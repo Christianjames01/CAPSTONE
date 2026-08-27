@@ -80,7 +80,7 @@
 .status-payment_pending,
 .status-receipt_uploaded,
 .status-processing,
-.status-digital_credential,
+.status-lacking_requirements,
 .status-ready_for_claiming,
 .status-scheduled,
 .status-uploaded,
@@ -220,6 +220,29 @@
 }
 
 .admin-primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-secondary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 19px;
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+.admin-secondary-button:hover {
+    background: var(--paper);
+}
+
+.admin-secondary-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }

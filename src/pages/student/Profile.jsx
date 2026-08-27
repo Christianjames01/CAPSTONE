@@ -15,6 +15,7 @@ function Profile() {
 
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
     const [phoneNumber, setPhoneNumber] = useState('')
     const [address, setAddress] = useState('')
@@ -112,6 +113,75 @@ function Profile() {
             setError(err.message || 'Failed to load profile.')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const uploadAvatar = async (file) => {
+        setError('')
+        setMessage('')
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+
+        if (!allowedTypes.includes(file.type)) {
+            setError('Only JPG, PNG, and WEBP images are allowed.')
+            return
+        }
+
+        const maxSize = 2 * 1024 * 1024
+
+        if (file.size > maxSize) {
+            setError('Image must not exceed 2 MB.')
+            return
+        }
+
+        try {
+            setUploadingAvatar(true)
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const fileExtension = file.name.split('.').pop().toLowerCase()
+            const filePath = `${user.id}/avatar-${Date.now()}.${fileExtension}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file, { cacheControl: '3600', upsert: false })
+
+            if (uploadError) {
+                throw new Error('Failed to upload photo: ' + uploadError.message)
+            }
+
+            const { data: publicUrlData } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath)
+
+            const publicUrl = publicUrlData?.publicUrl
+
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ profile_photo_url: publicUrl })
+                .eq('user_id', user.id)
+
+            if (updateError) {
+                await supabase.storage.from('avatars').remove([filePath])
+                throw new Error('Failed to save photo: ' + updateError.message)
+            }
+
+            setProfile((prev) => ({ ...prev, profile_photo_url: publicUrl }))
+            setMessage('Profile photo updated.')
+            window.dispatchEvent(new Event('profile-updated'))
+
+        } catch (err) {
+            console.error('AVATAR UPLOAD ERROR:', err)
+            setError(err.message || 'Failed to upload photo.')
+        } finally {
+            setUploadingAvatar(false)
         }
     }
 
@@ -225,36 +295,84 @@ function Profile() {
 
             {/* IDENTITY */}
             <div className="student-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div
-                    style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: '50%',
-                        background: 'var(--blue)',
-                        color: 'var(--white)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        fontSize: 18,
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                    }}
-                >
-                    {profile?.profile_photo_url ? (
-                        <img
-                            src={profile.profile_photo_url}
-                            alt={fullName}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    ) : (
-                        initials || 'ST'
-                    )}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div
+                        style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: '50%',
+                            background: 'var(--blue)',
+                            color: 'var(--white)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: 18,
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {profile?.profile_photo_url ? (
+                            <img
+                                src={profile.profile_photo_url}
+                                alt={fullName}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                        ) : (
+                            initials || 'ST'
+                        )}
+                    </div>
+
+                    <input
+                        id="avatar-input"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        style={{ display: 'none' }}
+                        disabled={uploadingAvatar}
+                        onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) uploadAvatar(file)
+                            e.target.value = ''
+                        }}
+                    />
+
+                    <button
+                        type="button"
+                        onClick={() => document.getElementById('avatar-input').click()}
+                        disabled={uploadingAvatar}
+                        title="Change photo"
+                        style={{
+                            position: 'absolute',
+                            bottom: -2,
+                            right: -2,
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            background: 'var(--red)',
+                            color: 'var(--white)',
+                            border: '2px solid var(--white)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {uploadingAvatar ? '…' : '✎'}
+                    </button>
                 </div>
 
                 <div>
                     <h2 style={{ fontSize: 18, marginBottom: 4 }}>{fullName}</h2>
                     <p>{student?.student_number}</p>
+                    <button
+                        type="button"
+                        className="student-link-button"
+                        style={{ marginTop: 4, fontSize: 12.5 }}
+                        onClick={() => document.getElementById('avatar-input').click()}
+                        disabled={uploadingAvatar}
+                    >
+                        {uploadingAvatar ? 'Uploading...' : 'Change profile photo'}
+                    </button>
                 </div>
             </div>
 

@@ -7,7 +7,7 @@ import './AdminPages.css'
 
 const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
-    'processing', 'digital_credential', 'ready_for_claiming', 'completed', 'rejected',
+    'processing', 'lacking_requirements', 'ready_for_claiming', 'completed', 'rejected',
 ]
 
 function AdminRequestDetails() {
@@ -145,13 +145,20 @@ function AdminRequestDetails() {
 
             const user = await getAdminUser()
 
-            const { error: updateError } = await supabase
+            const { data: updatedRows, error: updateError } = await supabase
                 .from('document_requests')
                 .update({ assigned_employee_id: reassignTo, updated_at: new Date().toISOString() })
                 .eq('request_id', requestId)
+                .select('request_id')
 
             if (updateError) {
                 throw new Error('Failed to reassign request: ' + updateError.message)
+            }
+
+            if (!updatedRows || updatedRows.length === 0) {
+                throw new Error(
+                    'The reassignment was not saved. Your account may not have permission to update this request (a database access policy may be blocking it) — this needs to be fixed in Supabase, not the app.'
+                )
             }
 
             const newEmployee = employees.find((e) => e.employee_id === reassignTo)
@@ -193,7 +200,7 @@ function AdminRequestDetails() {
 
             const user = await getAdminUser()
 
-            const { error: updateError } = await supabase
+            const { data: updatedRows, error: updateError } = await supabase
                 .from('document_requests')
                 .update({
                     status: newStatus,
@@ -204,9 +211,16 @@ function AdminRequestDetails() {
                     updated_at: new Date().toISOString(),
                 })
                 .eq('request_id', requestId)
+                .select('request_id')
 
             if (updateError) {
                 throw new Error('Failed to override status: ' + updateError.message)
+            }
+
+            if (!updatedRows || updatedRows.length === 0) {
+                throw new Error(
+                    'The status change was not saved. Your account may not have permission to update this request (a database access policy may be blocking it) — this needs to be fixed in Supabase, not the app.'
+                )
             }
 
             await logActivity({

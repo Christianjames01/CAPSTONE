@@ -80,7 +80,7 @@
 .status-payment_pending,
 .status-receipt_uploaded,
 .status-processing,
-.status-digital_credential,
+.status-lacking_requirements,
 .status-ready_for_claiming,
 .status-scheduled,
 .status-uploaded {
@@ -198,4 +198,211 @@
 .employee-search-input:focus {
     border-color: var(--blue);
     box-shadow: 0 0 0 3px var(--blue-tint);
+}
+
+/* ===================================================
+   REQUEST DETAILS PAGE
+=================================================== */
+
+.employee-primary-button,
+.employee-danger-button,
+.employee-secondary-button,
+.employee-file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 13.5px;
+    text-decoration: none;
+    border: none;
+}
+
+.employee-primary-button,
+.employee-file-link {
+    background: var(--blue);
+    color: var(--white);
+}
+
+.employee-primary-button:hover,
+.employee-file-link:hover {
+    background: var(--blue-dark);
+}
+
+.employee-danger-button {
+    background: var(--red);
+    color: var(--white);
+}
+
+.employee-danger-button:hover {
+    background: var(--red-dark);
+}
+
+.employee-secondary-button {
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+.employee-secondary-button:hover {
+    background: var(--paper);
+}
+
+.employee-primary-button:disabled,
+.employee-danger-button:disabled,
+.employee-secondary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.employee-actions-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.employee-notice {
+    padding: 16px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.employee-notice strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.employee-notice.tone-info {
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+}
+
+.employee-notice.tone-success {
+    background: rgba(30, 138, 95, 0.12);
+    color: #1e8a5f;
+}
+
+.employee-notice.tone-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.employee-notice.tone-danger {
+    background: rgba(200, 16, 46, 0.08);
+    color: var(--red-dark);
+}
+
+.employee-code-block {
+    display: block;
+    background: var(--paper);
+    padding: 10px 12px;
+    border-radius: 6px;
+    word-break: break-all;
+    font-size: 12px;
+    margin: 10px 0;
+}
+
+.employee-badge-required {
+    display: inline-block;
+    background: rgba(200, 16, 46, 0.1);
+    color: var(--red-dark);
+    padding: 4px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 6px;
+}
+
+.employee-requirement-count {
+    padding: 7px 14px;
+    border-radius: 20px;
+    background: var(--paper);
+    color: var(--slate);
+    font-weight: 700;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.employee-textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    outline: none;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.employee-textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-tint);
+}
+
+select.employee-textarea {
+    min-height: 0;
+    resize: none;
+}
+
+.employee-required {
+    color: var(--red);
+    margin-left: 3px;
+}
+
+.employee-help-text {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.employee-workflow {
+    display: flex;
+    flex-direction: column;
+}
+
+.employee-workflow-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.employee-workflow-step strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 14px;
+}
+
+.employee-workflow-step p {
+    font-size: 13px;
+    color: var(--slate);
+}
+
+.employee-workflow-number {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--blue-tint);
+    color: var(--blue);
+    font-weight: 700;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employee-workflow-line {
+    width: 2px;
+    height: 22px;
+    background: var(--line);
+    margin-left: 14px;
 }

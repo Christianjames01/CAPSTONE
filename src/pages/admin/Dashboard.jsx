@@ -1,7 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import './AdminPages.css'
+
+const STATUS_BUCKETS = [
+    { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], color: '#2a78d6' },
+    { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], color: '#eb6834' },
+    { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], color: '#1baf7a' },
+    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], color: '#eda100' },
+    { key: 'completed', label: 'Completed', statuses: ['completed'], color: '#e87ba4' },
+    { key: 'rejected', label: 'Rejected', statuses: ['rejected', 'cancelled'], color: '#008300' },
+]
+
+const TREND_DAYS = 14
 
 function AdminDashboard() {
     const navigate = useNavigate()
@@ -25,7 +37,7 @@ function AdminDashboard() {
 
             const { data: requestRows, error: requestError } = await supabase
                 .from('document_requests')
-                .select('request_id, status')
+                .select('request_id, status, requested_at')
 
             if (requestError) {
                 throw new Error('Failed to load requests: ' + requestError.message)
@@ -143,6 +155,36 @@ function AdminDashboard() {
     const countByStatus = (statuses) =>
         requests.filter((r) => statuses.includes(r.status)).length
 
+    const statusChartData = useMemo(
+        () => STATUS_BUCKETS.map((bucket) => ({
+            key: bucket.key,
+            label: bucket.label,
+            color: bucket.color,
+            value: countByStatus(bucket.statuses),
+        })),
+        [requests]
+    )
+
+    const trendChartData = useMemo(() => {
+        const days = []
+
+        for (let i = TREND_DAYS - 1; i >= 0; i--) {
+            const d = new Date()
+            d.setDate(d.getDate() - i)
+            days.push(d.toISOString().slice(0, 10))
+        }
+
+        const countByDay = Object.fromEntries(days.map((date) => [date, 0]))
+
+        requests.forEach((r) => {
+            if (!r.requested_at) return
+            const day = r.requested_at.slice(0, 10)
+            if (day in countByDay) countByDay[day] += 1
+        })
+
+        return days.map((date) => ({ date, count: countByDay[date] }))
+    }, [requests])
+
     const stats = [
         { label: 'Total Students', value: studentCount, to: '/admin/students' },
         { label: 'Total Requests', value: requests.length, to: '/admin/requests' },
@@ -181,6 +223,11 @@ function AdminDashboard() {
                         <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>{stat.label}</span>
                     </button>
                 ))}
+            </div>
+
+            <div className="dash-charts-grid">
+                <StatusDonutChart data={statusChartData} />
+                <RequestsTrendChart data={trendChartData} />
             </div>
 
             <div className="admin-page-header-row" style={{ marginBottom: 16 }}>

@@ -10,10 +10,11 @@ const STATUS_CHIPS = [
     { key: 'receipt_uploaded', label: 'Receipt Uploaded' },
     { key: 'receipt_verified', label: 'Receipt Verified' },
     { key: 'processing', label: 'Processing' },
-    { key: 'digital_credential', label: 'Digital Credential' },
+    { key: 'lacking_requirements', label: 'Lacking Requirements' },
     { key: 'ready_for_claiming', label: 'Ready for Claiming' },
     { key: 'completed', label: 'Completed' },
     { key: 'rejected', label: 'Rejected' },
+    { key: 'cancelled', label: 'Cancelled' },
 ]
 
 function AllRequests() {

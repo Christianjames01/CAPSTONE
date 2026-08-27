@@ -3,6 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId } from '../../lib/notify'
+import '../auth/Auth.css'
+import './EmployeePages.css'
+
+const DEFAULT_REMARKS =
+    'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
+    'Kindly arrive on time for your scheduled slot.'
 
 function ClaimSchedule() {
     const { requestId } = useParams()
@@ -130,7 +136,6 @@ function ClaimSchedule() {
             // ==========================================
 
             if (
-                requestData.status !== 'digital_credential' &&
                 requestData.status !== 'ready_for_claiming'
             ) {
                 throw new Error(
@@ -237,6 +242,8 @@ function ClaimSchedule() {
                 setRemarks(
                     scheduleData.remarks || ''
                 )
+            } else {
+                setRemarks(DEFAULT_REMARKS)
             }
 
         } catch (error) {
@@ -588,7 +595,7 @@ function ClaimSchedule() {
                     )
                     .eq(
                         'status',
-                        'digital_credential'
+                        'ready_for_claiming'
                     )
 
                 if (requestUpdateError) {
@@ -704,7 +711,7 @@ function ClaimSchedule() {
                 .from('document_requests')
                 .update({
                     status:
-                        'digital_credential',
+                        'ready_for_claiming',
 
                     employee_remarks:
                         'Claiming schedule cancelled.',
@@ -827,17 +834,7 @@ function ClaimSchedule() {
     // ==========================================
 
     if (loading) {
-        return (
-            <div style={styles.page}>
-                <div style={styles.container}>
-                    <div style={styles.card}>
-                        <h2>
-                            Loading claim schedule...
-                        </h2>
-                    </div>
-                </div>
-            </div>
-        )
+        return <p className="employee-loading">Loading claim schedule...</p>
     }
 
     // ==========================================
@@ -846,39 +843,17 @@ function ClaimSchedule() {
 
     if (errorMessage) {
         return (
-            <div style={styles.page}>
-                <div style={styles.container}>
+            <div>
+                <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/employee/requests/${requestId}`)}>
+                    ← Back to Request
+                </button>
 
-                    <button
-                        onClick={() =>
-                            navigate(
-                                `/employee/requests/${requestId}`
-                            )
-                        }
-                        style={styles.backButton}
-                    >
-                        ← Back to Request
+                <div className="employee-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Unable to Load Claim Schedule</h2>
+                    <div className="employee-error-box">{errorMessage}</div>
+                    <button className="employee-primary-button" onClick={loadData}>
+                        Try Again
                     </button>
-
-                    <div style={styles.card}>
-
-                        <h1>
-                            Unable to Load Claim Schedule
-                        </h1>
-
-                        <p style={styles.error}>
-                            {errorMessage}
-                        </p>
-
-                        <button
-                            onClick={loadData}
-                            style={styles.button}
-                        >
-                            Try Again
-                        </button>
-
-                    </div>
-
                 </div>
             </div>
         )
@@ -893,128 +868,56 @@ function ClaimSchedule() {
     // ==========================================
 
     return (
-        <div style={styles.page}>
+        <div>
+            <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/employee/requests/${requestId}`)}>
+                ← Back to Request
+            </button>
 
-            <div style={styles.container}>
+            <div className="employee-page-header">
+                <h1>Claim Schedule</h1>
+                <p>Schedule the student's date and time for claiming the requested academic document.</p>
+            </div>
 
-                {/* ==========================================
-                    BACK
-                ========================================== */}
+            {/* ==========================================
+                REQUEST INFORMATION
+            ========================================== */}
 
-                <button
-                    onClick={() =>
-                        navigate(
-                            `/employee/requests/${requestId}`
-                        )
-                    }
-                    style={styles.backButton}
-                >
-                    ← Back to Request
-                </button>
-
-                {/* ==========================================
-                    PAGE HEADER
-                ========================================== */}
-
-                <h1 style={styles.title}>
-                    Claim Schedule
-                </h1>
-
-                <p style={styles.subtitle}>
-                    Schedule the student's date and time
-                    for claiming the requested academic
-                    document.
-                </p>
-
-                {/* ==========================================
-                    REQUEST INFORMATION
-                ========================================== */}
-
-                <div style={styles.card}>
-
-                    <div style={styles.header}>
-
-                        <div>
-
-                            <p style={styles.label}>
-                                Request Number
-                            </p>
-
-                            <h2>
-                                {request.request_number}
-                            </h2>
-
-                        </div>
-
-                        <span
-                            style={{
-                                ...styles.status,
-                                ...getStatusStyle(
-                                    request.status
-                                )
-                            }}
-                        >
-                            {request.status}
-                        </span>
-
+            <div className="employee-card">
+                <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
+                    <div>
+                        <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
+                        <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
                     </div>
 
-                    <hr />
-
-                    <h3>
-                        Student Information
-                    </h3>
-
-                    <div style={styles.grid}>
-
-                        <div>
-                            <p style={styles.label}>
-                                Student Number
-                            </p>
-
-                            <p>
-                                {student?.student_number ||
-                                    'N/A'}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p style={styles.label}>
-                                Quantity
-                            </p>
-
-                            <p>
-                                {request.quantity}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p style={styles.label}>
-                                Total Amount
-                            </p>
-
-                            <p>
-                                ₱
-                                {Number(
-                                    request.total_amount || 0
-                                ).toFixed(2)}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p style={styles.label}>
-                                Priority
-                            </p>
-
-                            <p>
-                                {request.priority ||
-                                    'Normal'}
-                            </p>
-                        </div>
-
-                    </div>
-
+                    <span className={`employee-status-pill status-${request.status}`}>{request.status.replace(/_/g, ' ')}</span>
                 </div>
+
+                <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '16px 0' }} />
+
+                <h3 style={{ fontSize: 15, marginBottom: 14 }}>Student Information</h3>
+
+                <div className="employee-info-grid">
+                    <div className="employee-info-field">
+                        <span>Student Number</span>
+                        <strong>{student?.student_number || 'N/A'}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Quantity</span>
+                        <strong>{request.quantity}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Total Amount</span>
+                        <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Priority</span>
+                        <strong style={{ textTransform: 'capitalize' }}>{request.priority || 'Normal'}</strong>
+                    </div>
+                </div>
+            </div>
 
                 {/* ==========================================
                     EXISTING SCHEDULE
@@ -1022,87 +925,37 @@ function ClaimSchedule() {
 
                 {existingSchedule &&
                     existingSchedule.status !== 'cancelled' && (
-                        <div style={styles.card}>
+                        <div className="employee-card">
+                            <h2 style={{ fontSize: 16, marginBottom: 16 }}>Current Claim Schedule</h2>
 
-                            <h2>
-                                Current Claim Schedule
-                            </h2>
-
-                            <div style={styles.scheduleBox}>
-
-                                <div style={styles.scheduleGrid}>
-
-                                    <div>
-                                        <p style={styles.label}>
-                                            Claiming Date
-                                        </p>
-
-                                        <strong>
-                                            {formatDate(
-                                                existingSchedule.claim_date ||
-                                                existingSchedule.scheduled_date
-                                            )}
-                                        </strong>
-                                    </div>
-
-                                    <div>
-                                        <p style={styles.label}>
-                                            Claiming Time
-                                        </p>
-
-                                        <strong>
-                                            {formatTime(
-                                                existingSchedule.claim_time ||
-                                                existingSchedule.scheduled_time
-                                            )}
-                                        </strong>
-                                    </div>
-
-                                    <div>
-                                        <p style={styles.label}>
-                                            Duration
-                                        </p>
-
-                                        <strong>
-                                            {existingSchedule.estimated_duration_minutes ||
-                                                60}{' '}
-                                            minutes
-                                        </strong>
-                                    </div>
-
-                                    <div>
-                                        <p style={styles.label}>
-                                            Status
-                                        </p>
-
-                                        <span
-                                            style={{
-                                                ...styles.status,
-                                                ...getScheduleStatusStyle(
-                                                    existingSchedule.status
-                                                )
-                                            }}
-                                        >
-                                            {existingSchedule.status}
-                                        </span>
-                                    </div>
-
+                            <div className="employee-info-grid">
+                                <div className="employee-info-field">
+                                    <span>Claiming Date</span>
+                                    <strong>{formatDate(existingSchedule.claim_date || existingSchedule.scheduled_date)}</strong>
                                 </div>
 
-                                {existingSchedule.remarks && (
-                                    <div style={styles.section}>
-                                        <p style={styles.label}>
-                                            Remarks
-                                        </p>
+                                <div className="employee-info-field">
+                                    <span>Claiming Time</span>
+                                    <strong>{formatTime(existingSchedule.claim_time || existingSchedule.scheduled_time)}</strong>
+                                </div>
 
-                                        <p>
-                                            {existingSchedule.remarks}
-                                        </p>
-                                    </div>
-                                )}
+                                <div className="employee-info-field">
+                                    <span>Duration</span>
+                                    <strong>{existingSchedule.estimated_duration_minutes || 60} minutes</strong>
+                                </div>
 
+                                <div className="employee-info-field">
+                                    <span>Status</span>
+                                    <span className={`employee-status-pill status-${existingSchedule.status}`}>{existingSchedule.status}</span>
+                                </div>
                             </div>
 
+                            {existingSchedule.remarks && (
+                                <div className="employee-info-field" style={{ marginTop: 16 }}>
+                                    <span>Remarks</span>
+                                    <strong>{existingSchedule.remarks}</strong>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -1110,643 +963,160 @@ function ClaimSchedule() {
                     SCHEDULE FORM
                 ========================================== */}
 
-                <div style={styles.card}>
-
-                    <h2>
-                        {existingSchedule
-                            ? 'Update Claim Schedule'
-                            : 'Create Claim Schedule'}
+                <div className="employee-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 6 }}>
+                        {existingSchedule ? 'Update Claim Schedule' : 'Create Claim Schedule'}
                     </h2>
 
-                    <p style={styles.subtitle}>
-                        Choose the exact date and time when
-                        the student should arrive at the
-                        Registrar's Office.
+                    <p style={{ marginBottom: 18 }}>
+                        Choose the exact date and time when the student should arrive at the Registrar's Office.
                     </p>
 
-                    <div style={styles.formGrid}>
-
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 18 }}>
                         {/* DATE */}
-
-                        <div style={styles.formGroup}>
-
-                            <label style={styles.formLabel}>
-                                Claiming Date
-                                <span style={styles.required}>
-                                    *
-                                </span>
+                        <div className="form-group">
+                            <label className="form-label">
+                                Claiming Date<span className="employee-required">*</span>
                             </label>
 
                             <input
                                 type="date"
                                 value={scheduledDate}
                                 min={getToday()}
-                                onChange={event =>
-                                    setScheduledDate(
-                                        event.target.value
-                                    )
-                                }
-                                style={styles.input}
+                                onChange={(event) => setScheduledDate(event.target.value)}
+                                className="form-input"
                                 disabled={saving}
                             />
 
-                            <small style={styles.helpText}>
-                                The student will be instructed
-                                to claim the document on this date.
-                            </small>
-
+                            <small className="employee-help-text">The student will be instructed to claim the document on this date.</small>
                         </div>
 
                         {/* TIME */}
-
-                        <div style={styles.formGroup}>
-
-                            <label style={styles.formLabel}>
-                                Claiming Time
-                                <span style={styles.required}>
-                                    *
-                                </span>
+                        <div className="form-group">
+                            <label className="form-label">
+                                Claiming Time<span className="employee-required">*</span>
                             </label>
 
                             <input
                                 type="time"
                                 value={scheduledTime}
-                                onChange={event =>
-                                    setScheduledTime(
-                                        event.target.value
-                                    )
-                                }
-                                style={styles.input}
+                                onChange={(event) => setScheduledTime(event.target.value)}
+                                className="form-input"
                                 disabled={saving}
                             />
 
-                            <small style={styles.helpText}>
-                                Use the student's assigned
-                                claiming time.
-                            </small>
-
+                            <small className="employee-help-text">Use the student's assigned claiming time.</small>
                         </div>
 
                         {/* DURATION */}
-
-                        <div style={styles.formGroup}>
-
-                            <label style={styles.formLabel}>
-                                Estimated Duration
-                                <span style={styles.required}>
-                                    *
-                                </span>
+                        <div className="form-group">
+                            <label className="form-label">
+                                Estimated Duration<span className="employee-required">*</span>
                             </label>
 
                             <select
                                 value={estimatedDuration}
-                                onChange={event =>
-                                    setEstimatedDuration(
-                                        Number(
-                                            event.target.value
-                                        )
-                                    )
-                                }
-                                style={styles.input}
+                                onChange={(event) => setEstimatedDuration(Number(event.target.value))}
+                                className="form-input"
                                 disabled={saving}
                             >
-
-                                <option value={30}>
-                                    30 minutes
-                                </option>
-
-                                <option value={60}>
-                                    1 hour
-                                </option>
-
-                                <option value={90}>
-                                    1 hour 30 minutes
-                                </option>
-
-                                <option value={120}>
-                                    2 hours
-                                </option>
-
+                                <option value={30}>30 minutes</option>
+                                <option value={60}>1 hour</option>
+                                <option value={90}>1 hour 30 minutes</option>
+                                <option value={120}>2 hours</option>
                             </select>
 
-                            <small style={styles.helpText}>
-                                Default claiming allocation is
-                                60 minutes.
-                            </small>
-
+                            <small className="employee-help-text">Default claiming allocation is 60 minutes.</small>
                         </div>
-
                     </div>
 
                     {/* REMARKS */}
-
-                    <div style={styles.formGroup}>
-
-                        <label style={styles.formLabel}>
-                            Remarks
-                        </label>
-
+                    <div className="form-group" style={{ marginBottom: 18 }}>
+                        <label className="form-label">Remarks</label>
                         <textarea
                             value={remarks}
-                            onChange={event =>
-                                setRemarks(
-                                    event.target.value
-                                )
-                            }
+                            onChange={(event) => setRemarks(event.target.value)}
                             placeholder="Example: Please bring your official receipt and valid school ID."
-                            style={styles.textarea}
+                            className="employee-textarea"
                             disabled={saving}
                         />
-
                     </div>
 
                     {/* REMINDER */}
-
-                    <div style={styles.reminderBox}>
-
-                        <strong>
-                            Claiming Reminder
-                        </strong>
-
-                        <p>
-                            The student must present their
-                            official receipt (OR) from the
-                            Finance Office when claiming the
-                            academic document.
-                        </p>
-
-                        <p>
-                            The student should also bring a
-                            valid ID for identity verification.
-                        </p>
-
+                    <div className="employee-notice tone-info" style={{ marginBottom: 20 }}>
+                        <strong>Claiming Reminder</strong>
+                        <p>The student must present their official receipt (OR) from the Finance Office when claiming the academic document.</p>
+                        <p>The student should also bring a valid ID for identity verification.</p>
                     </div>
 
                     {/* ACTIONS */}
-
-                    <div style={styles.actions}>
-
-                        <button
-                            onClick={() =>
-                                navigate(
-                                    `/employee/requests/${requestId}`
-                                )
-                            }
-                            style={styles.cancelButton}
-                            disabled={saving}
-                        >
+                    <div className="employee-actions-row" style={{ marginTop: 0 }}>
+                        <button className="employee-secondary-button" onClick={() => navigate(`/employee/requests/${requestId}`)} disabled={saving}>
                             Cancel
                         </button>
 
-                        <button
-                            onClick={saveSchedule}
-                            style={styles.scheduleButton}
-                            disabled={saving}
-                        >
-                            {saving
-                                ? 'Saving...'
-                                : existingSchedule
-                                    ? '✓ Update Claim Schedule'
-                                    : '📅 Schedule Claiming'}
+                        <button className="employee-primary-button" onClick={saveSchedule} disabled={saving}>
+                            {saving ? 'Saving...' : existingSchedule ? '✓ Update Claim Schedule' : '📅 Schedule Claiming'}
                         </button>
-
                     </div>
 
                     {/* CANCEL EXISTING SCHEDULE */}
-
-                    {existingSchedule &&
-                        existingSchedule.status !== 'cancelled' && (
-                            <button
-                                onClick={cancelSchedule}
-                                style={styles.cancelScheduleButton}
-                                disabled={saving}
-                            >
-                                Cancel Existing Schedule
-                            </button>
-                        )}
-
+                    {existingSchedule && existingSchedule.status !== 'cancelled' && (
+                        <button className="employee-danger-button" style={{ marginTop: 14 }} onClick={cancelSchedule} disabled={saving}>
+                            Cancel Existing Schedule
+                        </button>
+                    )}
                 </div>
 
                 {/* ==========================================
                     WORKFLOW INFORMATION
                 ========================================== */}
 
-                <div style={styles.card}>
+                <div className="employee-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Claiming Workflow</h2>
 
-                    <h2>
-                        Claiming Workflow
-                    </h2>
-
-                    <div style={styles.workflow}>
-
-                        <div style={styles.workflowStep}>
-                            <div style={styles.workflowNumber}>
-                                1
-                            </div>
-
+                    <div className="employee-workflow">
+                        <div className="employee-workflow-step">
+                            <div className="employee-workflow-number">1</div>
                             <div>
-                                <strong>
-                                    Digital Credential Generated
-                                </strong>
-
-                                <p>
-                                    The requested academic
-                                    document has been prepared.
-                                </p>
+                                <strong>Digital Credential Generated</strong>
+                                <p>The requested academic document has been prepared.</p>
                             </div>
                         </div>
 
-                        <div style={styles.workflowLine} />
+                        <div className="employee-workflow-line" />
 
-                        <div style={styles.workflowStep}>
-                            <div style={styles.workflowNumber}>
-                                2
-                            </div>
-
+                        <div className="employee-workflow-step">
+                            <div className="employee-workflow-number">2</div>
                             <div>
-                                <strong>
-                                    Schedule Claiming
-                                </strong>
-
-                                <p>
-                                    Select the student's date
-                                    and time for claiming.
-                                </p>
+                                <strong>Schedule Claiming</strong>
+                                <p>Select the student's date and time for claiming.</p>
                             </div>
                         </div>
 
-                        <div style={styles.workflowLine} />
+                        <div className="employee-workflow-line" />
 
-                        <div style={styles.workflowStep}>
-                            <div style={styles.workflowNumber}>
-                                3
-                            </div>
-
+                        <div className="employee-workflow-step">
+                            <div className="employee-workflow-number">3</div>
                             <div>
-                                <strong>
-                                    Student Receives Schedule
-                                </strong>
-
-                                <p>
-                                    The student's account can
-                                    display the claiming date
-                                    and time.
-                                </p>
+                                <strong>Student Receives Schedule</strong>
+                                <p>The student's account can display the claiming date and time.</p>
                             </div>
                         </div>
 
-                        <div style={styles.workflowLine} />
+                        <div className="employee-workflow-line" />
 
-                        <div style={styles.workflowStep}>
-                            <div style={styles.workflowNumber}>
-                                4
-                            </div>
-
+                        <div className="employee-workflow-step">
+                            <div className="employee-workflow-number">4</div>
                             <div>
-                                <strong>
-                                    Student Claims Document
-                                </strong>
-
-                                <p>
-                                    Employee verifies identity
-                                    and official receipt before
-                                    releasing the document.
-                                </p>
+                                <strong>Student Claims Document</strong>
+                                <p>Employee verifies identity and official receipt before releasing the document.</p>
                             </div>
                         </div>
-
                     </div>
-
                 </div>
-
-            </div>
-
         </div>
     )
-}
-
-// ==========================================
-// REQUEST STATUS STYLE
-// ==========================================
-
-function getStatusStyle(status) {
-    switch (status) {
-
-        case 'digital_credential':
-            return {
-                background: '#e2d9f3',
-                color: '#432874'
-            }
-
-        case 'ready_for_claiming':
-            return {
-                background: '#cff4fc',
-                color: '#055160'
-            }
-
-        case 'scheduled':
-            return {
-                background: '#cff4fc',
-                color: '#055160'
-            }
-
-        case 'completed':
-        case 'claimed':
-            return {
-                background: '#d1e7dd',
-                color: '#0f5132'
-            }
-
-        case 'cancelled':
-            return {
-                background: '#f8d7da',
-                color: '#842029'
-            }
-
-        default:
-            return {
-                background: '#e9ecef',
-                color: '#333'
-            }
-    }
-}
-
-// ==========================================
-// SCHEDULE STATUS STYLE
-// ==========================================
-
-function getScheduleStatusStyle(status) {
-    switch (status) {
-
-        case 'scheduled':
-            return {
-                background: '#cff4fc',
-                color: '#055160'
-            }
-
-        case 'completed':
-        case 'claimed':
-            return {
-                background: '#d1e7dd',
-                color: '#0f5132'
-            }
-
-        case 'cancelled':
-            return {
-                background: '#f8d7da',
-                color: '#842029'
-            }
-
-        default:
-            return {
-                background: '#e9ecef',
-                color: '#333'
-            }
-    }
-}
-
-// ==========================================
-// STYLES
-// ==========================================
-
-const styles = {
-
-    page: {
-        minHeight: '100vh',
-        background: '#f5f7fb',
-        padding: '40px 20px'
-    },
-
-    container: {
-        maxWidth: '1000px',
-        margin: '0 auto'
-    },
-
-    card: {
-        background: '#fff',
-        border: '1px solid #ddd',
-        borderRadius: '10px',
-        padding: '30px',
-        marginTop: '25px',
-        boxShadow:
-            '0 2px 8px rgba(0,0,0,0.05)'
-    },
-
-    backButton: {
-        padding: '10px 16px',
-        border: '1px solid #ddd',
-        background: '#fff',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontSize: '14px'
-    },
-
-    title: {
-        marginTop: '25px',
-        marginBottom: '5px'
-    },
-
-    subtitle: {
-        color: '#666',
-        lineHeight: '1.6'
-    },
-
-    header: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '20px',
-        flexWrap: 'wrap'
-    },
-
-    status: {
-        display: 'inline-block',
-        padding: '7px 12px',
-        borderRadius: '20px',
-        fontWeight: 'bold',
-        fontSize: '13px',
-        textTransform: 'capitalize'
-    },
-
-    grid: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(4, 1fr)',
-        gap: '20px'
-    },
-
-    scheduleGrid: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(4, 1fr)',
-        gap: '20px'
-    },
-
-    formGrid: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(3, 1fr)',
-        gap: '20px',
-        marginTop: '25px'
-    },
-
-    label: {
-        fontSize: '13px',
-        color: '#777',
-        marginBottom: '5px'
-    },
-
-    section: {
-        marginTop: '20px'
-    },
-
-    formGroup: {
-        marginTop: '20px'
-    },
-
-    formLabel: {
-        display: 'block',
-        fontWeight: '600',
-        marginBottom: '8px',
-        color: '#333'
-    },
-
-    required: {
-        color: '#dc3545',
-        marginLeft: '4px'
-    },
-
-    input: {
-        width: '100%',
-        padding: '12px',
-        border: '1px solid #ccc',
-        borderRadius: '7px',
-        boxSizing: 'border-box',
-        fontSize: '14px',
-        background: '#fff'
-    },
-
-    textarea: {
-        width: '100%',
-        minHeight: '120px',
-        padding: '12px',
-        border: '1px solid #ccc',
-        borderRadius: '7px',
-        resize: 'vertical',
-        boxSizing: 'border-box',
-        fontSize: '14px',
-        marginTop: '5px'
-    },
-
-    helpText: {
-        display: 'block',
-        marginTop: '7px',
-        color: '#777',
-        fontSize: '12px',
-        lineHeight: '1.5'
-    },
-
-    scheduleBox: {
-        marginTop: '20px',
-        padding: '20px',
-        borderRadius: '8px',
-        background: '#f0f9ff',
-        border: '1px solid #bae6fd'
-    },
-
-    reminderBox: {
-        marginTop: '25px',
-        padding: '18px',
-        borderRadius: '8px',
-        background: '#fff3cd',
-        color: '#664d03',
-        border: '1px solid #ffecb5'
-    },
-
-    actions: {
-        display: 'flex',
-        gap: '10px',
-        marginTop: '25px',
-        flexWrap: 'wrap'
-    },
-
-    scheduleButton: {
-        padding: '13px 22px',
-        border: 'none',
-        background: '#0d6efd',
-        color: '#fff',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontWeight: '600',
-        fontSize: '15px'
-    },
-
-    cancelButton: {
-        padding: '13px 22px',
-        border: '1px solid #ddd',
-        background: '#fff',
-        color: '#333',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontWeight: '600',
-        fontSize: '15px'
-    },
-
-    cancelScheduleButton: {
-        marginTop: '15px',
-        padding: '11px 18px',
-        border: 'none',
-        background: '#dc3545',
-        color: '#fff',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontWeight: '600'
-    },
-
-    button: {
-        padding: '10px 18px',
-        border: 'none',
-        background: '#222',
-        color: '#fff',
-        borderRadius: '6px',
-        cursor: 'pointer'
-    },
-
-    error: {
-        color: '#b00020',
-        lineHeight: '1.6'
-    },
-
-    workflow: {
-        marginTop: '25px'
-    },
-
-    workflowStep: {
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '15px'
-    },
-
-    workflowNumber: {
-        minWidth: '35px',
-        height: '35px',
-        borderRadius: '50%',
-        background: '#0d6efd',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 'bold'
-    },
-
-    workflowLine: {
-        width: '2px',
-        height: '30px',
-        background: '#ddd',
-        marginLeft: '17px',
-        marginTop: '5px',
-        marginBottom: '5px'
-    }
 }
 
 export default ClaimSchedule

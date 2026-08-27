@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { exportToExcel } from '../../lib/excelExport'
+import { parseExcelFile } from '../../lib/excelImport'
 import '../auth/Auth.css'
 import './AdminPages.css'
+
+const IMPORT_COLUMNS = [
+    { header: 'document_code', key: 'document_code', width: 16 },
+    { header: 'document_name', key: 'document_name', width: 34 },
+    { header: 'category', key: 'category', width: 20 },
+    { header: 'description', key: 'description', width: 40 },
+    { header: 'fee', key: 'fee', width: 12 },
+    { header: 'processing_days_min', key: 'processing_days_min', width: 18 },
+    { header: 'processing_days_max', key: 'processing_days_max', width: 18 },
+    { header: 'is_available', key: 'is_available', width: 14 },
+]
 
 const EMPTY_FORM = {
     document_type_id: null,
@@ -28,6 +41,9 @@ function Documents() {
     const [expandedId, setExpandedId] = useState(null)
     const [requirements, setRequirements] = useState([])
     const [newRequirement, setNewRequirement] = useState({ requirement_name: '', description: '', is_required: true, accepted_file_types: '', max_file_size_mb: 5 })
+
+    const [importing, setImporting] = useState(false)
+    const [importSummary, setImportSummary] = useState(null)
 
     useEffect(() => {
         loadDocuments()
@@ -65,6 +81,122 @@ function Documents() {
         if (!user) return
 
         await logActivity({ userId: user.id, action, tableName: 'document_types', recordId, description })
+    }
+
+    const downloadImportTemplate = async () => {
+        await exportToExcel('document-types-template', [
+            {
+                name: 'Document Types',
+                columns: IMPORT_COLUMNS,
+                rows: [
+                    {
+                        document_code: 'TOR',
+                        document_name: 'Transcript of Records',
+                        category: 'Academic Records',
+                        description: 'Official record of courses taken and grades earned.',
+                        fee: '150',
+                        processing_days_min: '5',
+                        processing_days_max: '10',
+                        is_available: 'yes',
+                    },
+                ],
+            },
+        ])
+    }
+
+    const handleImportFile = async (e) => {
+        const file = e.target.files?.[0]
+        e.target.value = ''
+        if (!file) return
+
+        setImportSummary(null)
+
+        try {
+            setImporting(true)
+
+            const rows = await parseExcelFile(file)
+
+            if (rows.length === 0) {
+                alert('That file has no data rows.')
+                return
+            }
+
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+
+            let added = 0
+            let updated = 0
+            const failed = []
+
+            for (const row of rows) {
+                const code = (row.document_code || '').trim()
+                const name = (row.document_name || '').trim()
+
+                if (!code || !name) {
+                    failed.push(`Row missing document_code/document_name: ${JSON.stringify(row)}`)
+                    continue
+                }
+
+                const payload = {
+                    document_code: code,
+                    document_name: name,
+                    category: row.category?.trim() || null,
+                    description: row.description?.trim() || null,
+                    fee: row.fee ? Number(row.fee) : 0,
+                    processing_days_min: row.processing_days_min ? Number(row.processing_days_min) : null,
+                    processing_days_max: row.processing_days_max ? Number(row.processing_days_max) : null,
+                    is_available: !['no', 'false', '0'].includes((row.is_available || '').toLowerCase()),
+                }
+
+                const { data: existing } = await supabase
+                    .from('document_types')
+                    .select('document_type_id')
+                    .eq('document_code', code)
+                    .maybeSingle()
+
+                if (existing) {
+                    const { error: updateError } = await supabase
+                        .from('document_types')
+                        .update(payload)
+                        .eq('document_type_id', existing.document_type_id)
+
+                    if (updateError) {
+                        failed.push(`${code}: ${updateError.message}`)
+                    } else {
+                        updated++
+                    }
+                } else {
+                    const { error: insertError } = await supabase
+                        .from('document_types')
+                        .insert(payload)
+
+                    if (insertError) {
+                        failed.push(`${code}: ${insertError.message}`)
+                    } else {
+                        added++
+                    }
+                }
+            }
+
+            if (user) {
+                await logActivity({
+                    userId: user.id,
+                    action: 'import_document_types',
+                    tableName: 'document_types',
+                    description: `Imported document types from CSV: ${added} added, ${updated} updated, ${failed.length} failed.`,
+                })
+            }
+
+            setImportSummary({ added, updated, failed })
+            await loadDocuments()
+
+        } catch (err) {
+            console.error('IMPORT ERROR:', err)
+            alert(err.message || 'Failed to import file.')
+        } finally {
+            setImporting(false)
+        }
     }
 
     const openNewForm = () => {
@@ -258,8 +390,47 @@ function Documents() {
                     <p>Manage document types, fees, processing times, and their requirements.</p>
                 </div>
 
-                <button className="admin-primary-button" onClick={openNewForm}>+ Add Document Type</button>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button className="admin-link-button" onClick={downloadImportTemplate}>
+                        Download Excel template
+                    </button>
+
+                    <input
+                        id="document-import-input"
+                        type="file"
+                        accept=".xlsx"
+                        style={{ display: 'none' }}
+                        onChange={handleImportFile}
+                        disabled={importing}
+                    />
+
+                    <button
+                        className="admin-secondary-button"
+                        onClick={() => document.getElementById('document-import-input').click()}
+                        disabled={importing}
+                    >
+                        {importing ? 'Importing...' : '⬆ Import Excel'}
+                    </button>
+
+                    <button className="admin-primary-button" onClick={openNewForm}>+ Add Document Type</button>
+                </div>
             </div>
+
+            {importSummary && (
+                <div className="admin-card" style={{ marginTop: 16 }}>
+                    <h2 style={{ fontSize: 15, marginBottom: 8 }}>Import Complete</h2>
+                    <p style={{ marginBottom: importSummary.failed.length ? 10 : 0 }}>
+                        {importSummary.added} added · {importSummary.updated} updated
+                        {importSummary.failed.length > 0 ? ` · ${importSummary.failed.length} failed` : ''}
+                    </p>
+
+                    {importSummary.failed.length > 0 && (
+                        <ul style={{ fontSize: 12.5, color: 'var(--red-dark)', paddingLeft: 18 }}>
+                            {importSummary.failed.map((msg, i) => <li key={i}>{msg}</li>)}
+                        </ul>
+                    )}
+                </div>
+            )}
 
             {showForm && (
                 <div className="admin-card" style={{ marginTop: 20 }}>

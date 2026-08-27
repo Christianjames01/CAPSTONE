@@ -77,8 +77,11 @@
 }
 
 .status-pending,
+.status-payment_pending,
+.status-receipt_uploaded,
+.status-receipt_verified,
 .status-processing,
-.status-digital_credential,
+.status-lacking_requirements,
 .status-ready_for_claiming,
 .status-scheduled,
 .status-uploaded {
@@ -186,4 +189,57 @@
 
 .student-link-button:hover {
     color: var(--blue-dark);
+}
+
+.student-notice {
+    padding: 16px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-top: 20px;
+}
+
+.student-notice strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.student-notice.tone-info {
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+}
+
+.student-notice.tone-success {
+    background: rgba(30, 138, 95, 0.12);
+    color: #1e8a5f;
+}
+
+.student-notice.tone-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.student-notice.tone-danger {
+    background: rgba(200, 16, 46, 0.08);
+    color: var(--red-dark);
+}
+
+.student-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.student-request-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .student-request-grid {
+        grid-template-columns: 1fr;
+    }
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import '../auth/Auth.css'
+import './StudentPages.css'
 
 function UploadReceipt() {
     const { requestId } = useParams()
@@ -9,9 +11,8 @@ function UploadReceipt() {
     const [request, setRequest] = useState(null)
     const [student, setStudent] = useState(null)
 
-    const [receiptNumber, setReceiptNumber] = useState('')
-    const [amountPaid, setAmountPaid] = useState('')
     const [receiptFile, setReceiptFile] = useState(null)
+    const [currentReceipt, setCurrentReceipt] = useState(null)
 
     const [loading, setLoading] = useState(true)
     const [uploading, setUploading] = useState(false)
@@ -149,15 +150,7 @@ function UploadReceipt() {
                 )
             }
 
-            if (existingReceipt) {
-                setReceiptNumber(
-                    existingReceipt.receipt_number || ''
-                )
-
-                setAmountPaid(
-                    existingReceipt.amount_paid || ''
-                )
-            }
+            setCurrentReceipt(existingReceipt || null)
 
         } catch (error) {
             console.error(
@@ -185,20 +178,6 @@ function UploadReceipt() {
         // VALIDATION
         // ================================
 
-        if (!receiptNumber.trim()) {
-            setError(
-                'Please enter the official receipt number.'
-            )
-            return
-        }
-
-        if (!amountPaid) {
-            setError(
-                'Please enter the amount paid.'
-            )
-            return
-        }
-
         if (!receiptFile) {
             setError(
                 'Please select your official receipt file.'
@@ -213,17 +192,7 @@ function UploadReceipt() {
             return
         }
 
-        const paid = Number(amountPaid)
-        const required = Number(
-            request.total_amount
-        )
-
-        if (paid < required) {
-            setError(
-                `Amount paid cannot be less than ₱${required.toFixed(2)}.`
-            )
-            return
-        }
+        const paid = Number(request.total_amount)
 
         // ================================
         // FILE VALIDATION
@@ -337,9 +306,6 @@ function UploadReceipt() {
                 } = await supabase
                     .from('official_receipts')
                     .update({
-                        receipt_number:
-                            receiptNumber.trim(),
-
                         amount_paid: paid,
 
                         receipt_file_name:
@@ -387,9 +353,6 @@ function UploadReceipt() {
 
                         student_id:
                             student.student_id,
-
-                        receipt_number:
-                            receiptNumber.trim(),
 
                         amount_paid:
                             paid,
@@ -488,17 +451,7 @@ function UploadReceipt() {
     // ================================
 
     if (loading) {
-        return (
-            <div style={styles.page}>
-                <div style={styles.container}>
-                    <div style={styles.card}>
-                        <h2>
-                            Loading...
-                        </h2>
-                    </div>
-                </div>
-            </div>
-        )
+        return <p className="student-loading">Loading...</p>
     }
 
     // ================================
@@ -507,30 +460,13 @@ function UploadReceipt() {
 
     if (error && !request) {
         return (
-            <div style={styles.page}>
-                <div style={styles.container}>
-
-                    <div style={styles.card}>
-                        <h1>
-                            Unable to Load
-                        </h1>
-
-                        <p style={styles.error}>
-                            {error}
-                        </p>
-
-                        <button
-                            onClick={() =>
-                                navigate(
-                                    '/student/my-requests'
-                                )
-                            }
-                            style={styles.button}
-                        >
-                            Back to My Requests
-                        </button>
-                    </div>
-
+            <div>
+                <div className="student-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Unable to Load</h2>
+                    <div className="student-error-box">{error}</div>
+                    <button className="student-link-button" onClick={() => navigate('/student/my-requests')}>
+                        Back to My Requests
+                    </button>
                 </div>
             </div>
         )
@@ -541,423 +477,101 @@ function UploadReceipt() {
     // ================================
 
     return (
-        <div style={styles.page}>
+        <div>
+            <button className="student-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/student/request/${requestId}`)}>
+                ← Back to Request
+            </button>
 
-            <div style={styles.container}>
-
-                <button
-                    onClick={() =>
-                        navigate(
-                            `/student/request/${requestId}`
-                        )
-                    }
-                    style={styles.backButton}
-                >
-                    ← Back to Request
-                </button>
-
-                <h1 style={styles.title}>
-                    Upload Official Receipt
-                </h1>
-
-                <p style={styles.subtitle}>
-                    Submit your official receipt
-                    for Registrar verification.
-                </p>
-
-                {/* REQUEST SUMMARY */}
-
-                <div style={styles.card}>
-
-                    <h2>
-                        Request Information
-                    </h2>
-
-                    <div style={styles.summary}>
-
-                        <div>
-                            <span style={styles.label}>
-                                Request Number
-                            </span>
-
-                            <strong>
-                                {request.request_number}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <span style={styles.label}>
-                                Amount Due
-                            </span>
-
-                            <strong>
-                                ₱
-                                {Number(
-                                    request.total_amount ||
-                                    0
-                                ).toFixed(2)}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <span style={styles.label}>
-                                Request Status
-                            </span>
-
-                            <strong>
-                                {request.status}
-                            </strong>
-                        </div>
-
-                    </div>
-
-                </div>
-
-                {/* UPLOAD FORM */}
-
-                <div style={styles.card}>
-
-                    <h2>
-                        Official Receipt
-                    </h2>
-
-                    {error && (
-                        <div
-                            style={
-                                styles.errorBox
-                            }
-                        >
-                            {error}
-                        </div>
-                    )}
-
-                    {message && (
-                        <div
-                            style={
-                                styles.successBox
-                            }
-                        >
-                            {message}
-                        </div>
-                    )}
-
-                    <form
-                        onSubmit={handleUpload}
-                    >
-
-                        {/* OR NUMBER */}
-
-                        <div
-                            style={
-                                styles.formGroup
-                            }
-                        >
-
-                            <label
-                                style={
-                                    styles.formLabel
-                                }
-                            >
-                                Official Receipt
-                                Number
-                            </label>
-
-                            <input
-                                type="text"
-                                value={
-                                    receiptNumber
-                                }
-                                onChange={(e) =>
-                                    setReceiptNumber(
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Enter OR number"
-                                style={
-                                    styles.input
-                                }
-                                disabled={
-                                    uploading
-                                }
-                            />
-
-                        </div>
-
-                        {/* AMOUNT */}
-
-                        <div
-                            style={
-                                styles.formGroup
-                            }
-                        >
-
-                            <label
-                                style={
-                                    styles.formLabel
-                                }
-                            >
-                                Amount Paid
-                            </label>
-
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={
-                                    amountPaid
-                                }
-                                onChange={(e) =>
-                                    setAmountPaid(
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="0.00"
-                                style={
-                                    styles.input
-                                }
-                                disabled={
-                                    uploading
-                                }
-                            />
-
-                            <small
-                                style={
-                                    styles.help
-                                }
-                            >
-                                Amount due:
-                                {' '}
-                                ₱
-                                {Number(
-                                    request.total_amount ||
-                                    0
-                                ).toFixed(2)}
-                            </small>
-
-                        </div>
-
-                        {/* FILE */}
-
-                        <div
-                            style={
-                                styles.formGroup
-                            }
-                        >
-
-                            <label
-                                style={
-                                    styles.formLabel
-                                }
-                            >
-                                Receipt File
-                            </label>
-
-                            <input
-                                id="receipt-file"
-                                type="file"
-                                accept=".jpg,.jpeg,.png,.webp,.pdf"
-                                onChange={(e) =>
-                                    setReceiptFile(
-                                        e.target.files?.[0] ||
-                                        null
-                                    )
-                                }
-                                style={
-                                    styles.fileInput
-                                }
-                                disabled={
-                                    uploading
-                                }
-                            />
-
-                            <small
-                                style={
-                                    styles.help
-                                }
-                            >
-                                Accepted:
-                                JPG, PNG, WEBP,
-                                PDF.
-                                Maximum 5 MB.
-                            </small>
-
-                            {receiptFile && (
-                                <p
-                                    style={
-                                        styles.fileName
-                                    }
-                                >
-                                    Selected:
-                                    {' '}
-                                    {receiptFile.name}
-                                </p>
-                            )}
-
-                        </div>
-
-                        {/* SUBMIT */}
-
-                        <button
-                            type="submit"
-                            disabled={uploading}
-                            style={
-                                styles.submitButton
-                            }
-                        >
-                            {uploading
-                                ? 'Uploading...'
-                                : 'Upload Official Receipt'}
-                        </button>
-
-                    </form>
-
-                </div>
-
+            <div className="student-page-header">
+                <h1>Upload Official Receipt</h1>
+                <p>Submit your official receipt for Registrar verification.</p>
             </div>
 
+            {/* REQUEST SUMMARY */}
+
+            <div className="student-card">
+                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Request Information</h2>
+
+                <div className="student-info-grid">
+                    <div className="student-info-field">
+                        <span>Request Number</span>
+                        <strong>{request.request_number}</strong>
+                    </div>
+
+                    <div className="student-info-field">
+                        <span>Amount Due</span>
+                        <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
+                    </div>
+
+                    <div className="student-info-field">
+                        <span>Request Status</span>
+                        <span className={`student-status-pill status-${request.status}`}>{request.status.replace(/_/g, ' ')}</span>
+                    </div>
+                </div>
+
+                {currentReceipt && (
+                    <div className={`student-notice tone-${
+                        currentReceipt.status === 'verified' ? 'success' : currentReceipt.status === 'rejected' ? 'danger' : 'info'
+                    }`}>
+                        <strong>
+                            {currentReceipt.status === 'verified'
+                                ? 'Payment Verified'
+                                : currentReceipt.status === 'rejected'
+                                    ? 'Receipt Rejected'
+                                    : 'Receipt Uploaded'}
+                        </strong>
+                        <p>
+                            {currentReceipt.status === 'rejected' && currentReceipt.rejection_reason
+                                ? currentReceipt.rejection_reason
+                                : currentReceipt.status === 'verified'
+                                    ? 'Your payment has been verified. No further action is needed.'
+                                    : 'Your receipt is waiting for the Registrar to verify it.'}
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* UPLOAD FORM */}
+
+            <div className="student-card">
+                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
+
+                {error && <div className="student-error-box">{error}</div>}
+                {message && <div className="student-success-box">{message}</div>}
+
+                <form onSubmit={handleUpload}>
+                    {/* FILE */}
+                    <div className="form-group">
+                        <label className="form-label">Receipt File</label>
+
+                        <input
+                            id="receipt-file"
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.webp,.pdf"
+                            onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                            className="form-input"
+                            disabled={uploading}
+                        />
+
+                        <small style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--slate)' }}>
+                            Accepted: JPG, PNG, WEBP, PDF. Maximum 5 MB.
+                        </small>
+
+                        {receiptFile && (
+                            <p style={{ marginTop: 10, fontSize: 13.5, color: 'var(--ink)' }}>
+                                Selected: {receiptFile.name}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* SUBMIT */}
+                    <button type="submit" className="auth-submit" style={{ width: 'auto', padding: '11px 20px', marginTop: 20 }} disabled={uploading}>
+                        {uploading ? 'Uploading...' : 'Upload Official Receipt'}
+                    </button>
+                </form>
+            </div>
         </div>
     )
-}
-
-// ==========================================
-// STYLES
-// ==========================================
-
-const styles = {
-
-    page: {
-        minHeight: '100vh',
-        background: '#f5f7fb',
-        padding: '40px 20px',
-        color: '#222'
-    },
-
-    container: {
-        maxWidth: '900px',
-        margin: '0 auto'
-    },
-
-    card: {
-        background: '#fff',
-        border: '1px solid #ddd',
-        borderRadius: '12px',
-        padding: '30px',
-        marginTop: '25px',
-        boxShadow:
-            '0 2px 8px rgba(0,0,0,0.05)'
-    },
-
-    backButton: {
-        padding: '10px 16px',
-        border: '1px solid #ddd',
-        background: '#fff',
-        borderRadius: '6px',
-        cursor: 'pointer'
-    },
-
-    title: {
-        marginTop: '25px',
-        marginBottom: '5px'
-    },
-
-    subtitle: {
-        color: '#666'
-    },
-
-    summary: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(3, 1fr)',
-        gap: '20px',
-        marginTop: '20px'
-    },
-
-    label: {
-        display: 'block',
-        fontSize: '13px',
-        color: '#777',
-        marginBottom: '6px'
-    },
-
-    formGroup: {
-        marginTop: '22px'
-    },
-
-    formLabel: {
-        display: 'block',
-        fontWeight: '600',
-        marginBottom: '8px'
-    },
-
-    input: {
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: '12px',
-        border: '1px solid #ccc',
-        borderRadius: '7px',
-        fontSize: '15px'
-    },
-
-    fileInput: {
-        width: '100%',
-        padding: '10px',
-        border: '1px solid #ccc',
-        borderRadius: '7px',
-        boxSizing: 'border-box'
-    },
-
-    help: {
-        display: 'block',
-        marginTop: '6px',
-        color: '#777'
-    },
-
-    fileName: {
-        marginTop: '10px',
-        color: '#444'
-    },
-
-    submitButton: {
-        marginTop: '25px',
-        padding: '13px 20px',
-        background: '#222',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontSize: '15px',
-        fontWeight: '600'
-    },
-
-    button: {
-        marginTop: '20px',
-        padding: '11px 18px',
-        background: '#222',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '7px',
-        cursor: 'pointer'
-    },
-
-    error: {
-        color: '#b00020'
-    },
-
-    errorBox: {
-        padding: '14px',
-        marginTop: '15px',
-        background: '#f8d7da',
-        color: '#842029',
-        borderRadius: '7px'
-    },
-
-    successBox: {
-        padding: '14px',
-        marginTop: '15px',
-        background: '#d1e7dd',
-        color: '#0f5132',
-        borderRadius: '7px'
-    }
 }
 
 export default UploadReceipt

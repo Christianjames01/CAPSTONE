@@ -1,0 +1,5 @@
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.send-claim-reminders]
+verify_jwt = false

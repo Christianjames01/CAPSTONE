@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { IconCalendar } from '../student/icons'
+import { IconShieldCheck, IconGear, IconUsers } from './icons'
 import './EmployeePages.css'
+
+const QUICK_LINKS = [
+    { to: '/employee/verification', label: 'Request Verification', icon: <IconShieldCheck /> },
+    { to: '/employee/processing', label: 'Document Processing', icon: <IconGear /> },
+    { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
+    { to: '/employee/students', label: 'Students', icon: <IconUsers /> },
+]
 
 function EmployeeDashboard() {
     const navigate = useNavigate()
@@ -9,7 +18,7 @@ function EmployeeDashboard() {
     const [employee, setEmployee] = useState(null)
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
-    const [todayScheduleCount, setTodayScheduleCount] = useState(0)
+    const [todaySchedules, setTodaySchedules] = useState([])
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
 
@@ -88,14 +97,41 @@ function EmployeeDashboard() {
 
             const today = new Date().toISOString().slice(0, 10)
 
-            const { count } = await supabase
+            const { data: scheduleRows, error: scheduleError } = await supabase
                 .from('claim_schedules')
-                .select('claim_schedule_id', { count: 'exact', head: true })
+                .select('claim_schedule_id, request_id, student_id, claim_time, scheduled_time, status')
                 .eq('scheduled_by', employeeData.employee_id)
                 .eq('claim_date', today)
                 .neq('status', 'cancelled')
+                .order('claim_time', { ascending: true })
 
-            setTodayScheduleCount(count || 0)
+            if (scheduleError) {
+                console.error('TODAY SCHEDULE ERROR:', scheduleError)
+            }
+
+            const sRows = scheduleRows || []
+            const scheduleRequestIds = [...new Set(sRows.map((s) => s.request_id))]
+            const scheduleStudentIds = [...new Set(sRows.map((s) => s.student_id).filter(Boolean))]
+
+            const [{ data: scheduleRequests }, { data: scheduleStudents }] = await Promise.all([
+                scheduleRequestIds.length
+                    ? supabase.from('document_requests').select('request_id, request_number').in('request_id', scheduleRequestIds)
+                    : Promise.resolve({ data: [] }),
+                scheduleStudentIds.length
+                    ? supabase.from('students').select('student_id, student_number').in('student_id', scheduleStudentIds)
+                    : Promise.resolve({ data: [] }),
+            ])
+
+            const requestNumberById = Object.fromEntries((scheduleRequests || []).map((r) => [r.request_id, r.request_number]))
+            const studentNumberById = Object.fromEntries((scheduleStudents || []).map((s) => [s.student_id, s.student_number]))
+
+            setTodaySchedules(
+                sRows.map((s) => ({
+                    ...s,
+                    requestNumber: requestNumberById[s.request_id] || 'N/A',
+                    studentNumber: studentNumberById[s.student_id] || 'N/A',
+                }))
+            )
 
         } catch (error) {
             console.error('EMPLOYEE DASHBOARD ERROR:', error)
@@ -114,6 +150,14 @@ function EmployeeDashboard() {
     const completedCount = requests.filter((r) => r.status === 'completed').length
 
     const recentRequests = requests.slice(0, 6)
+
+    const formatTime = (time) => {
+        if (!time) return 'N/A'
+        const [hours, minutes] = time.split(':')
+        const date = new Date()
+        date.setHours(Number(hours), Number(minutes), 0, 0)
+        return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+    }
 
     if (loading) {
         return <p className="employee-loading">Loading dashboard...</p>
@@ -139,13 +183,13 @@ function EmployeeDashboard() {
                 </p>
             </div>
 
-            <div className="employee-info-grid" style={{ marginBottom: 28 }}>
+            <div className="employee-info-grid" style={{ marginBottom: 24 }}>
                 {[
                     { label: 'Pending', value: pendingCount, to: '/employee/verification' },
                     { label: 'Receipts to Verify', value: receiptCount, to: '/employee/verification' },
                     { label: 'Processing', value: processingCount, to: '/employee/processing' },
                     { label: 'Completed', value: completedCount, to: '/employee/requests' },
-                    { label: "Today's Claim Schedules", value: todayScheduleCount, to: '/employee/claim-schedule' },
+                    { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },
                 ].map((stat) => (
                     <button
                         key={stat.label}
@@ -161,7 +205,46 @@ function EmployeeDashboard() {
                 ))}
             </div>
 
-            <div className="employee-page-header-row" style={{ marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 28 }}>
+                {QUICK_LINKS.map((link) => (
+                    <button
+                        key={link.to}
+                        className="employee-card"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, margin: 0, padding: '14px 16px' }}
+                        onClick={() => navigate(link.to)}
+                    >
+                        <span style={{ color: 'var(--blue)', display: 'flex' }}>{link.icon}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>{link.label}</span>
+                    </button>
+                ))}
+            </div>
+
+            {todaySchedules.length > 0 && (
+                <>
+                    <h2 style={{ fontSize: 17, marginBottom: 14 }}>Today's Appointments</h2>
+
+                    {todaySchedules.map((schedule) => (
+                        <div className="employee-list-card" key={schedule.claim_schedule_id}>
+                            <div className="employee-list-card-header">
+                                <div>
+                                    <h3>{schedule.requestNumber}</h3>
+                                    <p>Student {schedule.studentNumber} · {formatTime(schedule.claim_time || schedule.scheduled_time)}</p>
+                                </div>
+                                <span className={`employee-status-pill status-${schedule.status}`}>{schedule.status}</span>
+                            </div>
+
+                            <button
+                                className="employee-link-button"
+                                onClick={() => navigate(`/employee/requests/${schedule.request_id}`)}
+                            >
+                                Open request →
+                            </button>
+                        </div>
+                    ))}
+                </>
+            )}
+
+            <div className="employee-page-header-row" style={{ marginTop: todaySchedules.length > 0 ? 28 : 0, marginBottom: 16 }}>
                 <h2 style={{ fontSize: 17 }}>Recent Assigned Requests</h2>
                 <button className="employee-link-button" onClick={() => navigate('/employee/requests')}>
                     View all →

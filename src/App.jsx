@@ -19,6 +19,7 @@ import UploadReceipt from './pages/student/UploadReceipt'
 import UploadReceiptList from './pages/student/UploadReceiptList'
 import UploadRequirements from './pages/student/UploadRequirements'
 import StudentClaimSchedule from './pages/student/ClaimSchedule'
+import StudentMessages from './pages/student/Messages'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
 import HelpSupport from './pages/student/HelpSupport'
@@ -136,6 +137,11 @@ function App() {
           <Route
             path="/student/claim-schedule"
             element={<StudentClaimSchedule />}
+          />
+
+          <Route
+            path="/student/messages"
+            element={<StudentMessages />}
           />
 
           <Route

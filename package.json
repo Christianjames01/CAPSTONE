@@ -13,12 +13,16 @@
     "@supabase/supabase-js": "^2.112.4",
     "axios": "^1.19.0",
     "bootstrap": "^5.3.8",
+    "exceljs": "^4.4.0",
     "lucide-react": "^1.34.0",
     "react": "^19.2.8",
     "react-data-table-component": "^8.8.1",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
     "sweetalert2": "^11.26.25"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

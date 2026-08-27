@@ -79,13 +79,19 @@ function ClaimSchedules() {
             const { data: unclaimedRequests, error: unclaimedError } = await supabase
                 .from('document_requests')
                 .select('request_id, request_number, student_id, document_type_id')
-                .eq('status', 'digital_credential')
+                .eq('status', 'ready_for_claiming')
 
             if (unclaimedError) {
                 console.error('UNCLAIMED ERROR:', unclaimedError)
             }
 
-            const uRows = unclaimedRequests || []
+            // A request stays "ready_for_claiming" even after a schedule is
+            // created, so exclude requests that already have an active schedule.
+            const scheduledRequestIds = new Set(
+                rows.filter((s) => s.status !== 'cancelled').map((s) => s.request_id)
+            )
+
+            const uRows = (unclaimedRequests || []).filter((r) => !scheduledRequestIds.has(r.request_id))
             const uStudentIds = [...new Set(uRows.map((r) => r.student_id).filter(Boolean))]
             const uDocTypeIds = [...new Set(uRows.map((r) => r.document_type_id).filter(Boolean))]
 
@@ -201,7 +207,7 @@ function ClaimSchedules() {
                                     <h3>{r.documentName}</h3>
                                     <p>{r.request_number} · Student {r.studentNumber}</p>
                                 </div>
-                                <span className="admin-status-pill status-digital_credential">Not scheduled</span>
+                                <span className="admin-status-pill status-ready_for_claiming">Not scheduled</span>
                             </div>
 
                             <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>

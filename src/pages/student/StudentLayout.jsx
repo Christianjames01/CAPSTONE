@@ -8,6 +8,7 @@ import {
     IconList,
     IconCalendar,
     IconReceipt,
+    IconMessage,
     IconBell,
     IconUserCircle,
     IconHelp,
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
     { to: '/student/my-requests', label: 'My Requests', icon: <IconList /> },
     { to: '/student/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
     { to: '/student/upload-receipt', label: 'Upload Receipt', icon: <IconReceipt /> },
+    { to: '/student/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/student/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/student/profile', label: 'Profile', icon: <IconUserCircle /> },
     { to: '/student/help', label: 'Help / Support', icon: <IconHelp /> },
@@ -30,11 +32,17 @@ function StudentLayout() {
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
+    const [photoUrl, setPhotoUrl] = useState('')
     const [unreadCount, setUnreadCount] = useState(0)
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0)
 
     useEffect(() => {
         loadProfile()
         loadUnreadCount()
+        loadUnreadMessageCount()
+
+        window.addEventListener('profile-updated', loadProfile)
+        return () => window.removeEventListener('profile-updated', loadProfile)
     }, [])
 
     async function loadProfile() {
@@ -46,7 +54,7 @@ function StudentLayout() {
 
         const { data } = await supabase
             .from('profiles')
-            .select('first_name, last_name')
+            .select('first_name, last_name, profile_photo_url')
             .eq('user_id', user.id)
             .single()
 
@@ -55,6 +63,7 @@ function StudentLayout() {
             setInitials(
                 `${data.first_name?.[0] || ''}${data.last_name?.[0] || ''}`.toUpperCase()
             )
+            setPhotoUrl(data.profile_photo_url || '')
         }
     }
 
@@ -72,6 +81,22 @@ function StudentLayout() {
             .eq('is_read', false)
 
         setUnreadCount(count || 0)
+    }
+
+    async function loadUnreadMessageCount() {
+        const {
+            data: { user }
+        } = await supabase.auth.getUser()
+
+        if (!user) return
+
+        const { count } = await supabase
+            .from('messages')
+            .select('message_id', { count: 'exact', head: true })
+            .eq('receiver_user_id', user.id)
+            .eq('is_read', false)
+
+        setUnreadMessageCount(count || 0)
     }
 
     const handleLogout = async () => {
@@ -107,11 +132,18 @@ function StudentLayout() {
                             >
                                 {item.icon}
                                 <span>{item.label}</span>
-                                {item.badgeKey === 'notifications' && unreadCount > 0 && (
-                                    <span className="student-nav-badge">
-                                        {unreadCount > 9 ? '9+' : unreadCount}
-                                    </span>
-                                )}
+                                {(() => {
+                                    const badgeValue =
+                                        item.badgeKey === 'notifications' ? unreadCount :
+                                        item.badgeKey === 'messages' ? unreadMessageCount :
+                                        0
+
+                                    return badgeValue > 0 && (
+                                        <span className="student-nav-badge">
+                                            {badgeValue > 9 ? '9+' : badgeValue}
+                                        </span>
+                                    )
+                                })()}
                             </NavLink>
                         ))}
                     </nav>
@@ -119,7 +151,17 @@ function StudentLayout() {
 
                 <div className="student-sidebar-bottom">
                     <div className="student-user">
-                        <div className="student-user-avatar">{initials || 'ST'}</div>
+                        <div className="student-user-avatar">
+                            {photoUrl ? (
+                                <img
+                                    src={photoUrl}
+                                    alt={name || 'Student'}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }}
+                                />
+                            ) : (
+                                initials || 'ST'
+                            )}
+                        </div>
                         <div>
                             <div className="student-user-name">{name || 'Student'}</div>
                             <div className="student-user-role">Student Account</div>

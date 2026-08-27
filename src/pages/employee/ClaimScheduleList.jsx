@@ -57,7 +57,7 @@ function ClaimScheduleList() {
                     completed_at
                 `)
                 .eq('assigned_employee_id', employeeData.employee_id)
-                .in('status', ['digital_credential', 'ready_for_claiming'])
+                .eq('status', 'ready_for_claiming')
                 .order('processed_at', { ascending: false })
 
             if (requestError) {
@@ -318,7 +318,7 @@ function ClaimScheduleList() {
                                 <p>{request.request_number}</p>
                             </div>
 
-                            <span className={`employee-status-pill status-${request.schedule ? request.schedule.status : 'digital_credential'}`}>
+                            <span className={`employee-status-pill status-${request.schedule ? request.schedule.status : 'ready_for_claiming'}`}>
                                 {request.schedule ? request.schedule.status : 'Not scheduled'}
                             </span>
                         </div>

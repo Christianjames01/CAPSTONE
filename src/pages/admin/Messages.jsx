@@ -3,14 +3,10 @@ import { supabase } from '../../lib/supabase'
 import './AdminPages.css'
 
 function Messages() {
-    const [userId, setUserId] = useState(null)
     const [threads, setThreads] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-
     const [activeThread, setActiveThread] = useState(null)
-    const [reply, setReply] = useState('')
-    const [sending, setSending] = useState(false)
 
     useEffect(() => {
         loadMessages()
@@ -21,21 +17,9 @@ function Messages() {
             setLoading(true)
             setError('')
 
-            const {
-                data: { user },
-                error: userError
-            } = await supabase.auth.getUser()
-
-            if (userError || !user) {
-                throw new Error('You are not logged in.')
-            }
-
-            setUserId(user.id)
-
             const { data, error: messagesError } = await supabase
                 .from('messages')
                 .select('message_id, request_id, sender_user_id, receiver_user_id, message, is_read, created_at')
-                .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
                 .order('created_at', { ascending: true })
 
             if (messagesError) {
@@ -44,44 +28,53 @@ function Messages() {
 
             const rows = data || []
 
-            const otherUserIds = [
-                ...new Set(rows.map((m) => (m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id)))
+            const userIds = [
+                ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
             ]
 
-            const { data: profiles } = otherUserIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', otherUserIds)
+            const { data: profiles } = userIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name, role').in('user_id', userIds)
                 : { data: [] }
 
             const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
 
+            const nameFor = (userId) => {
+                const p = profileByUserId[userId]
+                return p ? `${p.first_name} ${p.last_name}`.trim() : 'Unknown'
+            }
+
+            const roleFor = (userId) => profileByUserId[userId]?.role || ''
+
             const grouped = {}
 
             for (const m of rows) {
-                const otherId = m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id
+                const pairKey = [m.sender_user_id, m.receiver_user_id].sort().join('|')
 
-                if (!grouped[otherId]) {
-                    grouped[otherId] = {
-                        otherUserId: otherId,
-                        name: profileByUserId[otherId]
-                            ? `${profileByUserId[otherId].first_name} ${profileByUserId[otherId].last_name}`.trim()
-                            : 'Unknown',
+                if (!grouped[pairKey]) {
+                    grouped[pairKey] = {
+                        pairKey,
+                        participantA: m.sender_user_id,
+                        participantB: m.receiver_user_id,
                         messages: [],
-                        unreadCount: 0,
                     }
                 }
 
-                grouped[otherId].messages.push(m)
-
-                if (m.receiver_user_id === user.id && !m.is_read) {
-                    grouped[otherId].unreadCount += 1
-                }
+                grouped[pairKey].messages.push(m)
             }
 
-            const threadList = Object.values(grouped).sort((a, b) => {
-                const aLast = a.messages[a.messages.length - 1]?.created_at || ''
-                const bLast = b.messages[b.messages.length - 1]?.created_at || ''
-                return bLast.localeCompare(aLast)
-            })
+            const threadList = Object.values(grouped)
+                .map((t) => ({
+                    ...t,
+                    nameA: nameFor(t.participantA),
+                    roleA: roleFor(t.participantA),
+                    nameB: nameFor(t.participantB),
+                    roleB: roleFor(t.participantB),
+                }))
+                .sort((a, b) => {
+                    const aLast = a.messages[a.messages.length - 1]?.created_at || ''
+                    const bLast = b.messages[b.messages.length - 1]?.created_at || ''
+                    return bLast.localeCompare(aLast)
+                })
 
             setThreads(threadList)
 
@@ -93,62 +86,11 @@ function Messages() {
         }
     }
 
-    const openThread = async (thread) => {
-        setActiveThread(thread)
-
-        const unreadIds = thread.messages
-            .filter((m) => m.receiver_user_id === userId && !m.is_read)
-            .map((m) => m.message_id)
-
-        if (unreadIds.length > 0) {
-            await supabase
-                .from('messages')
-                .update({ is_read: true, read_at: new Date().toISOString() })
-                .in('message_id', unreadIds)
-
-            setThreads((prev) =>
-                prev.map((t) => (t.otherUserId === thread.otherUserId ? { ...t, unreadCount: 0 } : t))
-            )
-        }
-    }
-
-    const sendReply = async () => {
-        if (!reply.trim() || !activeThread) return
-
-        try {
-            setSending(true)
-
-            const { data, error: sendError } = await supabase
-                .from('messages')
-                .insert({
-                    sender_user_id: userId,
-                    receiver_user_id: activeThread.otherUserId,
-                    message: reply.trim(),
-                    is_read: false,
-                })
-                .select()
-                .single()
-
-            if (sendError) {
-                throw new Error('Failed to send message: ' + sendError.message)
-            }
-
-            const updatedThread = { ...activeThread, messages: [...activeThread.messages, data] }
-
-            setActiveThread(updatedThread)
-            setThreads((prev) => prev.map((t) => (t.otherUserId === activeThread.otherUserId ? updatedThread : t)))
-            setReply('')
-
-        } catch (err) {
-            console.error('SEND MESSAGE ERROR:', err)
-            alert(err.message || 'Failed to send message.')
-        } finally {
-            setSending(false)
-        }
-    }
-
     const formatTime = (value) =>
         new Date(value).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+
+    const nameForSender = (thread, senderId) =>
+        senderId === thread.participantA ? thread.nameA : thread.nameB
 
     if (activeThread) {
         return (
@@ -158,44 +100,44 @@ function Messages() {
                 </button>
 
                 <div className="admin-page-header">
-                    <h1>{activeThread.name}</h1>
+                    <h1>{activeThread.nameA} ↔ {activeThread.nameB}</h1>
+                    <p>
+                        {activeThread.roleA === 'student' ? 'Student' : 'Registrar Staff'} and{' '}
+                        {activeThread.roleB === 'student' ? 'Student' : 'Registrar Staff'} · view only
+                    </p>
                 </div>
 
                 <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {activeThread.messages.map((m) => (
-                        <div
-                            key={m.message_id}
-                            style={{
-                                alignSelf: m.sender_user_id === userId ? 'flex-end' : 'flex-start',
-                                maxWidth: '70%',
-                                background: m.sender_user_id === userId ? 'var(--blue)' : 'var(--paper)',
-                                color: m.sender_user_id === userId ? 'var(--white)' : 'var(--ink)',
-                                padding: '10px 14px',
-                                borderRadius: 10,
-                            }}
-                        >
-                            <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
-                            <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
-                                {formatTime(m.created_at)}
-                            </span>
-                        </div>
-                    ))}
-                </div>
+                    {activeThread.messages.map((m) => {
+                        const isA = m.sender_user_id === activeThread.participantA
 
-                <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                    <input
-                        className="admin-search-input"
-                        style={{ flex: 1, maxWidth: 'none' }}
-                        value={reply}
-                        onChange={(e) => setReply(e.target.value)}
-                        placeholder="Type a reply..."
-                        onKeyDown={(e) => e.key === 'Enter' && sendReply()}
-                        disabled={sending}
-                    />
-
-                    <button className="admin-primary-button" onClick={sendReply} disabled={sending}>
-                        {sending ? 'Sending...' : 'Send'}
-                    </button>
+                        return (
+                            <div
+                                key={m.message_id}
+                                style={{
+                                    alignSelf: isA ? 'flex-start' : 'flex-end',
+                                    maxWidth: '70%',
+                                }}
+                            >
+                                <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                                    {nameForSender(activeThread, m.sender_user_id)}
+                                </span>
+                                <div
+                                    style={{
+                                        background: isA ? 'var(--paper)' : 'var(--blue)',
+                                        color: isA ? 'var(--ink)' : 'var(--white)',
+                                        padding: '10px 14px',
+                                        borderRadius: 10,
+                                    }}
+                                >
+                                    <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
+                                    <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
+                                        {formatTime(m.created_at)}
+                                    </span>
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         )
@@ -205,7 +147,7 @@ function Messages() {
         <div>
             <div className="admin-page-header">
                 <h1>Messages</h1>
-                <p>Student inquiries and conversations.</p>
+                <p>All conversations between students and registrar employees, for oversight.</p>
             </div>
 
             {error && <div className="admin-error-box">{error}</div>}
@@ -213,27 +155,25 @@ function Messages() {
             {loading ? (
                 <p className="admin-loading">Loading messages...</p>
             ) : threads.length === 0 ? (
-                <div className="admin-empty">No messages yet.</div>
+                <div className="admin-empty">No conversations yet.</div>
             ) : (
                 threads.map((thread) => {
                     const lastMessage = thread.messages[thread.messages.length - 1]
 
                     return (
                         <button
-                            key={thread.otherUserId}
+                            key={thread.pairKey}
                             className="admin-list-card"
                             style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                            onClick={() => openThread(thread)}
+                            onClick={() => setActiveThread(thread)}
                         >
                             <div className="admin-list-card-header">
                                 <div>
-                                    <h3>{thread.name}</h3>
+                                    <h3>{thread.nameA} ↔ {thread.nameB}</h3>
                                     <p>{lastMessage?.message}</p>
                                 </div>
 
-                                {thread.unreadCount > 0 && (
-                                    <span className="admin-status-pill status-pending">{thread.unreadCount} new</span>
-                                )}
+                                <span className="admin-status-pill">{thread.messages.length} messages</span>
                             </div>
 
                             <span style={{ fontSize: 12, color: 'var(--slate)' }}>

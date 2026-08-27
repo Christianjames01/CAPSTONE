@@ -3,6 +3,21 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './StudentPages.css'
 
+const STATUS_LABELS = {
+    pending: 'Pending',
+    payment_pending: 'Payment Pending',
+    receipt_uploaded: 'Receipt Uploaded',
+    receipt_verified: 'Payment Verified',
+    processing: 'Processing',
+    lacking_requirements: 'Requirements Needed',
+    ready_for_claiming: 'Ready for Claiming',
+    completed: 'Completed',
+    rejected: 'Rejected',
+    cancelled: 'Cancelled',
+}
+
+const statusLabel = (status) => STATUS_LABELS[status] || status.replace(/_/g, ' ')
+
 function MyRequest() {
     const navigate = useNavigate()
     const location = useLocation()
@@ -198,7 +213,7 @@ function MyRequest() {
                             </div>
 
                             <span className={`student-status-pill status-${request.status}`}>
-                                {request.status}
+                                {statusLabel(request.status)}
                             </span>
                         </div>
 

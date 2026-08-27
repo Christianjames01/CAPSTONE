@@ -58,6 +58,13 @@ export const IconUserCircle = () => (
     </svg>
 )
 
+export const IconMessage = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 5.5h16v11H9.5L5 20.5v-4H4z" />
+        <path d="M8 9.5h8M8 13h5" />
+    </svg>
+)
+
 export const IconHelp = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="8.5" />

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId } from '../../lib/notify'
+import './EmployeePages.css'
 
 function EmployeeRequestDetails() {
     const { requestId } = useParams()
@@ -26,6 +27,10 @@ function EmployeeRequestDetails() {
     const [selectedRequirement, setSelectedRequirement] = useState(null)
 
     const [errorMessage, setErrorMessage] = useState('')
+
+    const [manualStatus, setManualStatus] = useState('')
+    const [statusReason, setStatusReason] = useState('')
+    const [changingStatus, setChangingStatus] = useState(false)
 
     useEffect(() => {
         if (!requestId) {
@@ -124,6 +129,7 @@ function EmployeeRequestDetails() {
             }
 
             setRequest(requestData)
+            setManualStatus(requestData.status)
 
             // ==========================================
             // STUDENT
@@ -1094,7 +1100,7 @@ function EmployeeRequestDetails() {
                 .from('document_requests')
                 .update({
                     status:
-                        'digital_credential',
+                        'ready_for_claiming',
                     employee_remarks:
                         'Digital credential generated and recorded.',
                     updated_at:
@@ -1158,19 +1164,78 @@ function EmployeeRequestDetails() {
     }
 
     // ==========================================
+    // CHANGE STATUS (MANUAL)
+    // ==========================================
+
+    const changeStatus = async () => {
+        if (!manualStatus || manualStatus === request.status) {
+            return
+        }
+
+        const confirmed = window.confirm(
+            `Change this request's status from "${request.status.replace(/_/g, ' ')}" to "${manualStatus.replace(/_/g, ' ')}"?`
+        )
+
+        if (!confirmed) {
+            return
+        }
+
+        try {
+            setChangingStatus(true)
+
+            const employee = await getCurrentEmployee()
+
+            const { error: updateError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: manualStatus,
+                    rejection_reason: manualStatus === 'rejected' ? (statusReason.trim() || null) : request.rejection_reason,
+                    employee_remarks: statusReason.trim()
+                        ? statusReason.trim()
+                        : request.employee_remarks,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('request_id', requestId)
+                .eq('assigned_employee_id', employee.employee_id)
+
+            if (updateError) {
+                throw new Error('Failed to change status: ' + updateError.message)
+            }
+
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'change_status',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Changed request ${request?.request_number || requestId} status from "${request.status}" to "${manualStatus}".${statusReason.trim() ? ' ' + statusReason.trim() : ''}`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Request status updated',
+                message: `Your request ${request.request_number} status was updated to "${manualStatus.replace(/_/g, ' ')}".${statusReason.trim() ? ' ' + statusReason.trim() : ''}`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
+
+            setStatusReason('')
+            alert('Status updated.')
+            await loadRequest()
+
+        } catch (error) {
+            console.error('CHANGE STATUS ERROR:', error)
+            alert(error.message || 'Failed to change status.')
+        } finally {
+            setChangingStatus(false)
+        }
+    }
+
+    // ==========================================
     // LOADING
     // ==========================================
 
     if (loading) {
-        return (
-            <div style={styles.page}>
-                <div style={styles.card}>
-                    <h2>
-                        Loading request...
-                    </h2>
-                </div>
-            </div>
-        )
+        return <p className="employee-loading">Loading request...</p>
     }
 
     // ==========================================
@@ -1179,39 +1244,17 @@ function EmployeeRequestDetails() {
 
     if (errorMessage) {
         return (
-            <div style={styles.page}>
-                <div style={styles.container}>
+            <div>
+                <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/employee/dashboard')}>
+                    ← Back to Dashboard
+                </button>
 
-                    <button
-                        onClick={() =>
-                            navigate(
-                                '/employee/dashboard'
-                            )
-                        }
-                        style={styles.backButton}
-                    >
-                        ← Back to Dashboard
+                <div className="employee-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Unable to Load Request</h2>
+                    <div className="employee-error-box">{errorMessage}</div>
+                    <button className="employee-primary-button" onClick={loadRequest}>
+                        Try Again
                     </button>
-
-                    <div style={styles.card}>
-
-                        <h1>
-                            Unable to Load Request
-                        </h1>
-
-                        <p style={styles.error}>
-                            {errorMessage}
-                        </p>
-
-                        <button
-                            onClick={loadRequest}
-                            style={styles.button}
-                        >
-                            Try Again
-                        </button>
-
-                    </div>
-
                 </div>
             </div>
         )
@@ -1229,355 +1272,146 @@ function EmployeeRequestDetails() {
     // ==========================================
 
     return (
-        <div style={styles.page}>
+        <div>
+            <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/employee/dashboard')}>
+                ← Back to Dashboard
+            </button>
 
-            <div style={styles.container}>
+            <div className="employee-page-header">
+                <h1>Request Details</h1>
+                <p>Review the student's document request, payment, and requirements.</p>
+            </div>
 
-                {/* BACK BUTTON */}
+            {/* ==========================================
+                REQUEST INFORMATION
+            ========================================== */}
 
-                <button
-                    onClick={() =>
-                        navigate(
-                            '/employee/dashboard'
-                        )
-                    }
-                    style={styles.backButton}
-                >
-                    ← Back to Dashboard
-                </button>
-
-                <h1 style={styles.title}>
-                    Request Details
-                </h1>
-
-                <p style={styles.subtitle}>
-                    Review the student's document request,
-                    payment, and requirements.
-                </p>
-
-                {/* ==========================================
-                    REQUEST INFORMATION
-                ========================================== */}
-
-                <div style={styles.card}>
-
-                    <div style={styles.header}>
-
-                        <div>
-
-                            <p style={styles.label}>
-                                Request Number
-                            </p>
-
-                            <h2>
-                                {request.request_number}
-                            </h2>
-
-                        </div>
-
-                        <span
-                            style={{
-                                ...styles.status,
-                                ...getStatusStyle(
-                                    request.status
-                                )
-                            }}
-                        >
-                            {request.status}
-                        </span>
-
+            <div className="employee-card">
+                <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
+                    <div>
+                        <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
+                        <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
                     </div>
 
-                    <hr />
-
-                    <h3>
-                        Student Information
-                    </h3>
-
-                    <div style={styles.grid}>
-
-                        <div>
-                            <p style={styles.label}>
-                                Student Number
-                            </p>
-
-                            <p>
-                                {student?.student_number ||
-                                    'N/A'}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p style={styles.label}>
-                                Quantity
-                            </p>
-
-                            <p>
-                                {request.quantity}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p style={styles.label}>
-                                Unit Fee
-                            </p>
-
-                            <p>
-                                ₱
-                                {Number(
-                                    request.unit_fee || 0
-                                ).toFixed(2)}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p style={styles.label}>
-                                Total Amount
-                            </p>
-
-                            <p>
-                                ₱
-                                {Number(
-                                    request.total_amount || 0
-                                ).toFixed(2)}
-                            </p>
-                        </div>
-
-                    </div>
-
-                    <hr />
-
-                    <h3>
-                        Request Information
-                    </h3>
-
-                    <div style={styles.section}>
-
-                        <p style={styles.label}>
-                            Purpose
-                        </p>
-
-                        <p>
-                            {request.purpose ||
-                                'No purpose specified'}
-                        </p>
-
-                    </div>
-
-                    {request.student_remarks && (
-                        <div style={styles.section}>
-
-                            <p style={styles.label}>
-                                Student Remarks
-                            </p>
-
-                            <p>
-                                {request.student_remarks}
-                            </p>
-
-                        </div>
-                    )}
-
-                    <div style={styles.section}>
-
-                        <p style={styles.label}>
-                            Requested At
-                        </p>
-
-                        <p>
-                            {new Date(
-                                request.requested_at
-                            ).toLocaleString()}
-                        </p>
-
-                    </div>
-
+                    <span className={`employee-status-pill status-${request.status}`}>
+                        {request.status.replace(/_/g, ' ')}
+                    </span>
                 </div>
+
+                <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '16px 0' }} />
+
+                <h3 style={{ fontSize: 15, marginBottom: 14 }}>Student Information</h3>
+
+                <div className="employee-info-grid">
+                    <div className="employee-info-field">
+                        <span>Student Number</span>
+                        <strong>{student?.student_number || 'N/A'}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Quantity</span>
+                        <strong>{request.quantity}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Unit Fee</span>
+                        <strong>₱{Number(request.unit_fee || 0).toFixed(2)}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Total Amount</span>
+                        <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
+                    </div>
+                </div>
+
+                <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '20px 0 16px' }} />
+
+                <h3 style={{ fontSize: 15, marginBottom: 14 }}>Request Information</h3>
+
+                <div className="employee-info-field" style={{ marginBottom: 16 }}>
+                    <span>Purpose</span>
+                    <strong>{request.purpose || 'No purpose specified'}</strong>
+                </div>
+
+                {request.student_remarks && (
+                    <div className="employee-info-field" style={{ marginBottom: 16 }}>
+                        <span>Student Remarks</span>
+                        <strong>{request.student_remarks}</strong>
+                    </div>
+                )}
+
+                <div className="employee-info-field">
+                    <span>Requested At</span>
+                    <strong>{new Date(request.requested_at).toLocaleString()}</strong>
+                </div>
+            </div>
 
                 {/* ==========================================
                     OFFICIAL RECEIPT
                 ========================================== */}
 
-                <div style={styles.card}>
-
-                    <h2>
-                        Official Receipt
-                    </h2>
+                <div className="employee-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
 
                     {!receipt ? (
-
-                        <div style={styles.warning}>
-
-                            <strong>
-                                No Receipt Uploaded
-                            </strong>
-
-                            <p>
-                                The student has not uploaded
-                                an official receipt yet.
-                            </p>
-
+                        <div className="employee-notice tone-warning">
+                            <strong>No Receipt Uploaded</strong>
+                            <p>The student has not uploaded an official receipt yet.</p>
                         </div>
-
                     ) : (
-
                         <>
-
-                            <div style={styles.receiptGrid}>
-
-                                <div>
-                                    <p style={styles.label}>
-                                        Receipt Number
-                                    </p>
-
-                                    <p>
-                                        {receipt.receipt_number ||
-                                            'Not provided'}
-                                    </p>
+                            <div className="employee-info-grid">
+                                <div className="employee-info-field">
+                                    <span>Receipt Number</span>
+                                    <strong>{receipt.receipt_number || 'Not provided'}</strong>
                                 </div>
 
-                                <div>
-                                    <p style={styles.label}>
-                                        Amount Paid
-                                    </p>
-
-                                    <p>
-                                        ₱
-                                        {Number(
-                                            receipt.amount_paid || 0
-                                        ).toFixed(2)}
-                                    </p>
+                                <div className="employee-info-field">
+                                    <span>Amount Paid</span>
+                                    <strong>₱{Number(receipt.amount_paid || 0).toFixed(2)}</strong>
                                 </div>
 
-                                <div>
-                                    <p style={styles.label}>
-                                        Uploaded At
-                                    </p>
-
-                                    <p>
-                                        {receipt.uploaded_at
-                                            ? new Date(
-                                                receipt.uploaded_at
-                                            ).toLocaleString()
-                                            : 'N/A'}
-                                    </p>
+                                <div className="employee-info-field">
+                                    <span>Uploaded At</span>
+                                    <strong>{receipt.uploaded_at ? new Date(receipt.uploaded_at).toLocaleString() : 'N/A'}</strong>
                                 </div>
 
-                                <div>
-                                    <p style={styles.label}>
-                                        Receipt Status
-                                    </p>
-
-                                    <span
-                                        style={{
-                                            ...styles.status,
-                                            ...getReceiptStatusStyle(
-                                                receipt.status
-                                            )
-                                        }}
-                                    >
-                                        {receipt.status}
-                                    </span>
+                                <div className="employee-info-field">
+                                    <span>Receipt Status</span>
+                                    <span className={`employee-status-pill status-${receipt.status}`}>{receipt.status}</span>
                                 </div>
-
                             </div>
 
-                            <div style={styles.section}>
-
-                                <p style={styles.label}>
-                                    Receipt File
-                                </p>
+                            <div style={{ marginTop: 20 }}>
+                                <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 8 }}>Receipt File</p>
 
                                 {receiptUrl ? (
-
-                                    <a
-                                        href={receiptUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={styles.fileButton}
-                                    >
+                                    <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="employee-file-link">
                                         View Official Receipt
                                     </a>
-
                                 ) : (
-
-                                    <div
-                                        style={
-                                            styles.dangerBox
-                                        }
-                                    >
-
-                                        <strong>
-                                            Receipt file could not
-                                            be opened.
-                                        </strong>
-
-                                        <p>
-                                            The receipt record exists,
-                                            but the Storage file could
-                                            not be opened.
-                                        </p>
-
-                                        <code
-                                            style={
-                                                styles.filePath
-                                            }
-                                        >
-                                            {receipt.receipt_file_path ||
-                                                'No file path'}
-                                        </code>
-
-                                        <button
-                                            onClick={
-                                                loadRequest
-                                            }
-                                            style={{
-                                                ...styles.button,
-                                                marginTop: '15px'
-                                            }}
-                                        >
+                                    <div className="employee-notice tone-danger">
+                                        <strong>Receipt file could not be opened.</strong>
+                                        <p>The receipt record exists, but the Storage file could not be opened.</p>
+                                        <code className="employee-code-block">{receipt.receipt_file_path || 'No file path'}</code>
+                                        <button className="employee-secondary-button" onClick={loadRequest}>
                                             Retry
                                         </button>
-
                                     </div>
-
                                 )}
-
                             </div>
 
                             {receipt.rejection_reason && (
-                                <div
-                                    style={
-                                        styles.dangerBox
-                                    }
-                                >
-                                    <strong>
-                                        Rejection Reason
-                                    </strong>
-
-                                    <p>
-                                        {
-                                            receipt.rejection_reason
-                                        }
-                                    </p>
+                                <div className="employee-notice tone-danger" style={{ marginTop: 16 }}>
+                                    <strong>Rejection Reason</strong>
+                                    <p>{receipt.rejection_reason}</p>
                                 </div>
                             )}
 
                             {receipt.status === 'uploaded' && (
-                                <div style={styles.actions}>
-
-                                    <button
-                                        onClick={
-                                            verifyPayment
-                                        }
-                                        disabled={processing}
-                                        style={
-                                            styles.verifyButton
-                                        }
-                                    >
-                                        {processing
-                                            ? 'Processing...'
-                                            : '✓ Verify Payment'}
+                                <div className="employee-actions-row">
+                                    <button onClick={verifyPayment} disabled={processing} className="employee-primary-button">
+                                        {processing ? 'Processing...' : '✓ Verify Payment'}
                                     </button>
 
                                     <button
@@ -1587,107 +1421,51 @@ function EmployeeRequestDetails() {
                                             setRejectionReason('')
                                         }}
                                         disabled={processing}
-                                        style={
-                                            styles.rejectButton
-                                        }
+                                        className="employee-danger-button"
                                     >
                                         ✕ Reject Payment
                                     </button>
-
                                 </div>
                             )}
 
                             {receipt.status === 'verified' && (
-                                <div
-                                    style={
-                                        styles.success
-                                    }
-                                >
-                                    <strong>
-                                        Payment Verified
-                                    </strong>
-
-                                    <p>
-                                        This official receipt
-                                        has already been verified.
-                                    </p>
+                                <div className="employee-notice tone-success" style={{ marginTop: 16 }}>
+                                    <strong>Payment Verified</strong>
+                                    <p>This official receipt has already been verified.</p>
                                 </div>
                             )}
 
                             {receipt.status === 'rejected' && (
-                                <div
-                                    style={
-                                        styles.dangerBox
-                                    }
-                                >
-                                    <strong>
-                                        Payment Rejected
-                                    </strong>
-
-                                    <p>
-                                        This official receipt
-                                        has been rejected.
-                                    </p>
+                                <div className="employee-notice tone-danger" style={{ marginTop: 16 }}>
+                                    <strong>Payment Rejected</strong>
+                                    <p>This official receipt has been rejected.</p>
                                 </div>
                             )}
-
                         </>
-
                     )}
-
                 </div>
 
                 {/* ==========================================
                     REQUIRED DOCUMENTS
                 ========================================== */}
 
-                <div style={styles.card}>
-
-                    <div style={styles.requirementHeader}>
-
+                <div className="employee-card">
+                    <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
                         <div>
-
-                            <h2>
-                                Required Documents
-                            </h2>
-
-                            <p style={styles.subtitle}>
-                                Review the student's submitted
-                                requirements before processing.
-                            </p>
-
+                            <h2 style={{ fontSize: 16, marginBottom: 4 }}>Required Documents</h2>
+                            <p style={{ fontSize: 13 }}>Review the student's submitted requirements before processing.</p>
                         </div>
 
-                        <span
-                            style={
-                                styles.requirementCount
-                            }
-                        >
-                            {requirements.length}
-                            {' '}
-                            Requirements
-                        </span>
-
+                        <span className="employee-requirement-count">{requirements.length} Requirements</span>
                     </div>
 
                     {requirements.length === 0 ? (
-
-                        <div style={styles.warning}>
-
-                            <strong>
-                                No requirements found
-                            </strong>
-
-                            <p>
-                                No request requirements have
-                                been created for this request yet.
-                            </p>
-
+                        <div className="employee-notice tone-warning">
+                            <strong>No requirements found</strong>
+                            <p>No request requirements have been created for this request yet.</p>
                         </div>
-
                     ) : (
-
-                        <div style={styles.requirementList}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                             {requirements.map(
                                 requirement => {
@@ -1703,269 +1481,106 @@ function EmployeeRequestDetails() {
                                         ]
 
                                     return (
-
-                                        <div
-                                            key={
-                                                requirement
-                                                    .request_requirement_id
-                                            }
-                                            style={
-                                                styles.requirementCard
-                                            }
-                                        >
-
-                                            <div
-                                                style={
-                                                    styles.requirementTop
-                                                }
-                                            >
-
+                                        <div key={requirement.request_requirement_id} className="employee-list-card" style={{ marginBottom: 0 }}>
+                                            <div className="employee-list-card-header">
                                                 <div>
-
-                                                    <h3
-                                                        style={{
-                                                            marginTop: 0
-                                                        }}
-                                                    >
-                                                        {definition
-                                                            ?.requirement_name ||
-                                                            'Requirement'}
-                                                    </h3>
-
-                                                    <p
-                                                        style={
-                                                            styles.requirementDescription
-                                                        }
-                                                    >
-                                                        {definition
-                                                            ?.description ||
-                                                            'No description provided.'}
+                                                    <h3 style={{ marginTop: 0 }}>{definition?.requirement_name || 'Requirement'}</h3>
+                                                    <p style={{ color: 'var(--slate)', marginTop: 4 }}>
+                                                        {definition?.description || 'No description provided.'}
                                                     </p>
 
-                                                    {definition
-                                                        ?.is_required && (
-                                                            <span
-                                                                style={
-                                                                    styles.requiredBadge
-                                                                }
-                                                            >
-                                                                Required
-                                                            </span>
-                                                        )}
-
+                                                    {definition?.is_required && (
+                                                        <span className="employee-badge-required">Required</span>
+                                                    )}
                                                 </div>
 
-                                                <span
-                                                    style={{
-                                                        ...styles.status,
-                                                        ...getRequirementStatusStyle(
-                                                            requirement.status
-                                                        )
-                                                    }}
-                                                >
-                                                    {
-                                                        requirement.status
-                                                    }
+                                                <span className={`employee-status-pill status-${requirement.status}`}>
+                                                    {requirement.status}
                                                 </span>
-
                                             </div>
 
-                                            <hr />
+                                            <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
 
-                                            <div
-                                                style={
-                                                    styles.requirementInfo
-                                                }
-                                            >
-
-                                                <div>
-
-                                                    <p
-                                                        style={
-                                                            styles.label
-                                                        }
-                                                    >
-                                                        File Name
-                                                    </p>
-
-                                                    <p>
-                                                        {requirement.file_name ||
-                                                            'No file uploaded'}
-                                                    </p>
-
+                                            <div className="employee-info-grid">
+                                                <div className="employee-info-field">
+                                                    <span>File Name</span>
+                                                    <strong>{requirement.file_name || 'No file uploaded'}</strong>
                                                 </div>
 
-                                                <div>
-
-                                                    <p
-                                                        style={
-                                                            styles.label
-                                                        }
-                                                    >
-                                                        Uploaded At
-                                                    </p>
-
-                                                    <p>
+                                                <div className="employee-info-field">
+                                                    <span>Uploaded At</span>
+                                                    <strong>
                                                         {requirement.uploaded_at
-                                                            ? new Date(
-                                                                requirement.uploaded_at
-                                                            ).toLocaleString()
+                                                            ? new Date(requirement.uploaded_at).toLocaleString()
                                                             : 'Not uploaded'}
-                                                    </p>
-
+                                                    </strong>
                                                 </div>
-
                                             </div>
 
                                             {requirement.rejection_reason && (
-                                                <div
-                                                    style={
-                                                        styles.dangerBox
-                                                    }
-                                                >
-
-                                                    <strong>
-                                                        Rejection Reason
-                                                    </strong>
-
-                                                    <p>
-                                                        {
-                                                            requirement.rejection_reason
-                                                        }
-                                                    </p>
-
+                                                <div className="employee-notice tone-danger">
+                                                    <strong>Rejection Reason</strong>
+                                                    <p>{requirement.rejection_reason}</p>
                                                 </div>
                                             )}
 
-                                            <div
-                                                style={
-                                                    styles.actions
-                                                }
-                                            >
-
+                                            <div className="employee-actions-row" style={{ marginTop: 0 }}>
                                                 {fileUrl && (
-                                                    <a
-                                                        href={fileUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        style={
-                                                            styles.fileButton
-                                                        }
-                                                    >
+                                                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="employee-file-link">
                                                         View Document
                                                     </a>
                                                 )}
 
-                                                {requirement.status ===
-                                                    'uploaded' && (
-                                                        <>
+                                                {requirement.status === 'uploaded' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => approveRequirement(requirement)}
+                                                            disabled={requirementProcessing}
+                                                            className="employee-primary-button"
+                                                        >
+                                                            {requirementProcessing ? 'Processing...' : '✓ Approve'}
+                                                        </button>
 
-                                                            <button
-                                                                onClick={() =>
-                                                                    approveRequirement(
-                                                                        requirement
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    requirementProcessing
-                                                                }
-                                                                style={
-                                                                    styles.verifyButton
-                                                                }
-                                                            >
-                                                                {requirementProcessing
-                                                                    ? 'Processing...'
-                                                                    : '✓ Approve'}
-                                                            </button>
-
-                                                            <button
-                                                                onClick={() => {
-                                                                    setSelectedRequirement(
-                                                                        requirement
-                                                                    )
-                                                                    setRejectionReason(
-                                                                        ''
-                                                                    )
-                                                                    setShowReject(
-                                                                        true
-                                                                    )
-                                                                }}
-                                                                disabled={
-                                                                    requirementProcessing
-                                                                }
-                                                                style={
-                                                                    styles.rejectButton
-                                                                }
-                                                            >
-                                                                ✕ Reject
-                                                            </button>
-
-                                                        </>
-                                                    )}
-
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedRequirement(requirement)
+                                                                setRejectionReason('')
+                                                                setShowReject(true)
+                                                            }}
+                                                            disabled={requirementProcessing}
+                                                            className="employee-danger-button"
+                                                        >
+                                                            ✕ Reject
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
-
                                         </div>
-
                                     )
                                 }
                             )}
-
                         </div>
-
                     )}
 
                     {/* REQUIREMENT SUMMARY */}
 
                     {requirements.length > 0 && (
-                        <div
-                            style={
-                                styles.requirementSummary
-                            }
-                        >
-
-                            <strong>
-                                Requirement Review
-                            </strong>
+                        <div className={`employee-notice tone-${
+                            requirementState.allApproved ? 'success' : requirementState.rejected ? 'danger' : 'warning'
+                        }`} style={{ marginTop: 20 }}>
+                            <strong>Requirement Review</strong>
 
                             {requirementState.allApproved ? (
-
-                                <p style={styles.successText}>
-                                    ✓ All required documents
-                                    have been approved.
-                                    This request is ready
-                                    for document processing.
-                                </p>
-
+                                <p>✓ All required documents have been approved. This request is ready for document processing.</p>
                             ) : requirementState.rejected ? (
-
-                                <p style={styles.errorText}>
-                                    ✕ One or more required
-                                    documents have been rejected.
-                                    The student must submit
-                                    a replacement.
-                                </p>
-
+                                <p>✕ One or more required documents have been rejected. The student must submit a replacement.</p>
                             ) : requirementState.pending ? (
-
-                                <p style={styles.warningText}>
-                                    ⚠ Some required documents
-                                    are still waiting for the
-                                    student to upload them.
-                                </p>
-
+                                <p>⚠ Some required documents are still waiting for the student to upload them.</p>
                             ) : (
-
-                                <p style={styles.warningText}>
-                                    ⚠ Some uploaded documents
-                                    still need to be reviewed.
-                                </p>
-
+                                <p>⚠ Some uploaded documents still need to be reviewed.</p>
                             )}
-
                         </div>
                     )}
-
                 </div>
 
                 {/* ==========================================
@@ -1973,82 +1588,36 @@ function EmployeeRequestDetails() {
                 ========================================== */}
 
                 {request.status === 'receipt_verified' && (
-                    <div style={styles.card}>
-
-                        <h2>
-                            Document Processing
-                        </h2>
-
-                        <p>
-                            Once the payment and all required
-                            documents are verified, you can
-                            begin processing the requested
-                            academic document.
+                    <div className="employee-card">
+                        <h2 style={{ fontSize: 16, marginBottom: 8 }}>Document Processing</h2>
+                        <p style={{ marginBottom: 16 }}>
+                            Once the payment and all required documents are verified, you can begin processing
+                            the requested academic document.
                         </p>
 
                         {!requirementState.hasRequirements && (
-                            <div style={styles.warning}>
-
-                                <strong>
-                                    Requirements are not ready
-                                </strong>
-
-                                <p>
-                                    Create the request's required
-                                    documents before starting
-                                    processing.
-                                </p>
-
+                            <div className="employee-notice tone-warning">
+                                <strong>Requirements are not ready</strong>
+                                <p>Create the request's required documents before starting processing.</p>
                             </div>
                         )}
 
-                        {requirementState.hasRequirements &&
-                            !requirementState.allApproved && (
-                                <div style={styles.warning}>
-
-                                    <strong>
-                                        Processing is not available yet.
-                                    </strong>
-
-                                    <p>
-                                        All required documents must
-                                        be approved before processing
-                                        can begin.
-                                    </p>
-
-                                </div>
-                            )}
+                        {requirementState.hasRequirements && !requirementState.allApproved && (
+                            <div className="employee-notice tone-warning">
+                                <strong>Processing is not available yet.</strong>
+                                <p>All required documents must be approved before processing can begin.</p>
+                            </div>
+                        )}
 
                         {requirementState.allApproved && (
-                            <div style={styles.readyBox}>
-
-                                <strong>
-                                    ✓ Ready for Document Processing
-                                </strong>
-
-                                <p>
-                                    Payment is verified and all
-                                    required documents have been
-                                    approved.
-                                </p>
-
-                                <button
-                                    onClick={
-                                        startProcessing
-                                    }
-                                    disabled={processing}
-                                    style={
-                                        styles.processButton
-                                    }
-                                >
-                                    {processing
-                                        ? 'Starting Processing...'
-                                        : '▶ Start Document Processing'}
+                            <div className="employee-notice tone-success">
+                                <strong>✓ Ready for Document Processing</strong>
+                                <p>Payment is verified and all required documents have been approved.</p>
+                                <button onClick={startProcessing} disabled={processing} className="employee-primary-button" style={{ marginTop: 12 }}>
+                                    {processing ? 'Starting Processing...' : '▶ Start Document Processing'}
                                 </button>
-
                             </div>
                         )}
-
                     </div>
                 )}
 
@@ -2057,52 +1626,20 @@ function EmployeeRequestDetails() {
                 ========================================== */}
 
                 {request.status === 'processing' && (
-                    <div style={styles.card}>
-
-                        <div style={styles.processingBox}>
-
-                            <h2>
-                                Document Processing
-                            </h2>
-
-                            <strong>
-                                Processing has started.
-                            </strong>
-
-                            <p>
-                                The registrar employee can now
-                                prepare the student's requested
-                                academic document.
-                            </p>
+                    <div className="employee-card">
+                        <div className="employee-notice tone-info">
+                            <h2 style={{ fontSize: 16, marginBottom: 8 }}>Document Processing</h2>
+                            <strong>Processing has started.</strong>
+                            <p>The registrar employee can now prepare the student's requested academic document.</p>
 
                             {request.processed_at && (
-                                <p>
-                                    <strong>
-                                        Processing Started:
-                                    </strong>
-                                    {' '}
-                                    {new Date(
-                                        request.processed_at
-                                    ).toLocaleString()}
-                                </p>
+                                <p><strong>Processing Started:</strong> {new Date(request.processed_at).toLocaleString()}</p>
                             )}
 
-                            <button
-                                onClick={
-                                    generateDigitalCredential
-                                }
-                                disabled={processing}
-                                style={
-                                    styles.processButton
-                                }
-                            >
-                                {processing
-                                    ? 'Generating Credential...'
-                                    : '📄 Generate Digital Credential'}
+                            <button onClick={generateDigitalCredential} disabled={processing} className="employee-primary-button" style={{ marginTop: 12 }}>
+                                {processing ? 'Generating Credential...' : '📄 Generate Digital Credential'}
                             </button>
-
                         </div>
-
                     </div>
                 )}
 
@@ -2110,42 +1647,23 @@ function EmployeeRequestDetails() {
                     DIGITAL CREDENTIAL
                 ========================================== */}
 
-                {request.status === 'digital_credential' && (
-                    <div style={styles.card}>
+                {request.status === 'ready_for_claiming' && (
+                    <div className="employee-card">
+                        <h2 style={{ fontSize: 16, marginBottom: 16 }}>Digital Credential</h2>
 
-                        <h2>
-                            Digital Credential
-                        </h2>
-
-                        <div style={styles.readyBox}>
-
-                            <strong>
-                                ✓ Digital Credential Generated
-                            </strong>
-
-                            <p>
-                                The requested academic document
-                                has been prepared successfully.
-                            </p>
-
-                            <p>
-                                The next step is to schedule the
-                                student's claiming date and time.
-                            </p>
+                        <div className="employee-notice tone-success">
+                            <strong>✓ Digital Credential Generated</strong>
+                            <p>The requested academic document has been prepared successfully.</p>
+                            <p>The next step is to schedule the student's claiming date and time.</p>
 
                             <button
-                                onClick={() =>
-                                    navigate(
-                                        `/employee/requests/${request.request_id}/claim-schedule`
-                                    )
-                                }
-                                style={styles.processButton}
+                                onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
+                                className="employee-primary-button"
+                                style={{ marginTop: 12 }}
                             >
                                 📅 Schedule Claiming
                             </button>
-
                         </div>
-
                     </div>
                 )}
 
@@ -2154,15 +1672,12 @@ function EmployeeRequestDetails() {
                 ========================================== */}
 
                 {showReject && (
-                    <div style={styles.card}>
-
-                        <h2>
-                            {selectedRequirement
-                                ? 'Reject Requirement'
-                                : 'Reject Payment'}
+                    <div className="employee-card">
+                        <h2 style={{ fontSize: 16, marginBottom: 8 }}>
+                            {selectedRequirement ? 'Reject Requirement' : 'Reject Payment'}
                         </h2>
 
-                        <p>
+                        <p style={{ marginBottom: 12 }}>
                             {selectedRequirement
                                 ? `Enter the reason why "${selectedRequirement.document_requirements?.requirement_name || 'this requirement'}" is being rejected.`
                                 : 'Enter the reason why the official receipt is being rejected.'}
@@ -2170,496 +1685,87 @@ function EmployeeRequestDetails() {
 
                         <textarea
                             value={rejectionReason}
-                            onChange={event =>
-                                setRejectionReason(
-                                    event.target.value
-                                )
-                            }
+                            onChange={(event) => setRejectionReason(event.target.value)}
                             placeholder={
                                 selectedRequirement
                                     ? 'Example: School ID is blurry and cannot be verified.'
                                     : 'Enter rejection reason...'
                             }
-                            style={styles.textarea}
+                            className="employee-textarea"
                         />
 
-                        <div style={styles.actions}>
-
+                        <div className="employee-actions-row">
                             <button
                                 onClick={() => {
                                     setShowReject(false)
                                     setSelectedRequirement(null)
                                     setRejectionReason('')
                                 }}
-                                style={
-                                    styles.cancelButton
-                                }
+                                className="employee-secondary-button"
                             >
                                 Cancel
                             </button>
 
                             <button
-                                onClick={
-                                    selectedRequirement
-                                        ? rejectRequirement
-                                        : rejectPayment
-                                }
-                                disabled={
-                                    processing ||
-                                    requirementProcessing
-                                }
-                                style={
-                                    styles.rejectButton
-                                }
+                                onClick={selectedRequirement ? rejectRequirement : rejectPayment}
+                                disabled={processing || requirementProcessing}
+                                className="employee-danger-button"
                             >
-                                {processing ||
-                                    requirementProcessing
-                                    ? 'Rejecting...'
-                                    : 'Confirm Rejection'}
+                                {processing || requirementProcessing ? 'Rejecting...' : 'Confirm Rejection'}
                             </button>
-
                         </div>
-
                     </div>
                 )}
 
-            </div>
+                {/* ==========================================
+                    CHANGE STATUS
+                ========================================== */}
 
+                <div className="employee-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 8 }}>Change Status</h2>
+
+                    <p style={{ marginBottom: 14 }}>
+                        Manually set this request's status. Use this for corrections or
+                        situations the guided actions above don't cover — the student is
+                        notified of the change.
+                    </p>
+
+                    <select
+                        value={manualStatus}
+                        onChange={(event) => setManualStatus(event.target.value)}
+                        disabled={changingStatus}
+                        className="employee-textarea"
+                        style={{ marginBottom: 12 }}
+                    >
+                        {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                        ))}
+                    </select>
+
+                    <textarea
+                        value={statusReason}
+                        onChange={(event) => setStatusReason(event.target.value)}
+                        placeholder="Reason for this change (required if rejecting, optional otherwise)"
+                        className="employee-textarea"
+                    />
+
+                    <div className="employee-actions-row">
+                        <button
+                            onClick={changeStatus}
+                            disabled={changingStatus || manualStatus === request.status}
+                            className="employee-primary-button"
+                        >
+                            {changingStatus ? 'Saving...' : 'Update Status'}
+                        </button>
+                    </div>
+                </div>
         </div>
     )
 }
 
-// ==========================================
-// REQUEST STATUS STYLE
-// ==========================================
-
-function getStatusStyle(status) {
-    switch (status) {
-
-        case 'receipt_uploaded':
-        case 'uploaded':
-            return {
-                background: '#fff3cd',
-                color: '#856404'
-            }
-
-        case 'receipt_verified':
-        case 'verified':
-            return {
-                background: '#d1e7dd',
-                color: '#0f5132'
-            }
-
-        case 'processing':
-            return {
-                background: '#cfe2ff',
-                color: '#084298'
-            }
-
-        case 'digital_credential':
-            return {
-                background: '#e2d9f3',
-                color: '#432874'
-            }
-
-        case 'ready_for_claiming':
-        case 'scheduled':
-            return {
-                background: '#cff4fc',
-                color: '#055160'
-            }
-
-        case 'completed':
-        case 'claimed':
-            return {
-                background: '#d1e7dd',
-                color: '#0f5132'
-            }
-
-        case 'rejected':
-            return {
-                background: '#f8d7da',
-                color: '#842029'
-            }
-
-        default:
-            return {
-                background: '#e9ecef',
-                color: '#333'
-            }
-    }
-}
-
-// ==========================================
-// RECEIPT STATUS STYLE
-// ==========================================
-
-function getReceiptStatusStyle(status) {
-    switch (status) {
-
-        case 'uploaded':
-            return {
-                background: '#fff3cd',
-                color: '#856404'
-            }
-
-        case 'verified':
-            return {
-                background: '#d1e7dd',
-                color: '#0f5132'
-            }
-
-        case 'rejected':
-            return {
-                background: '#f8d7da',
-                color: '#842029'
-            }
-
-        default:
-            return {
-                background: '#e9ecef',
-                color: '#333'
-            }
-    }
-}
-
-// ==========================================
-// REQUIREMENT STATUS STYLE
-// ==========================================
-
-function getRequirementStatusStyle(status) {
-    switch (status) {
-
-        case 'pending':
-            return {
-                background: '#fff3cd',
-                color: '#856404'
-            }
-
-        case 'uploaded':
-            return {
-                background: '#cfe2ff',
-                color: '#084298'
-            }
-
-        case 'approved':
-            return {
-                background: '#d1e7dd',
-                color: '#0f5132'
-            }
-
-        case 'rejected':
-            return {
-                background: '#f8d7da',
-                color: '#842029'
-            }
-
-        case 'not_applicable':
-            return {
-                background: '#e9ecef',
-                color: '#333'
-            }
-
-        default:
-            return {
-                background: '#e9ecef',
-                color: '#333'
-            }
-    }
-}
-
-// ==========================================
-// STYLES
-// ==========================================
-
-const styles = {
-
-    page: {
-        minHeight: '100vh',
-        background: '#f5f7fb',
-        padding: '40px 20px'
-    },
-
-    container: {
-        maxWidth: '1000px',
-        margin: '0 auto'
-    },
-
-    card: {
-        background: '#fff',
-        border: '1px solid #ddd',
-        borderRadius: '10px',
-        padding: '30px',
-        marginTop: '25px',
-        boxShadow:
-            '0 2px 8px rgba(0,0,0,0.05)'
-    },
-
-    backButton: {
-        padding: '10px 16px',
-        border: '1px solid #ddd',
-        background: '#fff',
-        borderRadius: '6px',
-        cursor: 'pointer'
-    },
-
-    title: {
-        marginTop: '25px',
-        marginBottom: '5px'
-    },
-
-    subtitle: {
-        color: '#666'
-    },
-
-    header: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '20px'
-    },
-
-    status: {
-        display: 'inline-block',
-        padding: '7px 12px',
-        borderRadius: '20px',
-        fontWeight: 'bold',
-        fontSize: '13px',
-        textTransform: 'capitalize'
-    },
-
-    grid: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(4, 1fr)',
-        gap: '20px'
-    },
-
-    receiptGrid: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(4, 1fr)',
-        gap: '20px'
-    },
-
-    label: {
-        fontSize: '13px',
-        color: '#777',
-        marginBottom: '5px'
-    },
-
-    section: {
-        marginTop: '20px'
-    },
-
-    actions: {
-        display: 'flex',
-        gap: '10px',
-        marginTop: '25px',
-        flexWrap: 'wrap'
-    },
-
-    verifyButton: {
-        padding: '12px 20px',
-        border: 'none',
-        background: '#198754',
-        color: '#fff',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontWeight: '600'
-    },
-
-    rejectButton: {
-        padding: '12px 20px',
-        border: 'none',
-        background: '#dc3545',
-        color: '#fff',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontWeight: '600'
-    },
-
-    cancelButton: {
-        padding: '12px 20px',
-        border: '1px solid #ddd',
-        background: '#fff',
-        borderRadius: '7px',
-        cursor: 'pointer'
-    },
-
-    fileButton: {
-        display: 'inline-block',
-        padding: '10px 16px',
-        background: '#2563eb',
-        color: '#fff',
-        textDecoration: 'none',
-        borderRadius: '6px',
-        fontWeight: '600'
-    },
-
-    filePath: {
-        display: 'block',
-        background: '#f1f3f5',
-        padding: '10px',
-        borderRadius: '6px',
-        wordBreak: 'break-all',
-        fontSize: '12px'
-    },
-
-    textarea: {
-        width: '100%',
-        minHeight: '120px',
-        padding: '12px',
-        border: '1px solid #ccc',
-        borderRadius: '7px',
-        resize: 'vertical',
-        boxSizing: 'border-box',
-        marginTop: '10px'
-    },
-
-    warning: {
-        padding: '15px',
-        background: '#fff3cd',
-        borderRadius: '7px',
-        color: '#664d03'
-    },
-
-    success: {
-        padding: '15px',
-        background: '#d1e7dd',
-        color: '#0f5132',
-        borderRadius: '7px',
-        marginTop: '20px'
-    },
-
-    dangerBox: {
-        padding: '15px',
-        background: '#f8d7da',
-        color: '#842029',
-        borderRadius: '7px',
-        marginTop: '20px'
-    },
-
-    error: {
-        color: '#b00020'
-    },
-
-    button: {
-        padding: '10px 18px',
-        border: 'none',
-        background: '#222',
-        color: '#fff',
-        borderRadius: '6px',
-        cursor: 'pointer'
-    },
-
-    requirementHeader: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '20px',
-        flexWrap: 'wrap'
-    },
-
-    requirementCount: {
-        padding: '8px 14px',
-        borderRadius: '20px',
-        background: '#e9ecef',
-        fontWeight: '600',
-        fontSize: '13px'
-    },
-
-    requirementList: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '15px',
-        marginTop: '20px'
-    },
-
-    requirementCard: {
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        padding: '20px',
-        background: '#fafafa'
-    },
-
-    requirementTop: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: '20px'
-    },
-
-    requirementDescription: {
-        color: '#666',
-        marginTop: '5px'
-    },
-
-    requiredBadge: {
-        display: 'inline-block',
-        background: '#f8d7da',
-        color: '#842029',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '11px',
-        fontWeight: '600'
-    },
-
-    requirementInfo: {
-        display: 'grid',
-        gridTemplateColumns:
-            'repeat(2, 1fr)',
-        gap: '20px'
-    },
-
-    requirementSummary: {
-        marginTop: '25px',
-        padding: '20px',
-        borderRadius: '8px',
-        background: '#f8f9fa',
-        border: '1px solid #ddd'
-    },
-
-    successText: {
-        color: '#0f5132'
-    },
-
-    warningText: {
-        color: '#856404'
-    },
-
-    errorText: {
-        color: '#842029'
-    },
-
-    readyBox: {
-        marginTop: '20px',
-        padding: '20px',
-        borderRadius: '8px',
-        background: '#d1e7dd',
-        color: '#0f5132',
-        border: '1px solid #a3cfbb'
-    },
-
-    processButton: {
-        marginTop: '15px',
-        padding: '13px 22px',
-        border: 'none',
-        background: '#0d6efd',
-        color: '#fff',
-        borderRadius: '7px',
-        cursor: 'pointer',
-        fontWeight: '600',
-        fontSize: '15px'
-    },
-
-    processingBox: {
-        padding: '20px',
-        borderRadius: '8px',
-        background: '#cfe2ff',
-        color: '#084298',
-        border: '1px solid #9ec5fe'
-    }
-}
+const STATUS_OPTIONS = [
+    'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
+    'processing', 'lacking_requirements', 'ready_for_claiming', 'completed', 'rejected',
+]
 
 export default EmployeeRequestDetails
