@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.student-layout {
+    --blue: #123B78;
+    --blue-dark: #0A2450;
+    --blue-tint: #EAF1FB;
+    --red: #C8102E;
+    --red-dark: #8C0B20;
+    --red-light: #F0596E;
+    --bg: #FBFCFE;
+    --paper: #F1F4FA;
+    --ink: #101827;
+    --slate: #57616F;
+    --line: rgba(16, 24, 39, 0.12);
+    --white: #FFFFFF;
+
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', -apple-system, sans-serif;
+
+    font-family: var(--font-body);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+.student-layout * {
+    box-sizing: border-box;
+}
+
+.student-layout h1,
+.student-layout h2,
+.student-layout h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.student-layout p {
+    margin: 0;
+    color: var(--slate);
+    line-height: 1.6;
+}
+
+.student-layout a,
+.student-layout button {
+    text-decoration: none;
+    font-family: var(--font-body);
+}
+
+.student-layout button {
+    cursor: pointer;
+}
+
+:where(.student-layout) button {
+    border: none;
+    background: none;
+}
+
+/* ===================================================
+   SIDEBAR
+=================================================== */
+.student-sidebar {
+    width: 264px;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 26px 18px;
+    background: var(--blue-dark);
+    overflow-y: auto;
+}
+
+.student-sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.student-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+}
+
+.student-sidebar-seal {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.student-sidebar-seal img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.student-sidebar-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--white);
+    line-height: 1;
+}
+
+.student-sidebar-subtitle {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 3px;
+}
+
+.student-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.student-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.student-nav-link svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.student-nav-link:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--white);
+}
+
+.student-nav-link.active {
+    background: var(--red);
+    color: var(--white);
+}
+
+.student-nav-badge {
+    margin-left: auto;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--red);
+    color: var(--white);
+    font-size: 10.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.student-nav-link.active .student-nav-badge {
+    background: var(--white);
+    color: var(--red);
+}
+
+.student-sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.student-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.student-user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--red);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.student-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.3;
+}
+
+.student-user-role {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.student-logout-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.student-logout-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.student-logout-button:hover {
+    border-color: var(--red-light);
+    color: var(--white);
+}
+
+/* ===================================================
+   CONTENT
+=================================================== */
+.student-content {
+    flex: 1;
+    min-width: 0;
+    padding: 44px 48px;
+}
+
+:where(.student-content) button {
+    color: var(--ink);
+    font-size: inherit;
+}
+
+/* ===================================================
+   RESPONSIVE
+=================================================== */
+@media (max-width: 880px) {
+    .student-layout {
+        flex-direction: column;
+    }
+
+    .student-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: 18px;
+        padding: 16px;
+        overflow-x: auto;
+    }
+
+    .student-sidebar-top {
+        flex-direction: row;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .student-sidebar-brand {
+        padding: 0;
+    }
+
+    .student-sidebar-subtitle {
+        display: none;
+    }
+
+    .student-nav {
+        flex-direction: row;
+    }
+
+    .student-nav-link span {
+        display: none;
+    }
+
+    .student-sidebar-bottom {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .student-user-role {
+        display: none;
+    }
+
+    .student-logout-button span {
+        display: none;
+    }
+
+    .student-content {
+        padding: 28px 20px;
+    }
+}

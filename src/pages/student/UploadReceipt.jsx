@@ -426,6 +426,28 @@ function UploadReceipt() {
             }
 
             // ================================
+            // MOVE REQUEST TO "RECEIPT UPLOADED"
+            // SO IT SHOWS UP IN THE REGISTRAR'S
+            // VERIFICATION QUEUE
+            // ================================
+
+            const { error: requestStatusError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'receipt_uploaded',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('request_id', requestId)
+                .in('status', ['pending', 'payment_pending', 'rejected'])
+
+            if (requestStatusError) {
+                console.error(
+                    'UPDATE REQUEST STATUS ERROR:',
+                    requestStatusError
+                )
+            }
+
+            // ================================
             // SUCCESS
             // ================================
 

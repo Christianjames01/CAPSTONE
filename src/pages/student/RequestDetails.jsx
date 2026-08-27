@@ -7,6 +7,7 @@ function RequestDetails() {
     const navigate = useNavigate()
 
     const [request, setRequest] = useState(null)
+    const [requirements, setRequirements] = useState([])
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
 
@@ -153,6 +154,20 @@ function RequestDetails() {
             )
 
             setRequest(requestData)
+
+            const {
+                data: requirementRows,
+                error: requirementError
+            } = await supabase
+                .from('request_requirements')
+                .select('request_requirement_id, status')
+                .eq('request_id', requestId)
+
+            if (requirementError) {
+                console.error('REQUIREMENTS LOAD ERROR:', requirementError)
+            }
+
+            setRequirements(requirementRows || [])
 
         } catch (error) {
             console.error(
@@ -551,6 +566,39 @@ function RequestDetails() {
                         )}
 
                     </div>
+
+                    {/* REQUIREMENTS */}
+
+                    {requirements.length > 0 && (
+                        <div style={styles.uploadSection}>
+
+                            <h3>
+                                Requirements
+                            </h3>
+
+                            <p style={styles.paymentText}>
+                                {requirements.filter(r => r.status === 'approved').length} of {requirements.length} approved
+                            </p>
+
+                            {requirements.some(r => r.status === 'pending' || r.status === 'rejected') && (
+                                <p style={styles.paymentNote}>
+                                    Some requirements still need to be uploaded or re-submitted.
+                                </p>
+                            )}
+
+                            <button
+                                onClick={() =>
+                                    navigate(
+                                        `/student/request/${request.request_id}/requirements`
+                                    )
+                                }
+                                style={styles.uploadButton}
+                            >
+                                View Requirements
+                            </button>
+
+                        </div>
+                    )}
 
                     {/* UPLOAD RECEIPT */}
 

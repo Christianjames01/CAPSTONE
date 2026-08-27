@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
+import { IconDocumentPlus, IconList } from './icons'
+import './Dashboard.css'
 
 function Dashboard() {
     const [name, setName] = useState('')
@@ -34,7 +36,7 @@ function Dashboard() {
             }
 
             if (data) {
-                setName(`${data.first_name} ${data.last_name}`)
+                setName(data.first_name)
             }
         } catch (error) {
             console.error('Dashboard error:', error)
@@ -44,91 +46,37 @@ function Dashboard() {
     }
 
     return (
-        <div
-            style={{
-                minHeight: '100vh',
-                backgroundColor: '#f5f7fb',
-                padding: '40px'
-            }}
-        >
-            <div
-                style={{
-                    maxWidth: '900px',
-                    margin: '0 auto'
-                }}
-            >
+        <div>
+            <div className="student-dashboard-header">
+                <h1>{!loading && name ? `Welcome back, ${name}` : 'Welcome back'}</h1>
+                <p>Here's what you can do with your CertiChain account today.</p>
+            </div>
 
-                <h1>Student Dashboard</h1>
+            <div className="student-dashboard-grid">
 
-                <p>Welcome to CertiChain.</p>
-
-                {!loading && name && (
-                    <p>
-                        Welcome, <strong>{name}</strong>!
-                    </p>
-                )}
-
-                <hr />
-
-                <h2>Document Services</h2>
-
-                <div
-                    style={{
-                        display: 'grid',
-                        gap: '15px',
-                        marginTop: '20px'
-                    }}
+                <button
+                    className="student-dashboard-card"
+                    onClick={() => navigate('/student/new-request')}
                 >
+                    <div className="student-dashboard-card-icon"><IconDocumentPlus /></div>
+                    <h3>Request a Document</h3>
+                    <p>Submit a new request for a transcript, certificate, or diploma.</p>
+                    <span className="student-dashboard-card-link">Get started →</span>
+                </button>
 
-                    <button
-                        onClick={() => navigate('/student/new-request')}
-                        style={buttonStyle}
-                    >
-                        Request a Document
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/student/my-requests')}
-                        style={buttonStyle}
-                    >
-                        My Requests
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/student/claim-schedule')}
-                        style={buttonStyle}
-                    >
-                        Claim Schedule
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/student/notifications')}
-                        style={buttonStyle}
-                    >
-                        Notifications
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/student/profile')}
-                        style={buttonStyle}
-                    >
-                        Profile
-                    </button>
-
-                </div>
+                <button
+                    className="student-dashboard-card"
+                    onClick={() => navigate('/student/my-requests')}
+                >
+                    <div className="student-dashboard-card-icon"><IconList /></div>
+                    <h3>My Requests</h3>
+                    <p>Track the status of documents you've already requested.</p>
+                    <span className="student-dashboard-card-link">View requests →</span>
+                </button>
 
             </div>
         </div>
     )
-}
-
-const buttonStyle = {
-    padding: '18px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    backgroundColor: '#ffffff',
-    cursor: 'pointer',
-    fontSize: '16px'
 }
 
 export default Dashboard

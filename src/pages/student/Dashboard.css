@@ -1,0 +1,75 @@
+.student-dashboard-header {
+    margin-bottom: 32px;
+}
+
+.student-dashboard-header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.student-dashboard-header p {
+    font-size: 15px;
+}
+
+.student-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 720px;
+}
+
+.student-dashboard-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 26px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.student-dashboard-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--red);
+    box-shadow: 0 20px 40px -30px rgba(10, 36, 80, 0.4);
+}
+
+.student-dashboard-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--blue-tint);
+    color: var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.student-dashboard-card-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.student-dashboard-card h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.student-dashboard-card p {
+    font-size: 13.5px;
+    margin-bottom: 14px;
+}
+
+.student-dashboard-card-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+}
+
+@media (max-width: 620px) {
+    .student-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

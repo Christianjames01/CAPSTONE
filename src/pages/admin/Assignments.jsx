@@ -1,0 +1,235 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
+import { logActivity } from '../../lib/activityLog'
+import './AdminPages.css'
+
+const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'digital_credential', 'ready_for_claiming']
+
+function Assignments() {
+    const navigate = useNavigate()
+
+    const [workload, setWorkload] = useState([])
+    const [unassigned, setUnassigned] = useState([])
+    const [employees, setEmployees] = useState([])
+    const [assigning, setAssigning] = useState({})
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        loadData()
+    }, [])
+
+    const loadData = async () => {
+        try {
+            setLoading(true)
+            setError('')
+
+            const { data: employeeRows, error: employeeError } = await supabase
+                .from('employees')
+                .select('employee_id, user_id, employee_number, position_title, status')
+                .eq('status', 'active')
+
+            if (employeeError) {
+                throw new Error('Failed to load employees: ' + employeeError.message)
+            }
+
+            const userIds = [...new Set((employeeRows || []).map((e) => e.user_id))]
+
+            const { data: profiles } = userIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
+                : { data: [] }
+
+            const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
+
+            const employeeList = (employeeRows || []).map((e) => ({
+                ...e,
+                name: profileByUserId[e.user_id]
+                    ? `${profileByUserId[e.user_id].first_name} ${profileByUserId[e.user_id].last_name}`.trim()
+                    : e.employee_number,
+            }))
+
+            setEmployees(employeeList)
+
+            const { data: allRequests, error: requestError } = await supabase
+                .from('document_requests')
+                .select('request_id, request_number, student_id, document_type_id, assigned_employee_id, status, requested_at')
+
+            if (requestError) {
+                throw new Error('Failed to load requests: ' + requestError.message)
+            }
+
+            const openRequests = (allRequests || []).filter((r) => OPEN_STATUSES.includes(r.status))
+
+            setWorkload(
+                employeeList.map((e) => ({
+                    ...e,
+                    openCount: openRequests.filter((r) => r.assigned_employee_id === e.employee_id).length,
+                }))
+            )
+
+            const unassignedRequests = (allRequests || []).filter((r) => !r.assigned_employee_id)
+
+            const studentIds = [...new Set(unassignedRequests.map((r) => r.student_id).filter(Boolean))]
+            const documentTypeIds = [...new Set(unassignedRequests.map((r) => r.document_type_id).filter(Boolean))]
+
+            const [{ data: students }, { data: documentTypes }] = await Promise.all([
+                studentIds.length
+                    ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
+                    : Promise.resolve({ data: [] }),
+                documentTypeIds.length
+                    ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
+                    : Promise.resolve({ data: [] }),
+            ])
+
+            const studentNumberById = Object.fromEntries((students || []).map((s) => [s.student_id, s.student_number]))
+            const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
+
+            setUnassigned(
+                unassignedRequests.map((r) => ({
+                    ...r,
+                    studentNumber: studentNumberById[r.student_id] || 'N/A',
+                    documentName: documentNameById[r.document_type_id] || 'Document',
+                }))
+            )
+
+        } catch (err) {
+            console.error('ASSIGNMENTS ERROR:', err)
+            setError(err.message || 'Failed to load assignment data.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const assignRequest = async (request) => {
+        const employeeId = assigning[request.request_id]
+
+        if (!employeeId) {
+            alert('Please select an employee first.')
+            return
+        }
+
+        try {
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const { error: updateError } = await supabase
+                .from('document_requests')
+                .update({ assigned_employee_id: employeeId, updated_at: new Date().toISOString() })
+                .eq('request_id', request.request_id)
+
+            if (updateError) {
+                throw new Error('Failed to assign request: ' + updateError.message)
+            }
+
+            const employee = employees.find((e) => e.employee_id === employeeId)
+
+            await logActivity({
+                userId: user.id,
+                action: 'assign_request',
+                tableName: 'document_requests',
+                recordId: request.request_id,
+                description: `Assigned request ${request.request_number} to ${employee?.name || employeeId}.`,
+            })
+
+            await loadData()
+
+        } catch (err) {
+            console.error('ASSIGN REQUEST ERROR:', err)
+            alert(err.message || 'Failed to assign request.')
+        }
+    }
+
+    return (
+        <div>
+            <div className="admin-page-header">
+                <h1>Request Assignments</h1>
+                <p>Assign requests to employees and monitor current workloads.</p>
+            </div>
+
+            {error && <div className="admin-error-box">{error}</div>}
+
+            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Employee Workload</h2>
+
+            {loading ? (
+                <p className="admin-loading">Loading...</p>
+            ) : (
+                <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Position</th>
+                                <th>Open Requests</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {workload.map((e) => (
+                                <tr key={e.employee_id}>
+                                    <td>{e.name}</td>
+                                    <td>{e.position_title}</td>
+                                    <td>{e.openCount}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Unassigned Requests</h2>
+
+            {!loading && unassigned.length === 0 ? (
+                <div className="admin-empty">All requests currently have an assigned employee.</div>
+            ) : (
+                unassigned.map((request) => (
+                    <div className="admin-list-card" key={request.request_id}>
+                        <div className="admin-list-card-header">
+                            <div>
+                                <h3>{request.documentName}</h3>
+                                <p>{request.request_number} · Student {request.studentNumber}</p>
+                            </div>
+
+                            <span className={`admin-status-pill status-${request.status}`}>
+                                {request.status.replace(/_/g, ' ')}
+                            </span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <select
+                                className="admin-search-input"
+                                style={{ maxWidth: 260 }}
+                                value={assigning[request.request_id] || ''}
+                                onChange={(e) =>
+                                    setAssigning((prev) => ({ ...prev, [request.request_id]: e.target.value }))
+                                }
+                            >
+                                <option value="">-- Select employee --</option>
+                                {employees.map((e) => (
+                                    <option key={e.employee_id} value={e.employee_id}>
+                                        {e.name} ({e.openCount ?? 0} open)
+                                    </option>
+                                ))}
+                            </select>
+
+                            <button className="admin-primary-button" onClick={() => assignRequest(request)}>
+                                Assign
+                            </button>
+
+                            <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${request.request_id}`)}>
+                                Open request →
+                            </button>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    )
+}
+
+export default Assignments

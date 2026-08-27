@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.employee-layout {
+    --blue: #123B78;
+    --blue-dark: #0A2450;
+    --blue-tint: #EAF1FB;
+    --red: #C8102E;
+    --red-dark: #8C0B20;
+    --red-light: #F0596E;
+    --bg: #FBFCFE;
+    --paper: #F1F4FA;
+    --ink: #101827;
+    --slate: #57616F;
+    --line: rgba(16, 24, 39, 0.12);
+    --white: #FFFFFF;
+
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', -apple-system, sans-serif;
+
+    font-family: var(--font-body);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+.employee-layout * {
+    box-sizing: border-box;
+}
+
+.employee-layout h1,
+.employee-layout h2,
+.employee-layout h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.employee-layout p {
+    margin: 0;
+    color: var(--slate);
+    line-height: 1.6;
+}
+
+.employee-layout a,
+.employee-layout button {
+    text-decoration: none;
+    font-family: var(--font-body);
+}
+
+.employee-layout button {
+    cursor: pointer;
+}
+
+:where(.employee-layout) button {
+    border: none;
+    background: none;
+}
+
+:where(.employee-content) button {
+    color: var(--ink);
+    font-size: inherit;
+}
+
+/* ===================================================
+   SIDEBAR
+=================================================== */
+.employee-sidebar {
+    width: 264px;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 26px 18px;
+    background: var(--blue-dark);
+    overflow-y: auto;
+}
+
+.employee-sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.employee-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+}
+
+.employee-sidebar-seal {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.employee-sidebar-seal img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.employee-sidebar-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--white);
+    line-height: 1;
+}
+
+.employee-sidebar-subtitle {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 3px;
+}
+
+.employee-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.employee-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--white);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.employee-nav-link svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.employee-nav-link:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--white);
+}
+
+.employee-nav-link.active {
+    background: var(--red);
+    color: var(--white);
+}
+
+.employee-nav-badge {
+    margin-left: auto;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--red);
+    color: var(--white);
+    font-size: 10.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.employee-nav-link.active .employee-nav-badge {
+    background: var(--white);
+    color: var(--red);
+}
+
+.employee-sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.employee-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.employee-user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--red);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.employee-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.3;
+}
+
+.employee-user-role {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.employee-logout-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.employee-logout-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.employee-logout-button:hover {
+    border-color: var(--red-light);
+    color: var(--white);
+}
+
+/* ===================================================
+   CONTENT
+=================================================== */
+.employee-content {
+    flex: 1;
+    min-width: 0;
+    padding: 40px 44px;
+}
+
+/* ===================================================
+   RESPONSIVE
+=================================================== */
+@media (max-width: 960px) {
+    .employee-layout {
+        flex-direction: column;
+    }
+
+    .employee-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: 18px;
+        padding: 16px;
+        overflow-x: auto;
+    }
+
+    .employee-sidebar-top {
+        flex-direction: row;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .employee-sidebar-brand {
+        padding: 0;
+    }
+
+    .employee-sidebar-subtitle {
+        display: none;
+    }
+
+    .employee-nav {
+        flex-direction: row;
+    }
+
+    .employee-nav-link span {
+        display: none;
+    }
+
+    .employee-sidebar-bottom {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .employee-user-role {
+        display: none;
+    }
+
+    .employee-logout-button span {
+        display: none;
+    }
+
+    .employee-content {
+        padding: 28px 20px;
+    }
+}

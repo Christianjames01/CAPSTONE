@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import AuthLayout from './AuthLayout'
 
 function Login() {
     const navigate = useNavigate()
@@ -80,68 +81,49 @@ function Login() {
     }
 
     return (
-        <div style={{ maxWidth: '400px', margin: '60px auto' }}>
+        <AuthLayout
+            title="Welcome back"
+            subtitle="Log in to manage your academic document requests."
+            footer={
+                <>Don't have an account? <Link to="/register">Register</Link></>
+            }
+        >
+            <form className="auth-form" onSubmit={handleLogin}>
 
-            <h1>CertiChain Login</h1>
-
-            <form onSubmit={handleLogin}>
-
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Email</label>
-
-                    <br />
-
+                <div className="form-group">
+                    <label className="form-label" htmlFor="login-email">Email</label>
                     <input
+                        id="login-email"
                         type="email"
+                        className="form-input"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
+                        placeholder="you@example.com"
                         required
-                        style={{
-                            width: '100%',
-                            padding: '10px'
-                        }}
                     />
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Password</label>
-
-                    <br />
-
+                <div className="form-group">
+                    <label className="form-label" htmlFor="login-password">Password</label>
                     <input
+                        id="login-password"
                         type="password"
+                        className="form-input"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
                         required
-                        style={{
-                            width: '100%',
-                            padding: '10px'
-                        }}
                     />
                 </div>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    style={{
-                        padding: '10px 20px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {loading ? 'Logging in...' : 'Login'}
+                {message && <p className="form-message error">{message}</p>}
+
+                <button type="submit" className="auth-submit" disabled={loading}>
+                    {loading ? 'Logging in...' : 'Log in'}
                 </button>
 
             </form>
-
-            {message && (
-                <p style={{ marginTop: '20px' }}>
-                    {message}
-                </p>
-            )}
-
-        </div>
+        </AuthLayout>
     )
 }
 

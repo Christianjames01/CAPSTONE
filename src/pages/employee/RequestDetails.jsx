@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../../lib/activityLog'
+import { notifyStudentByStudentId } from '../../lib/notify'
 
 function EmployeeRequestDetails() {
     const { requestId } = useParams()
@@ -443,6 +445,22 @@ function EmployeeRequestDetails() {
                 )
             }
 
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'verify_payment',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Verified payment for request ${request?.request_number || requestId}.`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Payment verified',
+                message: `Your payment for request ${request.request_number} has been verified. Your document is now being processed.`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
+
             alert(
                 'Payment verified successfully.'
             )
@@ -553,6 +571,22 @@ function EmployeeRequestDetails() {
                     requestUpdateError.message
                 )
             }
+
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'reject_payment',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Rejected payment for request ${request?.request_number || requestId}: ${rejectionReason.trim()}`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Payment rejected',
+                message: `Your payment for request ${request.request_number} was rejected: ${rejectionReason.trim()}`,
+                notificationType: 'payment',
+                relatedRequestId: requestId,
+            })
 
             alert(
                 'Payment rejected successfully.'
@@ -673,6 +707,14 @@ function EmployeeRequestDetails() {
                 )
             }
 
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'approve_requirement',
+                tableName: 'request_requirements',
+                recordId: requirement.request_requirement_id,
+                description: `Approved "${requirement.document_requirements?.requirement_name || 'requirement'}" for request ${request?.request_number || requestId}.`,
+            })
+
             alert(
                 'Requirement approved.'
             )
@@ -744,6 +786,22 @@ function EmployeeRequestDetails() {
                     error.message
                 )
             }
+
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'reject_requirement',
+                tableName: 'request_requirements',
+                recordId: selectedRequirement.request_requirement_id,
+                description: `Rejected "${selectedRequirement.document_requirements?.requirement_name || 'requirement'}" for request ${request?.request_number || requestId}: ${rejectionReason.trim()}`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Requirement rejected',
+                message: `"${selectedRequirement.document_requirements?.requirement_name || 'A requirement'}" for request ${request.request_number} was rejected: ${rejectionReason.trim()}. Please re-upload it.`,
+                notificationType: 'requirement',
+                relatedRequestId: requestId,
+            })
 
             alert(
                 'Requirement rejected.'
@@ -928,6 +986,14 @@ function EmployeeRequestDetails() {
                 )
             }
 
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'start_processing',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Started document processing for request ${request?.request_number || requestId}.`,
+            })
+
             alert(
                 'Document processing has started.'
             )
@@ -1053,6 +1119,22 @@ function EmployeeRequestDetails() {
                     requestError.message
                 )
             }
+
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'generate_credential',
+                tableName: 'credentials',
+                recordId: credential.credential_id,
+                description: `Generated digital credential ${credentialNumber} for request ${request?.request_number || requestId}.`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Document ready',
+                message: `Your document for request ${request.request_number} has been prepared. It will be scheduled for claiming shortly.`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
 
             alert(
                 `Digital credential generated successfully.\n\nCredential Number: ${credentialNumber}`

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import '../auth/Auth.css'
+import './StudentPages.css'
 
 function NewRequest() {
     const navigate = useNavigate()
@@ -11,6 +13,7 @@ function NewRequest() {
     const [purpose, setPurpose] = useState('')
     const [loading, setLoading] = useState(false)
     const [loadingDocuments, setLoadingDocuments] = useState(true)
+    const [error, setError] = useState('')
 
     useEffect(() => {
         loadDocuments()
@@ -34,7 +37,7 @@ function NewRequest() {
 
         if (error) {
             console.error(error)
-            alert('Failed to load documents: ' + error.message)
+            setError('Failed to load documents: ' + error.message)
         } else {
             setDocuments(data || [])
         }
@@ -42,16 +45,22 @@ function NewRequest() {
         setLoadingDocuments(false)
     }
 
+    const selectedDocumentDetails = documents.find(
+        (item) => item.document_type_id === selectedDocument
+    )
+
     const submitRequest = async (e) => {
         e.preventDefault()
 
+        setError('')
+
         if (!selectedDocument) {
-            alert('Please select a document.')
+            setError('Please select a document.')
             return
         }
 
         if (quantity < 1) {
-            alert('Quantity must be at least 1.')
+            setError('Quantity must be at least 1.')
             return
         }
 
@@ -155,127 +164,135 @@ function NewRequest() {
                 )
             }
 
-            alert(
-                `Request ${request.request_number} submitted successfully!`
-            )
+            // 8. Seed the requirements this document type needs so the
+            // student can upload them and the registrar can review them.
+            const { data: requiredDocs, error: requirementsError } = await supabase
+                .from('document_requirements')
+                .select('requirement_id')
+                .eq('document_type_id', document.document_type_id)
 
-            navigate('/student/my-requests')
+            if (requirementsError) {
+                console.error('LOAD REQUIREMENTS ERROR:', requirementsError)
+            } else if (requiredDocs && requiredDocs.length > 0) {
+                const { error: seedError } = await supabase
+                    .from('request_requirements')
+                    .insert(
+                        requiredDocs.map((req) => ({
+                            request_id: request.request_id,
+                            requirement_id: req.requirement_id,
+                            status: 'pending',
+                        }))
+                    )
 
-        } catch (error) {
-            console.error(error)
-            alert(error.message)
+                if (seedError) {
+                    console.error('SEED REQUIREMENTS ERROR:', seedError)
+                }
+            }
+
+            navigate('/student/my-requests', {
+                state: { justSubmitted: request.request_number }
+            })
+
+        } catch (err) {
+            console.error(err)
+            setError(err.message)
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div
-            style={{
-                maxWidth: '900px',
-                margin: '0 auto',
-                padding: '40px'
-            }}
-        >
-            <h1>Request a Document</h1>
+        <div>
+            <div className="student-page-header">
+                <h1>Request a Document</h1>
+                <p>Select the academic document you want to request.</p>
+            </div>
 
-            <p>
-                Select the academic document you want to request.
-            </p>
+            {error && <div className="student-error-box">{error}</div>}
 
-            <form onSubmit={submitRequest}>
+            <div className="student-card" style={{ maxWidth: 560 }}>
+                <form className="auth-form" onSubmit={submitRequest}>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <label>
-                        <strong>Document</strong>
-                    </label>
+                    <div className="form-group">
+                        <label className="form-label">Document</label>
 
-                    {loadingDocuments ? (
-                        <p>Loading documents...</p>
-                    ) : (
-                        <select
-                            value={selectedDocument}
-                            onChange={(e) =>
-                                setSelectedDocument(e.target.value)
-                            }
-                            style={{
-                                display: 'block',
-                                width: '100%',
-                                padding: '10px',
-                                marginTop: '5px'
-                            }}
-                        >
-                            <option value="">
-                                -- Select Document --
-                            </option>
+                        {loadingDocuments ? (
+                            <p className="student-loading" style={{ padding: 0 }}>Loading documents...</p>
+                        ) : (
+                            <select
+                                className="form-input"
+                                value={selectedDocument}
+                                onChange={(e) => setSelectedDocument(e.target.value)}
+                                disabled={loading}
+                            >
+                                <option value="">-- Select Document --</option>
 
-                            {documents.map((document) => (
-                                <option
-                                    key={document.document_type_id}
-                                    value={document.document_type_id}
-                                >
-                                    {document.document_name} — ₱
-                                    {Number(document.fee || 0).toFixed(2)}
-                                </option>
-                            ))}
-                        </select>
+                                {documents.map((document) => (
+                                    <option
+                                        key={document.document_type_id}
+                                        value={document.document_type_id}
+                                    >
+                                        {document.document_name} — ₱
+                                        {Number(document.fee || 0).toFixed(2)}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    </div>
+
+                    {selectedDocumentDetails && (
+                        <div className="student-info-grid" style={{ background: 'var(--paper)', padding: 16, borderRadius: 8 }}>
+                            <div className="student-info-field">
+                                <span>Fee</span>
+                                <strong>₱{Number(selectedDocumentDetails.fee || 0).toFixed(2)}</strong>
+                            </div>
+
+                            <div className="student-info-field">
+                                <span>Processing Time</span>
+                                <strong>
+                                    {selectedDocumentDetails.processing_days_min && selectedDocumentDetails.processing_days_max
+                                        ? `${selectedDocumentDetails.processing_days_min}–${selectedDocumentDetails.processing_days_max} working days`
+                                        : 'Varies'}
+                                </strong>
+                            </div>
+                        </div>
                     )}
-                </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <label>
-                        <strong>Quantity</strong>
-                    </label>
+                    <div className="form-group">
+                        <label className="form-label">Quantity</label>
+                        <input
+                            className="form-input"
+                            type="number"
+                            min="1"
+                            value={quantity}
+                            onChange={(e) => setQuantity(Number(e.target.value))}
+                            disabled={loading}
+                        />
+                    </div>
 
-                    <input
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) =>
-                            setQuantity(Number(e.target.value))
-                        }
-                        style={{
-                            display: 'block',
-                            width: '100%',
-                            padding: '10px',
-                            marginTop: '5px'
-                        }}
-                    />
-                </div>
+                    <div className="form-group">
+                        <label className="form-label">Purpose</label>
+                        <textarea
+                            className="form-input"
+                            value={purpose}
+                            onChange={(e) => setPurpose(e.target.value)}
+                            placeholder="Enter the purpose of your request"
+                            rows="4"
+                            disabled={loading}
+                        />
+                    </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <label>
-                        <strong>Purpose</strong>
-                    </label>
+                    <button
+                        type="submit"
+                        className="auth-submit"
+                        style={{ width: 'auto', padding: '13px 26px' }}
+                        disabled={loading || loadingDocuments}
+                    >
+                        {loading ? 'Submitting...' : 'Submit Request'}
+                    </button>
 
-                    <textarea
-                        value={purpose}
-                        onChange={(e) =>
-                            setPurpose(e.target.value)
-                        }
-                        placeholder="Enter the purpose of your request"
-                        rows="4"
-                        style={{
-                            display: 'block',
-                            width: '100%',
-                            padding: '10px',
-                            marginTop: '5px'
-                        }}
-                    />
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading || loadingDocuments}
-                    style={{
-                        padding: '12px 25px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {loading ? 'Submitting...' : 'Submit Request'}
-                </button>
-
-            </form>
+                </form>
+            </div>
         </div>
     )
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../../lib/activityLog'
+import { notifyStudentByStudentId } from '../../lib/notify'
 
 function ClaimSchedule() {
     const { requestId } = useParams()
@@ -480,6 +482,22 @@ function ClaimSchedule() {
                     updatedSchedule
                 )
 
+                await logActivity({
+                    employeeId: employee.employee_id,
+                    action: 'update_claim_schedule',
+                    tableName: 'claim_schedules',
+                    recordId: existingSchedule.claim_schedule_id,
+                    description: `Updated claiming schedule for request ${request?.request_number || requestId} to ${scheduledDate} ${scheduledTime}.`,
+                })
+
+                await notifyStudentByStudentId({
+                    studentId: request.student_id,
+                    title: 'Claiming schedule updated',
+                    message: `Your updated claiming date for request ${request.request_number} is ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}.`,
+                    notificationType: 'claim_schedule',
+                    relatedRequestId: requestId,
+                })
+
                 alert(
                     'Claiming schedule updated successfully.'
                 )
@@ -583,6 +601,22 @@ function ClaimSchedule() {
                 setExistingSchedule(
                     newSchedule
                 )
+
+                await logActivity({
+                    employeeId: employee.employee_id,
+                    action: 'create_claim_schedule',
+                    tableName: 'claim_schedules',
+                    recordId: newSchedule.claim_schedule_id,
+                    description: `Created claiming schedule for request ${request?.request_number || requestId} on ${scheduledDate} ${scheduledTime}.`,
+                })
+
+                await notifyStudentByStudentId({
+                    studentId: request.student_id,
+                    title: 'Claiming scheduled',
+                    message: `Your document for request ${request.request_number} is ready to claim on ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}. Bring your official receipt and a valid ID.`,
+                    notificationType: 'claim_schedule',
+                    relatedRequestId: requestId,
+                })
 
                 alert(
                     'Claiming schedule created successfully.'
@@ -693,6 +727,22 @@ function ClaimSchedule() {
                     requestError.message
                 )
             }
+
+            await logActivity({
+                employeeId: employee.employee_id,
+                action: 'cancel_claim_schedule',
+                tableName: 'claim_schedules',
+                recordId: existingSchedule.claim_schedule_id,
+                description: `Cancelled claiming schedule for request ${request?.request_number || requestId}.`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Claiming schedule cancelled',
+                message: `Your claiming schedule for request ${request.request_number} has been cancelled. Contact the Registrar's Office for a new schedule.`,
+                notificationType: 'claim_schedule',
+                relatedRequestId: requestId,
+            })
 
             alert(
                 'Claiming schedule cancelled.'

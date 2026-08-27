@@ -50,20 +50,21 @@
   }
 }
 
-body {
+/* App root: no fixed width, no centering box, no forced flex-column.
+   Individual layouts (AdminLayout, StudentLayout, EmployeeLayout, AuthLayout,
+   LandingPage) own their own full-width layout rules. */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+body {
+  margin: 0;
 }
 
 h1,
@@ -112,17 +113,4 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
-}
-
-html,
-body,
-#root {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  margin: 0;
 }
