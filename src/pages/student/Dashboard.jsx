@@ -10,6 +10,13 @@ const IN_PROGRESS_STATUSES = [
     'processing', 'lacking_requirements',
 ]
 
+// Statuses where the ball is in the student's court, and what to tell them
+// to do about it.
+const ACTION_NEEDED = {
+    payment_pending: { label: 'Payment needed', cta: 'Upload receipt →', to: (id) => `/student/request/${id}/upload-receipt` },
+    lacking_requirements: { label: 'Requirement needs fixing', cta: 'Submit requirements →', to: (id) => `/student/request/${id}/requirements` },
+}
+
 function Dashboard() {
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
@@ -119,6 +126,7 @@ function Dashboard() {
     const completedCount = requests.filter((r) => r.status === 'completed').length
 
     const recentRequests = requests.slice(0, 3)
+    const actionableRequests = requests.filter((r) => ACTION_NEEDED[r.status])
 
     const formatClaimDate = (date) => {
         if (!date) return 'N/A'
@@ -177,6 +185,47 @@ function Dashboard() {
                                 {(upcomingClaim.claim_date || upcomingClaim.scheduled_date)
                                     ? <>scheduled for {formatClaimDate(upcomingClaim.claim_date || upcomingClaim.scheduled_date)} at {formatClaimTime(upcomingClaim.claim_time || upcomingClaim.scheduled_time)}</>
                                     : 'waiting to be scheduled by the Registrar.'}
+                            </p>
+                        </div>
+                    )}
+
+                    {actionableRequests.length > 0 && (
+                        <div style={{ marginBottom: 24 }}>
+                            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Needs Your Attention</h2>
+
+                            {actionableRequests.map((request) => {
+                                const action = ACTION_NEEDED[request.status]
+
+                                return (
+                                    <div className="student-list-card" key={request.request_id}>
+                                        <div className="student-list-card-header">
+                                            <div>
+                                                <h3>{request.documentName}</h3>
+                                                <p>Request {request.request_number} · {action.label}</p>
+                                            </div>
+                                            <span className={`student-status-pill status-${request.status}`}>
+                                                {request.status.replace(/_/g, ' ')}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            className="student-link-button"
+                                            onClick={() => navigate(action.to(request.request_id))}
+                                        >
+                                            {action.cta}
+                                        </button>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {totalCount === 0 && (
+                        <div className="student-notice tone-info" style={{ marginTop: 0, marginBottom: 24 }}>
+                            <strong>No requests yet</strong>
+                            <p>
+                                Once you request your first document, you'll be able to track its
+                                status right here — from payment to claiming.
                             </p>
                         </div>
                     )}
