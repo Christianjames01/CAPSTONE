@@ -10,6 +10,7 @@ function Students() {
 
     const [term, setTerm] = useState('')
     const [results, setResults] = useState([])
+    const [pendingProfiles, setPendingProfiles] = useState([])
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
     const [error, setError] = useState('')
@@ -70,12 +71,34 @@ function Students() {
             setResults(await enrichStudents(rows || []))
             setSearched(true)
 
+            await loadPendingProfiles(rows || [])
+
         } catch (err) {
             console.error('LOAD STUDENTS ERROR:', err)
             setError(err.message || 'Failed to load students.')
         } finally {
             setLoading(false)
         }
+    }
+
+    // Accounts that registered (e.g. via Google sign-in) but never finished
+    // the "Complete your profile" step, so they have no row in "students"
+    // yet -- otherwise they'd be invisible here even though they can log in.
+    const loadPendingProfiles = async (studentRows) => {
+        const { data: studentProfiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name, email, created_at')
+            .eq('role', 'student')
+            .order('created_at', { ascending: false })
+
+        if (profilesError) {
+            console.error('LOAD PENDING PROFILES ERROR:', profilesError)
+            return
+        }
+
+        const studentUserIds = new Set(studentRows.map((s) => s.user_id))
+
+        setPendingProfiles((studentProfiles || []).filter((p) => !studentUserIds.has(p.user_id)))
     }
 
     const search = async (e) => {
@@ -272,6 +295,35 @@ function Students() {
             </form>
 
             {error && <div className="admin-error-box">{error}</div>}
+
+            {pendingProfiles.length > 0 && (
+                <>
+                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Setup</h2>
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
+                        These accounts signed in but haven't finished the "Complete your profile" step yet, so they don't have a student record and can't submit requests.
+                    </p>
+
+                    {pendingProfiles.map((p) => (
+                        <div className="admin-list-card" key={p.user_id}>
+                            <div className="admin-list-card-header">
+                                <div>
+                                    <h3>{`${p.first_name} ${p.last_name}`.trim() || 'Unknown'}</h3>
+                                    <p>{p.email}</p>
+                                </div>
+                                <span className="admin-status-pill status-pending">Setup incomplete</span>
+                            </div>
+
+                            <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>
+                                Signed up {new Date(p.created_at).toLocaleString('en-PH', {
+                                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                                })}
+                            </p>
+                        </div>
+                    ))}
+
+                    <h2 style={{ fontSize: 17, margin: '28px 0 14px' }}>Students</h2>
+                </>
+            )}
 
             {loading ? (
                 <p className="admin-loading">Loading students...</p>
