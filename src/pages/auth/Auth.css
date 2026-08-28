@@ -378,6 +378,11 @@
         display: none;
     }
 
+    .auth-brand-foot {
+        position: static;
+        margin-top: 16px;
+    }
+
     .auth-form-panel {
         padding: 36px 24px 48px;
         height: auto;

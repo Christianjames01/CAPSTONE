@@ -197,6 +197,7 @@ h2 span {
     font-size: 14px;
     font-weight: 600;
     padding: 9px 16px;
+    white-space: nowrap;
 }
 
 .nav-login:hover {
@@ -1203,6 +1204,27 @@ h2 span {
 }
 
 @media (max-width: 620px) {
+    .navbar-container {
+        padding: 12px 16px;
+        gap: 10px;
+    }
+
+    .brand-subtitle {
+        display: none;
+    }
+
+    .navbar-actions {
+        gap: 6px;
+    }
+
+    .nav-login {
+        padding: 8px 10px;
+    }
+
+    .nav-register {
+        padding: 9px 14px;
+    }
+
     .section {
         padding: 70px 0;
     }
@@ -1234,10 +1256,6 @@ h2 span {
 
     .footer-main {
         grid-template-columns: 1fr;
-    }
-
-    .navbar-actions .nav-login {
-        display: none;
     }
 }
 
