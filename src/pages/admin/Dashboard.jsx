@@ -10,7 +10,8 @@ const STATUS_BUCKETS = [
     { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], color: '#1baf7a' },
     { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], color: '#eda100' },
     { key: 'completed', label: 'Completed', statuses: ['completed'], color: '#e87ba4' },
-    { key: 'rejected', label: 'Rejected', statuses: ['rejected', 'cancelled'], color: '#008300' },
+    { key: 'rejected', label: 'Rejected', statuses: ['rejected'], color: '#008300' },
+    { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], color: '#8a94a6' },
 ]
 
 const TREND_DAYS = 14
@@ -192,6 +193,7 @@ function AdminDashboard() {
         { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/claim-schedules' },
         { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests' },
         { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests' },
+        { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests' },
         { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules' },
     ]
 
