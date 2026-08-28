@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { establishStudentSession } from '../../lib/singleSession'
 import AuthLayout from './AuthLayout'
 
 function CompleteProfile() {
@@ -66,6 +67,7 @@ function CompleteProfile() {
             .maybeSingle()
 
         if (existingStudent) {
+            await establishStudentSession(user.id)
             navigate('/student/dashboard')
             return
         }
@@ -157,6 +159,7 @@ function CompleteProfile() {
             return
         }
 
+        await establishStudentSession(user.id)
         navigate('/student/dashboard')
     }
 
