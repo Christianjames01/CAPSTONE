@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconNewspaper, IconMessage, IconHelp } from './icons'
+import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -294,37 +294,6 @@ function Dashboard() {
                                 <span className="student-stat-label">Unread Notifications</span>
                             </div>
                         </button>
-                    </div>
-
-                    <div style={{ marginBottom: 24 }}>
-                        <h2 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: 'var(--blue)', display: 'inline-flex' }}><IconNewspaper /></span>
-                            HCDC News
-                        </h2>
-
-                        <div className="student-card" style={{ padding: 0, overflow: 'hidden' }}>
-                            <iframe
-                                title="HCDC Official Facebook Page"
-                                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fhcdcofficial&tabs=timeline&width=500&height=560&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
-                                width="100%"
-                                height="560"
-                                style={{ border: 'none', display: 'block', maxWidth: '100%' }}
-                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                                allowFullScreen
-                            />
-                        </div>
-
-                        <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 10 }}>
-                            Feed provided by Facebook.{' '}
-                            <a
-                                href="https://www.facebook.com/hcdcofficial"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: 'var(--blue)', fontWeight: 600 }}
-                            >
-                                Visit HCDC's Facebook page →
-                            </a>
-                        </p>
                     </div>
 
                     {upcomingClaim && (
