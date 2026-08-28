@@ -25,6 +25,7 @@ function EmployeeRegister() {
             email,
             password,
             options: {
+                emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     role: 'employee',
                     first_name: firstName.trim(),

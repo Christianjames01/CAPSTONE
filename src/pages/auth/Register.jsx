@@ -96,6 +96,7 @@ function Register() {
             email,
             password,
             options: {
+                emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     first_name: firstName.trim(),
                     middle_name: middleName.trim() || null,
