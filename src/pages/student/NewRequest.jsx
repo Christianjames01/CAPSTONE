@@ -209,11 +209,11 @@ function NewRequest() {
                 throw new Error('Student record could not be found.')
             }
 
-            // 2.5. Enforce request limits: at most one active request per
-            // document type, and at most 2 new requests per calendar day.
+            // 2.5. Enforce request limit: at most 2 active requests per
+            // document type at once.
             const { data: existingRequests, error: existingError } = await supabase
                 .from('document_requests')
-                .select('document_type_id, status, requested_at')
+                .select('document_type_id, status')
                 .eq('student_id', student.student_id)
 
             if (existingError) {
@@ -225,23 +225,14 @@ function NewRequest() {
                 'processing', 'lacking_requirements', 'ready_for_claiming',
             ]
 
-            const hasActiveForSameDocument = (existingRequests || []).some(
+            const activeCountForSameDocument = (existingRequests || []).filter(
                 (r) => r.document_type_id === selectedDocument && ACTIVE_STATUSES.includes(r.status)
-            )
-
-            if (hasActiveForSameDocument) {
-                throw new Error(
-                    "You already have an active request for this document. Please wait for it to finish (or get claimed) before requesting another."
-                )
-            }
-
-            const today = new Date().toISOString().slice(0, 10)
-            const todayCount = (existingRequests || []).filter(
-                (r) => r.requested_at && r.requested_at.slice(0, 10) === today
             ).length
 
-            if (todayCount >= 2) {
-                throw new Error("You've reached the limit of 2 document requests per day. Please try again tomorrow.")
+            if (activeCountForSameDocument >= 2) {
+                throw new Error(
+                    "You already have 2 active requests for this document. Please wait for one to finish (or get claimed) before requesting another."
+                )
             }
 
             // 3. Find the registrar assigned to this college/program. If more
