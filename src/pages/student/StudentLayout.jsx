@@ -39,6 +39,15 @@ function StudentLayout() {
     const [unreadMessageCount, setUnreadMessageCount] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
+    // Lock background scrolling while the drawer is open -- otherwise
+    // scrolling the page behind it can make the fixed-position drawer
+    // visibly jump on mobile browsers (address bar collapsing shifts the
+    // fixed-position reference frame).
+    useEffect(() => {
+        document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
+        return () => { document.body.style.overflow = '' }
+    }, [mobileNavOpen])
+
     useEffect(() => {
         loadProfile()
         loadUnreadCount()
