@@ -739,88 +739,6 @@ h2 span {
 }
 
 /* ===================================================
-   SECURITY
-=================================================== */
-.security-section {
-    padding: 110px 0;
-    background: var(--blue-dark);
-}
-
-.security-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    justify-items: center;
-}
-
-.security-content {
-    max-width: 720px;
-    text-align: center;
-}
-
-.security-content .section-label {
-    background: rgba(200, 16, 46, 0.16);
-    color: var(--red-light);
-}
-
-.security-content h2 {
-    color: var(--white);
-}
-
-.security-content h2 span {
-    color: var(--red-light);
-}
-
-.security-content>p {
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 16px;
-    margin: 16px 0 36px;
-}
-
-.security-features {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 22px;
-    text-align: left;
-    max-width: 480px;
-    margin: 0 auto;
-}
-
-.security-feature {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-}
-
-.feature-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(200, 16, 46, 0.2);
-    color: var(--red-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-.feature-icon svg {
-    width: 12px;
-    height: 12px;
-}
-
-.security-feature h3 {
-    font-size: 15px;
-    color: var(--white);
-    margin-bottom: 6px;
-}
-
-.security-feature p {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.55);
-}
-
-/* ===================================================
    ABOUT
 =================================================== */
 .about-card {
@@ -1078,7 +996,6 @@ h2 span {
 
     .hero-container,
     .documents-layout,
-    .security-layout,
     .about-card {
         grid-template-columns: 1fr;
     }
@@ -1106,10 +1023,6 @@ h2 span {
 
     .footer-main {
         grid-template-columns: 1fr 1fr;
-    }
-
-    .security-features {
-        grid-template-columns: 1fr;
     }
 
     .desktop-nav {

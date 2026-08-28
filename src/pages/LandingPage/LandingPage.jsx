@@ -173,7 +173,6 @@ const LandingPage = () => {
                         <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection("services"); }}>Services</a>
                         <a href="#documents" onClick={(e) => { e.preventDefault(); scrollToSection("documents"); }}>Documents</a>
                         <a href="#process" onClick={(e) => { e.preventDefault(); scrollToSection("process"); }}>How it works</a>
-                        <a href="#security" onClick={(e) => { e.preventDefault(); scrollToSection("security"); }}>Security</a>
                         <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection("about"); }}>About</a>
                     </nav>
 
@@ -358,10 +357,10 @@ const LandingPage = () => {
 
                             <div className="service-card">
                                 <div className="service-icon"><IconShield /></div>
-                                <h3>Credential verification</h3>
-                                <p>Every issued document carries a secure identifier and
-                                    QR code so anyone can confirm it's authentic.</p>
-                                <a href="#security">View security →</a>
+                                <h3>Secure accounts</h3>
+                                <p>Every account is protected by authenticated login and
+                                    role-based access, keeping your request history private.</p>
+                                <a href="/register">Create an account →</a>
                             </div>
 
                         </div>
@@ -435,52 +434,6 @@ const LandingPage = () => {
                             ))}
                         </div>
 
-                    </div>
-                </section>
-
-
-                {/* =========================
-            SECURITY
-        ========================= */}
-                <section id="security" className="security-section">
-                    <div className="section-container">
-                        <div className="security-layout">
-
-                            <div className="security-content">
-                                <span className="section-label">Security &amp; Verification</span>
-                                <h2>Built for <br /><span>trust and integrity.</span></h2>
-                                <p>
-                                    CertiChain is designed to protect academic document
-                                    requests and support reliable credential verification
-                                    throughout the registrar process.
-                                </p>
-
-                                <div className="security-features">
-                                    <div className="security-feature">
-                                        <div className="feature-icon"><IconCheck /></div>
-                                        <div>
-                                            <h3>Secure authentication</h3>
-                                            <p>User accounts are protected through secure authentication and password protection.</p>
-                                        </div>
-                                    </div>
-                                    <div className="security-feature">
-                                        <div className="feature-icon"><IconCheck /></div>
-                                        <div>
-                                            <h3>Document integrity</h3>
-                                            <p>Digital credentials are tied directly to the registrar's records and can't be altered after issuance.</p>
-                                        </div>
-                                    </div>
-                                    <div className="security-feature">
-                                        <div className="feature-icon"><IconCheck /></div>
-                                        <div>
-                                            <h3>Activity logging</h3>
-                                            <p>Important registrar actions are recorded with employee, date, and time information.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
                     </div>
                 </section>
 
@@ -582,7 +535,6 @@ const LandingPage = () => {
                             <a href="#services">Services</a>
                             <a href="#documents">Documents</a>
                             <a href="#process">How it works</a>
-                            <a href="#security">Security</a>
                         </div>
 
                         <div className="footer-column">
