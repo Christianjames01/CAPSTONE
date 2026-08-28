@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
-import { fetchActiveAnnouncements } from "../../lib/announcements";
-import AnnouncementCarousel from "../../components/AnnouncementCarousel";
 
 const DOCUMENTS = [
     { name: "Transcript of Records", code: "TOR" },
@@ -123,12 +120,6 @@ const PROCESS_STEPS = [
 ];
 
 const LandingPage = () => {
-    const [announcements, setAnnouncements] = useState([]);
-
-    useEffect(() => {
-        fetchActiveAnnouncements("show_to_public").then(setAnnouncements);
-    }, []);
-
     const scrollToSection = (id) => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     };
@@ -169,12 +160,6 @@ const LandingPage = () => {
             </header>
 
             <main>
-
-                {announcements.length > 0 && (
-                    <div style={{ padding: '14px 24px', borderBottom: '1px solid var(--line)' }}>
-                        <AnnouncementCarousel items={announcements} />
-                    </div>
-                )}
 
                 {/* =========================
             HERO

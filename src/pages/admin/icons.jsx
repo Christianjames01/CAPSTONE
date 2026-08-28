@@ -47,14 +47,6 @@ export const IconDocument = () => (
     </svg>
 )
 
-export const IconMegaphone = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 10v4a1 1 0 0 0 1 1h2l1.5 5H10l-.8-5H9" />
-        <path d="M7 10 18 5v14L7 14" />
-        <path d="M18 9.5c1.4 0 2.5 1.1 2.5 2.5S19.4 14.5 18 14.5" />
-    </svg>
-)
-
 export const IconClipboardCheck = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="4.5" width="14" height="16.5" rx="2" />

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { fetchActiveAnnouncements } from '../../lib/announcements'
-import AnnouncementCarousel from '../../components/AnnouncementCarousel'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
 import './EmployeePages.css'
@@ -21,7 +19,6 @@ function EmployeeDashboard() {
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
     const [todaySchedules, setTodaySchedules] = useState([])
-    const [announcements, setAnnouncements] = useState([])
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
 
@@ -136,8 +133,6 @@ function EmployeeDashboard() {
                 }))
             )
 
-            setAnnouncements(await fetchActiveAnnouncements('show_to_employees'))
-
         } catch (error) {
             console.error('EMPLOYEE DASHBOARD ERROR:', error)
             setErrorMessage(error.message || 'Failed to load employee dashboard.')
@@ -187,12 +182,6 @@ function EmployeeDashboard() {
                     {employee?.employee_number} · {employee?.position_title}
                 </p>
             </div>
-
-            {announcements.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                    <AnnouncementCarousel items={announcements} />
-                </div>
-            )}
 
             <div className="employee-info-grid" style={{ marginBottom: 24 }}>
                 {[
