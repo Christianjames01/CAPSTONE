@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify } from '../../lib/notify'
+import { IconX } from './icons'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -40,6 +41,7 @@ function NewRequest() {
     const [studentInfo, setStudentInfo] = useState(null)
     const [selectedRequirements, setSelectedRequirements] = useState([])
     const [loadingRequirements, setLoadingRequirements] = useState(false)
+    const [previewZoomed, setPreviewZoomed] = useState(false)
 
     useEffect(() => {
         loadDocuments()
@@ -54,6 +56,11 @@ function NewRequest() {
 
         loadRequirementsFor(selectedDocument)
     }, [selectedDocument])
+
+    useEffect(() => {
+        document.body.style.overflow = previewZoomed ? 'hidden' : ''
+        return () => { document.body.style.overflow = '' }
+    }, [previewZoomed])
 
     const loadRequirementsFor = async (documentTypeId) => {
         try {
@@ -515,10 +522,55 @@ function NewRequest() {
                         Select a document on the left to preview a sample of what it looks like.
                     </div>
                 ) : (
-                    <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} student={studentInfo} />
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setPreviewZoomed(true)}
+                            style={{ display: 'block', width: '100%', cursor: 'zoom-in' }}
+                            aria-label="Enlarge sample document preview"
+                        >
+                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} student={studentInfo} />
+                        </button>
+                        <p style={{ fontSize: 11.5, color: 'var(--slate)', marginTop: 8, textAlign: 'center' }}>
+                            Tap to enlarge
+                        </p>
+                    </>
                 )}
             </div>
             </div>
+
+            {previewZoomed && selectedDocumentDetails && (
+                <div
+                    onClick={() => setPreviewZoomed(false)}
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(10, 15, 30, 0.7)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 24, zIndex: 100,
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '100%', maxWidth: 720, position: 'relative' }}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setPreviewZoomed(false)}
+                            aria-label="Close preview"
+                            style={{
+                                position: 'absolute', top: -40, right: 0,
+                                width: 32, height: 32, display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', color: 'var(--white)',
+                            }}
+                        >
+                            <IconX />
+                        </button>
+
+                        <div style={{ background: 'var(--white)', borderRadius: 10, padding: 20 }}>
+                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} student={studentInfo} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
