@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
+import GoogleIcon from './GoogleIcon'
 
 function Register() {
     // Account
@@ -34,6 +35,7 @@ function Register() {
     const [message, setMessage] = useState('')
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
+    const [googleLoading, setGoogleLoading] = useState(false)
 
     // Strips non-digits and caps PH mobile numbers at 11 digits (09XXXXXXXXX)
     const handlePhoneInput = (setter) => (e) => {
@@ -81,6 +83,30 @@ function Register() {
         }
 
         setPrograms(data || [])
+    }
+
+    const handleGoogleRegister = async () => {
+        setGoogleLoading(true)
+        setMessage('')
+
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                    hd: 'hcdc.edu.ph',
+                    prompt: 'select_account',
+                },
+            },
+        })
+
+        if (error) {
+            setStatus('error')
+            setMessage(error.message)
+            setGoogleLoading(false)
+        }
+        // On success, the browser is redirected to Google, so there's
+        // nothing further to do here.
     }
 
     const handleRegister = async (e) => {
@@ -177,7 +203,7 @@ function Register() {
                             className="form-input"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com"
+                            placeholder="juan.delacruz@hcdc.edu.ph"
                             required
                         />
                     </div>
@@ -414,6 +440,18 @@ function Register() {
                 </button>
 
             </form>
+
+            <div className="auth-divider">or</div>
+
+            <button
+                type="button"
+                className="auth-google-button"
+                onClick={handleGoogleRegister}
+                disabled={googleLoading}
+            >
+                <GoogleIcon />
+                {googleLoading ? 'Redirecting...' : 'Continue with your HCDC Google account'}
+            </button>
         </AuthLayout>
     )
 }
