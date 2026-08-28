@@ -1,15 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import ProtectedRoute from './components/ProtectedRoute'
+import HomeRoute from './components/HomeRoute'
 
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import EmployeeRegister from './pages/auth/EmployeeRegister'
 import AuthCallback from './pages/auth/AuthCallback'
 import CompleteProfile from './pages/auth/CompleteProfile'
-
-// LANDING PAGE
-import LandingPage from './pages/LandingPage/LandingPage'
 
 // STUDENT
 import StudentLayout from './pages/student/StudentLayout'
@@ -73,7 +71,7 @@ function App() {
 
         <Route
           path="/"
-          element={<LandingPage />}
+          element={<HomeRoute />}
         />
 
         {/* ========================= */}
