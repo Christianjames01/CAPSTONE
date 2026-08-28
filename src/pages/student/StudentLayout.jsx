@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { registerPushNotifications } from '../../lib/pushNotifications'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import {
     IconHome,
@@ -41,10 +40,6 @@ function StudentLayout() {
         loadProfile()
         loadUnreadCount()
         loadUnreadMessageCount()
-
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user) registerPushNotifications(user.id)
-        })
 
         window.addEventListener('profile-updated', loadProfile)
         return () => window.removeEventListener('profile-updated', loadProfile)

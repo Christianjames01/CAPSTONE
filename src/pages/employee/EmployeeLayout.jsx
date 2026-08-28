@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { registerPushNotifications } from '../../lib/pushNotifications'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory } from './icons'
@@ -31,10 +30,6 @@ function EmployeeLayout() {
     useEffect(() => {
         loadProfile()
         loadBadgeCounts()
-
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user) registerPushNotifications(user.id)
-        })
     }, [])
 
     async function loadProfile() {
