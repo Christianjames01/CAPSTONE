@@ -511,7 +511,6 @@ h2 span {
 .credential-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding-top: 14px;
     border-top: 1px solid var(--line);
 }
@@ -525,31 +524,6 @@ h2 span {
 .credential-footer strong {
     font-size: 13px;
     color: var(--blue);
-}
-
-.qr-placeholder {
-    width: 40px;
-    height: 40px;
-    background: var(--ink);
-    border-radius: 4px;
-    padding: 4px;
-}
-
-.qr-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1.5px;
-    width: 100%;
-    height: 100%;
-}
-
-.qr-grid span {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 0.5px;
-}
-
-.qr-grid span.on {
-    background: var(--red-light);
 }
 
 /* ===================================================
@@ -804,9 +778,11 @@ h2 span {
 
 .security-features {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 26px;
+    grid-template-columns: 1fr;
+    gap: 22px;
     text-align: left;
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 .security-feature {

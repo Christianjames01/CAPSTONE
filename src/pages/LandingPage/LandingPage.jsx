@@ -172,7 +172,7 @@ const LandingPage = () => {
                     <nav className="desktop-nav">
                         <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection("services"); }}>Services</a>
                         <a href="#documents" onClick={(e) => { e.preventDefault(); scrollToSection("documents"); }}>Documents</a>
-                        <a href="#process" onClick={(e) => { e.preventDefault(); scrollToSection("process"); }}>Verification</a>
+                        <a href="#process" onClick={(e) => { e.preventDefault(); scrollToSection("process"); }}>How it works</a>
                         <a href="#security" onClick={(e) => { e.preventDefault(); scrollToSection("security"); }}>Security</a>
                         <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection("about"); }}>About</a>
                     </nav>
@@ -210,9 +210,8 @@ const LandingPage = () => {
                             <p className="hero-description">
                                 Request transcripts, certificates, and diplomas from
                                 Holy Cross of Davao College without a single trip to the
-                                counter. Every credential CertiChain issues carries a
-                                verification code, so anyone can confirm it's authentic
-                                in seconds.
+                                counter. Submit, pay for, and track every request from
+                                one account.
                             </p>
 
                             <div className="hero-buttons">
@@ -221,7 +220,7 @@ const LandingPage = () => {
                                     <span>→</span>
                                 </button>
                                 <button className="secondary-button" onClick={() => scrollToSection("process")}>
-                                    See how verification works
+                                    See how it works
                                 </button>
                             </div>
 
@@ -234,11 +233,6 @@ const LandingPage = () => {
                                 <div className="trust-item">
                                     <strong>Verified</strong>
                                     <span>Registrar-checked records</span>
-                                </div>
-                                <div className="trust-divider" />
-                                <div className="trust-item">
-                                    <strong>&lt; 1 min</strong>
-                                    <span>To verify a document</span>
                                 </div>
                             </div>
 
@@ -283,13 +277,6 @@ const LandingPage = () => {
                                         <div>
                                             <small>Credential status</small>
                                             <strong>Verified by registrar</strong>
-                                        </div>
-                                        <div className="qr-placeholder">
-                                            <div className="qr-grid">
-                                                {Array.from({ length: 25 }).map((_, i) => (
-                                                    <span key={i} className={i % 3 === 0 ? "on" : ""} />
-                                                ))}
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -480,14 +467,7 @@ const LandingPage = () => {
                                         <div className="feature-icon"><IconCheck /></div>
                                         <div>
                                             <h3>Document integrity</h3>
-                                            <p>Verification codes help confirm document integrity and detect unauthorized changes.</p>
-                                        </div>
-                                    </div>
-                                    <div className="security-feature">
-                                        <div className="feature-icon"><IconCheck /></div>
-                                        <div>
-                                            <h3>QR verification</h3>
-                                            <p>Credentials contain QR-based verification information for easier validation.</p>
+                                            <p>Digital credentials are tied directly to the registrar's records and can't be altered after issuance.</p>
                                         </div>
                                     </div>
                                     <div className="security-feature">
