@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify } from '../../lib/notify'
@@ -27,6 +27,7 @@ const SAMPLE_LAYOUT_BY_CODE = {
 
 function NewRequest() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
 
     const [documents, setDocuments] = useState([])
     const [search, setSearch] = useState('')
@@ -136,6 +137,12 @@ function NewRequest() {
             setError('Failed to load documents: ' + error.message)
         } else {
             setDocuments(data || [])
+
+            // Pre-select a document type when arriving via a "Request again" link.
+            const requestedTypeId = searchParams.get('document')
+            if (requestedTypeId && (data || []).some((d) => d.document_type_id === requestedTypeId)) {
+                setSelectedDocument(requestedTypeId)
+            }
         }
 
         setLoadingDocuments(false)

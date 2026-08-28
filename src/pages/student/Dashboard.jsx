@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconNewspaper, IconMessage } from './icons'
+import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconNewspaper, IconMessage, IconHelp } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -17,6 +18,25 @@ const ACTION_NEEDED = {
     payment_pending: { label: 'Payment needed', cta: 'Upload receipt →', to: (id) => `/student/request/${id}/upload-receipt` },
     lacking_requirements: { label: 'Requirement needs fixing', cta: 'Submit requirements →', to: (id) => `/student/request/${id}/requirements` },
 }
+
+const STEPPER_STEPS = ['Submitted', 'Processing', 'Ready', 'Completed']
+
+// Which stepper index (0-3) a request's status maps to, or null for
+// rejected/cancelled requests where the linear stepper doesn't apply.
+const stepperStage = (status) => {
+    if (status === 'rejected' || status === 'cancelled') return null
+    if (status === 'completed') return 3
+    if (status === 'ready_for_claiming') return 2
+    if (status === 'processing' || status === 'lacking_requirements') return 1
+    return 0
+}
+
+const FAQ_ITEMS = [
+    ['What do I need to request a document?', "Requirements vary per document type. Once you pick one on the request form, it'll list exactly what's needed for that credential."],
+    ['How do I pay?', "Submit your request first, then upload your official receipt on the request's page. Registrar staff verify it before processing begins."],
+    ['How long does processing take?', "It varies by document type and current volume. You'll get a notification at every step, so there's no need to keep checking back."],
+    ["How will I know when it's ready?", 'You\'ll get a notification and it\'ll show as "Ready for Claiming" on your dashboard and My Requests.'],
+]
 
 function Dashboard() {
     const [name, setName] = useState('')
@@ -67,7 +87,7 @@ function Dashboard() {
 
             const { data: requestRows } = await supabase
                 .from('document_requests')
-                .select('request_id, request_number, document_type_id, status, requested_at')
+                .select('request_id, request_number, document_type_id, status, requested_at, total_amount')
                 .eq('student_id', student.student_id)
                 .order('requested_at', { ascending: false })
 
@@ -179,11 +199,37 @@ function Dashboard() {
         return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
     }
 
+    const openFaq = () => {
+        const items = FAQ_ITEMS.map(
+            ([q, a]) => `<li style="margin-bottom:12px;"><strong>${q}</strong><br/><span style="color:#57616F;font-size:13.5px;">${a}</span></li>`
+        ).join('')
+
+        Swal.fire({
+            title: 'Frequently Asked Questions',
+            html: `<ul style="text-align:left;list-style:none;padding:0;margin:0;">${items}</ul>`,
+            confirmButtonText: 'Got it',
+            confirmButtonColor: '#123B78',
+            width: 520,
+        })
+    }
+
     return (
         <div>
-            <div className="student-dashboard-header">
-                <h1>{!loading && name ? `Welcome back, ${name}` : 'Welcome back'}</h1>
-                <p>Here's what you can do with your CertiChain account today.</p>
+            <div className="student-dashboard-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                <div>
+                    <h1>{!loading && name ? `Welcome back, ${name}` : 'Welcome back'}</h1>
+                    <p>Here's what you can do with your CertiChain account today.</p>
+                </div>
+
+                <button
+                    onClick={openFaq}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        fontSize: 13, fontWeight: 600, color: 'var(--blue)',
+                    }}
+                >
+                    <IconHelp /> FAQs
+                </button>
             </div>
 
             {!loading && (
@@ -308,7 +354,12 @@ function Dashboard() {
                                         <div className="student-list-card-header">
                                             <div>
                                                 <h3>{request.documentName}</h3>
-                                                <p>Request {request.request_number} · {action.label}</p>
+                                                <p>
+                                                    Request {request.request_number} · {action.label}
+                                                    {request.status === 'payment_pending' && request.total_amount
+                                                        ? ` · ₱${Number(request.total_amount).toFixed(2)} due`
+                                                        : ''}
+                                                </p>
                                             </div>
                                             <span className={`student-status-pill status-${request.status}`}>
                                                 {request.status.replace(/_/g, ' ')}
@@ -330,10 +381,19 @@ function Dashboard() {
                     {totalCount === 0 && (
                         <div className="student-notice tone-info" style={{ marginTop: 0, marginBottom: 24 }}>
                             <strong>No requests yet</strong>
-                            <p>
+                            <p style={{ marginBottom: 12 }}>
                                 Once you request your first document, you'll be able to track its
                                 status right here — from payment to claiming.
                             </p>
+                            <button
+                                onClick={() => navigate('/student/new-request')}
+                                style={{
+                                    background: 'var(--blue)', color: 'var(--white)', fontWeight: 600,
+                                    fontSize: 13.5, padding: '10px 18px', borderRadius: 6,
+                                }}
+                            >
+                                Request your first document →
+                            </button>
                         </div>
                     )}
 
@@ -412,26 +472,53 @@ function Dashboard() {
                         </button>
                     </div>
 
-                    {recentRequests.map((request) => (
-                        <div className="student-list-card" key={request.request_id}>
-                            <div className="student-list-card-header">
-                                <div>
-                                    <h3>{request.documentName}</h3>
-                                    <p>Request {request.request_number}</p>
-                                </div>
-                                <span className={`student-status-pill status-${request.status}`}>
-                                    {request.status.replace(/_/g, ' ')}
-                                </span>
-                            </div>
+                    {recentRequests.map((request) => {
+                        const stage = stepperStage(request.status)
 
-                            <button
-                                className="student-link-button"
-                                onClick={() => navigate(`/student/request/${request.request_id}`)}
-                            >
-                                View details →
-                            </button>
-                        </div>
-                    ))}
+                        return (
+                            <div className="student-list-card" key={request.request_id}>
+                                <div className="student-list-card-header">
+                                    <div>
+                                        <h3>{request.documentName}</h3>
+                                        <p>Request {request.request_number}</p>
+                                    </div>
+                                    <span className={`student-status-pill status-${request.status}`}>
+                                        {request.status.replace(/_/g, ' ')}
+                                    </span>
+                                </div>
+
+                                {stage !== null && (
+                                    <div className="request-stepper">
+                                        {STEPPER_STEPS.map((label, i) => (
+                                            <div className={`request-stepper-step${i <= stage ? ' active' : ''}`} key={label}>
+                                                <div className="request-stepper-row">
+                                                    {i > 0 && <div className={`request-stepper-line${i <= stage ? ' active' : ''}`} />}
+                                                    <div className="request-stepper-dot" />
+                                                </div>
+                                                <span className="request-stepper-label">{label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div style={{ display: 'flex', gap: 16 }}>
+                                    <button
+                                        className="student-link-button"
+                                        onClick={() => navigate(`/student/request/${request.request_id}`)}
+                                    >
+                                        View details →
+                                    </button>
+
+                                    <button
+                                        className="student-link-button"
+                                        onClick={() => navigate(`/student/new-request?document=${request.document_type_id}`)}
+                                    >
+                                        Request again →
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    })}
                 </>
             )}
         </div>

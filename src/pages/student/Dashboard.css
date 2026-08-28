@@ -124,6 +124,62 @@
     color: var(--blue);
 }
 
+.request-stepper {
+    display: flex;
+    margin: 4px 0 14px;
+}
+
+.request-stepper-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.request-stepper-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.request-stepper-line {
+    flex: 1;
+    height: 2px;
+    background: var(--line);
+}
+
+.request-stepper-line.active {
+    background: var(--blue);
+}
+
+.request-stepper-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--line);
+    flex-shrink: 0;
+}
+
+.request-stepper-step:first-child .request-stepper-row {
+    justify-content: flex-start;
+}
+
+.request-stepper-step.active .request-stepper-dot {
+    background: var(--blue);
+}
+
+.request-stepper-label {
+    font-size: 10.5px;
+    color: var(--slate);
+    margin-top: 5px;
+    white-space: nowrap;
+}
+
+.request-stepper-step.active .request-stepper-label {
+    color: var(--ink);
+    font-weight: 600;
+}
+
 @media (max-width: 620px) {
     .student-dashboard-grid {
         grid-template-columns: 1fr;
