@@ -33,15 +33,6 @@ const DOCUMENTS = [
     { name: "Certificate of Grade for Cross-Enrollee", code: "CGCE" },
 ];
 
-const VERIFICATION_LOG = [
-    { code: "TOR", status: "Verified" },
-    { code: "COE", status: "Verified" },
-    { code: "DIP", status: "Verified" },
-    { code: "COR", status: "Verified" },
-    { code: "CAS", status: "Verified" },
-    { code: "CGS", status: "Verified" },
-];
-
 /* =========================
     ICONS (custom line set)
 ========================= */
@@ -94,14 +85,6 @@ const IconGear = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3.2" />
         <path d="M12 3.5v2.3M12 18.2v2.3M20.5 12h-2.3M5.8 12H3.5M17.8 6.2l-1.6 1.6M7.8 16.2l-1.6 1.6M17.8 17.8l-1.6-1.6M7.8 7.8 6.2 6.2" />
-    </svg>
-);
-
-const IconLock = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5.5" y="10.5" width="13" height="9" rx="1.8" />
-        <path d="M8.3 10.5V7.6a3.7 3.7 0 0 1 7.4 0v2.9" />
-        <path d="M12 14v2.5" />
     </svg>
 );
 
@@ -475,21 +458,6 @@ const LandingPage = () => {
                 <section id="security" className="security-section">
                     <div className="section-container">
                         <div className="security-layout">
-
-                            <div className="security-visual">
-                                <div className="ledger">
-                                    {VERIFICATION_LOG.map((entry, i) => (
-                                        <div className="ledger-block" key={`${entry.code}-${i}`}>
-                                            <span className="ledger-dot"><IconCheck /></span>
-                                            <code>{entry.code}</code>
-                                            <em>{entry.status}</em>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="security-circle">
-                                    <IconLock />
-                                </div>
-                            </div>
 
                             <div className="security-content">
                                 <span className="section-label">Security &amp; Verification</span>
