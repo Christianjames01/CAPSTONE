@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import AuthLayout from './AuthLayout'
 
 function CompleteProfile() {
@@ -66,6 +67,10 @@ function CompleteProfile() {
             .maybeSingle()
 
         if (existingStudent) {
+            const { hadExistingSession } = await establishStudentSession(user.id)
+            if (hadExistingSession) {
+                await notifyPreviousDeviceSignedOut()
+            }
             navigate('/student/dashboard')
             return
         }
@@ -157,6 +162,7 @@ function CompleteProfile() {
             return
         }
 
+        await establishStudentSession(user.id)
         navigate('/student/dashboard')
     }
 

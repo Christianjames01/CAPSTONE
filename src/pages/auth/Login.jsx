@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
+import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 
@@ -66,6 +67,13 @@ function Login() {
         const dashboardPath = dashboardPathForRole(profile.role)
 
         if (dashboardPath) {
+            if (profile.role === 'student') {
+                const { hadExistingSession } = await establishStudentSession(data.user.id)
+                if (hadExistingSession) {
+                    await notifyPreviousDeviceSignedOut()
+                }
+            }
+
             navigate(dashboardPath)
         } else {
             setMessage('Unknown account role.')

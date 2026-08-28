@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { watchStudentSession } from '../../lib/singleSession'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import {
     IconHome,
@@ -55,6 +57,29 @@ function StudentLayout() {
 
         window.addEventListener('profile-updated', loadProfile)
         return () => window.removeEventListener('profile-updated', loadProfile)
+    }, [])
+
+    // Students are limited to one active device -- if another login stamps
+    // a new session id on this account, sign this tab out immediately.
+    useEffect(() => {
+        let unwatch = () => {}
+
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (!user) return
+
+            unwatch = watchStudentSession(user.id, async () => {
+                await Swal.fire({
+                    title: 'Signed out',
+                    text: 'Your account was signed in on another device, so you\'ve been signed out here.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#123B78',
+                })
+                await supabase.auth.signOut()
+                navigate('/login')
+            })
+        })
+
+        return () => unwatch()
     }, [])
 
     async function loadProfile() {

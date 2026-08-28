@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
+import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import AuthLayout from './AuthLayout'
 
 const ALLOWED_EMAIL_DOMAIN = '@hcdc.edu.ph'
@@ -75,6 +76,13 @@ function AuthCallback() {
         const dashboardPath = dashboardPathForRole(profile.role)
 
         if (dashboardPath) {
+            if (profile.role === 'student') {
+                const { hadExistingSession } = await establishStudentSession(user.id)
+                if (hadExistingSession) {
+                    await notifyPreviousDeviceSignedOut()
+                }
+            }
+
             navigate(dashboardPath)
         } else {
             navigate('/login', { state: { message: 'Unknown account role.' } })
