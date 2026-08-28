@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { notifyError, notifyWarning } from '../../lib/notify'
 import './AdminPages.css'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
@@ -105,7 +106,7 @@ function Assignments() {
         const employeeId = assigning[request.request_id]
 
         if (!employeeId) {
-            alert('Please select an employee first.')
+            notifyWarning('Please select an employee first.')
             return
         }
 
@@ -142,7 +143,7 @@ function Assignments() {
 
         } catch (err) {
             console.error('ASSIGN REQUEST ERROR:', err)
-            alert(err.message || 'Failed to assign request.')
+            notifyError(err.message || 'Failed to assign request.')
         }
     }
 

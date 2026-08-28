@@ -110,7 +110,7 @@ function StudentLayout() {
             <aside className="student-sidebar">
 
                 <div className="student-sidebar-top">
-                    <Link to="/" className="student-sidebar-brand">
+                    <Link to="/student/dashboard" className="student-sidebar-brand">
                         <div className="student-sidebar-seal">
                             <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         </div>

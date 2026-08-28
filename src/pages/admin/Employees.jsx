@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
+import { notifyError, confirmModal } from '../../lib/notify'
 import './AdminPages.css'
+
+const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
 const BLANK_FORM = {
     firstName: '',
@@ -68,6 +71,21 @@ function Employees() {
             const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
             const collegeNameById = Object.fromEntries((colleges || []).map((c) => [c.college_id, c.college_name]))
 
+            const employeeIds = data.map((e) => e.employee_id)
+
+            const { data: openRequests } = employeeIds.length
+                ? await supabase
+                    .from('document_requests')
+                    .select('assigned_employee_id')
+                    .in('assigned_employee_id', employeeIds)
+                    .in('status', OPEN_STATUSES)
+                : { data: [] }
+
+            const openCountByEmployee = {}
+            for (const r of openRequests || []) {
+                openCountByEmployee[r.assigned_employee_id] = (openCountByEmployee[r.assigned_employee_id] || 0) + 1
+            }
+
             setEmployees(
                 data.map((e) => {
                     const profile = profileByUserId[e.user_id]
@@ -77,6 +95,7 @@ function Employees() {
                         name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
                         email: profile?.email || '',
                         collegeName: collegeNameById[e.assigned_college_id] || 'Unassigned',
+                        openCount: openCountByEmployee[e.employee_id] || 0,
                     }
                 })
             )
@@ -205,7 +224,7 @@ function Employees() {
     }
 
     const removeEmployee = async (employee) => {
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             `Remove ${employee.name}'s employee record? This does not delete their login account, only their registrar staff profile and access.`
         )
         if (!confirmed) return
@@ -243,7 +262,7 @@ function Employees() {
 
         } catch (err) {
             console.error('REMOVE EMPLOYEE ERROR:', err)
-            alert(err.message || 'Failed to remove employee.')
+            notifyError(err.message || 'Failed to remove employee.')
         } finally {
             setRemoving(null)
         }
@@ -252,7 +271,7 @@ function Employees() {
     const toggleStatus = async (employee) => {
         const nextStatus = employee.status === 'active' ? 'inactive' : 'active'
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             `${nextStatus === 'active' ? 'Activate' : 'Deactivate'} ${employee.name}?`
         )
         if (!confirmed) return
@@ -290,7 +309,7 @@ function Employees() {
 
         } catch (err) {
             console.error('TOGGLE STATUS ERROR:', err)
-            alert(err.message || 'Failed to update employee status.')
+            notifyError(err.message || 'Failed to update employee status.')
         } finally {
             setUpdating(null)
         }
@@ -329,7 +348,7 @@ function Employees() {
                         Creates a login account and an active employee profile immediately — no separate activation step needed.
                     </p>
 
-                    <form onSubmit={addEmployee} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
+                    <form onSubmit={addEmployee} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px 20px', maxWidth: 700 }}>
                         <div className="form-group">
                             <label className="form-label">First Name</label>
                             <input className="form-input" type="text" value={form.firstName} onChange={(e) => updateForm('firstName', e.target.value)} disabled={creating} />
@@ -395,10 +414,10 @@ function Employees() {
                             <input className="form-input" type="password" value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" disabled={creating} />
                         </div>
 
-                        {addError && <div className="admin-error-box">{addError}</div>}
-                        {addMessage && <div className="admin-success-box">{addMessage}</div>}
+                        {addError && <div className="admin-error-box" style={{ gridColumn: '1 / -1' }}>{addError}</div>}
+                        {addMessage && <div className="admin-success-box" style={{ gridColumn: '1 / -1' }}>{addMessage}</div>}
 
-                        <button className="auth-submit" style={{ width: 'auto', padding: '11px 20px' }} type="submit" disabled={creating}>
+                        <button className="auth-submit" style={{ gridColumn: '1 / -1', width: 'auto', padding: '11px 20px', justifySelf: 'start' }} type="submit" disabled={creating}>
                             {creating ? 'Creating...' : 'Create Employee Account'}
                         </button>
                     </form>
@@ -436,6 +455,10 @@ function Employees() {
                             <div className="admin-info-field">
                                 <span>Assigned College</span>
                                 <strong>{employee.collegeName}</strong>
+                            </div>
+                            <div className="admin-info-field">
+                                <span>Open Requests</span>
+                                <strong>{employee.openCount}</strong>
                             </div>
                         </div>
 

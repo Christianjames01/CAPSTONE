@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId } from '../../lib/notify'
+import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import './EmployeePages.css'
 
 function ClaimScheduleList() {
@@ -177,7 +177,7 @@ function ClaimScheduleList() {
     }
 
     const markAsClaimed = async (appointment) => {
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             `Mark ${appointment.requestNumber} as claimed? This releases the credential to the student.`
         )
 
@@ -236,7 +236,7 @@ function ClaimScheduleList() {
 
         } catch (err) {
             console.error('MARK AS CLAIMED ERROR:', err)
-            alert(err.message || 'Failed to mark as claimed.')
+            notifyError(err.message || 'Failed to mark as claimed.')
         } finally {
             setMarking(null)
         }

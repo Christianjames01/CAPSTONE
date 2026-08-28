@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId } from '../../lib/notify'
+import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import './AdminPages.css'
 
 const CHIPS = [
@@ -73,7 +73,7 @@ function OfficialReceipts() {
     }
 
     const verifyReceipt = async (receipt) => {
-        const confirmed = window.confirm(`Verify receipt ${receipt.receipt_number}?`)
+        const confirmed = await confirmModal(`Verify receipt ${receipt.receipt_number}?`)
         if (!confirmed) return
 
         try {
@@ -116,7 +116,7 @@ function OfficialReceipts() {
 
         } catch (err) {
             console.error('VERIFY RECEIPT ERROR:', err)
-            alert(err.message || 'Failed to verify receipt.')
+            notifyError(err.message || 'Failed to verify receipt.')
         } finally {
             setProcessing(null)
         }
@@ -166,7 +166,7 @@ function OfficialReceipts() {
 
         } catch (err) {
             console.error('REJECT RECEIPT ERROR:', err)
-            alert(err.message || 'Failed to reject receipt.')
+            notifyError(err.message || 'Failed to reject receipt.')
         } finally {
             setProcessing(null)
         }

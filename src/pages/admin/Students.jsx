@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../../lib/activityLog'
+import { notifyError, confirmModal } from '../../lib/notify'
 import './AdminPages.css'
 
 function Students() {
@@ -11,6 +13,8 @@ function Students() {
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
     const [error, setError] = useState('')
+    const [updating, setUpdating] = useState(null)
+    const [removing, setRemoving] = useState(null)
 
     useEffect(() => {
         loadAllStudents()
@@ -123,6 +127,130 @@ function Students() {
         }
     }
 
+    const applyToResults = (studentId, changes) => {
+        setResults((prev) => prev.map((s) => (s.student_id === studentId ? { ...s, ...changes } : s)))
+    }
+
+    const toggleStatus = async (student) => {
+        const nextStatus = student.status === 'active' ? 'inactive' : 'active'
+
+        const confirmed = await confirmModal(
+            `${nextStatus === 'active' ? 'Activate' : 'Deactivate'} ${student.fullName}? ${nextStatus === 'inactive' ? 'They will no longer be able to log in or submit requests.' : ''}`
+        )
+        if (!confirmed) return
+
+        try {
+            setUpdating(student.student_id)
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const { error: updateError } = await supabase
+                .from('students')
+                .update({ status: nextStatus })
+                .eq('student_id', student.student_id)
+
+            if (updateError) {
+                throw new Error('Failed to update student status: ' + updateError.message)
+            }
+
+            // profiles.status is what actually gates login (see Login.jsx / ProtectedRoute.jsx),
+            // so it has to be kept in sync with the student record's status.
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ status: nextStatus })
+                .eq('user_id', student.user_id)
+
+            if (profileError) {
+                throw new Error('Failed to update account status: ' + profileError.message)
+            }
+
+            await logActivity({
+                userId: user.id,
+                action: nextStatus === 'active' ? 'activate_student' : 'deactivate_student',
+                tableName: 'students',
+                recordId: student.student_id,
+                description: `${nextStatus === 'active' ? 'Activated' : 'Deactivated'} student ${student.fullName} (${student.student_number}).`,
+            })
+
+            applyToResults(student.student_id, { status: nextStatus })
+
+        } catch (err) {
+            console.error('TOGGLE STUDENT STATUS ERROR:', err)
+            notifyError(err.message || 'Failed to update student status.')
+        } finally {
+            setUpdating(null)
+        }
+    }
+
+    const removeStudent = async (student) => {
+        try {
+            setRemoving(student.student_id)
+
+            const { count: requestCount, error: countError } = await supabase
+                .from('document_requests')
+                .select('request_id', { count: 'exact', head: true })
+                .eq('student_id', student.student_id)
+
+            if (countError) {
+                throw new Error('Failed to check request history: ' + countError.message)
+            }
+
+            if (requestCount > 0) {
+                notifyError(
+                    `${student.fullName} has ${requestCount} document request${requestCount === 1 ? '' : 's'} on file, so their record can't be deleted. Deactivate the account instead.`,
+                    "Can't delete"
+                )
+                return
+            }
+
+            const confirmed = await confirmModal(
+                `Delete ${student.fullName}'s student record? This does not delete their login account, only their student profile. This cannot be undone.`
+            )
+            if (!confirmed) return
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const { error: deleteError } = await supabase
+                .from('students')
+                .delete()
+                .eq('student_id', student.student_id)
+
+            if (deleteError) {
+                throw new Error('Failed to delete student: ' + deleteError.message)
+            }
+
+            await logActivity({
+                userId: user.id,
+                action: 'remove_student',
+                tableName: 'students',
+                recordId: student.student_id,
+                description: `Deleted student record for ${student.fullName} (${student.student_number}).`,
+            })
+
+            setResults((prev) => prev.filter((s) => s.student_id !== student.student_id))
+
+        } catch (err) {
+            console.error('REMOVE STUDENT ERROR:', err)
+            notifyError(err.message || 'Failed to delete student.')
+        } finally {
+            setRemoving(null)
+        }
+    }
+
     return (
         <div>
             <div className="admin-page-header">
@@ -177,9 +305,31 @@ function Students() {
                             </div>
                         </div>
 
-                        <button className="admin-link-button" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
-                            View full record →
-                        </button>
+                        <div style={{ display: 'flex', gap: 16 }}>
+                            <button className="admin-link-button" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                                View full record →
+                            </button>
+
+                            <button
+                                className="admin-link-button"
+                                style={{ color: student.status === 'active' ? 'var(--red)' : 'var(--blue)' }}
+                                onClick={() => toggleStatus(student)}
+                                disabled={updating === student.student_id}
+                            >
+                                {updating === student.student_id
+                                    ? 'Updating...'
+                                    : student.status === 'active' ? 'Deactivate' : 'Activate'}
+                            </button>
+
+                            <button
+                                className="admin-link-button"
+                                style={{ color: 'var(--red)' }}
+                                onClick={() => removeStudent(student)}
+                                disabled={removing === student.student_id}
+                            >
+                                {removing === student.student_id ? 'Checking...' : 'Delete'}
+                            </button>
+                        </div>
                     </div>
                 ))
             )}

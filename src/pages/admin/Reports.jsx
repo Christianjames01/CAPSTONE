@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { exportToExcel } from '../../lib/excelExport'
+import { notifyError, notifyWarning } from '../../lib/notify'
 import './AdminPages.css'
 
 function Reports() {
@@ -219,7 +220,7 @@ function Reports() {
 
         } catch (err) {
             console.error('EXPORT ERROR:', err)
-            alert(err.message || 'Failed to export requests.')
+            notifyError(err.message || 'Failed to export requests.')
         } finally {
             setExporting(false)
         }
@@ -233,7 +234,7 @@ function Reports() {
             const completedRows = allRows.filter((r) => r.rawStatus === 'completed')
 
             if (completedRows.length === 0) {
-                alert('There are no completed requests yet.')
+                notifyWarning('There are no completed requests yet.')
                 return
             }
 
@@ -263,7 +264,7 @@ function Reports() {
 
         } catch (err) {
             console.error('EXPORT COMPLETED ERROR:', err)
-            alert(err.message || 'Failed to export completed requests.')
+            notifyError(err.message || 'Failed to export completed requests.')
         } finally {
             setExporting(false)
         }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId } from '../../lib/notify'
+import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import './EmployeePages.css'
 
 function EmployeeRequestDetails() {
@@ -371,20 +371,20 @@ function EmployeeRequestDetails() {
 
     const verifyPayment = async () => {
         if (!receipt) {
-            alert(
+            notifyWarning(
                 'There is no official receipt to verify.'
             )
             return
         }
 
         if (receipt.status !== 'uploaded') {
-            alert(
+            notifyWarning(
                 'This receipt has already been processed.'
             )
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             'Are you sure you want to verify this payment?'
         )
 
@@ -467,7 +467,7 @@ function EmployeeRequestDetails() {
                 relatedRequestId: requestId,
             })
 
-            alert(
+            notifySuccess(
                 'Payment verified successfully.'
             )
 
@@ -479,7 +479,7 @@ function EmployeeRequestDetails() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to verify payment.'
             )
@@ -494,20 +494,20 @@ function EmployeeRequestDetails() {
 
     const rejectPayment = async () => {
         if (!receipt) {
-            alert(
+            notifyWarning(
                 'There is no official receipt to reject.'
             )
             return
         }
 
         if (!rejectionReason.trim()) {
-            alert(
+            notifyWarning(
                 'Please enter a rejection reason.'
             )
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             'Are you sure you want to reject this payment?'
         )
 
@@ -594,7 +594,7 @@ function EmployeeRequestDetails() {
                 relatedRequestId: requestId,
             })
 
-            alert(
+            notifySuccess(
                 'Payment rejected successfully.'
             )
 
@@ -609,7 +609,7 @@ function EmployeeRequestDetails() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to reject payment.'
             )
@@ -665,13 +665,13 @@ function EmployeeRequestDetails() {
         if (
             requirement.status !== 'uploaded'
         ) {
-            alert(
+            notifyWarning(
                 'Only uploaded requirements can be approved.'
             )
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             `Approve "${requirement.document_requirements?.requirement_name || 'this requirement'}"?`
         )
 
@@ -721,7 +721,7 @@ function EmployeeRequestDetails() {
                 description: `Approved "${requirement.document_requirements?.requirement_name || 'requirement'}" for request ${request?.request_number || requestId}.`,
             })
 
-            alert(
+            notifySuccess(
                 'Requirement approved.'
             )
 
@@ -733,7 +733,7 @@ function EmployeeRequestDetails() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to approve requirement.'
             )
@@ -752,7 +752,7 @@ function EmployeeRequestDetails() {
         }
 
         if (!rejectionReason.trim()) {
-            alert(
+            notifyWarning(
                 'Please enter a rejection reason.'
             )
             return
@@ -809,7 +809,7 @@ function EmployeeRequestDetails() {
                 relatedRequestId: requestId,
             })
 
-            alert(
+            notifySuccess(
                 'Requirement rejected.'
             )
 
@@ -825,7 +825,7 @@ function EmployeeRequestDetails() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to reject requirement.'
             )
@@ -903,7 +903,7 @@ function EmployeeRequestDetails() {
         if (
             request.status !== 'receipt_verified'
         ) {
-            alert(
+            notifyWarning(
                 'This request is not ready for document processing.'
             )
             return
@@ -915,7 +915,7 @@ function EmployeeRequestDetails() {
         if (
             !requirementState.hasRequirements
         ) {
-            alert(
+            notifyWarning(
                 'No required documents have been created for this request yet.'
             )
             return
@@ -925,18 +925,18 @@ function EmployeeRequestDetails() {
             !requirementState.allApproved
         ) {
             if (requirementState.rejected) {
-                alert(
+                notifyWarning(
                     'A required document has been rejected. The student must submit a new document before processing can start.'
                 )
             } else if (
                 requirementState.pending ||
                 requirementState.uploaded
             ) {
-                alert(
+                notifyWarning(
                     'Not all required documents have been approved yet.'
                 )
             } else {
-                alert(
+                notifyWarning(
                     'All required documents must be approved before processing.'
                 )
             }
@@ -944,7 +944,7 @@ function EmployeeRequestDetails() {
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             'All required documents are approved. Start document processing for this request?'
         )
 
@@ -1000,7 +1000,7 @@ function EmployeeRequestDetails() {
                 description: `Started document processing for request ${request?.request_number || requestId}.`,
             })
 
-            alert(
+            notifySuccess(
                 'Document processing has started.'
             )
 
@@ -1012,7 +1012,7 @@ function EmployeeRequestDetails() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to start document processing.'
             )
@@ -1031,13 +1031,13 @@ function EmployeeRequestDetails() {
         }
 
         if (request.status !== 'processing') {
-            alert(
+            notifyWarning(
                 'This request is not currently being processed.'
             )
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             'Have you verified the student record and prepared the requested academic document?'
         )
 
@@ -1142,7 +1142,7 @@ function EmployeeRequestDetails() {
                 relatedRequestId: requestId,
             })
 
-            alert(
+            notifySuccess(
                 `Digital credential generated successfully.\n\nCredential Number: ${credentialNumber}`
             )
 
@@ -1154,7 +1154,7 @@ function EmployeeRequestDetails() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to generate digital credential.'
             )
@@ -1172,7 +1172,7 @@ function EmployeeRequestDetails() {
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             `Change this request's status from "${request.status.replace(/_/g, ' ')}" to "${manualStatus.replace(/_/g, ' ')}"?`
         )
 
@@ -1219,12 +1219,12 @@ function EmployeeRequestDetails() {
             })
 
             setStatusReason('')
-            alert('Status updated.')
+            notifySuccess('Status updated.')
             await loadRequest()
 
         } catch (error) {
             console.error('CHANGE STATUS ERROR:', error)
-            alert(error.message || 'Failed to change status.')
+            notifyError(error.message || 'Failed to change status.')
         } finally {
             setChangingStatus(false)
         }

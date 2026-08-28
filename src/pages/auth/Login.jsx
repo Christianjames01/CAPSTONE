@@ -51,7 +51,9 @@ function Login() {
         if (profile.status !== 'active') {
             await supabase.auth.signOut()
 
-            setMessage('Your account is not active.')
+            setMessage(
+                'Your account has been deactivated. Please contact the Registrar\'s Office for assistance.'
+            )
             setLoading(false)
             return
         }

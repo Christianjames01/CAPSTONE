@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -168,7 +169,7 @@ function EmployeeDetails() {
 
     const addAssignment = async () => {
         if (!newCollegeId || !newProgramId) {
-            alert('Please select a college and program.')
+            notifyWarning('Please select a college and program.')
             return
         }
 
@@ -204,18 +205,25 @@ function EmployeeDetails() {
                 description: `Added a college/program assignment for employee ${employee.first_name} ${employee.last_name}.`,
             })
 
+            await notify({
+                userId: employee.user_id,
+                title: 'New assignment',
+                message: `You've been assigned to ${collegeName(newCollegeId)} · ${programName(newProgramId)}. Student requests from this program will now route to you.`,
+                notificationType: 'assignment',
+            })
+
             setNewCollegeId('')
             setNewProgramId('')
             await loadEmployee()
 
         } catch (err) {
             console.error('ADD ASSIGNMENT ERROR:', err)
-            alert(err.message || 'Failed to add assignment.')
+            notifyError(err.message || 'Failed to add assignment.')
         }
     }
 
     const removeAssignment = async (assignment) => {
-        const confirmed = window.confirm('Remove this assignment?')
+        const confirmed = await confirmModal('Remove this assignment?')
         if (!confirmed) return
 
         try {
@@ -249,7 +257,7 @@ function EmployeeDetails() {
 
         } catch (err) {
             console.error('REMOVE ASSIGNMENT ERROR:', err)
-            alert(err.message || 'Failed to remove assignment.')
+            notifyError(err.message || 'Failed to remove assignment.')
         }
     }
 

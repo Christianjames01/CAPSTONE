@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { notifyError, notifyWarning } from '../../lib/notify'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -63,7 +64,7 @@ function CollegesPrograms() {
 
     const saveCollege = async () => {
         if (!collegeForm.college_code.trim() || !collegeForm.college_name.trim()) {
-            alert('College code and name are required.')
+            notifyWarning('College code and name are required.')
             return
         }
 
@@ -92,7 +93,7 @@ function CollegesPrograms() {
 
         } catch (err) {
             console.error('SAVE COLLEGE ERROR:', err)
-            alert(err.message || 'Failed to save college.')
+            notifyError(err.message || 'Failed to save college.')
         } finally {
             setSaving(false)
         }
@@ -107,7 +108,7 @@ function CollegesPrograms() {
             await logAdmin('toggle_college_status', 'colleges', college.college_id, `Set college "${college.college_name}" to ${nextStatus}.`)
             await loadData()
         } catch (err) {
-            alert(err.message || 'Failed to update college status.')
+            notifyError(err.message || 'Failed to update college status.')
         }
     }
 
@@ -118,7 +119,7 @@ function CollegesPrograms() {
 
     const saveProgram = async () => {
         if (!programForm.college_id || !programForm.program_code.trim() || !programForm.program_name.trim()) {
-            alert('College, program code, and program name are required.')
+            notifyWarning('College, program code, and program name are required.')
             return
         }
 
@@ -149,7 +150,7 @@ function CollegesPrograms() {
 
         } catch (err) {
             console.error('SAVE PROGRAM ERROR:', err)
-            alert(err.message || 'Failed to save program.')
+            notifyError(err.message || 'Failed to save program.')
         } finally {
             setSaving(false)
         }
@@ -164,7 +165,7 @@ function CollegesPrograms() {
             await logAdmin('toggle_program_status', 'programs', program.program_id, `Set program "${program.program_name}" to ${nextStatus}.`)
             await loadData()
         } catch (err) {
-            alert(err.message || 'Failed to update program status.')
+            notifyError(err.message || 'Failed to update program status.')
         }
     }
 

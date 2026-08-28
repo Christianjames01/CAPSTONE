@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { exportToExcel } from '../../lib/excelExport'
 import { parseExcelFile } from '../../lib/excelImport'
+import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -117,7 +118,7 @@ function Documents() {
             const rows = await parseExcelFile(file)
 
             if (rows.length === 0) {
-                alert('That file has no data rows.')
+                notifyWarning('That file has no data rows.')
                 return
             }
 
@@ -193,7 +194,7 @@ function Documents() {
 
         } catch (err) {
             console.error('IMPORT ERROR:', err)
-            alert(err.message || 'Failed to import file.')
+            notifyError(err.message || 'Failed to import file.')
         } finally {
             setImporting(false)
         }
@@ -221,7 +222,7 @@ function Documents() {
 
     const saveDocument = async () => {
         if (!form.document_code.trim() || !form.document_name.trim()) {
-            alert('Document code and name are required.')
+            notifyWarning('Document code and name are required.')
             return
         }
 
@@ -266,7 +267,7 @@ function Documents() {
 
         } catch (err) {
             console.error('SAVE DOCUMENT ERROR:', err)
-            alert(err.message || 'Failed to save document type.')
+            notifyError(err.message || 'Failed to save document type.')
         } finally {
             setSaving(false)
         }
@@ -291,7 +292,7 @@ function Documents() {
 
         } catch (err) {
             console.error('TOGGLE AVAILABILITY ERROR:', err)
-            alert(err.message || 'Failed to update availability.')
+            notifyError(err.message || 'Failed to update availability.')
         }
     }
 
@@ -320,7 +321,7 @@ function Documents() {
 
     const addRequirement = async (documentTypeId) => {
         if (!newRequirement.requirement_name.trim()) {
-            alert('Requirement name is required.')
+            notifyWarning('Requirement name is required.')
             return
         }
 
@@ -351,12 +352,12 @@ function Documents() {
 
         } catch (err) {
             console.error('ADD REQUIREMENT ERROR:', err)
-            alert(err.message || 'Failed to add requirement.')
+            notifyError(err.message || 'Failed to add requirement.')
         }
     }
 
     const removeRequirement = async (requirement, documentTypeId) => {
-        const confirmed = window.confirm(`Remove requirement "${requirement.requirement_name}"?`)
+        const confirmed = await confirmModal(`Remove requirement "${requirement.requirement_name}"?`)
         if (!confirmed) return
 
         try {
@@ -378,7 +379,7 @@ function Documents() {
 
         } catch (err) {
             console.error('REMOVE REQUIREMENT ERROR:', err)
-            alert(err.message || 'Failed to remove requirement.')
+            notifyError(err.message || 'Failed to remove requirement.')
         }
     }
 

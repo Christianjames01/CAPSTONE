@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId } from '../../lib/notify'
+import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
 import './AdminPages.css'
 
 const STATUS_OPTIONS = [
@@ -133,11 +133,11 @@ function AdminRequestDetails() {
 
     const reassignEmployee = async () => {
         if (!reassignTo) {
-            alert('Please select an employee.')
+            notifyWarning('Please select an employee.')
             return
         }
 
-        const confirmed = window.confirm('Reassign this request to the selected employee?')
+        const confirmed = await confirmModal('Reassign this request to the selected employee?')
         if (!confirmed) return
 
         try {
@@ -171,12 +171,12 @@ function AdminRequestDetails() {
                 description: `Reassigned request ${request.request_number} to ${newEmployee?.name || reassignTo}.`,
             })
 
-            alert('Request reassigned.')
+            notifySuccess('Request reassigned.')
             await loadRequest()
 
         } catch (err) {
             console.error('REASSIGN ERROR:', err)
-            alert(err.message || 'Failed to reassign request.')
+            notifyError(err.message || 'Failed to reassign request.')
         } finally {
             setSaving(false)
         }
@@ -186,11 +186,11 @@ function AdminRequestDetails() {
         if (!newStatus) return
 
         if (newStatus === 'rejected' && !overrideReason.trim()) {
-            alert('Please enter a reason for this override.')
+            notifyWarning('Please enter a reason for this override.')
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             `Override this request's status to "${newStatus.replace(/_/g, ' ')}"? This bypasses the normal workflow.`
         )
         if (!confirmed) return
@@ -239,13 +239,13 @@ function AdminRequestDetails() {
                 relatedRequestId: requestId,
             })
 
-            alert('Status updated.')
+            notifySuccess('Status updated.')
             setOverrideReason('')
             await loadRequest()
 
         } catch (err) {
             console.error('OVERRIDE STATUS ERROR:', err)
-            alert(err.message || 'Failed to override status.')
+            notifyError(err.message || 'Failed to override status.')
         } finally {
             setSaving(false)
         }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { notifyError } from '../../lib/notify'
 import './EmployeePages.css'
 
 function Messages() {
@@ -150,7 +151,7 @@ function Messages() {
 
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
-            alert(err.message || 'Failed to send message.')
+            notifyError(err.message || 'Failed to send message.')
         } finally {
             setSending(false)
         }

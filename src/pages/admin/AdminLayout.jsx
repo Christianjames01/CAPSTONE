@@ -100,7 +100,7 @@ function AdminLayout() {
             <aside className="admin-sidebar">
 
                 <div className="admin-sidebar-top">
-                    <Link to="/" className="admin-sidebar-brand">
+                    <Link to="/admin/dashboard" className="admin-sidebar-brand">
                         <div className="admin-sidebar-seal">
                             <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         </div>

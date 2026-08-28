@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId } from '../../lib/notify'
+import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -322,21 +322,21 @@ function ClaimSchedule() {
 
     const validateForm = () => {
         if (!scheduledDate) {
-            alert(
+            notifyWarning(
                 'Please select a claiming date.'
             )
             return false
         }
 
         if (!scheduledTime) {
-            alert(
+            notifyWarning(
                 'Please select a claiming time.'
             )
             return false
         }
 
         if (!estimatedDuration) {
-            alert(
+            notifyWarning(
                 'Please enter the estimated duration.'
             )
             return false
@@ -345,7 +345,7 @@ function ClaimSchedule() {
         if (
             Number(estimatedDuration) <= 0
         ) {
-            alert(
+            notifyWarning(
                 'Estimated duration must be greater than 0 minutes.'
             )
             return false
@@ -357,7 +357,7 @@ function ClaimSchedule() {
         if (
             scheduledDate < today
         ) {
-            alert(
+            notifyWarning(
                 'The claiming date cannot be in the past.'
             )
             return false
@@ -379,7 +379,7 @@ function ClaimSchedule() {
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             existingSchedule
                 ? 'Are you sure you want to update this claiming schedule?'
                 : 'Are you sure you want to schedule this request for claiming?'
@@ -505,7 +505,7 @@ function ClaimSchedule() {
                     relatedRequestId: requestId,
                 })
 
-                alert(
+                notifySuccess(
                     'Claiming schedule updated successfully.'
                 )
 
@@ -625,7 +625,7 @@ function ClaimSchedule() {
                     relatedRequestId: requestId,
                 })
 
-                alert(
+                notifySuccess(
                     'Claiming schedule created successfully.'
                 )
             }
@@ -638,7 +638,7 @@ function ClaimSchedule() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to save claim schedule.'
             )
@@ -656,7 +656,7 @@ function ClaimSchedule() {
             return
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await confirmModal(
             'Are you sure you want to cancel this claiming schedule?'
         )
 
@@ -751,7 +751,7 @@ function ClaimSchedule() {
                 relatedRequestId: requestId,
             })
 
-            alert(
+            notifySuccess(
                 'Claiming schedule cancelled.'
             )
 
@@ -769,7 +769,7 @@ function ClaimSchedule() {
                 error
             )
 
-            alert(
+            notifyError(
                 error.message ||
                 'Failed to cancel schedule.'
             )

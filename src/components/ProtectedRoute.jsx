@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -30,6 +30,10 @@ function ProtectedRoute({ children, allowedRoles }) {
             return
         }
 
+        if (data.status !== 'active') {
+            await supabase.auth.signOut()
+        }
+
         setProfile(data)
         setLoading(false)
     }
@@ -43,7 +47,26 @@ function ProtectedRoute({ children, allowedRoles }) {
     }
 
     if (profile.status !== 'active') {
-        return <div>Your account is not active.</div>
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: 24,
+                gap: 12,
+            }}>
+                <h1 style={{ fontSize: 20, margin: 0 }}>Account deactivated</h1>
+                <p style={{ color: 'var(--slate)', maxWidth: 420, margin: 0 }}>
+                    Your account has been deactivated. Please contact the Registrar's Office for assistance.
+                </p>
+                <Link to="/login" style={{ marginTop: 8, color: 'var(--blue)', fontWeight: 600 }}>
+                    Back to log in
+                </Link>
+            </div>
+        )
     }
 
     if (

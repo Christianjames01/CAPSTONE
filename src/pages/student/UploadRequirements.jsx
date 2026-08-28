@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { notifyWarning, notifyError } from '../../lib/notify'
 import './StudentPages.css'
 
 function UploadRequirements() {
@@ -93,14 +94,14 @@ function UploadRequirements() {
         const file = files[requirement.request_requirement_id]
 
         if (!file) {
-            alert('Please choose a file first.')
+            notifyWarning('Please choose a file first.')
             return
         }
 
         const maxSize = (requirement.document_requirements?.max_file_size_mb || 5) * 1024 * 1024
 
         if (file.size > maxSize) {
-            alert(`File must not exceed ${requirement.document_requirements?.max_file_size_mb || 5} MB.`)
+            notifyWarning(`File must not exceed ${requirement.document_requirements?.max_file_size_mb || 5} MB.`)
             return
         }
 
@@ -143,7 +144,7 @@ function UploadRequirements() {
 
         } catch (err) {
             console.error('UPLOAD REQUIREMENT ERROR:', err)
-            alert(err.message || 'Failed to upload requirement.')
+            notifyError(err.message || 'Failed to upload requirement.')
         } finally {
             setUploadingId(null)
         }

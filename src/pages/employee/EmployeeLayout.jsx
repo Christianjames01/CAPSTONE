@@ -104,7 +104,7 @@ function EmployeeLayout() {
             <aside className="employee-sidebar">
 
                 <div className="employee-sidebar-top">
-                    <Link to="/" className="employee-sidebar-brand">
+                    <Link to="/employee/dashboard" className="employee-sidebar-brand">
                         <div className="employee-sidebar-seal">
                             <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         </div>
