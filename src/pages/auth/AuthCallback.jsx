@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
-import { establishStudentSession } from '../../lib/singleSession'
+import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import AuthLayout from './AuthLayout'
 
 const ALLOWED_EMAIL_DOMAIN = '@hcdc.edu.ph'
@@ -77,7 +77,10 @@ function AuthCallback() {
 
         if (dashboardPath) {
             if (profile.role === 'student') {
-                await establishStudentSession(user.id)
+                const { hadExistingSession } = await establishStudentSession(user.id)
+                if (hadExistingSession) {
+                    await notifyPreviousDeviceSignedOut()
+                }
             }
 
             navigate(dashboardPath)

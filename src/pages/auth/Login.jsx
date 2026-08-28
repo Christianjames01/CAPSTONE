@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
-import { establishStudentSession } from '../../lib/singleSession'
+import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 
@@ -68,7 +68,10 @@ function Login() {
 
         if (dashboardPath) {
             if (profile.role === 'student') {
-                await establishStudentSession(data.user.id)
+                const { hadExistingSession } = await establishStudentSession(data.user.id)
+                if (hadExistingSession) {
+                    await notifyPreviousDeviceSignedOut()
+                }
             }
 
             navigate(dashboardPath)
