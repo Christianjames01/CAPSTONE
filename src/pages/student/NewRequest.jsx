@@ -631,8 +631,14 @@ function SampleHeader({ title }) {
 const REGISTRAR_HEAD_NAME = 'Jen Yee'
 const REGISTRAR_HEAD_TITLE = 'Registrar Head'
 
-const truncate = (text, max) =>
-    text && text.length > max ? text.slice(0, max - 1) + '…' : text
+// Long values (e.g. a full program or college name) shouldn't be cut off --
+// past a natural-fit length, compress the glyph spacing so the whole string
+// still renders on one line within the column's width instead of
+// truncating it.
+const fitProps = (text, naturalFitChars, pxWidth) =>
+    text && text.length > naturalFitChars
+        ? { textLength: pxWidth, lengthAdjust: 'spacingAndGlyphs' }
+        : {}
 
 function SampleFooter() {
     return (
@@ -654,8 +660,11 @@ function StudentInfoRow({ y = 110, student }) {
     return (
         <g fontSize="10" fill="var(--slate)">
             <text x="24" y={y}>Student Name</text>
-            <text x="24" y={y + 16} fontSize="11.5" fill="var(--ink)" fontWeight="600">
-                {truncate(student?.fullName || 'Juan Dela Cruz', 34)}
+            <text
+                x="24" y={y + 16} fontSize="11.5" fill="var(--ink)" fontWeight="600"
+                {...fitProps(student?.fullName, 34, 260)}
+            >
+                {student?.fullName || 'Juan Dela Cruz'}
             </text>
 
             <text x="300" y={y}>Student Number</text>
@@ -664,13 +673,19 @@ function StudentInfoRow({ y = 110, student }) {
             </text>
 
             <text x="24" y={y + 36}>Program</text>
-            <text x="24" y={y + 52} fontSize="11.5" fill="var(--ink)" fontWeight="600">
-                {truncate(student?.programName || 'BS Information Technology', 34)}
+            <text
+                x="24" y={y + 52} fontSize="11.5" fill="var(--ink)" fontWeight="600"
+                {...fitProps(student?.programName, 34, 260)}
+            >
+                {student?.programName || 'BS Information Technology'}
             </text>
 
             <text x="300" y={y + 36}>College</text>
-            <text x="300" y={y + 52} fontSize="11.5" fill="var(--ink)" fontWeight="600">
-                {truncate(student?.collegeName || 'College of Computer Studies', 30)}
+            <text
+                x="300" y={y + 52} fontSize="11.5" fill="var(--ink)" fontWeight="600"
+                {...fitProps(student?.collegeName, 30, 220)}
+            >
+                {student?.collegeName || 'College of Computer Studies'}
             </text>
         </g>
     )
