@@ -415,16 +415,6 @@ function Dashboard() {
 
                 <button
                     className="student-dashboard-card"
-                    onClick={() => navigate('/student/my-requests')}
-                >
-                    <div className="student-dashboard-card-icon"><IconList /></div>
-                    <h3>My Requests</h3>
-                    <p>Track the status of documents you've already requested.</p>
-                    <span className="student-dashboard-card-link">View requests →</span>
-                </button>
-
-                <button
-                    className="student-dashboard-card"
                     onClick={() => navigate('/student/claim-schedule')}
                 >
                     <div className="student-dashboard-card-icon"><IconCalendar /></div>
