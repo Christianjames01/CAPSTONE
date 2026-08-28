@@ -526,7 +526,7 @@ const LandingPage = () => {
                             </div>
                             <p>
                                 A web-based registrar services system for academic
-                                certificate requesting and credential verification.
+                                certificate requesting.
                             </p>
                         </div>
 
