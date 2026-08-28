@@ -209,6 +209,41 @@ function NewRequest() {
                 throw new Error('Student record could not be found.')
             }
 
+            // 2.5. Enforce request limits: at most one active request per
+            // document type, and at most 2 new requests per calendar day.
+            const { data: existingRequests, error: existingError } = await supabase
+                .from('document_requests')
+                .select('document_type_id, status, requested_at')
+                .eq('student_id', student.student_id)
+
+            if (existingError) {
+                throw new Error('Failed to check your existing requests: ' + existingError.message)
+            }
+
+            const ACTIVE_STATUSES = [
+                'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
+                'processing', 'lacking_requirements', 'ready_for_claiming',
+            ]
+
+            const hasActiveForSameDocument = (existingRequests || []).some(
+                (r) => r.document_type_id === selectedDocument && ACTIVE_STATUSES.includes(r.status)
+            )
+
+            if (hasActiveForSameDocument) {
+                throw new Error(
+                    "You already have an active request for this document. Please wait for it to finish (or get claimed) before requesting another."
+                )
+            }
+
+            const today = new Date().toISOString().slice(0, 10)
+            const todayCount = (existingRequests || []).filter(
+                (r) => r.requested_at && r.requested_at.slice(0, 10) === today
+            ).length
+
+            if (todayCount >= 2) {
+                throw new Error("You've reached the limit of 2 document requests per day. Please try again tomorrow.")
+            }
+
             // 3. Find the registrar assigned to this college/program. If more
             // than one active employee is assigned to the same college/program,
             // this picks whichever currently has the fewest open requests.
