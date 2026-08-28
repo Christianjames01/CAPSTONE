@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { IconDocumentPlus, IconList, IconCalendar, IconBell } from './icons'
+import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconNewspaper } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -150,30 +150,65 @@ function Dashboard() {
 
             {!loading && (
                 <>
-                    <div className="student-info-grid" style={{ marginBottom: 24 }}>
-                        <button className="student-card" style={{ textAlign: 'left', margin: 0, cursor: 'pointer' }} onClick={() => navigate('/student/my-requests')}>
-                            <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>{totalCount}</span>
-                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Total Requests</span>
+                    <div className="student-stat-grid" style={{ marginBottom: 24 }}>
+                        <button
+                            className="student-stat-card"
+                            style={{ '--stat-color': 'var(--blue)', '--stat-tint': 'var(--blue-tint)' }}
+                            onClick={() => navigate('/student/my-requests')}
+                        >
+                            <div className="student-stat-icon"><IconList /></div>
+                            <div>
+                                <span className="student-stat-value">{totalCount}</span>
+                                <span className="student-stat-label">Total Requests</span>
+                            </div>
                         </button>
 
-                        <button className="student-card" style={{ textAlign: 'left', margin: 0, cursor: 'pointer' }} onClick={() => navigate('/student/my-requests')}>
-                            <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>{inProgressCount}</span>
-                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>In Progress</span>
+                        <button
+                            className="student-stat-card"
+                            style={{ '--stat-color': '#B45309', '--stat-tint': '#FEF3C7' }}
+                            onClick={() => navigate('/student/my-requests')}
+                        >
+                            <div className="student-stat-icon"><IconClock /></div>
+                            <div>
+                                <span className="student-stat-value">{inProgressCount}</span>
+                                <span className="student-stat-label">In Progress</span>
+                            </div>
                         </button>
 
-                        <button className="student-card" style={{ textAlign: 'left', margin: 0, cursor: 'pointer' }} onClick={() => navigate('/student/claim-schedule')}>
-                            <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>{readyCount}</span>
-                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Ready for Claiming</span>
+                        <button
+                            className="student-stat-card"
+                            style={{ '--stat-color': '#1e8a5f', '--stat-tint': 'rgba(30, 138, 95, 0.12)' }}
+                            onClick={() => navigate('/student/claim-schedule')}
+                        >
+                            <div className="student-stat-icon"><IconCheckCircle /></div>
+                            <div>
+                                <span className="student-stat-value">{readyCount}</span>
+                                <span className="student-stat-label">Ready for Claiming</span>
+                            </div>
                         </button>
 
-                        <button className="student-card" style={{ textAlign: 'left', margin: 0, cursor: 'pointer' }} onClick={() => navigate('/student/my-requests')}>
-                            <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>{completedCount}</span>
-                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Completed</span>
+                        <button
+                            className="student-stat-card"
+                            style={{ '--stat-color': 'var(--blue-dark)', '--stat-tint': 'var(--paper)' }}
+                            onClick={() => navigate('/student/my-requests')}
+                        >
+                            <div className="student-stat-icon"><IconDocumentPlus /></div>
+                            <div>
+                                <span className="student-stat-value">{completedCount}</span>
+                                <span className="student-stat-label">Completed</span>
+                            </div>
                         </button>
 
-                        <button className="student-card" style={{ textAlign: 'left', margin: 0, cursor: 'pointer' }} onClick={() => navigate('/student/notifications')}>
-                            <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>{unreadCount}</span>
-                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Unread Notifications</span>
+                        <button
+                            className="student-stat-card"
+                            style={{ '--stat-color': 'var(--red)', '--stat-tint': 'rgba(200, 16, 46, 0.08)' }}
+                            onClick={() => navigate('/student/notifications')}
+                        >
+                            <div className="student-stat-icon"><IconBell /></div>
+                            <div>
+                                <span className="student-stat-value">{unreadCount}</span>
+                                <span className="student-stat-label">Unread Notifications</span>
+                            </div>
                         </button>
                     </div>
 
@@ -191,7 +226,10 @@ function Dashboard() {
 
                     {actionableRequests.length > 0 && (
                         <div style={{ marginBottom: 24 }}>
-                            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Needs Your Attention</h2>
+                            <h2 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ color: '#B45309', display: 'inline-flex' }}><IconAlertCircle /></span>
+                                Needs Your Attention
+                            </h2>
 
                             {actionableRequests.map((request) => {
                                 const action = ACTION_NEEDED[request.status]
@@ -307,6 +345,37 @@ function Dashboard() {
                     ))}
                 </>
             )}
+
+            <div style={{ marginTop: 32 }}>
+                <h2 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: 'var(--blue)', display: 'inline-flex' }}><IconNewspaper /></span>
+                    HCDC News
+                </h2>
+
+                <div className="student-card" style={{ padding: 0, overflow: 'hidden' }}>
+                    <iframe
+                        title="HCDC Official Facebook Page"
+                        src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fhcdcofficial&tabs=timeline&width=500&height=560&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
+                        width="100%"
+                        height="560"
+                        style={{ border: 'none', display: 'block', maxWidth: '100%' }}
+                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                        allowFullScreen
+                    />
+                </div>
+
+                <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 10 }}>
+                    Feed provided by Facebook.{' '}
+                    <a
+                        href="https://www.facebook.com/hcdcofficial"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--blue)', fontWeight: 600 }}
+                    >
+                        Visit HCDC's Facebook page →
+                    </a>
+                </p>
+            </div>
         </div>
     )
 }

@@ -65,6 +65,36 @@ export const IconMessage = () => (
     </svg>
 )
 
+export const IconClock = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7.5V12l3.2 2" />
+    </svg>
+)
+
+export const IconCheckCircle = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="m8.3 12.3 2.4 2.4 5-5.4" />
+    </svg>
+)
+
+export const IconAlertCircle = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7.5v5.5" />
+        <path d="M12 16.3h.01" />
+    </svg>
+)
+
+export const IconNewspaper = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 5.5h13a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5.5Z" />
+        <path d="M19 8.5h1v9a1.5 1.5 0 0 1-1.5 1.5H6" />
+        <path d="M7 9h7M7 12.5h7M7 16h4" />
+    </svg>
+)
+
 export const IconHelp = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="8.5" />
