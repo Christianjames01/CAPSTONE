@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { notify, notifyError, confirmModal } from '../../lib/notify'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -80,6 +81,7 @@ function RequestDetails() {
     const [assignedEmployee, setAssignedEmployee] = useState(null)
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
+    const [cancelling, setCancelling] = useState(false)
 
     useEffect(() => {
         console.log('URL REQUEST ID:', requestId)
@@ -299,6 +301,54 @@ function RequestDetails() {
         }
     }
 
+    const cancelRequest = async () => {
+        const confirmed = await confirmModal(
+            'Cancel this request? This cannot be undone.',
+            { title: 'Cancel Request', confirmButtonText: 'Yes, cancel it', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setCancelling(true)
+
+            const { error: cancelError } = await supabase
+                .from('document_requests')
+                .update({ status: 'cancelled' })
+                .eq('request_id', request.request_id)
+                .eq('status', 'pending')
+
+            if (cancelError) {
+                throw new Error('Failed to cancel request: ' + cancelError.message)
+            }
+
+            if (request.assigned_employee_id) {
+                const { data: employeeRow } = await supabase
+                    .from('employees')
+                    .select('user_id')
+                    .eq('employee_id', request.assigned_employee_id)
+                    .single()
+
+                if (employeeRow) {
+                    await notify({
+                        userId: employeeRow.user_id,
+                        title: 'Request cancelled',
+                        message: `Request ${request.request_number} was cancelled by the student.`,
+                        notificationType: 'request_update',
+                        relatedRequestId: request.request_id,
+                    })
+                }
+            }
+
+            setRequest((prev) => ({ ...prev, status: 'cancelled' }))
+
+        } catch (err) {
+            console.error('CANCEL REQUEST ERROR:', err)
+            notifyError(err.message || 'Failed to cancel request.')
+        } finally {
+            setCancelling(false)
+        }
+    }
+
     // ==========================================
     // LOADING
     // ==========================================
@@ -470,6 +520,17 @@ function RequestDetails() {
                     <strong>{statusMeta(request.status).title}</strong>
                     <p>{statusMeta(request.status).message}</p>
                 </div>
+
+                {request.status === 'pending' && (
+                    <button
+                        className="student-link-button"
+                        style={{ color: 'var(--red)', marginTop: 12 }}
+                        onClick={cancelRequest}
+                        disabled={cancelling}
+                    >
+                        {cancelling ? 'Cancelling...' : 'Cancel this request'}
+                    </button>
+                )}
 
                 {/* CLAIM SCHEDULE */}
 
