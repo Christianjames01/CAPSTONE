@@ -361,8 +361,8 @@ function Profile() {
                     </button>
                 </div>
 
-                <div>
-                    <h2 style={{ fontSize: 18, marginBottom: 4 }}>{fullName}</h2>
+                <div style={{ minWidth: 0 }}>
+                    <h2 style={{ fontSize: 18, marginBottom: 4, overflowWrap: 'break-word' }}>{fullName}</h2>
                     <p>{student?.student_number}</p>
                     <button
                         type="button"
