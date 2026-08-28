@@ -250,6 +250,37 @@ function Dashboard() {
                         </button>
                     </div>
 
+                    <div style={{ marginBottom: 24 }}>
+                        <h2 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: 'var(--blue)', display: 'inline-flex' }}><IconNewspaper /></span>
+                            HCDC News
+                        </h2>
+
+                        <div className="student-card" style={{ padding: 0, overflow: 'hidden' }}>
+                            <iframe
+                                title="HCDC Official Facebook Page"
+                                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fhcdcofficial&tabs=timeline&width=500&height=560&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
+                                width="100%"
+                                height="560"
+                                style={{ border: 'none', display: 'block', maxWidth: '100%' }}
+                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                                allowFullScreen
+                            />
+                        </div>
+
+                        <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 10 }}>
+                            Feed provided by Facebook.{' '}
+                            <a
+                                href="https://www.facebook.com/hcdcofficial"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: 'var(--blue)', fontWeight: 600 }}
+                            >
+                                Visit HCDC's Facebook page →
+                            </a>
+                        </p>
+                    </div>
+
                     {upcomingClaim && (
                         <div className="student-notice tone-success" style={{ marginTop: 0, marginBottom: 24 }}>
                             <strong>Document ready to claim</strong>
@@ -342,16 +373,6 @@ function Dashboard() {
 
                 <button
                     className="student-dashboard-card"
-                    onClick={() => navigate('/student/new-request')}
-                >
-                    <div className="student-dashboard-card-icon"><IconDocumentPlus /></div>
-                    <h3>Request a Document</h3>
-                    <p>Submit a new request for a transcript, certificate, or diploma.</p>
-                    <span className="student-dashboard-card-link">Get started →</span>
-                </button>
-
-                <button
-                    className="student-dashboard-card"
                     onClick={() => navigate('/student/my-requests')}
                 >
                     <div className="student-dashboard-card-icon"><IconList /></div>
@@ -413,37 +434,6 @@ function Dashboard() {
                     ))}
                 </>
             )}
-
-            <div style={{ marginTop: 32 }}>
-                <h2 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: 'var(--blue)', display: 'inline-flex' }}><IconNewspaper /></span>
-                    HCDC News
-                </h2>
-
-                <div className="student-card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <iframe
-                        title="HCDC Official Facebook Page"
-                        src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fhcdcofficial&tabs=timeline&width=500&height=560&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
-                        width="100%"
-                        height="560"
-                        style={{ border: 'none', display: 'block', maxWidth: '100%' }}
-                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                        allowFullScreen
-                    />
-                </div>
-
-                <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 10 }}>
-                    Feed provided by Facebook.{' '}
-                    <a
-                        href="https://www.facebook.com/hcdcofficial"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: 'var(--blue)', fontWeight: 600 }}
-                    >
-                        Visit HCDC's Facebook page →
-                    </a>
-                </p>
-            </div>
         </div>
     )
 }
