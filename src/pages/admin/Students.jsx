@@ -62,7 +62,6 @@ function Students() {
                 .from('students')
                 .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
                 .order('student_number', { ascending: true })
-                .limit(200)
 
             if (studentsError) {
                 throw new Error('Failed to load students: ' + studentsError.message)
@@ -274,6 +273,79 @@ function Students() {
         }
     }
 
+    const groupedResults = (() => {
+        const groups = {}
+
+        for (const student of results) {
+            const key = student.program_id || 'unassigned'
+
+            if (!groups[key]) {
+                groups[key] = {
+                    programName: student.programName || 'No Program Assigned',
+                    collegeName: student.collegeName || '',
+                    students: [],
+                }
+            }
+
+            groups[key].students.push(student)
+        }
+
+        return Object.values(groups).sort((a, b) => a.programName.localeCompare(b.programName))
+    })()
+
+    const renderStudentCard = (student) => (
+        <div className="admin-list-card" key={student.student_id}>
+            <div className="admin-list-card-header">
+                <div>
+                    <h3>{student.fullName}</h3>
+                    <p>{student.student_number} · {student.email}</p>
+                </div>
+                <span className={`admin-status-pill status-${student.status}`}>{student.status}</span>
+            </div>
+
+            <div className="admin-info-grid">
+                <div className="admin-info-field">
+                    <span>College</span>
+                    <strong>{student.collegeName || 'N/A'}</strong>
+                </div>
+                <div className="admin-info-field">
+                    <span>Program</span>
+                    <strong>{student.programName || 'N/A'}</strong>
+                </div>
+                <div className="admin-info-field">
+                    <span>Year Level</span>
+                    <strong>{student.year_level || 'N/A'}</strong>
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16 }}>
+                <button className="admin-link-button" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                    View full record →
+                </button>
+
+                <button
+                    className="admin-link-button"
+                    style={{ color: student.status === 'active' ? 'var(--red)' : 'var(--blue)' }}
+                    onClick={() => toggleStatus(student)}
+                    disabled={updating === student.student_id}
+                >
+                    {updating === student.student_id
+                        ? 'Updating...'
+                        : student.status === 'active' ? 'Deactivate' : 'Activate'}
+                </button>
+
+                <button
+                    className="admin-link-button"
+                    style={{ color: 'var(--red)' }}
+                    onClick={() => removeStudent(student)}
+                    disabled={removing === student.student_id}
+                >
+                    {removing === student.student_id ? 'Checking...' : 'Delete'}
+                </button>
+            </div>
+        </div>
+    )
+
     return (
         <div>
             <div className="admin-page-header">
@@ -332,56 +404,19 @@ function Students() {
                     {term.trim() ? `No students matched "${term}".` : 'No students found.'}
                 </div>
             ) : (
-                results.map((student) => (
-                    <div className="admin-list-card" key={student.student_id}>
-                        <div className="admin-list-card-header">
-                            <div>
-                                <h3>{student.fullName}</h3>
-                                <p>{student.student_number} · {student.email}</p>
-                            </div>
-                            <span className={`admin-status-pill status-${student.status}`}>{student.status}</span>
+                groupedResults.map((group) => (
+                    <div key={group.programName} style={{ marginBottom: 28 }}>
+                        <div className="admin-page-header-row" style={{ marginBottom: 14 }}>
+                            <h2 style={{ fontSize: 16 }}>
+                                {group.programName}
+                                {group.collegeName && <span style={{ color: 'var(--slate)', fontWeight: 400 }}> · {group.collegeName}</span>}
+                            </h2>
+                            <span className="admin-status-pill status-pending">
+                                {group.students.length} student{group.students.length === 1 ? '' : 's'}
+                            </span>
                         </div>
 
-                        <div className="admin-info-grid">
-                            <div className="admin-info-field">
-                                <span>College</span>
-                                <strong>{student.collegeName || 'N/A'}</strong>
-                            </div>
-                            <div className="admin-info-field">
-                                <span>Program</span>
-                                <strong>{student.programName || 'N/A'}</strong>
-                            </div>
-                            <div className="admin-info-field">
-                                <span>Year Level</span>
-                                <strong>{student.year_level || 'N/A'}</strong>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 16 }}>
-                            <button className="admin-link-button" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
-                                View full record →
-                            </button>
-
-                            <button
-                                className="admin-link-button"
-                                style={{ color: student.status === 'active' ? 'var(--red)' : 'var(--blue)' }}
-                                onClick={() => toggleStatus(student)}
-                                disabled={updating === student.student_id}
-                            >
-                                {updating === student.student_id
-                                    ? 'Updating...'
-                                    : student.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </button>
-
-                            <button
-                                className="admin-link-button"
-                                style={{ color: 'var(--red)' }}
-                                onClick={() => removeStudent(student)}
-                                disabled={removing === student.student_id}
-                            >
-                                {removing === student.student_id ? 'Checking...' : 'Delete'}
-                            </button>
-                        </div>
+                        {group.students.map(renderStudentCard)}
                     </div>
                 ))
             )}
