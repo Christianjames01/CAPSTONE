@@ -62,6 +62,38 @@ function Announcements() {
     const openNew = () => { setForm(EMPTY_ANNOUNCEMENT); setShowForm(true) }
     const openEdit = (a) => { setForm(a); setShowForm(true) }
 
+    // Bulk-notifies everyone in the announcement's audience. Only called for
+    // brand-new active announcements -- edits don't re-notify everyone.
+    const notifyAudience = async (announcement) => {
+        const userIds = []
+
+        if (announcement.show_to_students) {
+            const { data } = await supabase.from('students').select('user_id').eq('status', 'active')
+            userIds.push(...(data || []).map((s) => s.user_id))
+        }
+
+        if (announcement.show_to_employees) {
+            const { data } = await supabase.from('employees').select('user_id').eq('status', 'active')
+            userIds.push(...(data || []).map((e) => e.user_id))
+        }
+
+        if (userIds.length === 0) return
+
+        const rows = userIds.map((userId) => ({
+            user_id: userId,
+            title: announcement.title,
+            message: announcement.message,
+            notification_type: 'announcement',
+            is_read: false,
+        }))
+
+        const { error: bulkNotifyError } = await supabase.from('notifications').insert(rows)
+
+        if (bulkNotifyError) {
+            console.error('NOTIFY ANNOUNCEMENT AUDIENCE ERROR:', bulkNotifyError)
+        }
+    }
+
     const save = async () => {
         if (!form.title.trim() || !form.message.trim()) {
             notifyWarning('Title and message are required.')
@@ -106,6 +138,10 @@ function Announcements() {
 
                 if (insertError) throw new Error(insertError.message)
                 await logAdmin('add_announcement', data.announcement_id, `Posted announcement "${payload.title}".`)
+
+                if (payload.is_active) {
+                    await notifyAudience(payload)
+                }
             }
 
             setShowForm(false)

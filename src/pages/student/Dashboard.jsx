@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
+import AnnouncementCarousel from '../../components/AnnouncementCarousel'
 import { IconDocumentPlus, IconList, IconCalendar, IconBell } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
@@ -144,12 +145,11 @@ function Dashboard() {
                 <p>Here's what you can do with your CertiChain account today.</p>
             </div>
 
-            {announcements.map((a) => (
-                <div className="student-notice tone-info" key={a.announcement_id} style={{ marginBottom: 16 }}>
-                    <strong>{a.title}</strong>
-                    <p>{a.message}</p>
+            {announcements.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                    <AnnouncementCarousel items={announcements} />
                 </div>
-            ))}
+            )}
 
             {!loading && (
                 <>

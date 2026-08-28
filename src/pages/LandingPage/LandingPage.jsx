@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
 import { fetchActiveAnnouncements } from "../../lib/announcements";
+import AnnouncementCarousel from "../../components/AnnouncementCarousel";
 
 const DOCUMENTS = [
     { name: "Transcript of Records", code: "TOR" },
@@ -170,13 +171,8 @@ const LandingPage = () => {
             <main>
 
                 {announcements.length > 0 && (
-                    <div className="landing-announcements">
-                        {announcements.map((a) => (
-                            <div className="landing-announcement" key={a.announcement_id}>
-                                <strong>{a.title}</strong>
-                                <span>{a.message}</span>
-                            </div>
-                        ))}
+                    <div style={{ padding: '14px 24px', borderBottom: '1px solid var(--line)' }}>
+                        <AnnouncementCarousel items={announcements} />
                     </div>
                 )}
 

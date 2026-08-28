@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
+import AnnouncementCarousel from '../../components/AnnouncementCarousel'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
 import './EmployeePages.css'
@@ -187,12 +188,11 @@ function EmployeeDashboard() {
                 </p>
             </div>
 
-            {announcements.map((a) => (
-                <div className="employee-notice tone-info" key={a.announcement_id} style={{ marginBottom: 16 }}>
-                    <strong>{a.title}</strong>
-                    <p>{a.message}</p>
+            {announcements.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                    <AnnouncementCarousel items={announcements} />
                 </div>
-            ))}
+            )}
 
             <div className="employee-info-grid" style={{ marginBottom: 24 }}>
                 {[

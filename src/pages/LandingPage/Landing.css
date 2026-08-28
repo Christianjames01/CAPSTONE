@@ -218,37 +218,6 @@ h2 span {
 }
 
 /* ===================================================
-   ANNOUNCEMENTS
-=================================================== */
-.landing-announcements {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    background: var(--line);
-    border-bottom: 1px solid var(--line);
-}
-
-.landing-announcement {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 12px 24px;
-    background: var(--blue-tint);
-    font-size: 13.5px;
-    color: var(--ink);
-}
-
-.landing-announcement strong {
-    color: var(--blue);
-    white-space: nowrap;
-}
-
-.landing-announcement span {
-    color: var(--slate);
-}
-
-/* ===================================================
    HERO
 =================================================== */
 .hero-section {
