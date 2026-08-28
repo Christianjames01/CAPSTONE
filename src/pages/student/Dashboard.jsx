@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconNewspaper } from './icons'
+import { findAssignedEmployee } from '../../lib/assignEmployee'
+import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconNewspaper, IconMessage } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -22,6 +23,8 @@ function Dashboard() {
     const [requests, setRequests] = useState([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [upcomingClaim, setUpcomingClaim] = useState(null)
+    const [latestMessage, setLatestMessage] = useState(null)
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0)
     const [loading, setLoading] = useState(true)
 
     const navigate = useNavigate()
@@ -53,7 +56,7 @@ function Dashboard() {
 
             const { data: student } = await supabase
                 .from('students')
-                .select('student_id')
+                .select('student_id, college_id, program_id')
                 .eq('user_id', user.id)
                 .single()
 
@@ -111,6 +114,41 @@ function Dashboard() {
                     requestNumber: request?.request_number,
                     documentName: documentNameById[request?.document_type_id] || 'Document',
                 })
+            }
+
+            const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
+
+            if (assignedEmployeeId) {
+                const { data: employeeRow } = await supabase
+                    .from('employees')
+                    .select('user_id')
+                    .eq('employee_id', assignedEmployeeId)
+                    .single()
+
+                if (employeeRow) {
+                    const { data: messageRows } = await supabase
+                        .from('messages')
+                        .select('message_id, sender_user_id, message, is_read, created_at')
+                        .or(`and(sender_user_id.eq.${user.id},receiver_user_id.eq.${employeeRow.user_id}),and(sender_user_id.eq.${employeeRow.user_id},receiver_user_id.eq.${user.id})`)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+
+                    if (messageRows && messageRows.length > 0) {
+                        setLatestMessage({
+                            ...messageRows[0],
+                            fromStaff: messageRows[0].sender_user_id === employeeRow.user_id,
+                        })
+                    }
+
+                    const { count } = await supabase
+                        .from('messages')
+                        .select('message_id', { count: 'exact', head: true })
+                        .eq('receiver_user_id', user.id)
+                        .eq('sender_user_id', employeeRow.user_id)
+                        .eq('is_read', false)
+
+                    setUnreadMessageCount(count || 0)
+                }
             }
 
         } catch (error) {
@@ -265,6 +303,36 @@ function Dashboard() {
                                 Once you request your first document, you'll be able to track its
                                 status right here — from payment to claiming.
                             </p>
+                        </div>
+                    )}
+
+                    {latestMessage && (
+                        <div className="student-list-card" style={{ marginBottom: 24 }}>
+                            <div className="student-list-card-header">
+                                <div>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span style={{ color: 'var(--blue)', display: 'inline-flex' }}><IconMessage /></span>
+                                        Recent Message
+                                    </h3>
+                                    <p>
+                                        {latestMessage.fromStaff ? 'From your registrar staff' : 'You sent'} ·{' '}
+                                        {new Date(latestMessage.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                                    </p>
+                                </div>
+                                {unreadMessageCount > 0 && (
+                                    <span className="student-status-pill status-pending">{unreadMessageCount} unread</span>
+                                )}
+                            </div>
+
+                            <p style={{ fontSize: 13.5, color: 'var(--ink)', margin: '4px 0 10px' }}>
+                                {latestMessage.message.length > 140
+                                    ? `${latestMessage.message.slice(0, 140)}…`
+                                    : latestMessage.message}
+                            </p>
+
+                            <button className="student-link-button" onClick={() => navigate('/student/messages')}>
+                                {unreadMessageCount > 0 ? 'Reply →' : 'View conversation →'}
+                            </button>
                         </div>
                     )}
                 </>
