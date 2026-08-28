@@ -108,6 +108,14 @@
     gap: 18px;
 }
 
+.student-info-field {
+    /* Grid items default to min-width: auto, which stops them shrinking
+       below an unbroken string's full width (e.g. an email address) --
+       that pushes the whole grid wider than the viewport on mobile
+       instead of letting the text wrap. */
+    min-width: 0;
+}
+
 .student-info-field span {
     display: block;
     font-size: 12px;
@@ -118,6 +126,7 @@
 .student-info-field strong {
     font-size: 14.5px;
     font-weight: 600;
+    overflow-wrap: break-word;
 }
 
 .student-search-input {
