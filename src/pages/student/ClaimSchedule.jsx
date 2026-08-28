@@ -45,7 +45,6 @@ function ClaimSchedule() {
                     request_id,
                     scheduled_date,
                     scheduled_time,
-                    estimated_duration_minutes,
                     status,
                     claim_date,
                     claim_time,
@@ -133,6 +132,20 @@ function ClaimSchedule() {
         })
     }
 
+    const formatArriveByTime = (time) => {
+        if (!time) return ''
+
+        const [hours, minutes] = time.split(':')
+        const date = new Date()
+        date.setHours(Number(hours), Number(minutes), 0, 0)
+        date.setMinutes(date.getMinutes() - 30)
+
+        return date.toLocaleTimeString('en-PH', {
+            hour: 'numeric',
+            minute: '2-digit'
+        })
+    }
+
     return (
         <div>
             <div className="student-page-header">
@@ -181,8 +194,10 @@ function ClaimSchedule() {
                                 </div>
 
                                 <div className="student-info-field">
-                                    <span>Estimated Duration</span>
-                                    <strong>{schedule.estimated_duration_minutes || 60} minutes</strong>
+                                    <span>Arrive By</span>
+                                    <strong>
+                                        {formatArriveByTime(schedule.claim_time || schedule.scheduled_time) || 'N/A'}
+                                    </strong>
                                 </div>
                             </div>
 
@@ -205,6 +220,7 @@ function ClaimSchedule() {
 
                     <div className="student-reminder-box">
                         <strong>Claiming Reminder</strong>
+                        Please arrive at least 30 minutes before your scheduled claiming time.
                         Bring your official receipt (OR) and a valid ID when claiming your
                         document at the Registrar's Office.
                     </div>
