@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
+import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -410,30 +410,6 @@ function Dashboard() {
                     )}
                 </>
             )}
-
-            <div className="student-dashboard-grid">
-
-                <button
-                    className="student-dashboard-card"
-                    onClick={() => navigate('/student/claim-schedule')}
-                >
-                    <div className="student-dashboard-card-icon"><IconCalendar /></div>
-                    <h3>Claim Schedule</h3>
-                    <p>See when and where to pick up your ready documents.</p>
-                    <span className="student-dashboard-card-link">View schedule →</span>
-                </button>
-
-                <button
-                    className="student-dashboard-card"
-                    onClick={() => navigate('/student/notifications')}
-                >
-                    <div className="student-dashboard-card-icon"><IconBell /></div>
-                    <h3>Notifications</h3>
-                    <p>Stay updated on payments, approvals, and claim schedules.</p>
-                    <span className="student-dashboard-card-link">View notifications →</span>
-                </button>
-
-            </div>
 
             {!loading && recentRequests.length > 0 && (
                 <>
