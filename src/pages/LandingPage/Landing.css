@@ -1135,15 +1135,24 @@ h2 span {
     font-weight: 600;
 }
 
-.footer-column a {
+.footer-column a,
+.footer-column button {
     display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
     margin-bottom: 12px;
     transition: color 0.15s ease;
 }
 
-.footer-column a:hover {
+.footer-column a:hover,
+.footer-column button:hover {
     color: var(--red-light);
 }
 

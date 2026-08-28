@@ -1,3 +1,4 @@
+import Swal from "sweetalert2";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
 
@@ -122,6 +123,48 @@ const PROCESS_STEPS = [
 const LandingPage = () => {
     const scrollToSection = (id) => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const openHelpModal = () => {
+        const steps = PROCESS_STEPS.map(
+            ([, , title, description]) =>
+                `<li style="margin-bottom:10px;"><strong>${title}</strong><br/><span style="color:#57616F;font-size:13.5px;">${description}</span></li>`
+        ).join("");
+
+        Swal.fire({
+            title: "Help Center",
+            html: `
+                <p style="text-align:left;color:#57616F;margin-bottom:14px;">
+                    Here's how requesting a document works, start to finish:
+                </p>
+                <ol style="text-align:left;padding-left:20px;margin:0;">${steps}</ol>
+                <p style="text-align:left;color:#57616F;margin-top:14px;">
+                    Already have a request in progress? Log in and use the Messages
+                    page to reach your assigned registrar staff directly.
+                </p>
+            `,
+            confirmButtonText: "Got it",
+            confirmButtonColor: "#123B78",
+            width: 560,
+        });
+    };
+
+    const openContactModal = () => {
+        Swal.fire({
+            title: "Contact",
+            html: `
+                <p style="text-align:left;color:#57616F;">
+                    For questions about a specific request, log in and message your
+                    assigned registrar staff directly from your CertiChain account.
+                </p>
+                <p style="text-align:left;color:#57616F;">
+                    For anything else, please reach out to the Office of Registration
+                    &amp; Records Management at Holy Cross of Davao College directly.
+                </p>
+            `,
+            confirmButtonText: "Got it",
+            confirmButtonColor: "#123B78",
+        });
     };
 
     return (
@@ -598,15 +641,14 @@ const LandingPage = () => {
                             <h4>Account</h4>
                             <a href="/login">Login</a>
                             <a href="/register">Register</a>
-                            <a href="/verify">Verify credential</a>
-                            <a href="/help">Help center</a>
+                            <button type="button" onClick={openHelpModal}>Help center</button>
                         </div>
 
                         <div className="footer-column">
                             <h4>Registrar</h4>
                             <a href="#about">About CertiChain</a>
                             <a href="#documents">Document catalog</a>
-                            <a href="/contact">Contact</a>
+                            <button type="button" onClick={openContactModal}>Contact</button>
                         </div>
 
                     </div>
