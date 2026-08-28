@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp } from './icons'
+import { IconDocumentPlus, IconList, IconCalendar, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -182,6 +182,7 @@ function Dashboard() {
     const inProgressCount = requests.filter((r) => IN_PROGRESS_STATUSES.includes(r.status)).length
     const readyCount = requests.filter((r) => r.status === 'ready_for_claiming').length
     const completedCount = requests.filter((r) => r.status === 'completed').length
+    const cancelledCount = requests.filter((r) => r.status === 'cancelled').length
 
     const recentRequests = requests.slice(0, 3)
     const actionableRequests = requests.filter((r) => ACTION_NEEDED[r.status])
@@ -280,6 +281,18 @@ function Dashboard() {
                             <div>
                                 <span className="student-stat-value">{completedCount}</span>
                                 <span className="student-stat-label">Completed</span>
+                            </div>
+                        </button>
+
+                        <button
+                            className="student-stat-card"
+                            style={{ '--stat-color': '#8a94a6', '--stat-tint': 'rgba(138, 148, 166, 0.12)' }}
+                            onClick={() => navigate('/student/my-requests')}
+                        >
+                            <div className="student-stat-icon"><IconX /></div>
+                            <div>
+                                <span className="student-stat-value">{cancelledCount}</span>
+                                <span className="student-stat-label">Cancelled</span>
                             </div>
                         </button>
 
