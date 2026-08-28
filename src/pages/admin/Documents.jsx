@@ -248,7 +248,29 @@ function Documents() {
 
                 if (updateError) throw new Error(updateError.message)
 
-                await logAdmin('edit_document_type', form.document_type_id, `Updated document type "${payload.document_name}".`)
+                // Carry the new fee over to requests that haven't been paid
+                // yet. Once a receipt is uploaded the amount stays locked to
+                // whatever was actually quoted, so it can't drift from what
+                // the student paid.
+                const { data: updatedRequests, error: propagateError } = await supabase
+                    .from('document_requests')
+                    .update({ unit_fee: payload.fee })
+                    .eq('document_type_id', form.document_type_id)
+                    .in('status', ['pending', 'payment_pending'])
+                    .select('request_id')
+
+                if (propagateError) {
+                    console.error('FEE PROPAGATION ERROR:', propagateError)
+                }
+
+                await logAdmin(
+                    'edit_document_type',
+                    form.document_type_id,
+                    `Updated document type "${payload.document_name}".` +
+                        (updatedRequests?.length
+                            ? ` Applied new fee to ${updatedRequests.length} unpaid request${updatedRequests.length === 1 ? '' : 's'}.`
+                            : '')
+                )
             } else {
                 const { data, error: insertError } = await supabase
                     .from('document_types')
