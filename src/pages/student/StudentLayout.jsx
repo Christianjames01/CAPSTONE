@@ -13,6 +13,8 @@ import {
     IconUserCircle,
     IconHelp,
     IconLogout,
+    IconMenu,
+    IconX,
 } from './icons'
 import './StudentLayout.css'
 
@@ -35,6 +37,7 @@ function StudentLayout() {
     const [photoUrl, setPhotoUrl] = useState('')
     const [unreadCount, setUnreadCount] = useState(0)
     const [unreadMessageCount, setUnreadMessageCount] = useState(0)
+    const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
     useEffect(() => {
         loadProfile()
@@ -104,21 +107,52 @@ function StudentLayout() {
         navigate('/')
     }
 
+    const closeMobileNav = () => setMobileNavOpen(false)
+
     return (
         <div className="student-layout">
 
-            <aside className="student-sidebar">
+            <header className="student-mobile-topbar">
+                <button
+                    className="student-mobile-menu-button"
+                    onClick={() => setMobileNavOpen(true)}
+                    aria-label="Open menu"
+                >
+                    <IconMenu />
+                </button>
+
+                <Link to="/student/dashboard" className="student-mobile-brand">
+                    <img src={hcdcLogo} alt="" />
+                    <span>CertiChain</span>
+                </Link>
+            </header>
+
+            {mobileNavOpen && (
+                <div className="student-nav-backdrop" onClick={closeMobileNav} />
+            )}
+
+            <aside className={`student-sidebar${mobileNavOpen ? ' open' : ''}`}>
 
                 <div className="student-sidebar-top">
-                    <Link to="/student/dashboard" className="student-sidebar-brand">
-                        <div className="student-sidebar-seal">
-                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
-                        </div>
-                        <div>
-                            <div className="student-sidebar-name">CertiChain</div>
-                            <div className="student-sidebar-subtitle">Student Portal</div>
-                        </div>
-                    </Link>
+                    <div className="student-sidebar-brand-row">
+                        <Link to="/student/dashboard" className="student-sidebar-brand" onClick={closeMobileNav}>
+                            <div className="student-sidebar-seal">
+                                <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                            </div>
+                            <div>
+                                <div className="student-sidebar-name">CertiChain</div>
+                                <div className="student-sidebar-subtitle">Student Portal</div>
+                            </div>
+                        </Link>
+
+                        <button
+                            className="student-mobile-close-button"
+                            onClick={closeMobileNav}
+                            aria-label="Close menu"
+                        >
+                            <IconX />
+                        </button>
+                    </div>
 
                     <nav className="student-nav">
                         {NAV_ITEMS.map((item) => (
@@ -126,6 +160,7 @@ function StudentLayout() {
                                 key={item.to}
                                 to={item.to}
                                 end={item.end}
+                                onClick={closeMobileNav}
                                 className={({ isActive }) =>
                                     `student-nav-link${isActive ? ' active' : ''}`
                                 }
