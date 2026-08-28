@@ -295,20 +295,20 @@ const LandingPage = () => {
                 <section className="stats-section">
                     <div className="stats-container">
                         <div className="stat-item">
-                            <strong>100%</strong>
-                            <span>Registrar transactions online</span>
-                        </div>
-                        <div className="stat-item">
                             <strong>{DOCUMENTS.length}</strong>
-                            <span>Requestable document types</span>
+                            <span>Document types available</span>
                         </div>
                         <div className="stat-item">
-                            <strong>Secure</strong>
-                            <span>Encrypted document requests</span>
+                            <strong>3</strong>
+                            <span>Roles: student, employee, registrar</span>
                         </div>
                         <div className="stat-item">
                             <strong>24/7</strong>
-                            <span>Request tracking access</span>
+                            <span>Submit requests anytime online</span>
+                        </div>
+                        <div className="stat-item">
+                            <strong>Real-time</strong>
+                            <span>Track every request's status</span>
                         </div>
                     </div>
                 </section>
