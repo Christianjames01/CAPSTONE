@@ -14,20 +14,29 @@
     display: flex;
     align-items: baseline;
     gap: 10px;
-    flex-wrap: wrap;
     min-width: 0;
+    flex: 1;
     animation: announcement-fade-in 0.35s ease;
 }
 
 .announcement-carousel-body strong {
     color: var(--blue);
     font-size: 13.5px;
+    flex-shrink: 0;
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .announcement-carousel-body span {
     color: var(--slate);
     font-size: 13.5px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .announcement-carousel-dots {
