@@ -287,6 +287,7 @@ function Register() {
                             value={phoneNumber}
                             onChange={handlePhoneInput(setPhoneNumber)}
                             placeholder="09XXXXXXXXX"
+                            autoComplete="off"
                             required
                         />
                     </div>
@@ -311,6 +312,7 @@ function Register() {
                         className="form-input"
                         value={birthPlace}
                         onChange={(e) => setBirthPlace(e.target.value)}
+                        autoComplete="off"
                     />
                 </div>
 
@@ -325,6 +327,7 @@ function Register() {
                             className="form-input"
                             value={studentNumber}
                             onChange={(e) => setStudentNumber(e.target.value)}
+                            autoComplete="off"
                             required
                         />
                     </div>
@@ -399,6 +402,7 @@ function Register() {
                         className="form-input"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
+                        autoComplete="off"
                     />
                 </div>
 
@@ -411,6 +415,7 @@ function Register() {
                             className="form-input"
                             value={emergencyContactName}
                             onChange={(e) => setEmergencyContactName(e.target.value)}
+                            autoComplete="off"
                         />
                     </div>
 
@@ -425,6 +430,7 @@ function Register() {
                             value={emergencyContactNumber}
                             onChange={handlePhoneInput(setEmergencyContactNumber)}
                             placeholder="09XXXXXXXXX"
+                            autoComplete="off"
                         />
                     </div>
                 </div>
