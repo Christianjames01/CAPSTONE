@@ -4,11 +4,12 @@ import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
-import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart } from './icons'
+import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone } from './icons'
 import './AdminLayout.css'
 
 const NAV_ITEMS = [
     { to: '/admin/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
+    { to: '/admin/announcements', label: 'Announcements', icon: <IconMegaphone /> },
     { to: '/admin/requests', label: 'All Requests', icon: <IconClipboardList /> },
     { to: '/admin/assignments', label: 'Request Assignments', icon: <IconSwap /> },
     { to: '/admin/employees', label: 'Employees', icon: <IconUsers /> },

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { fetchActiveAnnouncements } from '../../lib/announcements'
 import { IconDocumentPlus, IconList, IconCalendar, IconBell } from './icons'
 import './StudentPages.css'
 import './Dashboard.css'
@@ -15,6 +16,7 @@ function Dashboard() {
     const [requests, setRequests] = useState([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [upcomingClaim, setUpcomingClaim] = useState(null)
+    const [announcements, setAnnouncements] = useState([])
     const [loading, setLoading] = useState(true)
 
     const navigate = useNavigate()
@@ -106,6 +108,8 @@ function Dashboard() {
                 })
             }
 
+            setAnnouncements(await fetchActiveAnnouncements('show_to_students'))
+
         } catch (error) {
             console.error('Dashboard error:', error)
         }
@@ -139,6 +143,13 @@ function Dashboard() {
                 <h1>{!loading && name ? `Welcome back, ${name}` : 'Welcome back'}</h1>
                 <p>Here's what you can do with your CertiChain account today.</p>
             </div>
+
+            {announcements.map((a) => (
+                <div className="student-notice tone-info" key={a.announcement_id} style={{ marginBottom: 16 }}>
+                    <strong>{a.title}</strong>
+                    <p>{a.message}</p>
+                </div>
+            ))}
 
             {!loading && (
                 <>

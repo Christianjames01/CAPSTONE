@@ -45,6 +45,7 @@ import EmployeeProfile from './pages/employee/Profile'
 // ADMIN / REGISTRAR HEAD
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/Dashboard'
+import AdminAnnouncements from './pages/admin/Announcements'
 import AllRequests from './pages/admin/AllRequests'
 import AdminRequestDetails from './pages/admin/RequestDetails'
 import Assignments from './pages/admin/Assignments'
@@ -261,6 +262,11 @@ function App() {
           <Route
             path="/admin/dashboard"
             element={<AdminDashboard />}
+          />
+
+          <Route
+            path="/admin/announcements"
+            element={<AdminAnnouncements />}
           />
 
           <Route
