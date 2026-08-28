@@ -1,15 +1,19 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { dashboardPathForRole } from '../../lib/roleRedirect'
 import AuthLayout from './AuthLayout'
+import GoogleIcon from './GoogleIcon'
 
 function Login() {
     const navigate = useNavigate()
+    const location = useLocation()
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [message, setMessage] = useState('')
+    const [message, setMessage] = useState(location.state?.message || '')
     const [loading, setLoading] = useState(false)
+    const [googleLoading, setGoogleLoading] = useState(false)
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -59,27 +63,38 @@ function Login() {
         }
 
         // Redirect based on role
-        if (profile.role === 'student') {
-            navigate('/student/dashboard')
-        }
+        const dashboardPath = dashboardPathForRole(profile.role)
 
-        else if (profile.role === 'employee') {
-            navigate('/employee/dashboard')
-        }
-
-        else if (profile.role === 'registrar_head') {
-            navigate('/admin/dashboard')
-        }
-
-        else if (profile.role === 'admin') {
-            navigate('/admin/dashboard')
-        }
-
-        else {
+        if (dashboardPath) {
+            navigate(dashboardPath)
+        } else {
             setMessage('Unknown account role.')
         }
 
         setLoading(false)
+    }
+
+    const handleGoogleLogin = async () => {
+        setGoogleLoading(true)
+        setMessage('')
+
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                    hd: 'hcdc.edu.ph',
+                    prompt: 'select_account',
+                },
+            },
+        })
+
+        if (error) {
+            setMessage(error.message)
+            setGoogleLoading(false)
+        }
+        // On success, the browser is redirected to Google, so there's
+        // nothing further to do here.
     }
 
     return (
@@ -125,6 +140,18 @@ function Login() {
                 </button>
 
             </form>
+
+            <div className="auth-divider">or</div>
+
+            <button
+                type="button"
+                className="auth-google-button"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+            >
+                <GoogleIcon />
+                {googleLoading ? 'Redirecting...' : 'Continue with your HCDC Google account'}
+            </button>
         </AuthLayout>
     )
 }

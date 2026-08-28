@@ -5,6 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import EmployeeRegister from './pages/auth/EmployeeRegister'
+import AuthCallback from './pages/auth/AuthCallback'
+import CompleteProfile from './pages/auth/CompleteProfile'
 
 // LANDING PAGE
 import LandingPage from './pages/LandingPage/LandingPage'
@@ -91,6 +93,16 @@ function App() {
         <Route
           path="/register/employee"
           element={<EmployeeRegister />}
+        />
+
+        <Route
+          path="/auth/callback"
+          element={<AuthCallback />}
+        />
+
+        <Route
+          path="/complete-profile"
+          element={<CompleteProfile />}
         />
 
         {/* ========================= */}
