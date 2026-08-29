@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
+import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const STATUS_BUCKETS = [
@@ -198,7 +199,13 @@ function AdminDashboard() {
     ]
 
     if (loading) {
-        return <p className="admin-loading">Loading dashboard...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonStatGrid count={7} />
+                <SkeletonList count={2} />
+            </div>
+        )
     }
 
     if (error) {

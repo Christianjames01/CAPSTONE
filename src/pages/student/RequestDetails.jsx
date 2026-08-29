@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
+import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -354,7 +355,13 @@ function RequestDetails() {
     // ==========================================
 
     if (loading) {
-        return <p className="student-loading">Loading request...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonDetailCard fields={6} />
+                <SkeletonDetailCard fields={4} />
+            </div>
+        )
     }
 
     // ==========================================

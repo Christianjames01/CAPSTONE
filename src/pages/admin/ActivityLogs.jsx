@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 function ActivityLogs() {
@@ -110,7 +111,7 @@ function ActivityLogs() {
             {error && <div className="admin-error-box">{error}</div>}
 
             {loading ? (
-                <p className="admin-loading">Loading activity logs...</p>
+                <SkeletonList count={3} />
             ) : visibleLogs.length === 0 ? (
                 <div className="admin-empty">No activity matches this search.</div>
             ) : (

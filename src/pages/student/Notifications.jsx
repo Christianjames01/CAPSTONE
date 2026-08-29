@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
 function Notifications() {
@@ -129,7 +130,7 @@ function Notifications() {
             {error && <div className="student-error-box">{error}</div>}
 
             {loading ? (
-                <p className="student-loading">Loading notifications...</p>
+                <SkeletonList count={3} />
             ) : notifications.length === 0 ? (
                 <div className="student-empty">
                     You have no notifications yet. Updates about your requests will

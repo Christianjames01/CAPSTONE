@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
 const STATUS_CHIPS = [
@@ -162,7 +163,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             {error && <div className="employee-error-box">{error}</div>}
 
             {loading ? (
-                <p className="employee-loading">Loading requests...</p>
+                <SkeletonList count={3} />
             ) : visibleRequests.length === 0 ? (
                 <div className="employee-empty">
                     {emptyText || 'No requests match this view.'}

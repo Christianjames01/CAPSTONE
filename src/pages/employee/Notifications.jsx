@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
 function Notifications() {
@@ -117,7 +118,7 @@ function Notifications() {
             {error && <div className="employee-error-box">{error}</div>}
 
             {loading ? (
-                <p className="employee-loading">Loading notifications...</p>
+                <SkeletonList count={3} />
             ) : notifications.length === 0 ? (
                 <div className="employee-empty">You have no notifications yet.</div>
             ) : (

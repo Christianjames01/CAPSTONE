@@ -4,6 +4,7 @@ import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
+import { SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -232,6 +233,13 @@ function Dashboard() {
                     <IconHelp /> FAQs
                 </button>
             </div>
+
+            {loading && (
+                <>
+                    <SkeletonStatGrid count={6} />
+                    <SkeletonList count={2} />
+                </>
+            )}
 
             {!loading && (
                 <>

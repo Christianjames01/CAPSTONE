@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const STATUS_CHIPS = [
@@ -148,7 +149,7 @@ function AllRequests() {
             {error && <div className="admin-error-box">{error}</div>}
 
             {loading ? (
-                <p className="admin-loading">Loading requests...</p>
+                <SkeletonList count={3} />
             ) : visibleRequests.length === 0 ? (
                 <div className="admin-empty">No requests match this view.</div>
             ) : (

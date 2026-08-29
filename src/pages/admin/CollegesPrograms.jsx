@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifyWarning } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -221,7 +222,7 @@ function CollegesPrograms() {
                     )}
 
                     {loading ? (
-                        <p className="admin-loading">Loading colleges...</p>
+                        <SkeletonList count={3} />
                     ) : (
                         colleges.map((c) => (
                             <div className="admin-list-card" key={c.college_id}>
@@ -294,7 +295,7 @@ function CollegesPrograms() {
                     )}
 
                     {loading ? (
-                        <p className="admin-loading">Loading programs...</p>
+                        <SkeletonList count={3} />
                     ) : (
                         programs.map((p) => (
                             <div className="admin-list-card" key={p.program_id}>

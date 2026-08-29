@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -109,7 +110,13 @@ function Profile() {
         : ''
 
     if (loading) {
-        return <p className="admin-loading">Loading your profile...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonDetailCard fields={6} />
+                <SkeletonDetailCard fields={4} />
+            </div>
+        )
     }
 
     if (error && !profile) {

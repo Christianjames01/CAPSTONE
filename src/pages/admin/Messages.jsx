@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 function Messages() {
@@ -153,7 +154,7 @@ function Messages() {
             {error && <div className="admin-error-box">{error}</div>}
 
             {loading ? (
-                <p className="admin-loading">Loading messages...</p>
+                <SkeletonList count={3} />
             ) : threads.length === 0 ? (
                 <div className="admin-empty">No conversations yet.</div>
             ) : (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifyWarning } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
@@ -159,7 +160,7 @@ function Assignments() {
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Employee Workload</h2>
 
             {loading ? (
-                <p className="admin-loading">Loading...</p>
+                <SkeletonList count={3} />
             ) : (
                 <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
                     <table className="admin-table">

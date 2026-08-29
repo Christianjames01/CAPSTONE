@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError } from '../../lib/notify'
 import Swal from 'sweetalert2'
+import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
 function Students() {
@@ -345,7 +346,7 @@ function Students() {
             {error && <div className="employee-error-box">{error}</div>}
 
             {loading ? (
-                <p className="employee-loading">Loading students...</p>
+                <SkeletonList count={3} />
             ) : !searched ? null : results.length === 0 ? (
                 <div className="employee-empty">
                     {term.trim() ? `No students matched "${term}".` : 'No students found.'}

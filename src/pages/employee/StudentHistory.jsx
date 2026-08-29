@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
+import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -211,7 +212,13 @@ function StudentHistory() {
     }
 
     if (loading) {
-        return <p className="employee-loading">Loading student record...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonDetailCard fields={6} />
+                <SkeletonDetailCard fields={4} />
+            </div>
+        )
     }
 
     if (error) {

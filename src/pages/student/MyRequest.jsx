@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
 const STATUS_LABELS = {
@@ -187,7 +188,7 @@ function MyRequest() {
             )}
 
             {loading ? (
-                <p className="student-loading">Loading your requests...</p>
+                <SkeletonList count={3} />
             ) : requests.length === 0 && !errorMessage ? (
                 <div className="student-empty">
                     You have not submitted any document requests yet.

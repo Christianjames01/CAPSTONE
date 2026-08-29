@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
 function ClaimSchedule() {
@@ -156,7 +157,7 @@ function ClaimSchedule() {
             {error && <div className="student-error-box">{error}</div>}
 
             {loading ? (
-                <p className="student-loading">Loading your claim schedules...</p>
+                <SkeletonList count={3} />
             ) : schedules.length === 0 ? (
                 <div className="student-empty">
                     You don't have any claim schedules yet. Once the Registrar schedules

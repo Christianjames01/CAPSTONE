@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const CHIPS = [
@@ -233,7 +234,7 @@ function ClaimSchedules() {
             </div>
 
             {loading ? (
-                <p className="admin-loading">Loading schedules...</p>
+                <SkeletonList count={3} />
             ) : visibleSchedules.length === 0 ? (
                 <div className="admin-empty">No schedules match this view.</div>
             ) : (

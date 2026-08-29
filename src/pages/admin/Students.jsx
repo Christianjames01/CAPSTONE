@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
 import Swal from 'sweetalert2'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 function Students() {
@@ -542,7 +543,7 @@ function Students() {
             )}
 
             {loading ? (
-                <p className="admin-loading">Loading students...</p>
+                <SkeletonList count={3} />
             ) : !searched ? null : results.length === 0 ? (
                 <div className="admin-empty">
                     {term.trim() ? `No students matched "${term}".` : 'No students found.'}

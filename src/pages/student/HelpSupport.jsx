@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
 const REGISTRAR_CONTACT = {
@@ -118,7 +119,7 @@ function HelpSupport() {
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Document Processing Times &amp; Fees</h2>
 
                 {loading ? (
-                    <p className="student-loading">Loading document list...</p>
+                    <SkeletonList count={3} />
                 ) : documentTypes.length === 0 ? (
                     <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>
                         No document types are currently available.

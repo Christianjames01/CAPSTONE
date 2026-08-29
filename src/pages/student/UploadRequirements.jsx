@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notifyWarning, notifyError } from '../../lib/notify'
+import { SkeletonPageHeader, SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
 function UploadRequirements() {
@@ -151,7 +152,12 @@ function UploadRequirements() {
     }
 
     if (loading) {
-        return <p className="student-loading">Loading requirements...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonList count={3} />
+            </div>
+        )
     }
 
     if (error) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -170,7 +171,7 @@ function Messages() {
             {error && <div className="student-error-box">{error}</div>}
 
             {loading ? (
-                <p className="student-loading">Loading messages...</p>
+                <SkeletonList count={3} />
             ) : !employee ? (
                 <div className="student-empty">
                     No registrar employee is assigned to your program yet. Please check back later or visit
