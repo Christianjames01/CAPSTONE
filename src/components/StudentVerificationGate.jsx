@@ -80,7 +80,7 @@ function StudentVerificationGate({ children }) {
                     <p>
                         {rejected
                             ? "The Registrar's Office could not verify your enrollment with the details you provided."
-                            : "Your registration is being reviewed by the Registrar's Office to confirm you're currently enrolled. You'll get an email once it's verified — this usually doesn't take long."}
+                            : "Your registration is being reviewed by the Registrar's Office to confirm you're currently enrolled. Please check back later — this usually doesn't take long."}
                     </p>
 
                     {rejected && note && (
