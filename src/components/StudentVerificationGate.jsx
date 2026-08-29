@@ -34,6 +34,13 @@ function StudentVerificationGate({ children }) {
         if (data) {
             setStatus(data.verification_status)
             setNote(data.verification_note || '')
+        } else {
+            // No student record at all -- they signed up but never
+            // finished "Complete your profile". Send them to finish it
+            // instead of defaulting to "approved" and letting them
+            // through to a dashboard with no student data behind it.
+            navigate('/complete-profile', { replace: true })
+            return
         }
 
         setLoading(false)
