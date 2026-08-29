@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { IconClock, IconAlertCircle, IconMail, IconPhone } from '../pages/student/icons'
+import hcdcLogo from '../assets/hcdc-logo.png'
+import './StudentVerificationGate.css'
+
+const REGISTRAR_EMAIL = 'registrar@hcdc.edu.ph'
+const REGISTRAR_PHONE = '0912345677'
 
 // Sits between ProtectedRoute and StudentLayout. A newly-registered
 // student's verification_status starts "pending" until registrar staff
@@ -59,38 +65,47 @@ function StudentVerificationGate({ children }) {
         const rejected = status === 'rejected'
 
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: 24,
-                gap: 12,
-            }}>
-                <h1 style={{ fontSize: 20, margin: 0 }}>
-                    {rejected ? 'Registration not verified' : 'Waiting for verification'}
-                </h1>
-                <p style={{ color: 'var(--slate, #57616F)', maxWidth: 440, margin: 0 }}>
-                    {rejected
-                        ? "The Registrar's Office could not verify your enrollment with the details you provided."
-                        : "Your registration is being reviewed by the Registrar's Office to confirm you're currently enrolled. You'll get an email once it's verified — this usually doesn't take long."}
-                </p>
-                {rejected && note && (
-                    <p style={{ color: 'var(--ink, #101827)', maxWidth: 440, margin: 0, fontWeight: 600 }}>
-                        Reason: {note}
+            <div className="verify-gate-page">
+                <div className="verify-gate-card">
+                    <div className="verify-gate-seal">
+                        <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                    </div>
+
+                    <div className={`verify-gate-icon ${rejected ? 'rejected' : 'pending'}`}>
+                        {rejected ? <IconAlertCircle /> : <IconClock />}
+                    </div>
+
+                    <h1>{rejected ? 'Registration not verified' : 'Waiting for verification'}</h1>
+
+                    <p>
+                        {rejected
+                            ? "The Registrar's Office could not verify your enrollment with the details you provided."
+                            : "Your registration is being reviewed by the Registrar's Office to confirm you're currently enrolled. You'll get an email once it's verified — this usually doesn't take long."}
                     </p>
-                )}
-                <p style={{ color: 'var(--slate, #57616F)', maxWidth: 440, margin: 0, fontSize: 13 }}>
-                    Questions? Contact the HCDC Registrar's Office.
-                </p>
-                <button
-                    onClick={handleLogout}
-                    style={{ marginTop: 8, color: 'var(--blue, #123B78)', fontWeight: 600 }}
-                >
-                    Log out
-                </button>
+
+                    {rejected && note && (
+                        <div className="verify-gate-reason">
+                            <span>Reason</span>
+                            <strong>{note}</strong>
+                        </div>
+                    )}
+
+                    <div className="verify-gate-contact">
+                        <div className="verify-gate-contact-label">Need help? Contact the Registrar's Office</div>
+                        <div className="verify-gate-contact-links">
+                            <a className="verify-gate-contact-link" href={`mailto:${REGISTRAR_EMAIL}`}>
+                                <IconMail /> {REGISTRAR_EMAIL}
+                            </a>
+                            <a className="verify-gate-contact-link" href={`tel:${REGISTRAR_PHONE}`}>
+                                <IconPhone /> {REGISTRAR_PHONE}
+                            </a>
+                        </div>
+                    </div>
+
+                    <button className="verify-gate-logout" onClick={handleLogout}>
+                        Log out
+                    </button>
+                </div>
             </div>
         )
     }
