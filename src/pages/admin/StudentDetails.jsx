@@ -271,7 +271,7 @@ function StudentDetails() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Student Number</label>
-                                <input className="admin-search-input" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value })} disabled={saving} />
+                                <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Phone Number</label>
