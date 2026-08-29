@@ -8,6 +8,8 @@ import Register from './pages/auth/Register'
 import EmployeeRegister from './pages/auth/EmployeeRegister'
 import AuthCallback from './pages/auth/AuthCallback'
 import CompleteProfile from './pages/auth/CompleteProfile'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 
 // STUDENT
 import StudentLayout from './pages/student/StudentLayout'
@@ -101,6 +103,16 @@ function App() {
         <Route
           path="/complete-profile"
           element={<CompleteProfile />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password"
+          element={<ResetPassword />}
         />
 
         {/* ========================= */}
