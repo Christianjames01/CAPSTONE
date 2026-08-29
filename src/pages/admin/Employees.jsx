@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
 import { notifyError, confirmModal } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
@@ -436,7 +437,7 @@ function Employees() {
             {error && <div className="admin-error-box">{error}</div>}
 
             {loading ? (
-                <p className="admin-loading">Loading employees...</p>
+                <SkeletonList count={3} />
             ) : visibleEmployees.length === 0 ? (
                 <div className="admin-empty">No employees found.</div>
             ) : (

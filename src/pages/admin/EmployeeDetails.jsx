@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -266,7 +267,13 @@ function EmployeeDetails() {
     const filteredPrograms = programs.filter((p) => !newCollegeId || p.college_id === newCollegeId)
 
     if (loading) {
-        return <p className="admin-loading">Loading employee...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonDetailCard fields={6} />
+                <SkeletonDetailCard fields={4} />
+            </div>
+        )
     }
 
     if (error && !employee) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
 function ActivityLogs() {
@@ -75,7 +76,7 @@ function ActivityLogs() {
             {error && <div className="employee-error-box">{error}</div>}
 
             {loading ? (
-                <p className="employee-loading">Loading activity logs...</p>
+                <SkeletonList count={3} />
             ) : logs.length === 0 ? (
                 <div className="employee-empty">
                     No activity has been recorded yet. Actions you take (verifying payments,

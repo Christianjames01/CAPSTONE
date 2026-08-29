@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
 function ClaimScheduleList() {
@@ -264,7 +265,7 @@ function ClaimScheduleList() {
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Today's Appointments</h2>
 
             {loading ? (
-                <p className="employee-loading">Loading...</p>
+                <SkeletonList count={3} />
             ) : todayAppointments.length === 0 ? (
                 <div className="employee-empty" style={{ marginBottom: 28 }}>
                     No claiming appointments scheduled for today.

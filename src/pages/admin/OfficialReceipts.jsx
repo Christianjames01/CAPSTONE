@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const CHIPS = [
@@ -196,7 +197,7 @@ function OfficialReceipts() {
             {error && <div className="admin-error-box">{error}</div>}
 
             {loading ? (
-                <p className="admin-loading">Loading receipts...</p>
+                <SkeletonList count={3} />
             ) : visibleReceipts.length === 0 ? (
                 <div className="admin-empty">No receipts match this view.</div>
             ) : (

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
+import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import './AdminPages.css'
 
 const STATUS_OPTIONS = [
@@ -252,7 +253,13 @@ function AdminRequestDetails() {
     }
 
     if (loading) {
-        return <p className="admin-loading">Loading request...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonDetailCard fields={6} />
+                <SkeletonDetailCard fields={4} />
+            </div>
+        )
     }
 
     if (error) {

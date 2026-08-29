@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
 function UploadReceiptList() {
@@ -113,7 +114,7 @@ function UploadReceiptList() {
             {error && <div className="student-error-box">{error}</div>}
 
             {loading ? (
-                <p className="student-loading">Loading your requests...</p>
+                <SkeletonList count={3} />
             ) : requests.length === 0 ? (
                 <div className="student-empty">
                     No requests currently need a receipt. New requests will appear

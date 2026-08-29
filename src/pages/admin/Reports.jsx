@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { exportToExcel } from '../../lib/excelExport'
 import { notifyError, notifyWarning } from '../../lib/notify'
+import { SkeletonPageHeader, SkeletonStatGrid } from '../../components/Skeleton'
 import './AdminPages.css'
 
 function Reports() {
@@ -282,7 +283,12 @@ function Reports() {
     }
 
     if (loading) {
-        return <p className="admin-loading">Loading reports...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonStatGrid count={4} />
+            </div>
+        )
     }
 
     if (error) {

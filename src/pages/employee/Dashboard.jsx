@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
+import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
 const QUICK_LINKS = [
@@ -160,7 +161,13 @@ function EmployeeDashboard() {
     }
 
     if (loading) {
-        return <p className="employee-loading">Loading dashboard...</p>
+        return (
+            <div>
+                <SkeletonPageHeader />
+                <SkeletonStatGrid count={4} />
+                <SkeletonList count={2} />
+            </div>
+        )
     }
 
     if (errorMessage) {

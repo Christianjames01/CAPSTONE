@@ -4,6 +4,7 @@ import { logActivity } from '../../lib/activityLog'
 import { exportToExcel } from '../../lib/excelExport'
 import { parseExcelFile } from '../../lib/excelImport'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -517,7 +518,7 @@ function Documents() {
             {error && <div className="admin-error-box" style={{ marginTop: 20 }}>{error}</div>}
 
             {loading ? (
-                <p className="admin-loading">Loading document types...</p>
+                <SkeletonList count={3} />
             ) : (
                 documents.map((doc) => (
                     <div className="admin-list-card" key={doc.document_type_id} style={{ marginTop: 16 }}>

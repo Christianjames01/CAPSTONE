@@ -1,0 +1,65 @@
+@keyframes skeleton-shimmer {
+    0% { background-position: -300px 0; }
+    100% { background-position: 300px 0; }
+}
+
+.skeleton-block {
+    background: linear-gradient(90deg, #EEF1F6 25%, #E4E8F0 37%, #EEF1F6 63%);
+    background-size: 600px 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    border-radius: 6px;
+}
+
+.skeleton-page-header {
+    margin-bottom: 24px;
+}
+
+.skeleton-page-header .skeleton-block:first-child {
+    margin-bottom: 10px;
+}
+
+.skeleton-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.skeleton-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(16, 24, 39, 0.08);
+    background: #fff;
+}
+
+.skeleton-list-card {
+    padding: 18px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(16, 24, 39, 0.08);
+    background: #fff;
+    margin-bottom: 14px;
+}
+
+.skeleton-list-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.skeleton-list-card-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 16px;
+}
+
+.skeleton-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 18px;
+}
