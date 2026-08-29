@@ -178,7 +178,10 @@ function Register() {
         }
 
         setStatus('success')
-        setMessage('Registration successful! Check your email to confirm your account.')
+        setMessage(
+            'Registration successful! Check your email to confirm your account. ' +
+            "Once confirmed, the Registrar's Office will need to verify your enrollment before you can use CertiChain — you'll get an email when that's done."
+        )
         setLoading(false)
     }
 

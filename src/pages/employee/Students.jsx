@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../../lib/activityLog'
+import { notifyStudentByStudentId, notifyError } from '../../lib/notify'
+import Swal from 'sweetalert2'
 import './EmployeePages.css'
 
 function Students() {
@@ -12,9 +15,118 @@ function Students() {
     const [searched, setSearched] = useState(false)
     const [error, setError] = useState('')
 
+    const [pendingVerifications, setPendingVerifications] = useState([])
+    const [reviewingId, setReviewingId] = useState(null)
+
     useEffect(() => {
         loadAllStudents()
+        loadPendingVerifications()
     }, [])
+
+    // Only students in a college/program this employee is assigned to show
+    // up here -- approving someone's enrollment is a bigger deal than the
+    // general "any employee can edit any student" permission elsewhere.
+    const loadPendingVerifications = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            const { data: employee } = await supabase
+                .from('employees')
+                .select('employee_id')
+                .eq('user_id', user.id)
+                .maybeSingle()
+
+            if (!employee) return
+
+            const { data: assignments } = await supabase
+                .from('employee_assignments')
+                .select('college_id, program_id')
+                .eq('employee_id', employee.employee_id)
+                .eq('status', 'active')
+
+            const assignedPairs = new Set((assignments || []).map((a) => `${a.college_id}:${a.program_id}`))
+            if (assignedPairs.size === 0) return
+
+            const { data: pending } = await supabase
+                .from('students')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, created_at')
+                .eq('verification_status', 'pending')
+                .order('created_at', { ascending: true })
+
+            const mine = (pending || []).filter((s) => assignedPairs.has(`${s.college_id}:${s.program_id}`))
+
+            setPendingVerifications(await enrichStudents(mine))
+
+        } catch (err) {
+            console.error('LOAD PENDING VERIFICATIONS ERROR:', err)
+        }
+    }
+
+    const approveStudent = async (student) => {
+        await reviewStudent(student, 'approved')
+    }
+
+    const rejectStudent = async (student) => {
+        const { value: reason } = await Swal.fire({
+            title: 'Reject registration',
+            input: 'text',
+            inputLabel: 'Reason (shown to the student)',
+            inputPlaceholder: 'e.g. Student number not found in enrollment records',
+            showCancelButton: true,
+            confirmButtonText: 'Reject',
+            confirmButtonColor: '#dc3545',
+        })
+
+        if (!reason) return
+
+        await reviewStudent(student, 'rejected', reason)
+    }
+
+    const reviewStudent = async (student, decision, reason) => {
+        try {
+            setReviewingId(student.student_id)
+
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('You are not logged in.')
+
+            const { error: updateError } = await supabase
+                .from('students')
+                .update({
+                    verification_status: decision,
+                    verification_note: reason || null,
+                    verified_by: user.id,
+                    verified_at: new Date().toISOString(),
+                })
+                .eq('student_id', student.student_id)
+
+            if (updateError) throw new Error(updateError.message)
+
+            await notifyStudentByStudentId({
+                studentId: student.student_id,
+                title: decision === 'approved' ? 'Account verified' : 'Registration not verified',
+                message: decision === 'approved'
+                    ? "Your enrollment has been verified. You can now log in and use CertiChain."
+                    : `Your registration could not be verified: ${reason}. Contact the Registrar's Office for help.`,
+            })
+
+            await logActivity({
+                userId: user.id,
+                action: decision === 'approved' ? 'approve_student_registration' : 'reject_student_registration',
+                tableName: 'students',
+                recordId: student.student_id,
+                description: `${decision === 'approved' ? 'Approved' : 'Rejected'} registration for ${student.fullName} (${student.student_number}).`,
+            })
+
+            setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
+
+        } catch (err) {
+            console.error('REVIEW STUDENT ERROR:', err)
+            notifyError(err.message || 'Failed to review student.')
+        } finally {
+            setReviewingId(null)
+        }
+    }
 
     const enrichStudents = async (rows) => {
         const userIds = [...new Set(rows.map((s) => s.user_id))]
@@ -138,6 +250,71 @@ function Students() {
                 <h1>Students</h1>
                 <p>All enrolled students. Search to narrow the list, or view a student's information and request history.</p>
             </div>
+
+            {pendingVerifications.length > 0 && (
+                <>
+                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Verification</h2>
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
+                        New registrations in your assigned program(s), waiting for you to confirm enrollment.
+                    </p>
+
+                    {pendingVerifications.map((student) => (
+                        <div className="employee-list-card" key={student.student_id}>
+                            <div className="employee-list-card-header">
+                                <div>
+                                    <h3>{student.fullName}</h3>
+                                    <p>{student.student_number} · {student.email}</p>
+                                </div>
+                                <span className="employee-status-pill status-pending">pending</span>
+                            </div>
+
+                            <div className="employee-info-grid">
+                                <div className="employee-info-field">
+                                    <span>College</span>
+                                    <strong>{student.collegeName || 'N/A'}</strong>
+                                </div>
+                                <div className="employee-info-field">
+                                    <span>Program</span>
+                                    <strong>{student.programName || 'N/A'}</strong>
+                                </div>
+                                <div className="employee-info-field">
+                                    <span>Year Level</span>
+                                    <strong>{student.year_level || 'N/A'}</strong>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <button
+                                    className="employee-link-button"
+                                    onClick={() => navigate(`/employee/students/${student.student_id}`)}
+                                >
+                                    View full details →
+                                </button>
+
+                                <button
+                                    className="employee-link-button"
+                                    style={{ color: '#1e8a5f' }}
+                                    onClick={() => approveStudent(student)}
+                                    disabled={reviewingId === student.student_id}
+                                >
+                                    {reviewingId === student.student_id ? 'Working...' : 'Approve'}
+                                </button>
+
+                                <button
+                                    className="employee-link-button"
+                                    style={{ color: 'var(--red)' }}
+                                    onClick={() => rejectStudent(student)}
+                                    disabled={reviewingId === student.student_id}
+                                >
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+
+                    <h2 style={{ fontSize: 17, margin: '28px 0 14px' }}>Students</h2>
+                </>
+            )}
 
             <form onSubmit={search} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
                 <input
