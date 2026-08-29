@@ -252,7 +252,7 @@ function StudentHistory() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Student Number</label>
-                                <input className="employee-search-input" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value })} disabled={saving} />
+                                <input className="employee-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Phone Number</label>

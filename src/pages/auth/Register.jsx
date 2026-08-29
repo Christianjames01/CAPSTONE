@@ -42,6 +42,10 @@ function Register() {
         setter(e.target.value.replace(/\D/g, '').slice(0, 11))
     }
 
+    const handleStudentNumberInput = (e) => {
+        setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
+    }
+
     useEffect(() => {
         loadColleges()
     }, [])
@@ -327,9 +331,11 @@ function Register() {
                         <input
                             id="student-number"
                             type="text"
+                            inputMode="numeric"
                             className="form-input"
                             value={studentNumber}
-                            onChange={(e) => setStudentNumber(e.target.value)}
+                            onChange={handleStudentNumberInput}
+                            placeholder="XXXXXXXX"
                             autoComplete="off"
                             required
                         />
