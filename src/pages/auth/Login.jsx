@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
+import { checkLoginLock, recordLoginAttempt, formatLockMessage } from '../../lib/loginGuard'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 
@@ -24,6 +25,16 @@ function Login() {
         setMessage('')
         setMessageType('error')
 
+        // Refuse the attempt outright if this account is already locked
+        // out from previous failures, without spending another attempt
+        // against Supabase's own auth rate limit.
+        const lockStatus = await checkLoginLock(email)
+        if (lockStatus.locked) {
+            setMessage(formatLockMessage(lockStatus.lockedUntil))
+            setLoading(false)
+            return
+        }
+
         // Login to Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -31,10 +42,18 @@ function Login() {
         })
 
         if (error) {
-            setMessage(error.message)
+            const attempt = await recordLoginAttempt(email, false)
+
+            setMessage(
+                attempt.locked
+                    ? formatLockMessage(attempt.lockedUntil)
+                    : error.message
+            )
             setLoading(false)
             return
         }
+
+        await recordLoginAttempt(email, true)
 
         // Get the user's profile
         const { data: profile, error: profileError } = await supabase

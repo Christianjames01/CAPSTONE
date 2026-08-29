@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.send-claim-reminders]
 verify_jwt = false
+
+[functions.login-guard]
+verify_jwt = false
