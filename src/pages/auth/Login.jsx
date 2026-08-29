@@ -13,6 +13,7 @@ function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [message, setMessage] = useState(location.state?.message || '')
+    const [messageType, setMessageType] = useState(location.state?.type || 'error')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
 
@@ -21,6 +22,7 @@ function Login() {
 
         setLoading(true)
         setMessage('')
+        setMessageType('error')
 
         // Login to Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -129,7 +131,10 @@ function Login() {
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label" htmlFor="login-password">Password</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <label className="form-label" htmlFor="login-password">Password</label>
+                        <Link to="/forgot-password" style={{ fontSize: 12.5 }}>Forgot password?</Link>
+                    </div>
                     <input
                         id="login-password"
                         type="password"
@@ -141,7 +146,7 @@ function Login() {
                     />
                 </div>
 
-                {message && <p className="form-message error">{message}</p>}
+                {message && <p className={`form-message ${messageType}`}>{message}</p>}
 
                 <button type="submit" className="auth-submit" disabled={loading}>
                     {loading ? 'Logging in...' : 'Log in'}
