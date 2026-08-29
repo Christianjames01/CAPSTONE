@@ -42,9 +42,9 @@ function PrivacyPolicy() {
 
             <h2>4. Where it's stored</h2>
             <p>
-                CertiChain's data and file storage are hosted by Supabase, and the application itself is
-                hosted by Vercel. Both are third-party infrastructure providers used to run the platform —
-                they don't use your data for any purpose other than operating CertiChain.
+                Your information is stored on secure servers used to operate CertiChain on behalf of Holy
+                Cross of Davao College. It is not sold, rented, or used for any purpose outside of running
+                the platform and processing your document requests.
             </p>
 
             <h2>5. How long we keep it</h2>
