@@ -1,6 +1,7 @@
 import { Navigate, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { dashboardPathForRole } from '../lib/roleRedirect'
 
 function ProtectedRoute({ children, allowedRoles }) {
     const [loading, setLoading] = useState(true)
@@ -43,7 +44,7 @@ function ProtectedRoute({ children, allowedRoles }) {
     }
 
     if (!profile) {
-        return <Navigate to="/login" replace />
+        return <Navigate to="/" replace />
     }
 
     if (profile.status !== 'active') {
@@ -73,7 +74,10 @@ function ProtectedRoute({ children, allowedRoles }) {
         allowedRoles &&
         !allowedRoles.includes(profile.role)
     ) {
-        return <Navigate to="/unauthorized" replace />
+        // Wrong account for this section (e.g. a student link opened while
+        // signed in as an employee) -- send them to where they actually
+        // belong instead of a dead end.
+        return <Navigate to={dashboardPathForRole(profile.role) || '/'} replace />
     }
 
     return children

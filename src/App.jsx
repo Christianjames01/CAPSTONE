@@ -119,7 +119,13 @@ function App() {
         {/* STUDENT */}
         {/* ========================= */}
 
-        <Route element={<StudentLayout />}>
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentLayout />
+            </ProtectedRoute>
+          }
+        >
 
           <Route
             path="/student/dashboard"
@@ -187,7 +193,13 @@ function App() {
         {/* EMPLOYEE */}
         {/* ========================= */}
 
-        <Route element={<EmployeeLayout />}>
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeLayout />
+            </ProtectedRoute>
+          }
+        >
 
           <Route
             path="/employee/dashboard"
