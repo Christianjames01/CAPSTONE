@@ -42,9 +42,9 @@ function PrivacyPolicy() {
 
             <h2>4. Where it's stored</h2>
             <p>
-                Your information is stored on secure servers used to operate CertiChain on behalf of Holy
-                Cross of Davao College. It is not sold, rented, or used for any purpose outside of running
-                the platform and processing your document requests.
+                Your information is treated as part of your official student records, maintained by Holy
+                Cross of Davao College's Registrar's Office. It is safeguarded the same way your other
+                academic records are protected, and is never sold, rented, or shared with outside parties.
             </p>
 
             <h2>5. How long we keep it</h2>
