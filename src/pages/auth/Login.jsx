@@ -141,7 +141,7 @@ function Login() {
                         placeholder="Enter your password"
                         required
                     />
-                    <Link to="/forgot-password" style={{ fontSize: 12.5, display: 'inline-block', marginTop: 6 }}>
+                    <Link to="/forgot-password" style={{ fontSize: 12.5, display: 'block', textAlign: 'right', marginTop: 6 }}>
                         Forgot password?
                     </Link>
                 </div>
