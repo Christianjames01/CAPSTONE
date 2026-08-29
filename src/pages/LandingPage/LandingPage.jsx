@@ -555,6 +555,11 @@ const LandingPage = () => {
 
                     <div className="footer-bottom">
                         <span>© {new Date().getFullYear()} CertiChain. All rights reserved.</span>
+                        <span>
+                            <a href="/terms">Terms of Service</a>
+                            {' · '}
+                            <a href="/privacy-policy">Privacy Policy</a>
+                        </span>
                         <span>Holy Cross of Davao College</span>
                     </div>
 

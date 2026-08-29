@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.legal-page {
+    --blue: #123B78;
+    --blue-dark: #0A2450;
+    --blue-tint: #EAF1FB;
+    --red: #C8102E;
+    --ink: #101827;
+    --slate: #57616F;
+    --line: rgba(16, 24, 39, 0.12);
+    --white: #FFFFFF;
+
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--ink);
+    background: #FBFCFE;
+    min-height: 100vh;
+}
+
+.legal-header {
+    background: var(--blue-dark);
+    padding: 20px 24px;
+}
+
+.legal-header-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.legal-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.legal-brand img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+}
+
+.legal-brand-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--white);
+    line-height: 1.1;
+}
+
+.legal-brand-subtitle {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.legal-back-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    text-decoration: none;
+}
+
+.legal-content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+.legal-content h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+}
+
+.legal-updated {
+    font-size: 13px;
+    color: var(--slate);
+    margin: 0 0 40px;
+}
+
+.legal-content h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin: 40px 0 12px;
+}
+
+.legal-content h2:first-of-type {
+    margin-top: 0;
+}
+
+.legal-content p {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--slate);
+    margin: 0 0 14px;
+}
+
+.legal-content ul {
+    margin: 0 0 14px;
+    padding-left: 22px;
+}
+
+.legal-content li {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--slate);
+    margin-bottom: 6px;
+}
+
+.legal-content strong {
+    color: var(--ink);
+}
+
+.legal-content a {
+    color: var(--blue);
+    font-weight: 600;
+}
+
+.legal-cross-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 16px;
+    background: var(--blue-tint);
+    border-radius: 8px;
+    font-size: 13.5px;
+}
