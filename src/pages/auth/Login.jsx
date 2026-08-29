@@ -131,10 +131,7 @@ function Login() {
                 </div>
 
                 <div className="form-group">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <label className="form-label" htmlFor="login-password">Password</label>
-                        <Link to="/forgot-password" style={{ fontSize: 12.5 }}>Forgot password?</Link>
-                    </div>
+                    <label className="form-label" htmlFor="login-password">Password</label>
                     <input
                         id="login-password"
                         type="password"
@@ -144,6 +141,9 @@ function Login() {
                         placeholder="Enter your password"
                         required
                     />
+                    <Link to="/forgot-password" style={{ fontSize: 12.5, display: 'inline-block', marginTop: 6 }}>
+                        Forgot password?
+                    </Link>
                 </div>
 
                 {message && <p className={`form-message ${messageType}`}>{message}</p>}
