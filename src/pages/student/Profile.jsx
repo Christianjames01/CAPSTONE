@@ -16,6 +16,7 @@ function Profile() {
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
     const [uploadingAvatar, setUploadingAvatar] = useState(false)
+    const [exportingData, setExportingData] = useState(false)
 
     const [phoneNumber, setPhoneNumber] = useState('')
     const [address, setAddress] = useState('')
@@ -64,6 +65,7 @@ function Profile() {
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
                 .select(`
+                    student_id,
                     student_number,
                     college_id,
                     program_id,
@@ -185,6 +187,121 @@ function Profile() {
         }
     }
 
+    const exportMyData = async () => {
+        try {
+            setExportingData(true)
+            setError('')
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const { exportToExcel } = await import('../../lib/excelExport')
+            const { getHcdcLogoBase64 } = await import('../../lib/hcdcLogoBase64')
+            const logoBase64 = await getHcdcLogoBase64()
+
+            const profileSheet = {
+                name: 'My Profile',
+                letterhead: {
+                    logoBase64,
+                    title: 'CertiChain',
+                    subtitle: 'Holy Cross of Davao College — Your Personal Data',
+                },
+                columns: [
+                    { header: 'Field', key: 'field', width: 26 },
+                    { header: 'Value', key: 'value', width: 40 },
+                ],
+                rows: [
+                    { field: 'Full Name', value: fullName },
+                    { field: 'Email', value: profile?.email || '' },
+                    { field: 'Phone Number', value: profile?.phone_number || '' },
+                    { field: 'Student Number', value: student?.student_number || '' },
+                    { field: 'College', value: collegeName },
+                    { field: 'Program', value: programName },
+                    { field: 'Year Level', value: student?.year_level || '' },
+                    { field: 'Enrollment Status', value: student?.enrollment_status || '' },
+                    { field: 'Birth Date', value: student?.birth_date || '' },
+                    { field: 'Birth Place', value: student?.birth_place || '' },
+                    { field: 'Address', value: student?.address || '' },
+                    { field: 'Emergency Contact Name', value: student?.emergency_contact_name || '' },
+                    { field: 'Emergency Contact Number', value: student?.emergency_contact_number || '' },
+                ],
+            }
+
+            const { data: requestRows } = await supabase
+                .from('document_requests')
+                .select('request_number, document_type_id, quantity, total_amount, status, purpose, requested_at')
+                .eq('student_id', student?.student_id)
+                .order('requested_at', { ascending: false })
+
+            const documentTypeIds = [...new Set((requestRows || []).map((r) => r.document_type_id).filter(Boolean))]
+
+            const { data: documentTypes } = documentTypeIds.length
+                ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
+                : { data: [] }
+
+            const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
+
+            const requestsSheet = {
+                name: 'My Document Requests',
+                columns: [
+                    { header: 'Request Number', key: 'requestNumber', width: 20 },
+                    { header: 'Document', key: 'documentName', width: 32 },
+                    { header: 'Quantity', key: 'quantity', width: 12 },
+                    { header: 'Total Amount (PHP)', key: 'totalAmount', width: 18 },
+                    { header: 'Status', key: 'status', width: 18 },
+                    { header: 'Purpose', key: 'purpose', width: 30 },
+                    { header: 'Requested At', key: 'requestedAt', width: 20 },
+                ],
+                rows: (requestRows || []).map((r) => ({
+                    requestNumber: r.request_number,
+                    documentName: documentNameById[r.document_type_id] || 'Document',
+                    quantity: r.quantity,
+                    totalAmount: r.total_amount,
+                    status: r.status,
+                    purpose: r.purpose || '',
+                    requestedAt: r.requested_at ? new Date(r.requested_at).toLocaleString('en-PH') : '',
+                })),
+            }
+
+            const { data: messageRows } = await supabase
+                .from('messages')
+                .select('sender_user_id, message, created_at')
+                .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
+                .order('created_at', { ascending: true })
+
+            const messagesSheet = {
+                name: 'My Messages',
+                columns: [
+                    { header: 'From', key: 'from', width: 14 },
+                    { header: 'Message', key: 'message', width: 60 },
+                    { header: 'Sent At', key: 'sentAt', width: 20 },
+                ],
+                rows: (messageRows || []).map((m) => ({
+                    from: m.sender_user_id === user.id ? 'Me' : 'Registrar Staff',
+                    message: m.message,
+                    sentAt: m.created_at ? new Date(m.created_at).toLocaleString('en-PH') : '',
+                })),
+            }
+
+            await exportToExcel(
+                `certichain-my-data-${new Date().toISOString().slice(0, 10)}`,
+                [profileSheet, requestsSheet, messagesSheet]
+            )
+
+        } catch (err) {
+            console.error('EXPORT MY DATA ERROR:', err)
+            setError(err.message || 'Failed to export your data.')
+        } finally {
+            setExportingData(false)
+        }
+    }
+
     const startEditing = () => {
         setMessage('')
         setError('')
@@ -285,9 +402,20 @@ function Profile() {
 
     return (
         <div>
-            <div className="student-page-header">
-                <h1>Profile</h1>
-                <p>View your student information and update your contact details.</p>
+            <div className="student-page-header-row" style={{ marginBottom: 12 }}>
+                <div>
+                    <h1>Profile</h1>
+                    <p>View your student information and update your contact details.</p>
+                </div>
+
+                <button
+                    type="button"
+                    className="student-link-button"
+                    onClick={exportMyData}
+                    disabled={exportingData}
+                >
+                    {exportingData ? 'Preparing download...' : 'Download my data ↓'}
+                </button>
             </div>
 
             {error && <div className="student-error-box">{error}</div>}
