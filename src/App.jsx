@@ -11,6 +11,10 @@ import CompleteProfile from './pages/auth/CompleteProfile'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
 
+// LEGAL
+import Terms from './pages/legal/Terms'
+import PrivacyPolicy from './pages/legal/PrivacyPolicy'
+
 // STUDENT
 import StudentLayout from './pages/student/StudentLayout'
 import Dashboard from './pages/student/Dashboard'
@@ -113,6 +117,16 @@ function App() {
         <Route
           path="/reset-password"
           element={<ResetPassword />}
+        />
+
+        <Route
+          path="/terms"
+          element={<Terms />}
+        />
+
+        <Route
+          path="/privacy-policy"
+          element={<PrivacyPolicy />}
         />
 
         {/* ========================= */}
