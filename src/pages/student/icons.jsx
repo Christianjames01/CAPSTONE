@@ -114,3 +114,16 @@ export const IconX = () => (
         <path d="M6 6l12 12M18 6L6 18" />
     </svg>
 )
+
+export const IconMail = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+        <path d="m4 7 8 6 8-6" />
+    </svg>
+)
+
+export const IconPhone = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6.6 10.8a15.9 15.9 0 0 0 6.6 6.6l2.2-2.2a1.2 1.2 0 0 1 1.2-.3c1.3.4 2.7.6 4.1.6.7 0 1.3.6 1.3 1.3V20.7c0 .7-.6 1.3-1.3 1.3C10.6 22 2 13.4 2 2.8 2 2.1 2.6 1.5 3.3 1.5H6.7c.7 0 1.3.6 1.3 1.3 0 1.4.2 2.8.6 4.1.1.4 0 .9-.3 1.2L6.6 10.8Z" />
+    </svg>
+)
