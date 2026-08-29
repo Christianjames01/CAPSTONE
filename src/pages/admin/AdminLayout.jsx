@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
-import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout } from '../student/icons'
+import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart } from './icons'
 import './AdminLayout.css'
@@ -31,6 +31,12 @@ function AdminLayout() {
     const [roleLabel, setRoleLabel] = useState('')
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
+    const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
+    useEffect(() => {
+        document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
+        return () => { document.body.style.overflow = '' }
+    }, [mobileNavOpen])
 
     useEffect(() => {
         loadProfile()
@@ -94,21 +100,52 @@ function AdminLayout() {
         return 0
     }
 
+    const closeMobileNav = () => setMobileNavOpen(false)
+
     return (
         <div className="admin-layout">
 
-            <aside className="admin-sidebar">
+            <header className="admin-mobile-topbar">
+                <button
+                    className="admin-mobile-menu-button"
+                    onClick={() => setMobileNavOpen(true)}
+                    aria-label="Open menu"
+                >
+                    <IconMenu />
+                </button>
+
+                <Link to="/admin/dashboard" className="admin-mobile-brand">
+                    <img src={hcdcLogo} alt="" />
+                    <span>CertiChain</span>
+                </Link>
+            </header>
+
+            {mobileNavOpen && (
+                <div className="admin-nav-backdrop" onClick={closeMobileNav} />
+            )}
+
+            <aside className={`admin-sidebar${mobileNavOpen ? ' open' : ''}`}>
 
                 <div className="admin-sidebar-top">
-                    <Link to="/admin/dashboard" className="admin-sidebar-brand">
-                        <div className="admin-sidebar-seal">
-                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
-                        </div>
-                        <div>
-                            <div className="admin-sidebar-name">CertiChain</div>
-                            <div className="admin-sidebar-subtitle">Registrar Head Portal</div>
-                        </div>
-                    </Link>
+                    <div className="admin-sidebar-brand-row">
+                        <Link to="/admin/dashboard" className="admin-sidebar-brand" onClick={closeMobileNav}>
+                            <div className="admin-sidebar-seal">
+                                <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                            </div>
+                            <div>
+                                <div className="admin-sidebar-name">CertiChain</div>
+                                <div className="admin-sidebar-subtitle">Registrar Head Portal</div>
+                            </div>
+                        </Link>
+
+                        <button
+                            className="admin-mobile-close-button"
+                            onClick={closeMobileNav}
+                            aria-label="Close menu"
+                        >
+                            <IconX />
+                        </button>
+                    </div>
 
                     <nav className="admin-nav">
                         {NAV_ITEMS.map((item) => {
@@ -119,6 +156,7 @@ function AdminLayout() {
                                     key={item.to}
                                     to={item.to}
                                     end={item.end}
+                                    onClick={closeMobileNav}
                                     className={({ isActive }) =>
                                         `admin-nav-link${isActive ? ' active' : ''}`
                                     }
