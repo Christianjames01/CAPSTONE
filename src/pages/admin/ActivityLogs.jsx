@@ -59,7 +59,11 @@ function ActivityLogs() {
                     } else if (log.user_id && profileByUserId[log.user_id]) {
                         const profile = profileByUserId[log.user_id]
                         actorName = `${profile.first_name} ${profile.last_name}`.trim()
-                        actorRole = profile.role === 'admin' ? 'Admin' : 'Registrar Head'
+                        actorRole = profile.role === 'admin'
+                            ? 'Admin'
+                            : profile.role === 'employee'
+                                ? 'Employee'
+                                : 'Registrar Head'
                     }
 
                     return { ...log, actorName, actorRole }

@@ -90,6 +90,12 @@ function Students() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('You are not logged in.')
 
+            const { data: employee } = await supabase
+                .from('employees')
+                .select('employee_id')
+                .eq('user_id', user.id)
+                .maybeSingle()
+
             const { error: updateError } = await supabase
                 .from('students')
                 .update({
@@ -111,7 +117,8 @@ function Students() {
             })
 
             await logActivity({
-                userId: user.id,
+                employeeId: employee?.employee_id,
+                userId: employee ? null : user.id,
                 action: decision === 'approved' ? 'approve_student_registration' : 'reject_student_registration',
                 tableName: 'students',
                 recordId: student.student_id,
