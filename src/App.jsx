@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import ProtectedRoute from './components/ProtectedRoute'
+import StudentVerificationGate from './components/StudentVerificationGate'
 import HomeRoute from './components/HomeRoute'
 
 import Login from './pages/auth/Login'
@@ -136,7 +137,9 @@ function App() {
         <Route
           element={
             <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout />
+              <StudentVerificationGate>
+                <StudentLayout />
+              </StudentVerificationGate>
             </ProtectedRoute>
           }
         >

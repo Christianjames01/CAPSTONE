@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyError, confirmModal } from '../../lib/notify'
+import { notifyError, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
+import Swal from 'sweetalert2'
 import './AdminPages.css'
 
 function Students() {
@@ -11,6 +12,8 @@ function Students() {
     const [term, setTerm] = useState('')
     const [results, setResults] = useState([])
     const [pendingProfiles, setPendingProfiles] = useState([])
+    const [pendingVerifications, setPendingVerifications] = useState([])
+    const [reviewingId, setReviewingId] = useState(null)
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
     const [error, setError] = useState('')
@@ -19,7 +22,85 @@ function Students() {
 
     useEffect(() => {
         loadAllStudents()
+        loadPendingVerifications()
     }, [])
+
+    // The head/admin sees every pending registration, regardless of
+    // program -- unlike employees, who only see their assigned ones.
+    const loadPendingVerifications = async () => {
+        const { data: pending } = await supabase
+            .from('students')
+            .select('student_id, user_id, student_number, college_id, program_id, year_level, created_at')
+            .eq('verification_status', 'pending')
+            .order('created_at', { ascending: true })
+
+        setPendingVerifications(await enrichStudents(pending || []))
+    }
+
+    const approveStudent = async (student) => {
+        await reviewStudent(student, 'approved')
+    }
+
+    const rejectStudent = async (student) => {
+        const { value: reason } = await Swal.fire({
+            title: 'Reject registration',
+            input: 'text',
+            inputLabel: 'Reason (shown to the student)',
+            inputPlaceholder: 'e.g. Student number not found in enrollment records',
+            showCancelButton: true,
+            confirmButtonText: 'Reject',
+            confirmButtonColor: '#dc3545',
+        })
+
+        if (!reason) return
+
+        await reviewStudent(student, 'rejected', reason)
+    }
+
+    const reviewStudent = async (student, decision, reason) => {
+        try {
+            setReviewingId(student.student_id)
+
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('You are not logged in.')
+
+            const { error: updateError } = await supabase
+                .from('students')
+                .update({
+                    verification_status: decision,
+                    verification_note: reason || null,
+                    verified_by: user.id,
+                    verified_at: new Date().toISOString(),
+                })
+                .eq('student_id', student.student_id)
+
+            if (updateError) throw new Error(updateError.message)
+
+            await notifyStudentByStudentId({
+                studentId: student.student_id,
+                title: decision === 'approved' ? 'Account verified' : 'Registration not verified',
+                message: decision === 'approved'
+                    ? "Your enrollment has been verified. You can now log in and use CertiChain."
+                    : `Your registration could not be verified: ${reason}. Contact the Registrar's Office for help.`,
+            })
+
+            await logActivity({
+                userId: user.id,
+                action: decision === 'approved' ? 'approve_student_registration' : 'reject_student_registration',
+                tableName: 'students',
+                recordId: student.student_id,
+                description: `${decision === 'approved' ? 'Approved' : 'Rejected'} registration for ${student.fullName} (${student.student_number}).`,
+            })
+
+            setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
+
+        } catch (err) {
+            console.error('REVIEW STUDENT ERROR:', err)
+            notifyError(err.message || 'Failed to review student.')
+        } finally {
+            setReviewingId(null)
+        }
+    }
 
     const enrichStudents = async (rows) => {
         const userIds = [...new Set(rows.map((s) => s.user_id))]
@@ -367,6 +448,69 @@ function Students() {
             </form>
 
             {error && <div className="admin-error-box">{error}</div>}
+
+            {pendingVerifications.length > 0 && (
+                <>
+                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Verification</h2>
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
+                        New registrations waiting to be confirmed against enrollment records.
+                    </p>
+
+                    {pendingVerifications.map((student) => (
+                        <div className="admin-list-card" key={student.student_id}>
+                            <div className="admin-list-card-header">
+                                <div>
+                                    <h3>{student.fullName}</h3>
+                                    <p>{student.student_number} · {student.email}</p>
+                                </div>
+                                <span className="admin-status-pill status-pending">pending</span>
+                            </div>
+
+                            <div className="admin-info-grid">
+                                <div className="admin-info-field">
+                                    <span>College</span>
+                                    <strong>{student.collegeName || 'N/A'}</strong>
+                                </div>
+                                <div className="admin-info-field">
+                                    <span>Program</span>
+                                    <strong>{student.programName || 'N/A'}</strong>
+                                </div>
+                                <div className="admin-info-field">
+                                    <span>Year Level</span>
+                                    <strong>{student.year_level || 'N/A'}</strong>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <button
+                                    className="admin-link-button"
+                                    onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                                >
+                                    View full record →
+                                </button>
+
+                                <button
+                                    className="admin-link-button"
+                                    style={{ color: '#1e8a5f' }}
+                                    onClick={() => approveStudent(student)}
+                                    disabled={reviewingId === student.student_id}
+                                >
+                                    {reviewingId === student.student_id ? 'Working...' : 'Approve'}
+                                </button>
+
+                                <button
+                                    className="admin-link-button"
+                                    style={{ color: 'var(--red)' }}
+                                    onClick={() => rejectStudent(student)}
+                                    disabled={reviewingId === student.student_id}
+                                >
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </>
+            )}
 
             {pendingProfiles.length > 0 && (
                 <>
