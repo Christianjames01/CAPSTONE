@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
-import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout } from '../student/icons'
+import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory } from './icons'
 import './EmployeeLayout.css'
 
@@ -26,6 +26,12 @@ function EmployeeLayout() {
     const [positionTitle, setPositionTitle] = useState('')
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
+    const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
+    useEffect(() => {
+        document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
+        return () => { document.body.style.overflow = '' }
+    }, [mobileNavOpen])
 
     useEffect(() => {
         loadProfile()
@@ -98,21 +104,52 @@ function EmployeeLayout() {
         return 0
     }
 
+    const closeMobileNav = () => setMobileNavOpen(false)
+
     return (
         <div className="employee-layout">
 
-            <aside className="employee-sidebar">
+            <header className="employee-mobile-topbar">
+                <button
+                    className="employee-mobile-menu-button"
+                    onClick={() => setMobileNavOpen(true)}
+                    aria-label="Open menu"
+                >
+                    <IconMenu />
+                </button>
+
+                <Link to="/employee/dashboard" className="employee-mobile-brand">
+                    <img src={hcdcLogo} alt="" />
+                    <span>CertiChain</span>
+                </Link>
+            </header>
+
+            {mobileNavOpen && (
+                <div className="employee-nav-backdrop" onClick={closeMobileNav} />
+            )}
+
+            <aside className={`employee-sidebar${mobileNavOpen ? ' open' : ''}`}>
 
                 <div className="employee-sidebar-top">
-                    <Link to="/employee/dashboard" className="employee-sidebar-brand">
-                        <div className="employee-sidebar-seal">
-                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
-                        </div>
-                        <div>
-                            <div className="employee-sidebar-name">CertiChain</div>
-                            <div className="employee-sidebar-subtitle">Registrar Employee Portal</div>
-                        </div>
-                    </Link>
+                    <div className="employee-sidebar-brand-row">
+                        <Link to="/employee/dashboard" className="employee-sidebar-brand" onClick={closeMobileNav}>
+                            <div className="employee-sidebar-seal">
+                                <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                            </div>
+                            <div>
+                                <div className="employee-sidebar-name">CertiChain</div>
+                                <div className="employee-sidebar-subtitle">Registrar Employee Portal</div>
+                            </div>
+                        </Link>
+
+                        <button
+                            className="employee-mobile-close-button"
+                            onClick={closeMobileNav}
+                            aria-label="Close menu"
+                        >
+                            <IconX />
+                        </button>
+                    </div>
 
                     <nav className="employee-nav">
                         {NAV_ITEMS.map((item) => {
@@ -123,6 +160,7 @@ function EmployeeLayout() {
                                     key={item.to}
                                     to={item.to}
                                     end={item.end}
+                                    onClick={closeMobileNav}
                                     className={({ isActive }) =>
                                         `employee-nav-link${isActive ? ' active' : ''}`
                                     }
