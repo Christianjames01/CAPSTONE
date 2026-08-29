@@ -17,8 +17,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #FBFCFE;
     padding: 32px 20px;
+    background-image:
+        linear-gradient(180deg, rgba(10, 36, 80, 0.82) 0%, rgba(251, 252, 254, 0.96) 60%, #FBFCFE 100%),
+        url('../assets/hcdc-background.png');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
 }
 
 .verify-gate-card {
@@ -33,17 +38,18 @@
 }
 
 .verify-gate-seal {
-    width: 52px;
-    height: 52px;
+    width: 76px;
+    height: 76px;
     margin: 0 auto 20px;
     border-radius: 50%;
     background: var(--white);
-    border: 2px solid var(--red);
+    border: 3px solid var(--red);
+    box-shadow: 0 6px 18px rgba(16, 24, 39, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 5px;
+    padding: 8px;
 }
 
 .verify-gate-seal img {
