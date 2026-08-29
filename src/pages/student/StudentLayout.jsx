@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { watchStudentSession } from '../../lib/singleSession'
+import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import {
     IconHome,
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
 
 function StudentLayout() {
     const navigate = useNavigate()
+    useIdleLogout()
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
     const [photoUrl, setPhotoUrl] = useState('')
