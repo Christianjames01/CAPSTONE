@@ -1,7 +1,7 @@
 // Fires on every INSERT into "notifications" (via a Database trigger) and
 // emails the notified user, mirroring whatever the in-app notification says.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { sendEmail } from '../_shared/mailgun.ts'
+import { sendEmail } from '../_shared/email.ts'
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
 
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
         console.log('SENDING TO:', profile.email)
 
-        const mailgunResponse = await sendEmail({
+        const result = await sendEmail({
             to: profile.email,
             subject: notification.title || 'CertiChain Notification',
             html: `
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
             `,
         })
 
-        return new Response(JSON.stringify({ sent: true, mailgun: mailgunResponse }), { status: 200 })
+        return new Response(JSON.stringify({ sent: true, ...result }), { status: 200 })
 
     } catch (err) {
         console.error('SEND NOTIFICATION EMAIL ERROR:', err)
