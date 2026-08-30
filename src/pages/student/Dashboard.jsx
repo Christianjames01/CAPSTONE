@@ -259,7 +259,7 @@ function Dashboard() {
                         <button
                             className="student-stat-card"
                             style={{ '--stat-color': '#B45309', '--stat-tint': '#FEF3C7' }}
-                            onClick={() => navigate('/student/my-requests')}
+                            onClick={() => navigate(`/student/my-requests?status=${IN_PROGRESS_STATUSES.join(',')}`)}
                         >
                             <div className="student-stat-icon"><IconClock /></div>
                             <div>
@@ -283,7 +283,7 @@ function Dashboard() {
                         <button
                             className="student-stat-card"
                             style={{ '--stat-color': 'var(--blue-dark)', '--stat-tint': 'var(--paper)' }}
-                            onClick={() => navigate('/student/my-requests')}
+                            onClick={() => navigate('/student/my-requests?status=completed')}
                         >
                             <div className="student-stat-icon"><IconDocumentPlus /></div>
                             <div>
@@ -295,7 +295,7 @@ function Dashboard() {
                         <button
                             className="student-stat-card"
                             style={{ '--stat-color': '#8a94a6', '--stat-tint': 'rgba(138, 148, 166, 0.12)' }}
-                            onClick={() => navigate('/student/my-requests')}
+                            onClick={() => navigate('/student/my-requests?status=cancelled')}
                         >
                             <div className="student-stat-icon"><IconX /></div>
                             <div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
@@ -19,15 +19,38 @@ const STATUS_LABELS = {
 
 const statusLabel = (status) => STATUS_LABELS[status] || status.replace(/_/g, ' ')
 
+const STATUS_CHIPS = [
+    { key: 'all', label: 'All' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'payment_pending', label: 'Payment Pending' },
+    { key: 'receipt_uploaded', label: 'Receipt Uploaded' },
+    { key: 'receipt_verified', label: 'Payment Verified' },
+    { key: 'processing', label: 'Processing' },
+    { key: 'lacking_requirements', label: 'Requirements Needed' },
+    { key: 'ready_for_claiming', label: 'Ready for Claiming' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'rejected', label: 'Rejected' },
+    { key: 'cancelled', label: 'Cancelled' },
+]
+
 function MyRequest() {
     const navigate = useNavigate()
     const location = useLocation()
+    const [searchParams, setSearchParams] = useSearchParams()
 
     const [requests, setRequests] = useState([])
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
     const [search, setSearch] = useState('')
+    const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'all')
     const justSubmitted = location.state?.justSubmitted || ''
+
+    const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
+
+    const setChip = (key) => {
+        setActiveChip(key)
+        setSearchParams(key === 'all' ? {} : { status: key })
+    }
 
     useEffect(() => {
         loadRequests()
@@ -137,14 +160,16 @@ function MyRequest() {
         }
     }
 
-    const visibleRequests = requests.filter((r) => {
-        if (!search.trim()) return true
-        const term = search.trim().toLowerCase()
-        return (
-            r.request_number.toLowerCase().includes(term) ||
-            r.documentName.toLowerCase().includes(term)
-        )
-    })
+    const visibleRequests = requests
+        .filter((r) => !activeStatuses || activeStatuses.includes(r.status))
+        .filter((r) => {
+            if (!search.trim()) return true
+            const term = search.trim().toLowerCase()
+            return (
+                r.request_number.toLowerCase().includes(term) ||
+                r.documentName.toLowerCase().includes(term)
+            )
+        })
 
     return (
         <div>
@@ -178,6 +203,18 @@ function MyRequest() {
                 placeholder="Search by request number or document"
             />
 
+            <div className="student-filter-row">
+                {STATUS_CHIPS.map((chip) => (
+                    <button
+                        key={chip.key}
+                        className={`student-filter-chip${activeChip === chip.key ? ' active' : ''}`}
+                        onClick={() => setChip(chip.key)}
+                    >
+                        {chip.label}
+                    </button>
+                ))}
+            </div>
+
             {errorMessage && (
                 <div className="student-error-box">
                     {errorMessage}
@@ -202,7 +239,7 @@ function MyRequest() {
                     </div>
                 </div>
             ) : visibleRequests.length === 0 && !errorMessage ? (
-                <div className="student-empty">No requests match your search.</div>
+                <div className="student-empty">No requests match this view.</div>
             ) : (
                 visibleRequests.map((request) => (
                     <div className="student-list-card" key={request.request_id}>

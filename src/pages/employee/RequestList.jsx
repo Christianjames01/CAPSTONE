@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
@@ -20,12 +20,20 @@ const STATUS_CHIPS = [
 
 function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, emptyText }) {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
 
     const [requests, setRequests] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [activeChip, setActiveChip] = useState('all')
+    const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'all')
     const [search, setSearch] = useState('')
+
+    const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
+
+    const setChip = (key) => {
+        setActiveChip(key)
+        setSearchParams(key === 'all' ? {} : { status: key })
+    }
 
     useEffect(() => {
         loadRequests()
@@ -119,7 +127,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
     }
 
     const visibleRequests = requests
-        .filter((r) => !(showFilterChips && activeChip !== 'all') || r.status === activeChip)
+        .filter((r) => !(showFilterChips && activeStatuses) || activeStatuses.includes(r.status))
         .filter((r) => {
             if (!search.trim()) return true
             const term = search.trim().toLowerCase()
@@ -152,7 +160,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                         <button
                             key={chip.key}
                             className={`employee-filter-chip${activeChip === chip.key ? ' active' : ''}`}
-                            onClick={() => setActiveChip(chip.key)}
+                            onClick={() => setChip(chip.key)}
                         >
                             {chip.label}
                         </button>

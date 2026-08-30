@@ -146,6 +146,29 @@
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
+.student-filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.student-filter-chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--white);
+    border: 1px solid var(--line);
+    color: var(--slate);
+}
+
+.student-filter-chip.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--white);
+}
+
 .student-list-card {
     display: flex;
     flex-direction: column;
