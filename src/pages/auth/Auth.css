@@ -83,7 +83,7 @@
     align-items: center;
     gap: 16px;
     width: fit-content;
-    margin-bottom: 192px;
+    margin-bottom: 32px;
 }
 
 .auth-brand-seal {
@@ -373,10 +373,6 @@
     .auth-brand-panel {
         padding: 32px 28px;
         min-height: 220px;
-    }
-
-    .auth-brand-link {
-        margin-bottom: 24px;
     }
 
     .auth-brand-copy h2 {
