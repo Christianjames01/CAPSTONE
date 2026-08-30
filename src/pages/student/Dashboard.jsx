@@ -52,6 +52,9 @@ function Dashboard() {
 
     useEffect(() => {
         loadDashboard()
+
+        window.addEventListener('notifications-updated', loadDashboard)
+        return () => window.removeEventListener('notifications-updated', loadDashboard)
     }, [])
 
     async function loadDashboard() {

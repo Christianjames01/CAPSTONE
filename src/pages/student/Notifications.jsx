@@ -76,6 +76,8 @@ function Notifications() {
             .from('notifications')
             .update({ is_read: true, read_at: new Date().toISOString() })
             .eq('notification_id', notification.notification_id)
+
+        window.dispatchEvent(new Event('notifications-updated'))
     }
 
     const markAllAsRead = async () => {
@@ -88,6 +90,8 @@ function Notifications() {
             .update({ is_read: true, read_at: new Date().toISOString() })
             .eq('user_id', userId)
             .eq('is_read', false)
+
+        window.dispatchEvent(new Event('notifications-updated'))
     }
 
     const handleClick = (notification) => {

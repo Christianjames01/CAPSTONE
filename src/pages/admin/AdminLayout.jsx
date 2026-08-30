@@ -43,6 +43,9 @@ function AdminLayout() {
     useEffect(() => {
         loadProfile()
         loadBadgeCounts()
+
+        window.addEventListener('notifications-updated', loadBadgeCounts)
+        return () => window.removeEventListener('notifications-updated', loadBadgeCounts)
     }, [])
 
     async function loadProfile() {
