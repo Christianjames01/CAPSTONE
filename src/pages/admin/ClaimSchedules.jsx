@@ -153,7 +153,7 @@ function ClaimSchedules() {
                 action: 'mark_claimed',
                 tableName: 'document_requests',
                 recordId: schedule.request_id,
-                description: `Marked ${schedule.requestNumber} as claimed (Registrar Head override).`,
+                description: `Marked "${schedule.requestNumber}" as claimed (Registrar Head override).`,
             })
 
             await notifyStudentByStudentId({

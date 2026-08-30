@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifyWarning } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
@@ -80,9 +81,18 @@ function CollegesPrograms() {
             }
 
             if (collegeForm.college_id) {
+                const original = colleges.find((c) => c.college_id === collegeForm.college_id)
+
                 const { error: updateError } = await supabase.from('colleges').update(payload).eq('college_id', collegeForm.college_id)
                 if (updateError) throw new Error(updateError.message)
-                await logAdmin('edit_college', 'colleges', collegeForm.college_id, `Updated college "${payload.college_name}".`)
+
+                const collegeChanges = describeChanges([
+                    ['code', original?.college_code, payload.college_code],
+                    ['name', original?.college_name, payload.college_name],
+                    ['status', original?.status, payload.status],
+                ])
+
+                await logAdmin('edit_college', 'colleges', collegeForm.college_id, `Updated college "${payload.college_name}".${collegeChanges ? ' ' + collegeChanges + '.' : ''}`)
             } else {
                 const { data, error: insertError } = await supabase.from('colleges').insert(payload).select().single()
                 if (insertError) throw new Error(insertError.message)
@@ -106,7 +116,7 @@ function CollegesPrograms() {
         try {
             const { error: updateError } = await supabase.from('colleges').update({ status: nextStatus }).eq('college_id', college.college_id)
             if (updateError) throw new Error(updateError.message)
-            await logAdmin('toggle_college_status', 'colleges', college.college_id, `Set college "${college.college_name}" to ${nextStatus}.`)
+            await logAdmin('toggle_college_status', 'colleges', college.college_id, `Set college "${college.college_name}" status from "${college.status}" to "${nextStatus}".`)
             await loadData()
         } catch (err) {
             notifyError(err.message || 'Failed to update college status.')
@@ -137,9 +147,19 @@ function CollegesPrograms() {
             }
 
             if (programForm.program_id) {
+                const original = programs.find((p) => p.program_id === programForm.program_id)
+
                 const { error: updateError } = await supabase.from('programs').update(payload).eq('program_id', programForm.program_id)
                 if (updateError) throw new Error(updateError.message)
-                await logAdmin('edit_program', 'programs', programForm.program_id, `Updated program "${payload.program_name}".`)
+
+                const programChanges = describeChanges([
+                    ['code', original?.program_code, payload.program_code],
+                    ['name', original?.program_name, payload.program_name],
+                    ['degree level', original?.degree_level, payload.degree_level],
+                    ['status', original?.status, payload.status],
+                ])
+
+                await logAdmin('edit_program', 'programs', programForm.program_id, `Updated program "${payload.program_name}".${programChanges ? ' ' + programChanges + '.' : ''}`)
             } else {
                 const { data, error: insertError } = await supabase.from('programs').insert(payload).select().single()
                 if (insertError) throw new Error(insertError.message)
@@ -163,7 +183,7 @@ function CollegesPrograms() {
         try {
             const { error: updateError } = await supabase.from('programs').update({ status: nextStatus }).eq('program_id', program.program_id)
             if (updateError) throw new Error(updateError.message)
-            await logAdmin('toggle_program_status', 'programs', program.program_id, `Set program "${program.program_name}" to ${nextStatus}.`)
+            await logAdmin('toggle_program_status', 'programs', program.program_id, `Set program "${program.program_name}" status from "${program.status}" to "${nextStatus}".`)
             await loadData()
         } catch (err) {
             notifyError(err.message || 'Failed to update program status.')

@@ -171,7 +171,7 @@ function Employees() {
                 action: 'add_employee',
                 tableName: 'employees',
                 recordId: newUser.id,
-                description: `Added employee ${form.firstName.trim()} ${form.lastName.trim()} (${form.employeeNumber.trim()}).`,
+                description: `Added employee "${form.firstName.trim()} ${form.lastName.trim()}" (${form.employeeNumber.trim()}).`,
             })
 
             let assignmentNote = ''
@@ -206,7 +206,7 @@ function Employees() {
                             action: 'add_employee_assignment',
                             tableName: 'employee_assignments',
                             recordId: newEmployeeRow.employee_id,
-                            description: `Assigned new employee ${form.firstName.trim()} ${form.lastName.trim()} to a college/program on creation.`,
+                            description: `Assigned new employee "${form.firstName.trim()} ${form.lastName.trim()}" to a college/program on creation.`,
                         })
                     }
                 }
@@ -256,7 +256,7 @@ function Employees() {
                 action: 'remove_employee',
                 tableName: 'employees',
                 recordId: employee.employee_id,
-                description: `Removed employee record for ${employee.name} (${employee.employee_number}).`,
+                description: `Removed employee record for "${employee.name}" (${employee.employee_number}).`,
             })
 
             await loadEmployees()
@@ -303,7 +303,7 @@ function Employees() {
                 action: nextStatus === 'active' ? 'activate_employee' : 'deactivate_employee',
                 tableName: 'employees',
                 recordId: employee.employee_id,
-                description: `${nextStatus === 'active' ? 'Activated' : 'Deactivated'} employee ${employee.name} (${employee.employee_number}).`,
+                description: `${nextStatus === 'active' ? 'Activated' : 'Deactivated'} employee "${employee.name}" (${employee.employee_number}).`,
             })
 
             await loadEmployees()

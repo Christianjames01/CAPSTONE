@@ -91,7 +91,7 @@ function Students() {
                 action: decision === 'approved' ? 'approve_student_registration' : 'reject_student_registration',
                 tableName: 'students',
                 recordId: student.student_id,
-                description: `${decision === 'approved' ? 'Approved' : 'Rejected'} registration for ${student.fullName} (${student.student_number}).`,
+                description: `${decision === 'approved' ? 'Approved' : 'Rejected'} registration for "${student.fullName}" (${student.student_number}).`,
             })
 
             setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
@@ -284,7 +284,7 @@ function Students() {
                 action: nextStatus === 'active' ? 'activate_student' : 'deactivate_student',
                 tableName: 'students',
                 recordId: student.student_id,
-                description: `${nextStatus === 'active' ? 'Activated' : 'Deactivated'} student ${student.fullName} (${student.student_number}).`,
+                description: `${nextStatus === 'active' ? 'Activated' : 'Deactivated'} student "${student.fullName}" (${student.student_number}).`,
             })
 
             applyToResults(student.student_id, { status: nextStatus })
@@ -346,7 +346,7 @@ function Students() {
                 action: 'remove_student',
                 tableName: 'students',
                 recordId: student.student_id,
-                description: `Deleted student record for ${student.fullName} (${student.student_number}).`,
+                description: `Deleted student record for "${student.fullName}" (${student.student_number}).`,
             })
 
             setResults((prev) => prev.filter((s) => s.student_id !== student.student_id))

@@ -102,7 +102,7 @@ function OfficialReceipts() {
                 action: 'verify_receipt',
                 tableName: 'official_receipts',
                 recordId: receipt.receipt_id,
-                description: `Verified official receipt ${receipt.receipt_number} for request ${receipt.requestNumber} (Registrar Head).`,
+                description: `Verified official receipt "${receipt.receipt_number}" for request "${receipt.requestNumber}" (Registrar Head).`,
             })
 
             await notifyStudentByStudentId({
@@ -152,7 +152,7 @@ function OfficialReceipts() {
                 action: 'reject_receipt',
                 tableName: 'official_receipts',
                 recordId: receipt.receipt_id,
-                description: `Rejected official receipt ${receipt.receipt_number} for request ${receipt.requestNumber}: ${reason.trim()} (Registrar Head).`,
+                description: `Rejected official receipt "${receipt.receipt_number}" for request "${receipt.requestNumber}": "${reason.trim()}" (Registrar Head).`,
             })
 
             await notifyStudentByStudentId({

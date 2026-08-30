@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { describeChanges } from '../../lib/describeChanges'
 import { exportToExcel } from '../../lib/excelExport'
 import { parseExcelFile } from '../../lib/excelImport'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
@@ -242,12 +243,20 @@ function Documents() {
             }
 
             if (form.document_type_id) {
+                const original = documents.find((d) => d.document_type_id === form.document_type_id)
+
                 const { error: updateError } = await supabase
                     .from('document_types')
                     .update(payload)
                     .eq('document_type_id', form.document_type_id)
 
                 if (updateError) throw new Error(updateError.message)
+
+                const docChanges = describeChanges([
+                    ['name', original?.document_name, payload.document_name],
+                    ['fee', original ? `₱${Number(original.fee || 0).toFixed(2)}` : '', `₱${Number(payload.fee || 0).toFixed(2)}`],
+                    ['category', original?.category, payload.category],
+                ])
 
                 // Carry the new fee over to requests that haven't been paid
                 // yet. Once a receipt is uploaded the amount stays locked to
@@ -268,6 +277,7 @@ function Documents() {
                     'edit_document_type',
                     form.document_type_id,
                     `Updated document type "${payload.document_name}".` +
+                        (docChanges ? ` ${docChanges}.` : '') +
                         (updatedRequests?.length
                             ? ` Applied new fee to ${updatedRequests.length} unpaid request${updatedRequests.length === 1 ? '' : 's'}.`
                             : '')

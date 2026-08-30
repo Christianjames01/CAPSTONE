@@ -501,7 +501,7 @@ function ClaimSchedule() {
                     action: 'update_claim_schedule',
                     tableName: 'claim_schedules',
                     recordId: existingSchedule.claim_schedule_id,
-                    description: `Updated claiming schedule for request ${request?.request_number || requestId}.${scheduleChanges ? ' ' + scheduleChanges + '.' : ''}`,
+                    description: `Updated claiming schedule for request "${request?.request_number || requestId}".${scheduleChanges ? ' ' + scheduleChanges + '.' : ''}`,
                 })
 
                 await notifyStudentByStudentId({
@@ -621,7 +621,7 @@ function ClaimSchedule() {
                     action: 'create_claim_schedule',
                     tableName: 'claim_schedules',
                     recordId: newSchedule.claim_schedule_id,
-                    description: `Created claiming schedule for request ${request?.request_number || requestId} on ${scheduledDate} ${scheduledTime}.`,
+                    description: `Created claiming schedule for request "${request?.request_number || requestId}" on "${scheduledDate}" at "${scheduledTime}".`,
                 })
 
                 await notifyStudentByStudentId({
@@ -747,7 +747,7 @@ function ClaimSchedule() {
                 action: 'cancel_claim_schedule',
                 tableName: 'claim_schedules',
                 recordId: existingSchedule.claim_schedule_id,
-                description: `Cancelled claiming schedule for request ${request?.request_number || requestId}.`,
+                description: `Cancelled claiming schedule for request "${request?.request_number || requestId}".`,
             })
 
             await notifyStudentByStudentId({
