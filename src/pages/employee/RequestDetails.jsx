@@ -1148,8 +1148,8 @@ function EmployeeRequestDetails() {
 
             await notifyStudentByStudentId({
                 studentId: request.student_id,
-                title: 'Document ready',
-                message: `Your document for request ${request.request_number} has been prepared. It will be scheduled for claiming shortly.`,
+                title: 'Ready to claim',
+                message: `Your document for request ${request.request_number} is ready to claim. You'll be notified separately once a claiming date and time is scheduled.`,
                 notificationType: 'request_update',
                 relatedRequestId: requestId,
             })
@@ -1211,8 +1211,10 @@ function EmployeeRequestDetails() {
 
             await notifyStudentByStudentId({
                 studentId: request.student_id,
-                title: 'Request status updated',
-                message: `Your request ${request.request_number} status was updated to "${targetStatus.replace(/_/g, ' ')}".${reason ? ' ' + reason : ''}`,
+                title: targetStatus === 'ready_for_claiming' ? 'Ready to claim' : 'Request status updated',
+                message: targetStatus === 'ready_for_claiming'
+                    ? `Your document for request ${request.request_number} is ready to claim. You'll be notified separately once a claiming date and time is scheduled.`
+                    : `Your request ${request.request_number} status was updated to "${targetStatus.replace(/_/g, ' ')}".${reason ? ' ' + reason : ''}`,
                 notificationType: 'request_update',
                 relatedRequestId: requestId,
             })
