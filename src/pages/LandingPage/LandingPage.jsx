@@ -289,31 +289,6 @@ const LandingPage = () => {
 
 
                 {/* =========================
-            STATS
-        ========================= */}
-                <section className="stats-section">
-                    <div className="stats-container">
-                        <div className="stat-item">
-                            <strong>{DOCUMENTS.length}</strong>
-                            <span>Document types available</span>
-                        </div>
-                        <div className="stat-item">
-                            <strong>3</strong>
-                            <span>Roles: student, employee, registrar</span>
-                        </div>
-                        <div className="stat-item">
-                            <strong>24/7</strong>
-                            <span>Submit requests anytime online</span>
-                        </div>
-                        <div className="stat-item">
-                            <strong>Real-time</strong>
-                            <span>Track every request's status</span>
-                        </div>
-                    </div>
-                </section>
-
-
-                {/* =========================
             SERVICES
         ========================= */}
                 <section id="services" className="section services-section">
