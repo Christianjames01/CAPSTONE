@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
+import HighlightedText from '../../components/HighlightedText'
 import './AdminPages.css'
 
 function ActivityLogs() {
@@ -130,7 +131,7 @@ function ActivityLogs() {
                                 <tr key={log.activity_log_id}>
                                     <td>{log.actorName} {log.actorRole && <span style={{ color: 'var(--slate)', fontSize: 11 }}>({log.actorRole})</span>}</td>
                                     <td style={{ textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</td>
-                                    <td>{log.description}</td>
+                                    <td><HighlightedText text={log.description} /></td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(log.created_at)}</td>
                                 </tr>
                             ))}

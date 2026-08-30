@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
+import HighlightedText from '../../components/HighlightedText'
 import './EmployeePages.css'
 
 function ActivityLogs() {
@@ -89,7 +90,7 @@ function ActivityLogs() {
                         <div className="employee-list-card-header">
                             <div>
                                 <h3 style={{ textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</h3>
-                                <p>{log.description || (log.table_name ? `on ${log.table_name}` : '')}</p>
+                                <p>{log.description ? <HighlightedText text={log.description} /> : (log.table_name ? `on ${log.table_name}` : '')}</p>
                             </div>
 
                             <span style={{ fontSize: 12, color: 'var(--slate)', whiteSpace: 'nowrap' }}>

@@ -1,0 +1,23 @@
+.log-highlight-quote {
+    background: rgba(18, 59, 120, 0.08);
+    color: #123B78;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.log-highlight-amount {
+    color: #123B78;
+    font-weight: 700;
+}
+
+.log-highlight-old {
+    color: #C8102E;
+    text-decoration: line-through;
+    font-weight: 600;
+}
+
+.log-highlight-new {
+    color: #1e8a5f;
+    font-weight: 700;
+}
