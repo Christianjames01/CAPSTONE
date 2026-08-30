@@ -432,52 +432,64 @@ function AdminRequestDetails() {
                 )}
             </div>
 
-            {receipt && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
+            <div className="admin-card">
+                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
 
-                    <div className="admin-info-grid">
-                        <div className="admin-info-field">
-                            <span>Receipt Number</span>
-                            <strong>{receipt.receipt_number}</strong>
-                        </div>
-
-                        <div className="admin-info-field">
-                            <span>Amount Paid</span>
-                            <strong>₱{Number(receipt.amount_paid || 0).toFixed(2)}</strong>
-                        </div>
-
-                        <div className="admin-info-field">
-                            <span>Status</span>
-                            <strong style={{ textTransform: 'capitalize' }}>{receipt.status}</strong>
-                        </div>
+                {!receipt ? (
+                    <div className="admin-notice tone-warning">
+                        <strong>No Receipt Uploaded</strong>
+                        <p>The student has not uploaded an official receipt yet.</p>
                     </div>
+                ) : (
+                    <>
+                        <div className="admin-info-grid">
+                            <div className="admin-info-field">
+                                <span>Receipt Number</span>
+                                <strong>{receipt.receipt_number}</strong>
+                            </div>
 
-                    {receipt.rejection_reason && (
-                        <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
-                            Rejection reason: {receipt.rejection_reason}
+                            <div className="admin-info-field">
+                                <span>Amount Paid</span>
+                                <strong>₱{Number(receipt.amount_paid || 0).toFixed(2)}</strong>
+                            </div>
+
+                            <div className="admin-info-field">
+                                <span>Status</span>
+                                <strong style={{ textTransform: 'capitalize' }}>{receipt.status}</strong>
+                            </div>
                         </div>
-                    )}
 
-                    <div style={{ marginTop: 16 }}>
-                        {receiptUrl ? (
-                            <button
-                                className="admin-primary-button"
-                                onClick={() => setPreviewFile({ url: receiptUrl, name: receipt.receipt_file_name })}
-                            >
-                                View Official Receipt
-                            </button>
-                        ) : (
-                            <p style={{ fontSize: 13, color: 'var(--slate)' }}>Receipt file could not be opened.</p>
+                        {receipt.rejection_reason && (
+                            <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
+                                Rejection reason: {receipt.rejection_reason}
+                            </div>
                         )}
+
+                        <div style={{ marginTop: 16 }}>
+                            {receiptUrl ? (
+                                <button
+                                    className="admin-primary-button"
+                                    onClick={() => setPreviewFile({ url: receiptUrl, name: receipt.receipt_file_name })}
+                                >
+                                    View Official Receipt
+                                </button>
+                            ) : (
+                                <p style={{ fontSize: 13, color: 'var(--slate)' }}>Receipt file could not be opened.</p>
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            <div className="admin-card">
+                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Required Documents</h2>
+
+                {requirements.length === 0 ? (
+                    <div className="admin-notice tone-warning">
+                        <strong>No requirements found</strong>
+                        <p>No request requirements have been created for this request yet.</p>
                     </div>
-                </div>
-            )}
-
-            {requirements.length > 0 && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Required Documents</h2>
-
+                ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         {requirements.map((requirement) => {
                             const definition = requirement.document_requirements
@@ -525,8 +537,8 @@ function AdminRequestDetails() {
                             )
                         })}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Reassign Employee</h2>
