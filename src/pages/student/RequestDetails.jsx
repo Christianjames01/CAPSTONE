@@ -290,7 +290,7 @@ function RequestDetails() {
 
             const { data: credentialData } = await supabase
                 .from('credentials')
-                .select('credential_id, credential_number, generated_at')
+                .select('credential_id, credential_number, generated_at, status, revocation_reason')
                 .eq('request_id', requestId)
                 .order('generated_at', { ascending: false })
                 .limit(1)
@@ -539,7 +539,11 @@ function RequestDetails() {
                         <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 4 }}>
                             Share this QR code or credential number so anyone can verify this document is genuine.
                         </p>
-                        <CredentialQr credentialNumber={credential.credential_number} />
+                        <CredentialQr
+                            credentialNumber={credential.credential_number}
+                            status={credential.status}
+                            revocationReason={credential.revocation_reason}
+                        />
                     </div>
                 )}
 

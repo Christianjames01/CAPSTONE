@@ -5,8 +5,9 @@ import './CredentialQr.css'
 // Shows a credential's verify link as both a QR code and plain text,
 // for staff to hand to a student or for a student to keep with their
 // document -- anyone can scan/visit it to confirm authenticity, no
-// login required.
-function CredentialQr({ credentialNumber }) {
+// login required. Still shows the QR when revoked, since scanning it
+// is exactly how someone finds out it's no longer valid.
+function CredentialQr({ credentialNumber, status, revocationReason }) {
     const [qrDataUrl, setQrDataUrl] = useState('')
 
     useEffect(() => {
@@ -24,16 +25,26 @@ function CredentialQr({ credentialNumber }) {
     if (!credentialNumber) return null
 
     const url = verificationUrl(credentialNumber)
+    const revoked = status === 'revoked'
 
     return (
-        <div className="credential-qr">
-            {qrDataUrl && <img src={qrDataUrl} alt="Verification QR code" width={140} height={140} />}
-            <div className="credential-qr-info">
-                <div className="credential-qr-label">Credential Number</div>
-                <div className="credential-qr-number">{credentialNumber}</div>
-                <a href={url} target="_blank" rel="noopener noreferrer" className="credential-qr-link">
-                    Open verification page →
-                </a>
+        <div>
+            {revoked && (
+                <div className="credential-revoked-banner">
+                    <strong>Revoked</strong>
+                    {revocationReason && <p>{revocationReason}</p>}
+                </div>
+            )}
+
+            <div className="credential-qr">
+                {qrDataUrl && <img src={qrDataUrl} alt="Verification QR code" width={140} height={140} />}
+                <div className="credential-qr-info">
+                    <div className="credential-qr-label">Credential Number</div>
+                    <div className="credential-qr-number">{credentialNumber}</div>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="credential-qr-link">
+                        Open verification page →
+                    </a>
+                </div>
             </div>
         </div>
     )

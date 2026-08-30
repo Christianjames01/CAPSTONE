@@ -92,11 +92,15 @@ function VerifyCredential() {
 
                 {!loading && searched && (
                     result ? (
-                        <div className="verify-result verify-result-valid">
-                            <div className="verify-result-badge">✓ Verified</div>
+                        <div className={`verify-result ${result.status === 'revoked' ? 'verify-result-invalid' : 'verify-result-valid'}`}>
+                            <div className="verify-result-badge">
+                                {result.status === 'revoked' ? '✕ Revoked' : '✓ Verified'}
+                            </div>
                             <h2>{result.document_name}</h2>
                             <p className="verify-result-note">
-                                This credential was issued by the Holy Cross of Davao College Registrar Office and is authentic.
+                                {result.status === 'revoked'
+                                    ? `This credential was revoked by the Registrar Office and is no longer valid.${result.revocation_reason ? ` Reason: ${result.revocation_reason}` : ''}`
+                                    : "This credential was issued by the Holy Cross of Davao College Registrar Office and is authentic."}
                             </p>
 
                             <div className="verify-field-grid">
@@ -128,6 +132,12 @@ function VerifyCredential() {
                                     <span>Issued On</span>
                                     <strong>{formatDate(result.generated_at)}</strong>
                                 </div>
+                                {result.status === 'revoked' && (
+                                    <div className="verify-field">
+                                        <span>Revoked On</span>
+                                        <strong>{formatDate(result.revoked_at)}</strong>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
