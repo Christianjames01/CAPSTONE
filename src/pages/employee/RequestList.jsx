@@ -15,6 +15,7 @@ const STATUS_CHIPS = [
     { key: 'ready_for_claiming', label: 'Ready for Claiming' },
     { key: 'completed', label: 'Completed' },
     { key: 'rejected', label: 'Rejected' },
+    { key: 'cancelled', label: 'Cancelled' },
 ]
 
 function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, emptyText }) {
@@ -75,7 +76,6 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                     requested_at
                 `)
                 .eq('assigned_employee_id', employee.employee_id)
-                .neq('status', 'cancelled')
                 .order('requested_at', { ascending: false })
 
             if (statusFilter && statusFilter.length > 0) {
