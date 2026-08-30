@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import './EmployeePages.css'
 
 // Statuses where the request is still awaiting something and hasn't been
@@ -40,6 +41,8 @@ function EmployeeRequestDetails() {
     const [manualStatus, setManualStatus] = useState('')
     const [statusReason, setStatusReason] = useState('')
     const [changingStatus, setChangingStatus] = useState(false)
+
+    const [previewFile, setPreviewFile] = useState(null)
 
     useEffect(() => {
         if (!requestId) {
@@ -1445,9 +1448,12 @@ function EmployeeRequestDetails() {
                                 <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 8 }}>Receipt File</p>
 
                                 {receiptUrl ? (
-                                    <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="employee-file-link">
+                                    <button
+                                        className="employee-file-link"
+                                        onClick={() => setPreviewFile({ url: receiptUrl, name: receipt.receipt_file_name })}
+                                    >
                                         View Official Receipt
-                                    </a>
+                                    </button>
                                 ) : (
                                     <div className="employee-notice tone-danger">
                                         <strong>Receipt file could not be opened.</strong>
@@ -1585,9 +1591,12 @@ function EmployeeRequestDetails() {
 
                                             <div className="employee-actions-row" style={{ marginTop: 0 }}>
                                                 {fileUrl && (
-                                                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="employee-file-link">
+                                                    <button
+                                                        className="employee-file-link"
+                                                        onClick={() => setPreviewFile({ url: fileUrl, name: requirement.file_name })}
+                                                    >
                                                         View Document
-                                                    </a>
+                                                    </button>
                                                 )}
 
                                                 {requirement.status === 'uploaded' && (
@@ -1818,6 +1827,14 @@ function EmployeeRequestDetails() {
                         </button>
                     </div>
                 </div>
+
+                {previewFile && (
+                    <DocumentPreviewModal
+                        url={previewFile.url}
+                        fileName={previewFile.name}
+                        onClose={() => setPreviewFile(null)}
+                    />
+                )}
         </div>
     )
 }
