@@ -81,14 +81,14 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     width: fit-content;
-    margin-bottom: 32px;
+    margin-bottom: 192px;
 }
 
 .auth-brand-seal {
-    width: 46px;
-    height: 46px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
     background: var(--white);
     border: 2px solid var(--red);
@@ -96,7 +96,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 5px;
+    padding: 6px;
     flex-shrink: 0;
 }
 
@@ -109,15 +109,15 @@
 .auth-brand-name {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 19px;
+    font-size: 28px;
     color: var(--white);
     line-height: 1;
 }
 
 .auth-brand-subtitle {
-    font-size: 12px;
+    font-size: 14px;
     color: rgba(255, 255, 255, 0.55);
-    margin-top: 4px;
+    margin-top: 5px;
 }
 
 .auth-brand-copy {
@@ -373,6 +373,10 @@
     .auth-brand-panel {
         padding: 32px 28px;
         min-height: 220px;
+    }
+
+    .auth-brand-link {
+        margin-bottom: 24px;
     }
 
     .auth-brand-copy h2 {
