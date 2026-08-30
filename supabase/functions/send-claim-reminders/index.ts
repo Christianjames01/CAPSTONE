@@ -1,7 +1,7 @@
 // Runs once a day on a Cron Trigger. Emails every student whose claim
 // schedule falls tomorrow, as a heads-up reminder.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { sendEmail } from '../_shared/mailgun.ts'
+import { sendEmail } from '../_shared/email.ts'
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
 
