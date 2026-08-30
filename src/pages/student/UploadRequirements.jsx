@@ -10,6 +10,7 @@ function UploadRequirements() {
     const navigate = useNavigate()
 
     const [student, setStudent] = useState(null)
+    const [request, setRequest] = useState(null)
     const [requirements, setRequirements] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -48,7 +49,7 @@ function UploadRequirements() {
 
             const { data: requestData, error: requestError } = await supabase
                 .from('document_requests')
-                .select('request_id, request_number, student_id')
+                .select('request_id, request_number, student_id, status')
                 .eq('request_id', requestId)
                 .eq('student_id', studentData.student_id)
                 .single()
@@ -56,6 +57,8 @@ function UploadRequirements() {
             if (requestError || !requestData) {
                 throw new Error('Request could not be found.')
             }
+
+            setRequest(requestData)
 
             const { data: requirementRows, error: requirementError } = await supabase
                 .from('request_requirements')
@@ -92,6 +95,11 @@ function UploadRequirements() {
     }
 
     const uploadRequirement = async (requirement) => {
+        if (request?.status === 'cancelled') {
+            notifyWarning('This request has been cancelled. Requirements can no longer be uploaded.')
+            return
+        }
+
         const file = files[requirement.request_requirement_id]
 
         if (!file) {
@@ -175,12 +183,19 @@ function UploadRequirements() {
                 <p>Upload the documents the Registrar needs to process your request.</p>
             </div>
 
+            {request?.status === 'cancelled' && (
+                <div className="student-notice tone-danger" style={{ marginBottom: 16 }}>
+                    <strong>Request Cancelled</strong>
+                    <p>This request has been cancelled, so requirements can no longer be uploaded.</p>
+                </div>
+            )}
+
             {requirements.length === 0 ? (
                 <div className="student-empty">No additional requirements are needed for this request.</div>
             ) : (
                 requirements.map((req) => {
                     const doc = req.document_requirements
-                    const editable = req.status === 'pending' || req.status === 'rejected'
+                    const editable = (req.status === 'pending' || req.status === 'rejected') && request?.status !== 'cancelled'
 
                     return (
                         <div className="student-list-card" key={req.request_requirement_id}>
