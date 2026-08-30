@@ -398,6 +398,11 @@ function AdminRequestDetails() {
 
                 <div className="admin-info-grid">
                     <div className="admin-info-field">
+                        <span>Document Requested</span>
+                        <strong>{documentName}</strong>
+                    </div>
+
+                    <div className="admin-info-field">
                         <span>Quantity</span>
                         <strong>{request.quantity}</strong>
                     </div>

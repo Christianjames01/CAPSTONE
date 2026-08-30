@@ -20,6 +20,7 @@ function EmployeeRequestDetails() {
     const navigate = useNavigate()
 
     const [request, setRequest] = useState(null)
+    const [documentName, setDocumentName] = useState('')
     const [receipt, setReceipt] = useState(null)
     const [receiptUrl, setReceiptUrl] = useState('')
     const [student, setStudent] = useState(null)
@@ -142,6 +143,16 @@ function EmployeeRequestDetails() {
 
             setRequest(requestData)
             setManualStatus(requestData.status)
+
+            if (requestData.document_type_id) {
+                const { data: doc } = await supabase
+                    .from('document_types')
+                    .select('document_name')
+                    .eq('document_type_id', requestData.document_type_id)
+                    .single()
+
+                setDocumentName(doc?.document_name || 'Document')
+            }
 
             // ==========================================
             // STUDENT
@@ -1325,7 +1336,7 @@ function EmployeeRequestDetails() {
             </button>
 
             <div className="employee-page-header">
-                <h1>Request Details</h1>
+                <h1>{documentName || 'Request Details'}</h1>
                 <p>Review the student's document request, payment, and requirements.</p>
             </div>
 
@@ -1367,6 +1378,11 @@ function EmployeeRequestDetails() {
                 <h3 style={{ fontSize: 15, marginBottom: 14 }}>Student Information</h3>
 
                 <div className="employee-info-grid">
+                    <div className="employee-info-field">
+                        <span>Document Requested</span>
+                        <strong>{documentName || 'N/A'}</strong>
+                    </div>
+
                     <div className="employee-info-field">
                         <span>Student Number</span>
                         <strong>{student?.student_number || 'N/A'}</strong>
