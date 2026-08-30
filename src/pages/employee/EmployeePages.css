@@ -43,6 +43,35 @@
     font-size: 14px;
 }
 
+.employee-table-wrapper {
+    overflow-x: auto;
+}
+
+.employee-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+.employee-table th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    color: var(--slate);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.employee-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.employee-table tbody tr:hover {
+    background: var(--paper);
+}
+
 .employee-error-box {
     padding: 14px 16px;
     border-radius: 8px;

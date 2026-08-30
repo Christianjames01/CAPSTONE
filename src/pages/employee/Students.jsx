@@ -18,6 +18,7 @@ function Students() {
 
     const [pendingVerifications, setPendingVerifications] = useState([])
     const [reviewingId, setReviewingId] = useState(null)
+    const [selectedProgramKey, setSelectedProgramKey] = useState(null)
 
     useEffect(() => {
         loadAllStudents()
@@ -184,7 +185,6 @@ function Students() {
                 .from('students')
                 .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
                 .order('student_number', { ascending: true })
-                .limit(200)
 
             if (studentsError) {
                 throw new Error('Failed to load students: ' + studentsError.message)
@@ -207,9 +207,12 @@ function Students() {
         const query = term.trim()
 
         if (!query) {
+            setSelectedProgramKey(null)
             await loadAllStudents()
             return
         }
+
+        setSelectedProgramKey(null)
 
         try {
             setLoading(true)
@@ -251,6 +254,70 @@ function Students() {
             setLoading(false)
         }
     }
+
+    const groupedResults = (() => {
+        const groups = {}
+
+        for (const student of results) {
+            const key = student.program_id || 'unassigned'
+
+            if (!groups[key]) {
+                groups[key] = {
+                    key,
+                    programName: student.programName || 'No Program Assigned',
+                    collegeName: student.collegeName || 'Unassigned',
+                    students: [],
+                }
+            }
+
+            groups[key].students.push(student)
+        }
+
+        return Object.values(groups).sort((a, b) =>
+            a.collegeName.localeCompare(b.collegeName) || a.programName.localeCompare(b.programName)
+        )
+    })()
+
+    const selectedGroup = selectedProgramKey
+        ? groupedResults.find((g) => g.key === selectedProgramKey)
+        : null
+
+    const renderStudentCard = (student) => (
+        <div className="employee-list-card" key={student.student_id}>
+            <div className="employee-list-card-header">
+                <div>
+                    <h3>{student.fullName}</h3>
+                    <p>{student.student_number} · {student.email}</p>
+                </div>
+
+                <span className={`employee-status-pill status-${student.status}`}>{student.status}</span>
+            </div>
+
+            <div className="employee-info-grid">
+                <div className="employee-info-field">
+                    <span>College</span>
+                    <strong>{student.collegeName || 'N/A'}</strong>
+                </div>
+
+                <div className="employee-info-field">
+                    <span>Program</span>
+                    <strong>{student.programName || 'N/A'}</strong>
+                </div>
+
+                <div className="employee-info-field">
+                    <span>Year Level</span>
+                    <strong>{student.year_level || 'N/A'}</strong>
+                </div>
+            </div>
+
+            <button
+                className="employee-link-button"
+                onClick={() => navigate(`/employee/students/${student.student_id}`)}
+            >
+                View request history →
+            </button>
+        </div>
+    )
 
     return (
         <div>
@@ -351,43 +418,77 @@ function Students() {
                 <div className="employee-empty">
                     {term.trim() ? `No students matched "${term}".` : 'No students found.'}
                 </div>
-            ) : (
-                results.map((student) => (
-                    <div className="employee-list-card" key={student.student_id}>
-                        <div className="employee-list-card-header">
-                            <div>
-                                <h3>{student.fullName}</h3>
-                                <p>{student.student_number} · {student.email}</p>
-                            </div>
-
-                            <span className={`employee-status-pill status-${student.status}`}>{student.status}</span>
+            ) : term.trim() ? (
+                // Search results: show matches directly, grouped by program.
+                groupedResults.map((group) => (
+                    <div key={group.key} style={{ marginBottom: 28 }}>
+                        <div className="employee-page-header-row" style={{ marginBottom: 14 }}>
+                            <h2 style={{ fontSize: 16 }}>
+                                {group.programName}
+                                {group.collegeName && <span style={{ color: 'var(--slate)', fontWeight: 400 }}> · {group.collegeName}</span>}
+                            </h2>
+                            <span className="employee-status-pill status-pending">
+                                {group.students.length} student{group.students.length === 1 ? '' : 's'}
+                            </span>
                         </div>
 
-                        <div className="employee-info-grid">
-                            <div className="employee-info-field">
-                                <span>College</span>
-                                <strong>{student.collegeName || 'N/A'}</strong>
-                            </div>
-
-                            <div className="employee-info-field">
-                                <span>Program</span>
-                                <strong>{student.programName || 'N/A'}</strong>
-                            </div>
-
-                            <div className="employee-info-field">
-                                <span>Year Level</span>
-                                <strong>{student.year_level || 'N/A'}</strong>
-                            </div>
-                        </div>
-
-                        <button
-                            className="employee-link-button"
-                            onClick={() => navigate(`/employee/students/${student.student_id}`)}
-                        >
-                            View request history →
-                        </button>
+                        {group.students.map(renderStudentCard)}
                     </div>
                 ))
+            ) : selectedGroup ? (
+                // Drilled into one college/course: show just its students.
+                <>
+                    <button
+                        className="employee-link-button"
+                        style={{ marginBottom: 16 }}
+                        onClick={() => setSelectedProgramKey(null)}
+                    >
+                        ← Back to Colleges & Courses
+                    </button>
+
+                    <div className="employee-page-header-row" style={{ marginBottom: 14 }}>
+                        <h2 style={{ fontSize: 16 }}>
+                            {selectedGroup.programName}
+                            {selectedGroup.collegeName && <span style={{ color: 'var(--slate)', fontWeight: 400 }}> · {selectedGroup.collegeName}</span>}
+                        </h2>
+                        <span className="employee-status-pill status-pending">
+                            {selectedGroup.students.length} student{selectedGroup.students.length === 1 ? '' : 's'}
+                        </span>
+                    </div>
+
+                    {selectedGroup.students.map(renderStudentCard)}
+                </>
+            ) : (
+                // Default browse view: a table of colleges & courses, not
+                // every student's card at once -- click a row to drill in.
+                <div className="employee-table-wrapper">
+                    <table className="employee-table">
+                        <thead>
+                            <tr>
+                                <th>College</th>
+                                <th>Course</th>
+                                <th>Students</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {groupedResults.map((group) => (
+                                <tr
+                                    key={group.key}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => setSelectedProgramKey(group.key)}
+                                >
+                                    <td>{group.collegeName}</td>
+                                    <td>{group.programName}</td>
+                                    <td>{group.students.length}</td>
+                                    <td>
+                                        <span className="employee-link-button">View →</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     )
