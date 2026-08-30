@@ -7,6 +7,7 @@ import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, co
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import CredentialQr from '../../components/CredentialQr'
+import { revokeCredential } from '../../lib/revokeCredential'
 import './EmployeePages.css'
 
 // Statuses where the request is still awaiting something and hasn't been
@@ -263,7 +264,7 @@ function EmployeeRequestDetails() {
 
             const { data: credentialData } = await supabase
                 .from('credentials')
-                .select('credential_id, credential_number, generated_at')
+                .select('credential_id, credential_number, generated_at, status, revocation_reason')
                 .eq('request_id', requestId)
                 .order('generated_at', { ascending: false })
                 .limit(1)
@@ -1275,6 +1276,38 @@ function EmployeeRequestDetails() {
         await applyStatusChange('lacking_requirements', reason)
     }
 
+    const revokeCredentialAction = async () => {
+        const { value: reason } = await Swal.fire({
+            title: 'Revoke Credential',
+            input: 'text',
+            inputLabel: 'Reason (shown to the student)',
+            inputPlaceholder: 'e.g. Wrong document type was generated',
+            showCancelButton: true,
+            confirmButtonText: 'Revoke',
+            confirmButtonColor: '#C8102E',
+        })
+
+        if (!reason) return
+
+        try {
+            await revokeCredential({
+                credentialId: credential.credential_id,
+                credentialNumber: credential.credential_number,
+                requestNumber: request.request_number,
+                studentId: request.student_id,
+                reason,
+                employeeId: (await getCurrentEmployee()).employee_id,
+            })
+
+            notifySuccess('Credential revoked.')
+            await loadRequest()
+
+        } catch (error) {
+            console.error('REVOKE CREDENTIAL ERROR:', error)
+            notifyError(error.message || 'Failed to revoke credential.')
+        }
+    }
+
     // ==========================================
     // LOADING
     // ==========================================
@@ -1736,7 +1769,25 @@ function EmployeeRequestDetails() {
                             <p>The requested academic document has been prepared successfully.</p>
                             <p>The next step is to schedule the student's claiming date and time.</p>
 
-                            {credential && <CredentialQr credentialNumber={credential.credential_number} />}
+                            {credential && (
+                                <>
+                                    <CredentialQr
+                                        credentialNumber={credential.credential_number}
+                                        status={credential.status}
+                                        revocationReason={credential.revocation_reason}
+                                    />
+
+                                    {credential.status !== 'revoked' && (
+                                        <button
+                                            className="employee-link-button"
+                                            style={{ color: 'var(--red)', marginTop: 10 }}
+                                            onClick={revokeCredentialAction}
+                                        >
+                                            Revoke credential
+                                        </button>
+                                    )}
+                                </>
+                            )}
 
                             <button
                                 onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
