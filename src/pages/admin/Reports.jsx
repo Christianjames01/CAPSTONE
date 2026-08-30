@@ -15,6 +15,18 @@ const turnaroundDays = (r) => {
 
 const average = (nums) => (nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null)
 
+// Shows the smallest sensible unit -- minutes/hours for fast turnarounds
+// instead of a confusing fraction of a day like "0.3d".
+const formatTurnaround = (days) => {
+    if (days === null) return 'N/A'
+
+    const totalMinutes = days * 24 * 60
+
+    if (totalMinutes < 60) return `${Math.round(totalMinutes)}m`
+    if (days < 1) return `${(totalMinutes / 60).toFixed(1)}h`
+    return `${days.toFixed(1)}d`
+}
+
 function Reports() {
     const [requests, setRequests] = useState([])
     const [schedules, setSchedules] = useState([])
@@ -389,7 +401,7 @@ function Reports() {
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
                     <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
-                        {avgTurnaroundDays === null ? 'N/A' : `${avgTurnaroundDays.toFixed(1)}d`}
+                        {formatTurnaround(avgTurnaroundDays)}
                     </span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Avg Turnaround</span>
                 </div>
@@ -402,7 +414,7 @@ function Reports() {
 
             <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
                 <table className="admin-table">
-                    <thead><tr><th>Document</th><th>Completed</th><th>Avg Turnaround (days)</th></tr></thead>
+                    <thead><tr><th>Document</th><th>Completed</th><th>Avg Turnaround</th></tr></thead>
                     <tbody>
                         {documentTurnaround.length === 0 ? (
                             <tr><td colSpan={3} style={{ color: 'var(--slate)' }}>No completed requests yet.</td></tr>
@@ -411,7 +423,7 @@ function Reports() {
                                 <tr key={d.name}>
                                     <td>{d.name}</td>
                                     <td>{d.count}</td>
-                                    <td>{d.avgDays.toFixed(1)}</td>
+                                    <td>{formatTurnaround(d.avgDays)}</td>
                                 </tr>
                             ))
                         )}
@@ -437,7 +449,7 @@ function Reports() {
             <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
                 <table className="admin-table">
                     <thead>
-                        <tr><th>Employee</th><th>Assigned</th><th>Completed</th><th>Rejected</th><th>Avg Turnaround (days)</th></tr>
+                        <tr><th>Employee</th><th>Assigned</th><th>Completed</th><th>Rejected</th><th>Avg Turnaround</th></tr>
                     </thead>
                     <tbody>
                         {employeePerformance.map((e) => (
@@ -446,7 +458,7 @@ function Reports() {
                                 <td>{e.assignedCount}</td>
                                 <td>{e.completedCount}</td>
                                 <td>{e.rejectedCount}</td>
-                                <td>{e.avgTurnaroundDays === null ? 'N/A' : e.avgTurnaroundDays.toFixed(1)}</td>
+                                <td>{formatTurnaround(e.avgTurnaroundDays)}</td>
                             </tr>
                         ))}
                     </tbody>
