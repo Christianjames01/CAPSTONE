@@ -50,6 +50,7 @@ function ClaimSchedule() {
                     claim_date,
                     claim_time,
                     remarks,
+                    claimed_at,
                     created_at
                 `)
                 .eq('student_id', student.student_id)
@@ -179,28 +180,41 @@ function ClaimSchedule() {
                                 </span>
                             </div>
 
-                            <div className="student-info-grid">
-                                <div className="student-info-field">
-                                    <span>Claiming Date</span>
-                                    <strong>
-                                        {formatDate(schedule.claim_date || schedule.scheduled_date)}
-                                    </strong>
+                            {schedule.status === 'claimed' ? (
+                                <div className="student-info-grid">
+                                    <div className="student-info-field">
+                                        <span>Claimed On</span>
+                                        <strong>
+                                            {schedule.claimed_at
+                                                ? new Date(schedule.claimed_at).toLocaleString('en-PH')
+                                                : `${formatDate(schedule.claim_date || schedule.scheduled_date)} ${formatTime(schedule.claim_time || schedule.scheduled_time)}`}
+                                        </strong>
+                                    </div>
                                 </div>
+                            ) : (
+                                <div className="student-info-grid">
+                                    <div className="student-info-field">
+                                        <span>Claiming Date</span>
+                                        <strong>
+                                            {formatDate(schedule.claim_date || schedule.scheduled_date)}
+                                        </strong>
+                                    </div>
 
-                                <div className="student-info-field">
-                                    <span>Claiming Time</span>
-                                    <strong>
-                                        {formatTime(schedule.claim_time || schedule.scheduled_time) || 'N/A'}
-                                    </strong>
-                                </div>
+                                    <div className="student-info-field">
+                                        <span>Claiming Time</span>
+                                        <strong>
+                                            {formatTime(schedule.claim_time || schedule.scheduled_time) || 'N/A'}
+                                        </strong>
+                                    </div>
 
-                                <div className="student-info-field">
-                                    <span>Arrive By</span>
-                                    <strong>
-                                        {formatArriveByTime(schedule.claim_time || schedule.scheduled_time) || 'N/A'}
-                                    </strong>
+                                    <div className="student-info-field">
+                                        <span>Arrive By</span>
+                                        <strong>
+                                            {formatArriveByTime(schedule.claim_time || schedule.scheduled_time) || 'N/A'}
+                                        </strong>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {schedule.remarks && (
                                 <div className="student-info-field">

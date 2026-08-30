@@ -275,7 +275,7 @@ function RequestDetails() {
                 error: scheduleError
             } = await supabase
                 .from('claim_schedules')
-                .select('claim_schedule_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks')
+                .select('claim_schedule_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks, claimed_at')
                 .eq('request_id', requestId)
                 .neq('status', 'cancelled')
                 .order('claim_date', { ascending: false })
@@ -572,12 +572,25 @@ function RequestDetails() {
                         <h3 style={{ fontSize: 15, marginBottom: 10 }}>Claiming Schedule</h3>
 
                         <p style={{ marginBottom: 8 }}>
-                            {claimSchedule.status === 'claimed' ? 'Claimed on' : 'Scheduled for'}{' '}
-                            <strong>
-                                {claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}
-                                {' at '}
-                                {claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}
-                            </strong>
+                            {claimSchedule.status === 'claimed' ? (
+                                <>
+                                    Claimed on{' '}
+                                    <strong>
+                                        {claimSchedule.claimed_at
+                                            ? new Date(claimSchedule.claimed_at).toLocaleString()
+                                            : `${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'} at ${claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}`}
+                                    </strong>
+                                </>
+                            ) : (
+                                <>
+                                    Scheduled for{' '}
+                                    <strong>
+                                        {claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}
+                                        {' at '}
+                                        {claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}
+                                    </strong>
+                                </>
+                            )}
                         </p>
 
                         {claimSchedule.status !== 'claimed' && (
