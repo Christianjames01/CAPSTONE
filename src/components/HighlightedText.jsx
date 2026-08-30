@@ -1,6 +1,6 @@
 import './HighlightedText.css'
 
-const FROM_TO_PATTERN = /from\s+"([^"]+)"\s+to\s+"([^"]+)"/i
+const FROM_TO_PATTERN = /from\s+"([^"]+)"\s+to\s+"([^"]+)"/gi
 const SEGMENT_PATTERN = /("[^"]+"|₱[\d,]+(?:\.\d+)?)/g
 
 // Wraps quoted values and peso amounts in styled spans so they stand out
@@ -23,31 +23,35 @@ function highlightSegments(text, keyPrefix) {
     })
 }
 
-// Renders an activity log description with the "what changed" part
+// Renders an activity log description with the "what changed" part(s)
 // highlighted -- old value struck through, new value bolded in green for
-// a "from X to Y" style change, otherwise just quoted values/amounts.
+// each "from X to Y" change, otherwise just quoted values/amounts.
 function HighlightedText({ text }) {
     if (!text) return null
 
-    const match = text.match(FROM_TO_PATTERN)
+    const regex = new RegExp(FROM_TO_PATTERN)
+    const parts = []
+    let lastIndex = 0
+    let match
+    let i = 0
 
-    if (!match) {
-        return <>{highlightSegments(text, 'seg')}</>
-    }
+    while ((match = regex.exec(text)) !== null) {
+        const [fullMatch, oldValue, newValue] = match
 
-    const [fullMatch, oldValue, newValue] = match
-    const before = text.slice(0, match.index)
-    const after = text.slice(match.index + fullMatch.length)
-
-    return (
-        <>
-            {highlightSegments(before, 'before')}
-            <span className="log-highlight-change">
+        parts.push(...highlightSegments(text.slice(lastIndex, match.index), `seg-${i}`))
+        parts.push(
+            <span key={`ft-${i}`} className="log-highlight-change">
                 from <span className="log-highlight-old">"{oldValue}"</span> to <span className="log-highlight-new">"{newValue}"</span>
             </span>
-            {highlightSegments(after, 'after')}
-        </>
-    )
+        )
+
+        lastIndex = match.index + fullMatch.length
+        i++
+    }
+
+    parts.push(...highlightSegments(text.slice(lastIndex), 'seg-tail'))
+
+    return <>{parts}</>
 }
 
 export default HighlightedText

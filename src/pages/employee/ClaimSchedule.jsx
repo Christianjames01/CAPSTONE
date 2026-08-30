@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
@@ -490,12 +491,17 @@ function ClaimSchedule() {
                     updatedSchedule
                 )
 
+                const scheduleChanges = describeChanges([
+                    ['date', existingSchedule.scheduled_date, scheduledDate],
+                    ['time', existingSchedule.scheduled_time, scheduledTime],
+                ])
+
                 await logActivity({
                     employeeId: employee.employee_id,
                     action: 'update_claim_schedule',
                     tableName: 'claim_schedules',
                     recordId: existingSchedule.claim_schedule_id,
-                    description: `Updated claiming schedule for request ${request?.request_number || requestId} to ${scheduledDate} ${scheduledTime}.`,
+                    description: `Updated claiming schedule for request ${request?.request_number || requestId}.${scheduleChanges ? ' ' + scheduleChanges + '.' : ''}`,
                 })
 
                 await notifyStudentByStudentId({

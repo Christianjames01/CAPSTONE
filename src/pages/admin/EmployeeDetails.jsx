@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { describeChanges } from '../../lib/describeChanges'
 import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
@@ -149,12 +150,18 @@ function EmployeeDetails() {
                 throw new Error('Failed to update employee: ' + updateError.message)
             }
 
+            const changes = describeChanges([
+                ['employee number', employee.employee_number, employeeNumber.trim()],
+                ['position', employee.position_title, positionTitle.trim()],
+                ['assigned college', collegeName(employee.assigned_college_id), collegeName(assignedCollegeId || null)],
+            ])
+
             await logActivity({
                 userId: user.id,
                 action: 'edit_employee',
                 tableName: 'employees',
                 recordId: employeeId,
-                description: `Updated employee ${employee.first_name} ${employee.last_name}.`,
+                description: `Updated employee ${employee.first_name} ${employee.last_name}.${changes ? ' ' + changes + '.' : ''}`,
             })
 
             setMessage('Employee information updated.')
@@ -203,7 +210,7 @@ function EmployeeDetails() {
                 action: 'add_employee_assignment',
                 tableName: 'employee_assignments',
                 recordId: employeeId,
-                description: `Added a college/program assignment for employee ${employee.first_name} ${employee.last_name}.`,
+                description: `Assigned employee ${employee.first_name} ${employee.last_name} to "${collegeName(newCollegeId)}" · "${programName(newProgramId)}".`,
             })
 
             await notify({
@@ -251,7 +258,7 @@ function EmployeeDetails() {
                 action: 'remove_employee_assignment',
                 tableName: 'employee_assignments',
                 recordId: assignment.assignment_id,
-                description: `Removed a college/program assignment for employee ${employee.first_name} ${employee.last_name}.`,
+                description: `Removed employee ${employee.first_name} ${employee.last_name}'s assignment to "${collegeName(assignment.college_id)}" · "${programName(assignment.program_id)}".`,
             })
 
             await loadEmployee()

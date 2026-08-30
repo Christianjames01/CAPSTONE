@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
@@ -210,12 +211,24 @@ function StudentDetails() {
                 throw new Error('Failed to update student record: ' + studentError.message)
             }
 
+            const newCollegeName = colleges.find((c) => c.college_id === form.collegeId)?.college_name || ''
+            const newProgramName = programs.find((p) => p.program_id === form.programId)?.program_name || ''
+
+            const changes = describeChanges([
+                ['name', `${student.firstName} ${student.lastName}`.trim(), `${form.firstName.trim()} ${form.lastName.trim()}`],
+                ['student number', student.student_number, form.studentNumber.trim()],
+                ['college', student.collegeName, newCollegeName],
+                ['program', student.programName, newProgramName],
+                ['year level', student.year_level, form.yearLevel],
+                ['phone number', student.phoneNumber, form.phoneNumber.trim()],
+            ])
+
             await logActivity({
                 userId: user.id,
                 action: 'edit_student',
                 tableName: 'students',
                 recordId: student.student_id,
-                description: `Updated student information for ${form.firstName} ${form.lastName} (${form.studentNumber}).`,
+                description: `Updated student information for ${form.firstName} ${form.lastName} (${form.studentNumber}).${changes ? ' ' + changes + '.' : ''}`,
             })
 
             notifySuccess('Student information updated.')
