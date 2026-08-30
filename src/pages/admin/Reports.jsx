@@ -5,11 +5,23 @@ import { notifyError, notifyWarning } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonStatGrid } from '../../components/Skeleton'
 import './AdminPages.css'
 
+// Days between a request being submitted and marked completed, or null
+// if either timestamp is missing (not yet completed).
+const turnaroundDays = (r) => {
+    if (!r.completed_at || !r.requested_at) return null
+    const ms = new Date(r.completed_at).getTime() - new Date(r.requested_at).getTime()
+    return ms / (1000 * 60 * 60 * 24)
+}
+
+const average = (nums) => (nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null)
+
 function Reports() {
     const [requests, setRequests] = useState([])
     const [schedules, setSchedules] = useState([])
     const [employeePerformance, setEmployeePerformance] = useState([])
     const [documentBreakdown, setDocumentBreakdown] = useState([])
+    const [documentTurnaround, setDocumentTurnaround] = useState([])
+    const [avgTurnaroundDays, setAvgTurnaroundDays] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [exporting, setExporting] = useState(false)
@@ -25,7 +37,7 @@ function Reports() {
 
             const { data: requestRows, error: requestError } = await supabase
                 .from('document_requests')
-                .select('request_id, document_type_id, assigned_employee_id, status, total_amount, requested_at')
+                .select('request_id, document_type_id, assigned_employee_id, status, total_amount, requested_at, completed_at')
 
             if (requestError) {
                 throw new Error('Failed to load requests: ' + requestError.message)
@@ -69,6 +81,7 @@ function Reports() {
                     assignedCount: assigned.length,
                     completedCount: completed.length,
                     rejectedCount: rejected.length,
+                    avgTurnaroundDays: average(completed.map(turnaroundDays).filter((d) => d !== null)),
                 }
             })
 
@@ -93,6 +106,26 @@ function Reports() {
                     .map(([name, count]) => ({ name, count }))
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 10)
+            )
+
+            const completedRequests = (requestRows || []).filter((r) => r.status === 'completed')
+
+            setAvgTurnaroundDays(average(completedRequests.map(turnaroundDays).filter((d) => d !== null)))
+
+            const turnaroundByDoc = {}
+            for (const r of completedRequests) {
+                const days = turnaroundDays(r)
+                if (days === null) continue
+
+                const name = documentNameById[r.document_type_id] || 'Unknown'
+                if (!turnaroundByDoc[name]) turnaroundByDoc[name] = []
+                turnaroundByDoc[name].push(days)
+            }
+
+            setDocumentTurnaround(
+                Object.entries(turnaroundByDoc)
+                    .map(([name, days]) => ({ name, count: days.length, avgDays: average(days) }))
+                    .sort((a, b) => b.avgDays - a.avgDays)
             )
 
         } catch (err) {
@@ -193,6 +226,12 @@ function Reports() {
                 .map(([documentName, count]) => ({ documentName, count }))
                 .sort((a, b) => b.count - a.count)
 
+            const turnaroundRows = documentTurnaround.map((d) => ({
+                documentName: d.name,
+                completedCount: d.count,
+                avgTurnaroundDays: d.avgDays.toFixed(1),
+            }))
+
             await exportToExcel(`certichain-requests-${new Date().toISOString().slice(0, 10)}`, [
                 {
                     name: 'By Document (Summary)',
@@ -201,6 +240,15 @@ function Reports() {
                         { header: 'Requests', key: 'count', width: 14 },
                     ],
                     rows: summaryRows,
+                },
+                {
+                    name: 'Turnaround by Document',
+                    columns: [
+                        { header: 'Document', key: 'documentName', width: 42 },
+                        { header: 'Completed', key: 'completedCount', width: 14 },
+                        { header: 'Avg Turnaround (days)', key: 'avgTurnaroundDays', width: 20 },
+                    ],
+                    rows: turnaroundRows,
                 },
                 {
                     name: 'All Requests',
@@ -339,6 +387,36 @@ function Reports() {
                     <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>₱{totalRevenue.toFixed(2)}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Revenue (Completed)</span>
                 </div>
+                <div className="admin-card" style={{ margin: 0 }}>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
+                        {avgTurnaroundDays === null ? 'N/A' : `${avgTurnaroundDays.toFixed(1)}d`}
+                    </span>
+                    <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Avg Turnaround</span>
+                </div>
+            </div>
+
+            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Turnaround Time by Document</h2>
+            <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: -10, marginBottom: 14 }}>
+                Average days from request to completion, for completed requests only.
+            </p>
+
+            <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
+                <table className="admin-table">
+                    <thead><tr><th>Document</th><th>Completed</th><th>Avg Turnaround (days)</th></tr></thead>
+                    <tbody>
+                        {documentTurnaround.length === 0 ? (
+                            <tr><td colSpan={3} style={{ color: 'var(--slate)' }}>No completed requests yet.</td></tr>
+                        ) : (
+                            documentTurnaround.map((d) => (
+                                <tr key={d.name}>
+                                    <td>{d.name}</td>
+                                    <td>{d.count}</td>
+                                    <td>{d.avgDays.toFixed(1)}</td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Top Requested Documents</h2>
@@ -359,7 +437,7 @@ function Reports() {
             <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
                 <table className="admin-table">
                     <thead>
-                        <tr><th>Employee</th><th>Assigned</th><th>Completed</th><th>Rejected</th></tr>
+                        <tr><th>Employee</th><th>Assigned</th><th>Completed</th><th>Rejected</th><th>Avg Turnaround (days)</th></tr>
                     </thead>
                     <tbody>
                         {employeePerformance.map((e) => (
@@ -368,6 +446,7 @@ function Reports() {
                                 <td>{e.assignedCount}</td>
                                 <td>{e.completedCount}</td>
                                 <td>{e.rejectedCount}</td>
+                                <td>{e.avgTurnaroundDays === null ? 'N/A' : e.avgTurnaroundDays.toFixed(1)}</td>
                             </tr>
                         ))}
                     </tbody>
