@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
@@ -20,12 +20,20 @@ const STATUS_CHIPS = [
 
 function AllRequests() {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
 
     const [requests, setRequests] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [activeChip, setActiveChip] = useState('all')
+    const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'all')
     const [search, setSearch] = useState('')
+
+    const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
+
+    const setChip = (key) => {
+        setActiveChip(key)
+        setSearchParams(key === 'all' ? {} : { status: key })
+    }
 
     useEffect(() => {
         loadRequests()
@@ -107,7 +115,7 @@ function AllRequests() {
     }
 
     const visibleRequests = requests
-        .filter((r) => activeChip === 'all' || r.status === activeChip)
+        .filter((r) => !activeStatuses || activeStatuses.includes(r.status))
         .filter((r) => {
             if (!search.trim()) return true
             const term = search.trim().toLowerCase()
@@ -139,7 +147,7 @@ function AllRequests() {
                     <button
                         key={chip.key}
                         className={`admin-filter-chip${activeChip === chip.key ? ' active' : ''}`}
-                        onClick={() => setActiveChip(chip.key)}
+                        onClick={() => setChip(chip.key)}
                     >
                         {chip.label}
                     </button>

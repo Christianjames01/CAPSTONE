@@ -190,11 +190,11 @@ function AdminDashboard() {
     const stats = [
         { label: 'Total Students', value: studentCount, to: '/admin/students' },
         { label: 'Total Requests', value: requests.length, to: '/admin/requests' },
-        { label: 'Pending', value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests' },
+        { label: 'Pending', value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending' },
         { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/claim-schedules' },
-        { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests' },
-        { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests' },
-        { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests' },
+        { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests?status=completed' },
+        { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected' },
+        { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled' },
         { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules' },
     ]
 

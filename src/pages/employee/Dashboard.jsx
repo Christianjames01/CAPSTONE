@@ -195,7 +195,7 @@ function EmployeeDashboard() {
                     { label: 'Pending', value: pendingCount, to: '/employee/verification' },
                     { label: 'Receipts to Verify', value: receiptCount, to: '/employee/verification' },
                     { label: 'Processing', value: processingCount, to: '/employee/processing' },
-                    { label: 'Completed', value: completedCount, to: '/employee/requests' },
+                    { label: 'Completed', value: completedCount, to: '/employee/requests?status=completed' },
                     { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },
                 ].map((stat) => (
                     <button
