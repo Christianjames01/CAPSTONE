@@ -6,6 +6,7 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
+import CredentialQr from '../../components/CredentialQr'
 import './EmployeePages.css'
 
 // Statuses where the request is still awaiting something and hasn't been
@@ -43,6 +44,7 @@ function EmployeeRequestDetails() {
     const [changingStatus, setChangingStatus] = useState(false)
 
     const [previewFile, setPreviewFile] = useState(null)
+    const [credential, setCredential] = useState(null)
 
     useEffect(() => {
         if (!requestId) {
@@ -258,6 +260,16 @@ function EmployeeRequestDetails() {
             // ==========================================
 
             await loadRequirements(requestId)
+
+            const { data: credentialData } = await supabase
+                .from('credentials')
+                .select('credential_id, credential_number, generated_at')
+                .eq('request_id', requestId)
+                .order('generated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            setCredential(credentialData || null)
 
         } catch (error) {
             console.error(
@@ -1723,6 +1735,8 @@ function EmployeeRequestDetails() {
                             <strong>✓ Digital Credential Generated</strong>
                             <p>The requested academic document has been prepared successfully.</p>
                             <p>The next step is to schedule the student's claiming date and time.</p>
+
+                            {credential && <CredentialQr credentialNumber={credential.credential_number} />}
 
                             <button
                                 onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}

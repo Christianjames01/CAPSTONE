@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import CredentialQr from '../../components/CredentialQr'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -78,6 +79,7 @@ function RequestDetails() {
 
     const [request, setRequest] = useState(null)
     const [requirements, setRequirements] = useState([])
+    const [credential, setCredential] = useState(null)
     const [claimSchedule, setClaimSchedule] = useState(null)
     const [assignedEmployee, setAssignedEmployee] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -285,6 +287,16 @@ function RequestDetails() {
             }
 
             setClaimSchedule(scheduleRow || null)
+
+            const { data: credentialData } = await supabase
+                .from('credentials')
+                .select('credential_id, credential_number, generated_at')
+                .eq('request_id', requestId)
+                .order('generated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            setCredential(credentialData || null)
 
         } catch (error) {
             console.error(
@@ -518,6 +530,16 @@ function RequestDetails() {
                     <div className="student-info-field" style={{ marginTop: 16 }}>
                         <span>Completed At</span>
                         <strong>{new Date(request.completed_at).toLocaleString()}</strong>
+                    </div>
+                )}
+
+                {credential && (
+                    <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
+                        <h3 style={{ fontSize: 15, marginBottom: 6 }}>Digital Credential</h3>
+                        <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 4 }}>
+                            Share this QR code or credential number so anyone can verify this document is genuine.
+                        </p>
+                        <CredentialQr credentialNumber={credential.credential_number} />
                     </div>
                 )}
 
