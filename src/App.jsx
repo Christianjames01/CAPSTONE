@@ -16,6 +16,9 @@ import ResetPassword from './pages/auth/ResetPassword'
 import Terms from './pages/legal/Terms'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 
+// VERIFY
+import VerifyCredential from './pages/verify/VerifyCredential'
+
 // STUDENT
 import StudentLayout from './pages/student/StudentLayout'
 import Dashboard from './pages/student/Dashboard'
@@ -128,6 +131,20 @@ function App() {
         <Route
           path="/privacy-policy"
           element={<PrivacyPolicy />}
+        />
+
+        {/* ========================= */}
+        {/* PUBLIC CREDENTIAL VERIFICATION */}
+        {/* ========================= */}
+
+        <Route
+          path="/verify"
+          element={<VerifyCredential />}
+        />
+
+        <Route
+          path="/verify/:credentialNumber"
+          element={<VerifyCredential />}
         />
 
         {/* ========================= */}
