@@ -58,7 +58,11 @@ function StudentLayout() {
         loadUnreadMessageCount()
 
         window.addEventListener('profile-updated', loadProfile)
-        return () => window.removeEventListener('profile-updated', loadProfile)
+        window.addEventListener('notifications-updated', loadUnreadCount)
+        return () => {
+            window.removeEventListener('profile-updated', loadProfile)
+            window.removeEventListener('notifications-updated', loadUnreadCount)
+        }
     }, [])
 
     // Students are limited to one active device -- if another login stamps
