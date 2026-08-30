@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
@@ -10,6 +11,13 @@ const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
     'processing', 'lacking_requirements', 'ready_for_claiming', 'completed', 'rejected',
 ]
+
+// Statuses where the request is still awaiting something and hasn't been
+// flagged yet -- these are the ones eligible for the "overdue" warning.
+const OVERDUE_ELIGIBLE_STATUSES = [
+    'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
+]
+const OVERDUE_DAYS = 2
 
 function AdminRequestDetails() {
     const { requestId } = useParams()
@@ -183,31 +191,20 @@ function AdminRequestDetails() {
         }
     }
 
-    const overrideStatus = async () => {
-        if (!newStatus) return
-
-        if (newStatus === 'rejected' && !overrideReason.trim()) {
-            notifyWarning('Please enter a reason for this override.')
-            return
-        }
-
-        const confirmed = await confirmModal(
-            `Override this request's status to "${newStatus.replace(/_/g, ' ')}"? This bypasses the normal workflow.`
-        )
-        if (!confirmed) return
-
+    const applyOverride = async (targetStatus, reasonText) => {
         try {
             setSaving(true)
 
             const user = await getAdminUser()
+            const reason = (reasonText || '').trim()
 
             const { data: updatedRows, error: updateError } = await supabase
                 .from('document_requests')
                 .update({
-                    status: newStatus,
-                    rejection_reason: newStatus === 'rejected' ? overrideReason.trim() : request.rejection_reason,
-                    employee_remarks: overrideReason.trim()
-                        ? `Registrar Head override: ${overrideReason.trim()}`
+                    status: targetStatus,
+                    rejection_reason: targetStatus === 'rejected' ? reason : request.rejection_reason,
+                    employee_remarks: reason
+                        ? `Registrar Head override: ${reason}`
                         : request.employee_remarks,
                     updated_at: new Date().toISOString(),
                 })
@@ -229,13 +226,13 @@ function AdminRequestDetails() {
                 action: 'override_status',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Overrode request ${request.request_number} status to "${newStatus}". ${overrideReason.trim()}`,
+                description: `Overrode request ${request.request_number} status to "${targetStatus}". ${reason}`,
             })
 
             await notifyStudentByStudentId({
                 studentId: request.student_id,
                 title: 'Request status updated',
-                message: `Your request ${request.request_number} status was updated to "${newStatus.replace(/_/g, ' ')}".${overrideReason.trim() ? ' ' + overrideReason.trim() : ''}`,
+                message: `Your request ${request.request_number} status was updated to "${targetStatus.replace(/_/g, ' ')}".${reason ? ' ' + reason : ''}`,
                 notificationType: 'request_update',
                 relatedRequestId: requestId,
             })
@@ -252,6 +249,40 @@ function AdminRequestDetails() {
         }
     }
 
+    const overrideStatus = async () => {
+        if (!newStatus) return
+
+        if (newStatus === 'rejected' && !overrideReason.trim()) {
+            notifyWarning('Please enter a reason for this override.')
+            return
+        }
+
+        const confirmed = await confirmModal(
+            `Override this request's status to "${newStatus.replace(/_/g, ' ')}"? This bypasses the normal workflow.`
+        )
+        if (!confirmed) return
+
+        await applyOverride(newStatus, overrideReason)
+    }
+
+    // Quick action from the "overdue" warning banner -- skips the generic
+    // override form and asks directly for what's missing.
+    const flagLackingRequirements = async () => {
+        const { value: reason } = await Swal.fire({
+            title: 'Flag as Lacking Requirements',
+            input: 'text',
+            inputLabel: 'What is missing? (shown to the student)',
+            inputPlaceholder: 'e.g. Certificate of Registration not yet uploaded',
+            showCancelButton: true,
+            confirmButtonText: 'Flag Request',
+            confirmButtonColor: '#eda100',
+        })
+
+        if (!reason) return
+
+        await applyOverride('lacking_requirements', reason)
+    }
+
     if (loading) {
         return (
             <div>
@@ -265,6 +296,12 @@ function AdminRequestDetails() {
     if (error) {
         return <div className="admin-error-box">{error}</div>
     }
+
+    const daysSinceRequested = request.requested_at
+        ? Math.floor((Date.now() - new Date(request.requested_at).getTime()) / (1000 * 60 * 60 * 24))
+        : 0
+
+    const isOverdue = daysSinceRequested >= OVERDUE_DAYS && OVERDUE_ELIGIBLE_STATUSES.includes(request.status)
 
     return (
         <div>
@@ -282,6 +319,23 @@ function AdminRequestDetails() {
                     {request.status.replace(/_/g, ' ')}
                 </span>
             </div>
+
+            {isOverdue && (
+                <div className="admin-notice tone-warning" style={{ marginTop: 16 }}>
+                    <strong>Pending for {daysSinceRequested} days</strong>
+                    <p style={{ marginBottom: 12 }}>
+                        This request hasn't moved in {daysSinceRequested} days. If the student is missing something, flag it as Lacking Requirements to let them know what's needed.
+                    </p>
+                    <button
+                        className="admin-primary-button"
+                        style={{ background: '#856404' }}
+                        onClick={flagLackingRequirements}
+                        disabled={saving}
+                    >
+                        Flag as Lacking Requirements
+                    </button>
+                </div>
+            )}
 
             <div className="admin-card" style={{ marginTop: 24 }}>
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Request Information</h2>

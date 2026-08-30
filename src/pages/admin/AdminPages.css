@@ -53,6 +53,24 @@
     margin-bottom: 18px;
 }
 
+.admin-notice {
+    padding: 16px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.admin-notice strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.admin-notice.tone-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
 .admin-success-box {
     padding: 14px 16px;
     border-radius: 8px;

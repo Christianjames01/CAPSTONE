@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import './EmployeePages.css'
+
+// Statuses where the request is still awaiting something and hasn't been
+// flagged yet -- these are the ones eligible for the "overdue" warning.
+const OVERDUE_ELIGIBLE_STATUSES = [
+    'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
+]
+const OVERDUE_DAYS = 2
 
 function EmployeeRequestDetails() {
     const { requestId } = useParams()
@@ -1168,32 +1176,19 @@ function EmployeeRequestDetails() {
     // CHANGE STATUS (MANUAL)
     // ==========================================
 
-    const changeStatus = async () => {
-        if (!manualStatus || manualStatus === request.status) {
-            return
-        }
-
-        const confirmed = await confirmModal(
-            `Change this request's status from "${request.status.replace(/_/g, ' ')}" to "${manualStatus.replace(/_/g, ' ')}"?`
-        )
-
-        if (!confirmed) {
-            return
-        }
-
+    const applyStatusChange = async (targetStatus, reasonText) => {
         try {
             setChangingStatus(true)
 
             const employee = await getCurrentEmployee()
+            const reason = (reasonText || '').trim()
 
             const { error: updateError } = await supabase
                 .from('document_requests')
                 .update({
-                    status: manualStatus,
-                    rejection_reason: manualStatus === 'rejected' ? (statusReason.trim() || null) : request.rejection_reason,
-                    employee_remarks: statusReason.trim()
-                        ? statusReason.trim()
-                        : request.employee_remarks,
+                    status: targetStatus,
+                    rejection_reason: targetStatus === 'rejected' ? (reason || null) : request.rejection_reason,
+                    employee_remarks: reason || request.employee_remarks,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('request_id', requestId)
@@ -1208,13 +1203,13 @@ function EmployeeRequestDetails() {
                 action: 'change_status',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Changed request ${request?.request_number || requestId} status from "${request.status}" to "${manualStatus}".${statusReason.trim() ? ' ' + statusReason.trim() : ''}`,
+                description: `Changed request ${request?.request_number || requestId} status from "${request.status}" to "${targetStatus}".${reason ? ' ' + reason : ''}`,
             })
 
             await notifyStudentByStudentId({
                 studentId: request.student_id,
                 title: 'Request status updated',
-                message: `Your request ${request.request_number} status was updated to "${manualStatus.replace(/_/g, ' ')}".${statusReason.trim() ? ' ' + statusReason.trim() : ''}`,
+                message: `Your request ${request.request_number} status was updated to "${targetStatus.replace(/_/g, ' ')}".${reason ? ' ' + reason : ''}`,
                 notificationType: 'request_update',
                 relatedRequestId: requestId,
             })
@@ -1229,6 +1224,40 @@ function EmployeeRequestDetails() {
         } finally {
             setChangingStatus(false)
         }
+    }
+
+    const changeStatus = async () => {
+        if (!manualStatus || manualStatus === request.status) {
+            return
+        }
+
+        const confirmed = await confirmModal(
+            `Change this request's status from "${request.status.replace(/_/g, ' ')}" to "${manualStatus.replace(/_/g, ' ')}"?`
+        )
+
+        if (!confirmed) {
+            return
+        }
+
+        await applyStatusChange(manualStatus, statusReason)
+    }
+
+    // Quick action from the "overdue" warning banner -- skips the generic
+    // dropdown and asks directly for what's missing.
+    const flagLackingRequirements = async () => {
+        const { value: reason } = await Swal.fire({
+            title: 'Flag as Lacking Requirements',
+            input: 'text',
+            inputLabel: 'What is missing? (shown to the student)',
+            inputPlaceholder: 'e.g. Certificate of Registration not yet uploaded',
+            showCancelButton: true,
+            confirmButtonText: 'Flag Request',
+            confirmButtonColor: '#eda100',
+        })
+
+        if (!reason) return
+
+        await applyStatusChange('lacking_requirements', reason)
     }
 
     // ==========================================
@@ -1274,6 +1303,12 @@ function EmployeeRequestDetails() {
     const requirementState =
         getRequirementState()
 
+    const daysSinceRequested = request.requested_at
+        ? Math.floor((Date.now() - new Date(request.requested_at).getTime()) / (1000 * 60 * 60 * 24))
+        : 0
+
+    const isOverdue = daysSinceRequested >= OVERDUE_DAYS && OVERDUE_ELIGIBLE_STATUSES.includes(request.status)
+
     // ==========================================
     // MAIN
     // ==========================================
@@ -1288,6 +1323,23 @@ function EmployeeRequestDetails() {
                 <h1>Request Details</h1>
                 <p>Review the student's document request, payment, and requirements.</p>
             </div>
+
+            {isOverdue && (
+                <div className="employee-notice tone-warning" style={{ marginBottom: 20 }}>
+                    <strong>Pending for {daysSinceRequested} days</strong>
+                    <p style={{ marginBottom: 12 }}>
+                        This request hasn't moved in {daysSinceRequested} days. If the student is missing something, flag it as Lacking Requirements to let them know what's needed.
+                    </p>
+                    <button
+                        className="employee-primary-button"
+                        style={{ background: '#856404' }}
+                        onClick={flagLackingRequirements}
+                        disabled={changingStatus}
+                    >
+                        Flag as Lacking Requirements
+                    </button>
+                </div>
+            )}
 
             {/* ==========================================
                 REQUEST INFORMATION
