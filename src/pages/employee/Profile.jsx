@@ -17,6 +17,14 @@ function Profile() {
     const [saving, setSaving] = useState(false)
     const [phoneNumber, setPhoneNumber] = useState('')
 
+    const [changingPassword, setChangingPassword] = useState(false)
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmNewPassword, setConfirmNewPassword] = useState('')
+    const [passwordSaving, setPasswordSaving] = useState(false)
+    const [passwordError, setPasswordError] = useState('')
+    const [passwordMessage, setPasswordMessage] = useState('')
+
     useEffect(() => {
         loadProfile()
     }, [])
@@ -111,6 +119,55 @@ function Profile() {
             setError(err.message || 'Failed to save changes.')
         } finally {
             setSaving(false)
+        }
+    }
+
+    const changePassword = async () => {
+        setPasswordError('')
+        setPasswordMessage('')
+
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            setPasswordError('Please fill in all password fields.')
+            return
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            setPasswordError("New passwords don't match.")
+            return
+        }
+
+        try {
+            setPasswordSaving(true)
+
+            // Re-verify the current password before allowing the change,
+            // since the employee's account was originally set up by the
+            // Registrar Head with a password the employee didn't choose.
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: profile.email,
+                password: currentPassword,
+            })
+
+            if (signInError) {
+                throw new Error('Current password is incorrect.')
+            }
+
+            const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+
+            if (updateError) {
+                throw new Error(updateError.message)
+            }
+
+            setPasswordMessage('Your password has been changed.')
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmNewPassword('')
+            setChangingPassword(false)
+
+        } catch (err) {
+            console.error('CHANGE PASSWORD ERROR:', err)
+            setPasswordError(err.message || 'Failed to change password.')
+        } finally {
+            setPasswordSaving(false)
         }
     }
 
@@ -266,6 +323,90 @@ function Profile() {
                             <strong>{profile?.phone_number || 'Not set'}</strong>
                         </div>
                     </div>
+                )}
+            </div>
+
+            <div className="employee-card">
+                <div className="employee-page-header-row">
+                    <h2 style={{ fontSize: 16 }}>Password</h2>
+
+                    {!changingPassword && (
+                        <button className="employee-link-button" onClick={() => setChangingPassword(true)}>
+                            Change password
+                        </button>
+                    )}
+                </div>
+
+                {changingPassword ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                        <div className="form-group">
+                            <label className="form-label">Current Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                disabled={passwordSaving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">New Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                disabled={passwordSaving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Confirm New Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                disabled={passwordSaving}
+                            />
+                        </div>
+
+                        {passwordError && <div className="employee-error-box">{passwordError}</div>}
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                className="auth-submit"
+                                style={{ width: 'auto', padding: '11px 20px' }}
+                                onClick={changePassword}
+                                disabled={passwordSaving}
+                            >
+                                {passwordSaving ? 'Saving...' : 'Save new password'}
+                            </button>
+
+                            <button
+                                className="employee-link-button"
+                                style={{ color: 'var(--slate)' }}
+                                onClick={() => {
+                                    setCurrentPassword('')
+                                    setNewPassword('')
+                                    setConfirmNewPassword('')
+                                    setPasswordError('')
+                                    setChangingPassword(false)
+                                }}
+                                disabled={passwordSaving}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {passwordMessage && <div className="employee-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
+                        <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
+                            Change the password the Registrar Head set for your account.
+                        </p>
+                    </>
                 )}
             </div>
         </div>
