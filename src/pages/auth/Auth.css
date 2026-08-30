@@ -60,7 +60,13 @@
     justify-content: center;
     align-items: center;
     padding: 48px;
-    background: var(--blue-dark);
+    background-image:
+        radial-gradient(circle at 80% 15%, rgba(200, 16, 46, 0.22), transparent 55%),
+        linear-gradient(180deg, rgba(10, 36, 80, 0.88) 0%, rgba(10, 36, 80, 0.82) 100%),
+        url('../../assets/hcdc-background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     overflow: hidden;
 }
 
@@ -68,8 +74,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 80% 15%, rgba(200, 16, 46, 0.22), transparent 55%),
-        radial-gradient(circle at 10% 90%, rgba(18, 59, 120, 0.6), transparent 55%);
+    background: radial-gradient(circle at 10% 90%, rgba(18, 59, 120, 0.6), transparent 55%);
 }
 
 .auth-brand-link {
