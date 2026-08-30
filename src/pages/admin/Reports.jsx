@@ -22,9 +22,9 @@ const formatTurnaround = (days) => {
 
     const totalMinutes = days * 24 * 60
 
-    if (totalMinutes < 60) return `${Math.round(totalMinutes)}m`
-    if (days < 1) return `${(totalMinutes / 60).toFixed(1)}h`
-    return `${days.toFixed(1)}d`
+    if (totalMinutes < 60) return `${Math.round(totalMinutes)} min`
+    if (days < 1) return `${(totalMinutes / 60).toFixed(1)} hrs`
+    return `${days.toFixed(1)} days`
 }
 
 function Reports() {
@@ -403,7 +403,7 @@ function Reports() {
                     <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
                         {formatTurnaround(avgTurnaroundDays)}
                     </span>
-                    <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Avg Turnaround</span>
+                    <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Avg. Turnaround Time</span>
                 </div>
             </div>
 
