@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
+import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
@@ -230,7 +231,7 @@ function AdminRequestDetails() {
                 action: 'reassign_request',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Reassigned request ${request.request_number} to ${newEmployee?.name || reassignTo}.`,
+                description: `Reassigned request "${request.request_number}" ${describeChanges([['assigned employee', currentEmployeeName, newEmployee?.name || reassignTo]]) || `to "${newEmployee?.name || reassignTo}"`}.`,
             })
 
             notifySuccess('Request reassigned.')
@@ -279,7 +280,7 @@ function AdminRequestDetails() {
                 action: 'override_status',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Overrode request ${request.request_number} status to "${targetStatus}". ${reason}`,
+                description: `Overrode request "${request.request_number}" status from "${request.status}" to "${targetStatus}".${reason ? ' "' + reason + '"' : ''}`,
             })
 
             await notifyStudentByStudentId({

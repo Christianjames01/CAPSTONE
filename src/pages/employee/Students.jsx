@@ -124,7 +124,7 @@ function Students() {
                 action: decision === 'approved' ? 'approve_student_registration' : 'reject_student_registration',
                 tableName: 'students',
                 recordId: student.student_id,
-                description: `${decision === 'approved' ? 'Approved' : 'Rejected'} registration for ${student.fullName} (${student.student_number}).`,
+                description: `${decision === 'approved' ? 'Approved' : 'Rejected'} registration for "${student.fullName}" (${student.student_number}).`,
             })
 
             setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))

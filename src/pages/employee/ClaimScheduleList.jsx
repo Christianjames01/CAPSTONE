@@ -222,7 +222,7 @@ function ClaimScheduleList() {
                 action: 'mark_claimed',
                 tableName: 'document_requests',
                 recordId: appointment.request_id,
-                description: `Marked ${appointment.requestNumber} as claimed and released.`,
+                description: `Marked "${appointment.requestNumber}" as claimed and released.`,
             })
 
             await notifyStudentByStudentId({

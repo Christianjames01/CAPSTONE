@@ -468,7 +468,7 @@ function EmployeeRequestDetails() {
                 action: 'verify_payment',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Verified payment for request ${request?.request_number || requestId}.`,
+                description: `Verified payment for request "${request?.request_number || requestId}".`,
             })
 
             await notifyStudentByStudentId({
@@ -595,7 +595,7 @@ function EmployeeRequestDetails() {
                 action: 'reject_payment',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Rejected payment for request ${request?.request_number || requestId}: ${rejectionReason.trim()}`,
+                description: `Rejected payment for request "${request?.request_number || requestId}": "${rejectionReason.trim()}"`,
             })
 
             await notifyStudentByStudentId({
@@ -730,7 +730,7 @@ function EmployeeRequestDetails() {
                 action: 'approve_requirement',
                 tableName: 'request_requirements',
                 recordId: requirement.request_requirement_id,
-                description: `Approved "${requirement.document_requirements?.requirement_name || 'requirement'}" for request ${request?.request_number || requestId}.`,
+                description: `Approved "${requirement.document_requirements?.requirement_name || 'requirement'}" for request "${request?.request_number || requestId}".`,
             })
 
             notifySuccess(
@@ -810,7 +810,7 @@ function EmployeeRequestDetails() {
                 action: 'reject_requirement',
                 tableName: 'request_requirements',
                 recordId: selectedRequirement.request_requirement_id,
-                description: `Rejected "${selectedRequirement.document_requirements?.requirement_name || 'requirement'}" for request ${request?.request_number || requestId}: ${rejectionReason.trim()}`,
+                description: `Rejected "${selectedRequirement.document_requirements?.requirement_name || 'requirement'}" for request "${request?.request_number || requestId}": "${rejectionReason.trim()}"`,
             })
 
             await notifyStudentByStudentId({
@@ -1009,7 +1009,7 @@ function EmployeeRequestDetails() {
                 action: 'start_processing',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Started document processing for request ${request?.request_number || requestId}.`,
+                description: `Started document processing for request "${request?.request_number || requestId}".`,
             })
 
             notifySuccess(
@@ -1143,7 +1143,7 @@ function EmployeeRequestDetails() {
                 action: 'generate_credential',
                 tableName: 'credentials',
                 recordId: credential.credential_id,
-                description: `Generated digital credential ${credentialNumber} for request ${request?.request_number || requestId}.`,
+                description: `Generated digital credential "${credentialNumber}" for request "${request?.request_number || requestId}".`,
             })
 
             await notifyStudentByStudentId({
@@ -1206,7 +1206,7 @@ function EmployeeRequestDetails() {
                 action: 'change_status',
                 tableName: 'document_requests',
                 recordId: requestId,
-                description: `Changed request ${request?.request_number || requestId} status from "${request.status}" to "${targetStatus}".${reason ? ' ' + reason : ''}`,
+                description: `Changed request "${request?.request_number || requestId}" status from "${request.status}" to "${targetStatus}".${reason ? ' "' + reason + '"' : ''}`,
             })
 
             await notifyStudentByStudentId({

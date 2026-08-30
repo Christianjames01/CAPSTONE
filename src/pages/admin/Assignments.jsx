@@ -137,7 +137,7 @@ function Assignments() {
                 action: 'assign_request',
                 tableName: 'document_requests',
                 recordId: request.request_id,
-                description: `Assigned request ${request.request_number} to ${employee?.name || employeeId}.`,
+                description: `Assigned request "${request.request_number}" to "${employee?.name || employeeId}".`,
             })
 
             await loadData()
