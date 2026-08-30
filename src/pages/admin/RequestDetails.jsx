@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import './AdminPages.css'
 
 const STATUS_OPTIONS = [
@@ -27,6 +28,10 @@ function AdminRequestDetails() {
     const [student, setStudent] = useState(null)
     const [documentName, setDocumentName] = useState('')
     const [receipt, setReceipt] = useState(null)
+    const [receiptUrl, setReceiptUrl] = useState('')
+    const [requirements, setRequirements] = useState([])
+    const [requirementUrls, setRequirementUrls] = useState({})
+    const [previewFile, setPreviewFile] = useState(null)
     const [employees, setEmployees] = useState([])
     const [currentEmployeeName, setCurrentEmployeeName] = useState('Unassigned')
 
@@ -86,13 +91,61 @@ function AdminRequestDetails() {
 
             const { data: receiptData } = await supabase
                 .from('official_receipts')
-                .select('receipt_id, receipt_number, amount_paid, status, uploaded_at, rejection_reason')
+                .select('receipt_id, receipt_number, amount_paid, status, uploaded_at, rejection_reason, receipt_file_name, receipt_file_path')
                 .eq('request_id', requestId)
                 .order('uploaded_at', { ascending: false })
                 .limit(1)
                 .maybeSingle()
 
             setReceipt(receiptData || null)
+            setReceiptUrl('')
+
+            if (receiptData?.receipt_file_path) {
+                const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+                    .from('official-receipts')
+                    .createSignedUrl(receiptData.receipt_file_path, 3600)
+
+                if (!signedUrlError) {
+                    setReceiptUrl(signedUrlData?.signedUrl || '')
+                }
+            }
+
+            const { data: requirementRows } = await supabase
+                .from('request_requirements')
+                .select(`
+                    request_requirement_id,
+                    file_name,
+                    file_path,
+                    status,
+                    uploaded_at,
+                    rejection_reason,
+                    document_requirements (
+                        requirement_id,
+                        requirement_name,
+                        description,
+                        is_required
+                    )
+                `)
+                .eq('request_id', requestId)
+                .order('created_at', { ascending: true })
+
+            setRequirements(requirementRows || [])
+
+            const urls = {}
+
+            for (const requirement of requirementRows || []) {
+                if (requirement.file_path && ['uploaded', 'approved', 'rejected'].includes(requirement.status)) {
+                    const { data: signedData, error: signedError } = await supabase.storage
+                        .from('student-requirements')
+                        .createSignedUrl(requirement.file_path, 3600)
+
+                    if (!signedError) {
+                        urls[requirement.request_requirement_id] = signedData?.signedUrl || ''
+                    }
+                }
+            }
+
+            setRequirementUrls(urls)
 
             const { data: employeeRows } = await supabase
                 .from('employees')
@@ -399,6 +452,79 @@ function AdminRequestDetails() {
                             <strong style={{ textTransform: 'capitalize' }}>{receipt.status}</strong>
                         </div>
                     </div>
+
+                    {receipt.rejection_reason && (
+                        <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
+                            Rejection reason: {receipt.rejection_reason}
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: 16 }}>
+                        {receiptUrl ? (
+                            <button
+                                className="admin-primary-button"
+                                onClick={() => setPreviewFile({ url: receiptUrl, name: receipt.receipt_file_name })}
+                            >
+                                View Official Receipt
+                            </button>
+                        ) : (
+                            <p style={{ fontSize: 13, color: 'var(--slate)' }}>Receipt file could not be opened.</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {requirements.length > 0 && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Required Documents</h2>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        {requirements.map((requirement) => {
+                            const definition = requirement.document_requirements
+                            const fileUrl = requirementUrls[requirement.request_requirement_id]
+
+                            return (
+                                <div key={requirement.request_requirement_id} className="admin-list-card" style={{ marginBottom: 0 }}>
+                                    <div className="admin-list-card-header">
+                                        <div>
+                                            <h3>{definition?.requirement_name || 'Requirement'}{definition?.is_required && <span style={{ color: 'var(--red)' }}> *</span>}</h3>
+                                            <p>{definition?.description || 'No description provided.'}</p>
+                                        </div>
+
+                                        <span className={`admin-status-pill status-${requirement.status}`}>{requirement.status}</span>
+                                    </div>
+
+                                    <div className="admin-info-grid">
+                                        <div className="admin-info-field">
+                                            <span>File Name</span>
+                                            <strong>{requirement.file_name || 'No file uploaded'}</strong>
+                                        </div>
+
+                                        <div className="admin-info-field">
+                                            <span>Uploaded At</span>
+                                            <strong>{requirement.uploaded_at ? new Date(requirement.uploaded_at).toLocaleString() : 'Not uploaded'}</strong>
+                                        </div>
+                                    </div>
+
+                                    {requirement.rejection_reason && (
+                                        <div className="admin-error-box" style={{ marginTop: 12, marginBottom: 0 }}>
+                                            Rejection reason: {requirement.rejection_reason}
+                                        </div>
+                                    )}
+
+                                    {fileUrl && (
+                                        <button
+                                            className="admin-link-button"
+                                            style={{ marginTop: 12 }}
+                                            onClick={() => setPreviewFile({ url: fileUrl, name: requirement.file_name })}
+                                        >
+                                            View Document →
+                                        </button>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
                 </div>
             )}
 
@@ -466,6 +592,14 @@ function AdminRequestDetails() {
                     </button>
                 </div>
             </div>
+
+            {previewFile && (
+                <DocumentPreviewModal
+                    url={previewFile.url}
+                    fileName={previewFile.name}
+                    onClose={() => setPreviewFile(null)}
+                />
+            )}
         </div>
     )
 }
