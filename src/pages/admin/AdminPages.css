@@ -289,3 +289,7 @@
     border-bottom: 1px solid var(--line);
     vertical-align: middle;
 }
+
+.admin-table tbody tr:hover {
+    background: var(--paper);
+}
