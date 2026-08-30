@@ -7,8 +7,6 @@ import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
-import CredentialQr from '../../components/CredentialQr'
-import { revokeCredential } from '../../lib/revokeCredential'
 import './AdminPages.css'
 
 const STATUS_OPTIONS = [
@@ -35,7 +33,6 @@ function AdminRequestDetails() {
     const [requirements, setRequirements] = useState([])
     const [requirementUrls, setRequirementUrls] = useState({})
     const [previewFile, setPreviewFile] = useState(null)
-    const [credential, setCredential] = useState(null)
     const [employees, setEmployees] = useState([])
     const [currentEmployeeName, setCurrentEmployeeName] = useState('Unassigned')
 
@@ -150,16 +147,6 @@ function AdminRequestDetails() {
             }
 
             setRequirementUrls(urls)
-
-            const { data: credentialData } = await supabase
-                .from('credentials')
-                .select('credential_id, credential_number, generated_at, status, revocation_reason')
-                .eq('request_id', requestId)
-                .order('generated_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-
-            setCredential(credentialData || null)
 
             const { data: employeeRows } = await supabase
                 .from('employees')
@@ -348,40 +335,6 @@ function AdminRequestDetails() {
         if (!reason) return
 
         await applyOverride('lacking_requirements', reason)
-    }
-
-    const revokeCredentialAction = async () => {
-        const { value: reason } = await Swal.fire({
-            title: 'Revoke Credential',
-            input: 'text',
-            inputLabel: 'Reason (shown to the student)',
-            inputPlaceholder: 'e.g. Wrong document type was generated',
-            showCancelButton: true,
-            confirmButtonText: 'Revoke',
-            confirmButtonColor: '#C8102E',
-        })
-
-        if (!reason) return
-
-        try {
-            const user = await getAdminUser()
-
-            await revokeCredential({
-                credentialId: credential.credential_id,
-                credentialNumber: credential.credential_number,
-                requestNumber: request.request_number,
-                studentId: request.student_id,
-                reason,
-                userId: user.id,
-            })
-
-            notifySuccess('Credential revoked.')
-            await loadRequest()
-
-        } catch (err) {
-            console.error('REVOKE CREDENTIAL ERROR:', err)
-            notifyError(err.message || 'Failed to revoke credential.')
-        }
     }
 
     if (loading) {
@@ -587,28 +540,6 @@ function AdminRequestDetails() {
                     </div>
                 )}
             </div>
-
-            {credential && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Digital Credential</h2>
-
-                    <CredentialQr
-                        credentialNumber={credential.credential_number}
-                        status={credential.status}
-                        revocationReason={credential.revocation_reason}
-                    />
-
-                    {credential.status !== 'revoked' && (
-                        <button
-                            className="admin-link-button"
-                            style={{ color: 'var(--red)', marginTop: 10 }}
-                            onClick={revokeCredentialAction}
-                        >
-                            Revoke credential
-                        </button>
-                    )}
-                </div>
-            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Reassign Employee</h2>
