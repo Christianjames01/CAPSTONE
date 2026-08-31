@@ -97,6 +97,17 @@ Deno.serve(async (req) => {
             description: `Reset the login password for student "${studentRow.student_number}" (by ${actorName}).`,
         })
 
+        // Notify the student directly (in-app + email) so they know this
+        // happened, even though they weren't the one who requested it --
+        // if it wasn't legitimate, this is how they'd find out.
+        await supabaseAdmin.from('notifications').insert({
+            user_id: studentUserId,
+            title: 'Your password was reset',
+            message: `Your CertiChain password was reset by ${actorName} from the Registrar's Office. If you did not request this or don't recognize this change, contact the Registrar's Office immediately.`,
+            notification_type: 'system',
+            is_read: false,
+        })
+
         return json({ success: true })
 
     } catch (err) {
