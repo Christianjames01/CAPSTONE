@@ -71,6 +71,11 @@
     color: #856404;
 }
 
+.admin-notice.tone-danger {
+    background: rgba(200, 16, 46, 0.08);
+    color: var(--red-dark);
+}
+
 .admin-success-box {
     padding: 14px 16px;
     border-radius: 8px;

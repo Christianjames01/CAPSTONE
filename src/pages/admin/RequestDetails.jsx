@@ -485,16 +485,20 @@ function AdminRequestDetails() {
                 </div>
 
                 {request.rejection_reason && (
-                    <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
-                        Rejection reason: {request.rejection_reason}
+                    <div className="admin-notice tone-danger" style={{ marginTop: 16 }}>
+                        <strong>Rejection Reason</strong>
+                        <p style={{ margin: 0 }}>{request.rejection_reason}</p>
                     </div>
                 )}
 
                 {request.cancellation_reason && (
-                    <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
-                        Cancellation reason: {request.cancellation_reason}
+                    <div className="admin-notice tone-danger" style={{ marginTop: 16 }}>
+                        <strong>Cancellation Reason</strong>
+                        <p style={{ margin: 0 }}>{request.cancellation_reason}</p>
                         {request.cancelled_at && (
-                            <> (cancelled on {new Date(request.cancelled_at).toLocaleString()})</>
+                            <p style={{ margin: '6px 0 0', fontSize: 12.5, opacity: 0.8 }}>
+                                Cancelled on {new Date(request.cancelled_at).toLocaleString()}
+                            </p>
                         )}
                     </div>
                 )}
