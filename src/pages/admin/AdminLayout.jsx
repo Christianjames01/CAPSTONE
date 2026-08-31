@@ -34,6 +34,7 @@ function AdminLayout() {
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
+    const [loggingOut, setLoggingOut] = useState(false)
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
@@ -95,6 +96,7 @@ function AdminLayout() {
     }
 
     const handleLogout = async () => {
+        setLoggingOut(true)
         await supabase.auth.signOut()
         navigate('/login')
     }
@@ -188,9 +190,9 @@ function AdminLayout() {
                         </div>
                     </div>
 
-                    <button className="admin-logout-button" onClick={handleLogout}>
-                        <IconLogout />
-                        <span>Log out</span>
+                    <button className="admin-logout-button" onClick={handleLogout} disabled={loggingOut}>
+                        {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}
+                        <span>{loggingOut ? 'Logging out...' : 'Log out'}</span>
                     </button>
                 </div>
 
