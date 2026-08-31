@@ -12,6 +12,7 @@ function VerifyCredential() {
     const [result, setResult] = useState(null)
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
+    const [rateLimitMessage, setRateLimitMessage] = useState('')
 
     useEffect(() => {
         if (credentialNumber) {
@@ -26,12 +27,11 @@ function VerifyCredential() {
         try {
             setLoading(true)
             setSearched(true)
+            setRateLimitMessage('')
 
-            const { data, error } = await supabase
-                .from('public_credential_verification')
-                .select('*')
-                .eq('credential_number', query)
-                .maybeSingle()
+            const { data, error } = await supabase.functions.invoke('verify-credential', {
+                body: { credentialNumber: query },
+            })
 
             if (error) {
                 console.error('VERIFY LOOKUP ERROR:', error)
@@ -39,7 +39,13 @@ function VerifyCredential() {
                 return
             }
 
-            setResult(data || null)
+            if (data?.rateLimited) {
+                setRateLimitMessage(data.message || 'Too many verification attempts. Please try again in a few minutes.')
+                setResult(null)
+                return
+            }
+
+            setResult(data?.result || null)
 
         } finally {
             setLoading(false)
@@ -90,7 +96,14 @@ function VerifyCredential() {
                     </button>
                 </form>
 
-                {!loading && searched && (
+                {!loading && rateLimitMessage && (
+                    <div className="verify-result verify-result-invalid">
+                        <div className="verify-result-badge">⏳ Too Many Attempts</div>
+                        <p>{rateLimitMessage}</p>
+                    </div>
+                )}
+
+                {!loading && !rateLimitMessage && searched && (
                     result ? (
                         <div className={`verify-result ${result.status === 'revoked' ? 'verify-result-invalid' : 'verify-result-valid'}`}>
                             <div className="verify-result-badge">
