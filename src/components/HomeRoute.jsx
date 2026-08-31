@@ -35,7 +35,19 @@ function HomeRoute() {
         setChecking(false)
     }
 
-    if (checking) return null
+    if (checking) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#FBFCFE',
+            }}>
+                <span className="icon-spinner" style={{ width: 28, height: 28, borderWidth: 3, color: '#123B78' }} />
+            </div>
+        )
+    }
 
     if (redirectTo) return <Navigate to={redirectTo} replace />
 
