@@ -327,7 +327,7 @@ function NewRequest() {
                 await notify({
                     userId: assignedEmployeeRow.user_id,
                     title: 'New request pending',
-                    message: `${document.document_name} request ${requestNumber} is waiting for verification.`,
+                    message: `${document.document_name} request ${request.request_number} is waiting for verification.`,
                     notificationType: 'request_update',
                     relatedRequestId: request.request_id,
                 })
