@@ -457,6 +457,7 @@ function Register() {
                 </p>
 
                 <button type="submit" className="auth-submit" disabled={loading}>
+                    {loading && <span className="auth-spinner" />}
                     {loading ? 'Creating account...' : 'Create account'}
                 </button>
 

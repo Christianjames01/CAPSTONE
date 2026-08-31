@@ -168,6 +168,7 @@ function Login() {
                 {message && <p className={`form-message ${messageType}`}>{message}</p>}
 
                 <button type="submit" className="auth-submit" disabled={loading}>
+                    {loading && <span className="auth-spinner" />}
                     {loading ? 'Logging in...' : 'Log in'}
                 </button>
 
