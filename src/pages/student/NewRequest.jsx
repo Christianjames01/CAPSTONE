@@ -266,16 +266,12 @@ function NewRequest() {
             // 5. Calculate amount
             const unitFee = Number(document.fee || 0)
 
-            // 6. Generate request number
-            const requestNumber =
-                'REQ-' + Date.now()
-
-            // 7. Insert request
+            // 6. Insert request -- request_number is assigned by a
+            // database trigger (short, sequential, collision-free).
             const { data: request, error: requestError } =
                 await supabase
                     .from('document_requests')
                     .insert({
-                        request_number: requestNumber,
                         student_id: student.student_id,
                         document_type_id: document.document_type_id,
                         assigned_employee_id: assignedEmployeeId,
