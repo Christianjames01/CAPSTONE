@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.send-registrar-alerts]
 verify_jwt = false
+
+[functions.verify-credential]
+verify_jwt = false
