@@ -61,6 +61,7 @@ function AdminRequestDetails() {
                     request_id, request_number, student_id, document_type_id,
                     assigned_employee_id, quantity, unit_fee, total_amount, priority,
                     purpose, status, student_remarks, employee_remarks, rejection_reason,
+                    cancellation_reason, cancelled_at,
                     requested_at, processed_at, completed_at
                 `)
                 .eq('request_id', requestId)
@@ -486,6 +487,15 @@ function AdminRequestDetails() {
                 {request.rejection_reason && (
                     <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
                         Rejection reason: {request.rejection_reason}
+                    </div>
+                )}
+
+                {request.cancellation_reason && (
+                    <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
+                        Cancellation reason: {request.cancellation_reason}
+                        {request.cancelled_at && (
+                            <> (cancelled on {new Date(request.cancelled_at).toLocaleString()})</>
+                        )}
                     </div>
                 )}
             </div>

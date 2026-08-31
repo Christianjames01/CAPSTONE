@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
-import { notify, notifyError, confirmModal } from '../../lib/notify'
+import { notify, notifyError } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import CredentialQr from '../../components/CredentialQr'
 import '../auth/Auth.css'
@@ -204,6 +205,8 @@ function RequestDetails() {
                     student_remarks,
                     employee_remarks,
                     rejection_reason,
+                    cancellation_reason,
+                    cancelled_at,
                     requested_at,
                     processed_at,
                     completed_at
@@ -326,18 +329,36 @@ function RequestDetails() {
     }
 
     const cancelRequest = async () => {
-        const confirmed = await confirmModal(
-            'Cancel this request? This cannot be undone.',
-            { title: 'Cancel Request', confirmButtonText: 'Yes, cancel it', icon: 'warning' }
-        )
-        if (!confirmed) return
+        const { value: reason } = await Swal.fire({
+            title: 'Cancel Request',
+            text: 'This cannot be undone. Please tell us why you\'re cancelling.',
+            icon: 'warning',
+            input: 'textarea',
+            inputLabel: 'Reason for cancellation',
+            inputPlaceholder: 'e.g. I no longer need this document',
+            inputValidator: (value) => {
+                if (!value || !value.trim()) return 'A reason is required to cancel this request.'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Yes, cancel it',
+            cancelButtonText: 'Never mind',
+            confirmButtonColor: '#dc3545',
+        })
+
+        if (!reason) return
 
         try {
             setCancelling(true)
 
+            const cancelledAt = new Date().toISOString()
+
             const { error: cancelError } = await supabase
                 .from('document_requests')
-                .update({ status: 'cancelled' })
+                .update({
+                    status: 'cancelled',
+                    cancellation_reason: reason.trim(),
+                    cancelled_at: cancelledAt,
+                })
                 .eq('request_id', request.request_id)
                 .eq('status', 'pending')
 
@@ -356,14 +377,19 @@ function RequestDetails() {
                     await notify({
                         userId: employeeRow.user_id,
                         title: 'Request cancelled',
-                        message: `Request ${request.request_number} was cancelled by the student.`,
+                        message: `Request ${request.request_number} was cancelled by the student. Reason: ${reason.trim()}`,
                         notificationType: 'request_update',
                         relatedRequestId: request.request_id,
                     })
                 }
             }
 
-            setRequest((prev) => ({ ...prev, status: 'cancelled' }))
+            setRequest((prev) => ({
+                ...prev,
+                status: 'cancelled',
+                cancellation_reason: reason.trim(),
+                cancelled_at: cancelledAt,
+            }))
 
         } catch (err) {
             console.error('CANCEL REQUEST ERROR:', err)
@@ -527,6 +553,18 @@ function RequestDetails() {
                     <div className="student-notice tone-danger">
                         <strong>Rejection Reason</strong>
                         <p>{request.rejection_reason}</p>
+                    </div>
+                )}
+
+                {request.cancellation_reason && (
+                    <div className="student-notice tone-danger">
+                        <strong>Cancellation Reason</strong>
+                        <p>{request.cancellation_reason}</p>
+                        {request.cancelled_at && (
+                            <p style={{ marginTop: 4, fontSize: 12.5 }}>
+                                Cancelled on {new Date(request.cancelled_at).toLocaleString()}
+                            </p>
+                        )}
                     </div>
                 )}
 

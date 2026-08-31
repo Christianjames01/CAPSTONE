@@ -126,6 +126,8 @@ function EmployeeRequestDetails() {
                     student_remarks,
                     employee_remarks,
                     rejection_reason,
+                    cancellation_reason,
+                    cancelled_at,
                     requested_at,
                     processed_at,
                     completed_at
@@ -1470,6 +1472,18 @@ function EmployeeRequestDetails() {
                     <span>Requested At</span>
                     <strong>{new Date(request.requested_at).toLocaleString()}</strong>
                 </div>
+
+                {request.cancellation_reason && (
+                    <div className="employee-notice tone-danger" style={{ marginTop: 16 }}>
+                        <strong>Cancellation Reason</strong>
+                        <p>{request.cancellation_reason}</p>
+                        {request.cancelled_at && (
+                            <p style={{ marginTop: 4, fontSize: 12.5 }}>
+                                Cancelled on {new Date(request.cancelled_at).toLocaleString()}
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
                 {/* ==========================================
