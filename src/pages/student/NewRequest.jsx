@@ -690,9 +690,9 @@ function StudentInfoRow({ y = 110, student }) {
 
 function GradesBody({ student }) {
     const rows = [
-        ['IT 101', 'Introduction to Computing', '3.0', '1.75', 'Passed'],
-        ['IT 102', 'Computer Programming 1', '3.0', '1.50', 'Passed'],
-        ['GE 101', 'Understanding the Self', '3.0', '2.00', 'Passed'],
+        ['GE 101', 'Understanding the Self', '3.0', '1.75', 'Passed'],
+        ['GE 102', 'Readings in Philippine History', '3.0', '1.50', 'Passed'],
+        ['NSTP 101', 'National Service Training Program 1', '3.0', '2.00', 'Passed'],
         ['PE 101', 'Physical Fitness', '2.0', '1.25', 'Passed'],
     ]
 
