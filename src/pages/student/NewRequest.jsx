@@ -95,19 +95,16 @@ function NewRequest() {
 
             const { data: student } = await supabase
                 .from('students')
-                .select('student_number, college_id, program_id, user_id')
+                .select('student_number, program_id, year_level, user_id')
                 .eq('user_id', user.id)
                 .single()
 
             if (!student) return
 
-            const [{ data: profile }, { data: program }, { data: college }] = await Promise.all([
+            const [{ data: profile }, { data: program }] = await Promise.all([
                 supabase.from('profiles').select('first_name, last_name').eq('user_id', user.id).single(),
                 student.program_id
                     ? supabase.from('programs').select('program_name').eq('program_id', student.program_id).single()
-                    : Promise.resolve({ data: null }),
-                student.college_id
-                    ? supabase.from('colleges').select('college_name').eq('college_id', student.college_id).single()
                     : Promise.resolve({ data: null }),
             ])
 
@@ -115,7 +112,7 @@ function NewRequest() {
                 fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : '',
                 studentNumber: student.student_number || '',
                 programName: program?.program_name || '',
-                collegeName: college?.college_name || '',
+                yearLevel: student.year_level || '',
             })
 
         } catch (err) {
@@ -653,6 +650,12 @@ function SampleFooter() {
     )
 }
 
+const YEAR_LEVEL_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year', 5: '5th Year' }
+function formatYearLevel(yearLevel) {
+    if (!yearLevel) return ''
+    return YEAR_LEVEL_LABELS[yearLevel] || yearLevel
+}
+
 function StudentInfoRow({ y = 110, student }) {
     return (
         <g fontSize="10" fill="var(--slate)">
@@ -677,12 +680,12 @@ function StudentInfoRow({ y = 110, student }) {
                 {student?.programName || 'BS Information Technology'}
             </text>
 
-            <text x="300" y={y + 36}>College</text>
+            <text x="300" y={y + 36}>Year Level</text>
             <text
                 x="300" y={y + 52} fontSize="11.5" fill="var(--ink)" fontWeight="600"
-                {...fitProps(student?.collegeName, 30, 220)}
+                {...fitProps(formatYearLevel(student?.yearLevel), 30, 220)}
             >
-                {student?.collegeName || 'College of Computer Studies'}
+                {formatYearLevel(student?.yearLevel) || '3rd Year'}
             </text>
         </g>
     )
