@@ -6,6 +6,7 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
+import HighlightedText from '../../components/HighlightedText'
 import './EmployeePages.css'
 
 // Statuses where the request is still awaiting something and hasn't been
@@ -44,6 +45,7 @@ function EmployeeRequestDetails() {
     const [changingStatus, setChangingStatus] = useState(false)
 
     const [previewFile, setPreviewFile] = useState(null)
+    const [requestActivity, setRequestActivity] = useState([])
 
     useEffect(() => {
         if (!requestId) {
@@ -269,6 +271,55 @@ function EmployeeRequestDetails() {
             // ==========================================
 
             await loadRequirements(requestId)
+
+            // ==========================================
+            // LOAD ACTIVITY HISTORY FOR THIS REQUEST
+            // Log entries don't share one foreign key across every
+            // action type (some point to a requirement, a credential,
+            // a claim schedule...), but every description embeds the
+            // quoted request number, so match on that instead.
+            // ==========================================
+
+            const { data: activityRows, error: activityError } = await supabase
+                .from('activity_logs')
+                .select('activity_log_id, employee_id, user_id, action, description, created_at')
+                .ilike('description', `%"${requestData.request_number}"%`)
+                .order('created_at', { ascending: false })
+
+            if (activityError) {
+                console.error('REQUEST ACTIVITY ERROR:', activityError)
+            } else {
+                const rows = activityRows || []
+                const employeeIds = [...new Set(rows.map((r) => r.employee_id).filter(Boolean))]
+
+                const { data: activityEmployees } = employeeIds.length
+                    ? await supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', employeeIds)
+                    : { data: [] }
+
+                const activityUserIds = [...new Set([
+                    ...(activityEmployees || []).map((e) => e.user_id),
+                    ...rows.map((r) => r.user_id).filter(Boolean),
+                ])]
+
+                const { data: activityProfiles } = activityUserIds.length
+                    ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', activityUserIds)
+                    : { data: [] }
+
+                const activityProfileByUserId = Object.fromEntries((activityProfiles || []).map((p) => [p.user_id, p]))
+                const activityEmployeeById = Object.fromEntries((activityEmployees || []).map((e) => [e.employee_id, e]))
+
+                setRequestActivity(
+                    rows.map((r) => {
+                        const emp = r.employee_id ? activityEmployeeById[r.employee_id] : null
+                        const profile = emp ? activityProfileByUserId[emp.user_id] : (r.user_id ? activityProfileByUserId[r.user_id] : null)
+
+                        return {
+                            ...r,
+                            actorName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'System',
+                        }
+                    })
+                )
+            }
 
         } catch (error) {
             console.error(
@@ -1794,6 +1845,33 @@ function EmployeeRequestDetails() {
                             >
                                 {processing || requirementProcessing ? 'Rejecting...' : 'Confirm Rejection'}
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ==========================================
+                    ACTIVITY HISTORY
+                ========================================== */}
+
+                {requestActivity.length > 0 && (
+                    <div className="employee-card">
+                        <h2 style={{ fontSize: 16, marginBottom: 16 }}>Activity History</h2>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            {requestActivity.map((log) => (
+                                <div key={log.activity_log_id} style={{ paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
+                                        <strong style={{ fontSize: 13, textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</strong>
+                                        <span style={{ fontSize: 12, color: 'var(--slate)', whiteSpace: 'nowrap' }}>
+                                            {new Date(log.created_at).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 4 }}>
+                                        <HighlightedText text={log.description} />
+                                    </p>
+                                    <span style={{ fontSize: 11.5, color: 'var(--slate)' }}>{log.actorName}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

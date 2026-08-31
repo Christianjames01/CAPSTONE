@@ -7,6 +7,7 @@ import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
+import HighlightedText from '../../components/HighlightedText'
 import './AdminPages.css'
 
 const STATUS_OPTIONS = [
@@ -33,6 +34,7 @@ function AdminRequestDetails() {
     const [requirements, setRequirements] = useState([])
     const [requirementUrls, setRequirementUrls] = useState({})
     const [previewFile, setPreviewFile] = useState(null)
+    const [requestActivity, setRequestActivity] = useState([])
     const [employees, setEmployees] = useState([])
     const [currentEmployeeName, setCurrentEmployeeName] = useState('Unassigned')
 
@@ -172,6 +174,54 @@ function AdminRequestDetails() {
 
             const current = employeeList.find((e) => e.employee_id === requestData.assigned_employee_id)
             setCurrentEmployeeName(current ? current.name : 'Unassigned')
+
+            // ==========================================
+            // LOAD ACTIVITY HISTORY FOR THIS REQUEST
+            // Log entries don't share one foreign key across every
+            // action type, but every description embeds the quoted
+            // request number, so match on that instead.
+            // ==========================================
+
+            const { data: activityRows, error: activityError } = await supabase
+                .from('activity_logs')
+                .select('activity_log_id, employee_id, user_id, action, description, created_at')
+                .ilike('description', `%"${requestData.request_number}"%`)
+                .order('created_at', { ascending: false })
+
+            if (activityError) {
+                console.error('REQUEST ACTIVITY ERROR:', activityError)
+            } else {
+                const activityLogRows = activityRows || []
+                const activityEmployeeIds = [...new Set(activityLogRows.map((r) => r.employee_id).filter(Boolean))]
+
+                const { data: activityEmployees } = activityEmployeeIds.length
+                    ? await supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', activityEmployeeIds)
+                    : { data: [] }
+
+                const activityUserIds = [...new Set([
+                    ...(activityEmployees || []).map((e) => e.user_id),
+                    ...activityLogRows.map((r) => r.user_id).filter(Boolean),
+                ])]
+
+                const { data: activityProfiles } = activityUserIds.length
+                    ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', activityUserIds)
+                    : { data: [] }
+
+                const activityProfileByUserId = Object.fromEntries((activityProfiles || []).map((p) => [p.user_id, p]))
+                const activityEmployeeById = Object.fromEntries((activityEmployees || []).map((e) => [e.employee_id, e]))
+
+                setRequestActivity(
+                    activityLogRows.map((r) => {
+                        const emp = r.employee_id ? activityEmployeeById[r.employee_id] : null
+                        const profile = emp ? activityProfileByUserId[emp.user_id] : (r.user_id ? activityProfileByUserId[r.user_id] : null)
+
+                        return {
+                            ...r,
+                            actorName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'System',
+                        }
+                    })
+                )
+            }
 
         } catch (err) {
             console.error('ADMIN REQUEST DETAILS ERROR:', err)
@@ -547,6 +597,29 @@ function AdminRequestDetails() {
                     </div>
                 )}
             </div>
+
+            {requestActivity.length > 0 && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Activity History</h2>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {requestActivity.map((log) => (
+                            <div key={log.activity_log_id} style={{ paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
+                                    <strong style={{ fontSize: 13, textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</strong>
+                                    <span style={{ fontSize: 12, color: 'var(--slate)', whiteSpace: 'nowrap' }}>
+                                        {new Date(log.created_at).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 4 }}>
+                                    <HighlightedText text={log.description} />
+                                </p>
+                                <span style={{ fontSize: 11.5, color: 'var(--slate)' }}>{log.actorName}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Reassign Employee</h2>
