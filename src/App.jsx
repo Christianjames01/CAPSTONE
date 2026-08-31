@@ -229,7 +229,7 @@ function App() {
 
         <Route
           element={
-            <ProtectedRoute allowedRoles={['employee']}>
+            <ProtectedRoute allowedRoles={['employee', 'registrar_head']}>
               <EmployeeLayout />
             </ProtectedRoute>
           }
