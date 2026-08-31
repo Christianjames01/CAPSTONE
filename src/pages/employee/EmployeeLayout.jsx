@@ -29,6 +29,7 @@ function EmployeeLayout() {
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
+    const [loggingOut, setLoggingOut] = useState(false)
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
@@ -99,6 +100,7 @@ function EmployeeLayout() {
     }
 
     const handleLogout = async () => {
+        setLoggingOut(true)
         await supabase.auth.signOut()
         navigate('/login')
     }
@@ -192,9 +194,9 @@ function EmployeeLayout() {
                         </div>
                     </div>
 
-                    <button className="employee-logout-button" onClick={handleLogout}>
-                        <IconLogout />
-                        <span>Log out</span>
+                    <button className="employee-logout-button" onClick={handleLogout} disabled={loggingOut}>
+                        {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}
+                        <span>{loggingOut ? 'Logging out...' : 'Log out'}</span>
                     </button>
                 </div>
 

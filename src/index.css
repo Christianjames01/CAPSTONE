@@ -116,6 +116,27 @@ code {
 }
 
 /* ===================================================
+   ICON SPINNER -- generic small loading spinner that inherits
+   whatever text color it's placed in (via currentColor), for use
+   anywhere a button needs a loading indicator outside the auth forms.
+=================================================== */
+@keyframes icon-spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
+.icon-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: icon-spinner-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ===================================================
    SWEETALERT2 -- CertiChain theme
    Colors (confirmButtonColor/cancelButtonColor) are set per-call and
    deliberately vary by action (blue for primary, red for destructive,

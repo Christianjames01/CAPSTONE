@@ -42,6 +42,7 @@ function StudentLayout() {
     const [unreadCount, setUnreadCount] = useState(0)
     const [unreadMessageCount, setUnreadMessageCount] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
+    const [loggingOut, setLoggingOut] = useState(false)
 
     // Lock background scrolling while the drawer is open -- otherwise
     // scrolling the page behind it can make the fixed-position drawer
@@ -143,6 +144,7 @@ function StudentLayout() {
     }
 
     const handleLogout = async () => {
+        setLoggingOut(true)
         await supabase.auth.signOut()
         navigate('/')
     }
@@ -243,9 +245,9 @@ function StudentLayout() {
                         </div>
                     </div>
 
-                    <button className="student-logout-button" onClick={handleLogout}>
-                        <IconLogout />
-                        <span>Log out</span>
+                    <button className="student-logout-button" onClick={handleLogout} disabled={loggingOut}>
+                        {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}
+                        <span>{loggingOut ? 'Logging out...' : 'Log out'}</span>
                     </button>
                 </div>
 
