@@ -1074,13 +1074,10 @@ function EmployeeRequestDetails() {
             const employee =
                 await getCurrentEmployee()
 
-            const credentialNumber =
-                `CERT-${Date.now()}-${Math.floor(
-                    Math.random() * 10000
-                )}`
-
             // ==========================================
             // CREATE CREDENTIAL RECORD
+            // credential_number is assigned by a database trigger
+            // (short, sequential, collision-free).
             // ==========================================
 
             const {
@@ -1095,8 +1092,6 @@ function EmployeeRequestDetails() {
                         request.student_id,
                     document_type_id:
                         request.document_type_id,
-                    credential_number:
-                        credentialNumber,
                     status: 'generated',
                     generated_by:
                         employee.employee_id,
@@ -1154,7 +1149,7 @@ function EmployeeRequestDetails() {
                 action: 'generate_credential',
                 tableName: 'credentials',
                 recordId: credential.credential_id,
-                description: `Generated digital credential "${credentialNumber}" for request "${request?.request_number || requestId}".`,
+                description: `Generated digital credential "${credential.credential_number}" for request "${request?.request_number || requestId}".`,
             })
 
             await notifyStudentByStudentId({
@@ -1166,7 +1161,7 @@ function EmployeeRequestDetails() {
             })
 
             notifySuccess(
-                `Digital credential generated successfully.\n\nCredential Number: ${credentialNumber}`
+                `Digital credential generated successfully.\n\nCredential Number: ${credential.credential_number}`
             )
 
             await loadRequest()
