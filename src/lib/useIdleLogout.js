@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from './supabase'
 
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000
+const IDLE_TIMEOUT_MS = 20 * 60 * 1000
 const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
 
 // Signs the user out after a period of no activity -- this app handles
@@ -16,7 +17,14 @@ export function useIdleLogout() {
 
         const logout = async () => {
             await supabase.auth.signOut()
-            navigate('/login', { state: { message: "You've been logged out due to inactivity." } })
+            await Swal.fire({
+                title: 'Session Expired',
+                text: "You've been logged out due to inactivity. Please log in again.",
+                icon: 'info',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#123B78',
+            })
+            navigate('/login')
         }
 
         const resetTimer = () => {
