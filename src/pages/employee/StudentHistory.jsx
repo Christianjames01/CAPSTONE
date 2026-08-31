@@ -47,7 +47,7 @@ function StudentHistory() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name, email, phone_number')
+                .select('first_name, last_name, email, phone_number, profile_photo_url')
                 .eq('user_id', studentData.user_id)
                 .single()
 
@@ -79,6 +79,8 @@ function StudentHistory() {
                 fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
                 email: profile?.email || '',
                 phoneNumber: profile?.phone_number || '',
+                photoUrl: profile?.profile_photo_url || '',
+                initials: `${profile?.first_name?.[0] || ''}${profile?.last_name?.[0] || ''}`.toUpperCase(),
                 collegeName: college?.college_name || '',
                 programName: program?.program_name || '',
             })
@@ -295,9 +297,35 @@ function StudentHistory() {
                 ← Back to Students
             </button>
 
-            <div className="employee-page-header">
-                <h1>{student.fullName}</h1>
-                <p>{student.student_number} · {student.email}</p>
+            <div className="employee-page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    background: 'var(--red)',
+                    color: 'var(--white)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: 20,
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                }}>
+                    {student.photoUrl ? (
+                        <img
+                            src={student.photoUrl}
+                            alt={student.fullName}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                    ) : (
+                        student.initials || 'ST'
+                    )}
+                </div>
+                <div>
+                    <h1 style={{ marginBottom: 2 }}>{student.fullName}</h1>
+                    <p>{student.student_number} · {student.email}</p>
+                </div>
             </div>
 
             <div className="employee-card">
