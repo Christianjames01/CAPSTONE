@@ -1063,22 +1063,23 @@ function ClaimSchedule() {
                     </div>
 
                     {/* ACTIONS */}
-                    <div className="employee-actions-row" style={{ marginTop: 0 }}>
+                    <div className="employee-actions-row" style={{ marginTop: 0, justifyContent: 'space-between' }}>
                         <button className="employee-secondary-button" onClick={() => navigate(`/employee/requests/${requestId}`)} disabled={saving}>
                             ← Back
                         </button>
 
-                        <button className="employee-primary-button" onClick={saveSchedule} disabled={saving}>
-                            {saving ? 'Saving...' : existingSchedule ? '✓ Update Claim Schedule' : '📅 Schedule Claiming'}
-                        </button>
-                    </div>
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            {existingSchedule && existingSchedule.status !== 'cancelled' && (
+                                <button className="employee-danger-button" onClick={cancelSchedule} disabled={saving}>
+                                    Cancel Existing Schedule
+                                </button>
+                            )}
 
-                    {/* CANCEL EXISTING SCHEDULE */}
-                    {existingSchedule && existingSchedule.status !== 'cancelled' && (
-                        <button className="employee-danger-button" style={{ marginTop: 14 }} onClick={cancelSchedule} disabled={saving}>
-                            Cancel Existing Schedule
-                        </button>
-                    )}
+                            <button className="employee-primary-button" onClick={saveSchedule} disabled={saving}>
+                                {saving ? 'Saving...' : existingSchedule ? '✓ Update Claim Schedule' : '📅 Schedule Claiming'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* ==========================================
