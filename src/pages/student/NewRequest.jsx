@@ -501,6 +501,7 @@ function NewRequest() {
                         style={{ width: 'auto', padding: '13px 26px' }}
                         disabled={loading || loadingDocuments}
                     >
+                        {loading && <span className="auth-spinner" />}
                         {loading ? 'Submitting...' : 'Submit Request'}
                     </button>
 
