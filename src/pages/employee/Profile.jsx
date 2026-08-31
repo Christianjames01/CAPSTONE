@@ -8,6 +8,7 @@ function Profile() {
     const [profile, setProfile] = useState(null)
     const [employee, setEmployee] = useState(null)
     const [collegeName, setCollegeName] = useState('')
+    const [assignments, setAssignments] = useState([])
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -58,7 +59,7 @@ function Profile() {
 
             const { data: employeeData, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_number, position_title, assigned_college_id, status')
+                .select('employee_id, employee_number, position_title, assigned_college_id, status')
                 .eq('user_id', user.id)
                 .single()
 
@@ -76,6 +77,39 @@ function Profile() {
                     .single()
 
                 setCollegeName(college?.college_name || '')
+            }
+
+            const { data: assignmentRows, error: assignmentError } = await supabase
+                .from('employee_assignments')
+                .select('assignment_id, college_id, program_id, is_primary, status')
+                .eq('employee_id', employeeData.employee_id)
+                .eq('status', 'active')
+
+            if (assignmentError) {
+                console.error('EMPLOYEE ASSIGNMENTS ERROR:', assignmentError)
+            } else {
+                const collegeIds = [...new Set((assignmentRows || []).map((a) => a.college_id).filter(Boolean))]
+                const programIds = [...new Set((assignmentRows || []).map((a) => a.program_id).filter(Boolean))]
+
+                const [{ data: assignmentColleges }, { data: assignmentPrograms }] = await Promise.all([
+                    collegeIds.length
+                        ? supabase.from('colleges').select('college_id, college_name').in('college_id', collegeIds)
+                        : Promise.resolve({ data: [] }),
+                    programIds.length
+                        ? supabase.from('programs').select('program_id, program_name').in('program_id', programIds)
+                        : Promise.resolve({ data: [] }),
+                ])
+
+                const assignmentCollegeNameById = Object.fromEntries((assignmentColleges || []).map((c) => [c.college_id, c.college_name]))
+                const programNameById = Object.fromEntries((assignmentPrograms || []).map((p) => [p.program_id, p.program_name]))
+
+                setAssignments(
+                    (assignmentRows || []).map((a) => ({
+                        ...a,
+                        collegeName: assignmentCollegeNameById[a.college_id] || 'N/A',
+                        programName: programNameById[a.program_id] || 'N/A',
+                    }))
+                )
             }
 
         } catch (err) {
@@ -261,6 +295,25 @@ function Profile() {
                         <strong style={{ textTransform: 'capitalize' }}>{employee?.status || 'N/A'}</strong>
                     </div>
                 </div>
+            </div>
+
+            <div className="employee-card">
+                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Assigned Colleges & Programs</h2>
+
+                {assignments.length === 0 ? (
+                    <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>
+                        You have no active college/program assignments. Requests are routed to you only for programs you're assigned to.
+                    </p>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {assignments.map((a) => (
+                            <div key={a.assignment_id} className="employee-info-field">
+                                <span>{a.collegeName}{a.is_primary && ' · Primary'}</span>
+                                <strong>{a.programName}</strong>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="employee-card">
