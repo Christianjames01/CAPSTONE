@@ -114,3 +114,90 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* ===================================================
+   SWEETALERT2 -- CertiChain theme
+   Colors (confirmButtonColor/cancelButtonColor) are set per-call and
+   deliberately vary by action (blue for primary, red for destructive,
+   amber for warnings) -- only shape, type, and spacing are themed here
+   so those semantic colors keep working.
+=================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.swal2-popup {
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  border-radius: 16px !important;
+  padding: 28px 24px !important;
+  box-shadow: 0 20px 60px rgba(16, 24, 39, 0.25) !important;
+}
+
+.swal2-title {
+  font-family: 'Fraunces', serif !important;
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  color: #101827 !important;
+  padding: 0 0 4px !important;
+}
+
+.swal2-html-container,
+.swal2-content {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: #57616F !important;
+}
+
+.swal2-actions {
+  gap: 10px !important;
+  margin-top: 20px !important;
+}
+
+.swal2-styled {
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+  padding: 11px 22px !important;
+  box-shadow: none !important;
+  transition: filter 0.15s ease, transform 0.05s ease !important;
+}
+
+.swal2-styled:hover {
+  filter: brightness(0.92);
+}
+
+.swal2-styled:active {
+  transform: scale(0.98);
+}
+
+.swal2-styled:focus {
+  box-shadow: 0 0 0 3px rgba(18, 59, 120, 0.25) !important;
+}
+
+.swal2-cancel {
+  background: #EEF1F6 !important;
+  color: #101827 !important;
+}
+
+.swal2-input,
+.swal2-textarea {
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  font-size: 14px !important;
+  border: 1px solid rgba(16, 24, 39, 0.14) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.swal2-input:focus,
+.swal2-textarea:focus {
+  border-color: #123B78 !important;
+  box-shadow: 0 0 0 3px rgba(18, 59, 120, 0.12) !important;
+}
+
+.swal2-icon {
+  border-width: 3px !important;
+  margin: 12px auto 16px !important;
+}
+
+.swal2-timer-progress-bar {
+  background: #123B78 !important;
+}
