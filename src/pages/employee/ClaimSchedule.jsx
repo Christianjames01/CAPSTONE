@@ -1065,7 +1065,7 @@ function ClaimSchedule() {
                     {/* ACTIONS */}
                     <div className="employee-actions-row" style={{ marginTop: 0 }}>
                         <button className="employee-secondary-button" onClick={() => navigate(`/employee/requests/${requestId}`)} disabled={saving}>
-                            Cancel
+                            ← Back
                         </button>
 
                         <button className="employee-primary-button" onClick={saveSchedule} disabled={saving}>
