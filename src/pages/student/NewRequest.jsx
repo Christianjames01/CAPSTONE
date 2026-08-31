@@ -402,7 +402,6 @@ function NewRequest() {
                                                     <div className="student-list-card-header" style={{ gap: 10 }}>
                                                         <div>
                                                             <h3 style={{ fontSize: 14 }}>{document.document_name}</h3>
-                                                            <p>{document.category || 'General'}</p>
                                                         </div>
                                                         <strong style={{ fontSize: 13.5, whiteSpace: 'nowrap' }}>
                                                             ₱{Number(document.fee || 0).toFixed(2)}
