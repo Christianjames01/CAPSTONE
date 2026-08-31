@@ -489,7 +489,7 @@ const LandingPage = () => {
                                 type="text"
                                 value={verifyCode}
                                 onChange={(e) => setVerifyCode(e.target.value)}
-                                placeholder="Enter a credential number, e.g. CERT-1735689600000-1234"
+                                placeholder="Enter a credential number, e.g. CERT-000123"
                                 className="verify-cta-input"
                             />
                             <button type="submit" className="verify-cta-button">

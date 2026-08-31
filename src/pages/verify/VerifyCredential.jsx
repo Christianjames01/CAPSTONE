@@ -82,7 +82,7 @@ function VerifyCredential() {
                         type="text"
                         value={term}
                         onChange={(e) => setTerm(e.target.value)}
-                        placeholder="e.g. CERT-1735689600000-1234"
+                        placeholder="e.g. CERT-000123"
                         className="verify-input"
                     />
                     <button type="submit" className="verify-submit" disabled={loading}>
