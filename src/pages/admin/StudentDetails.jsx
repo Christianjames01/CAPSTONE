@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
+import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
@@ -23,6 +25,7 @@ function StudentDetails() {
     const [editing, setEditing] = useState(false)
     const [form, setForm] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [resettingPassword, setResettingPassword] = useState(false)
 
     useEffect(() => {
         loadDetails()
@@ -243,6 +246,47 @@ function StudentDetails() {
         }
     }
 
+    const handleResetPassword = async () => {
+        const confirmed = await Swal.fire({
+            icon: 'warning',
+            title: 'Reset student password?',
+            text: `This immediately sets a new login password for ${student.fullName}. Use this only if they can't use the email-based Forgot Password link.`,
+            showCancelButton: true,
+            confirmButtonText: 'Reset password',
+            confirmButtonColor: '#C8102E',
+        })
+
+        if (!confirmed.isConfirmed) return
+
+        try {
+            setResettingPassword(true)
+
+            const tempPassword = generateTempPassword()
+
+            await resetStudentPassword({
+                studentUserId: student.user_id,
+                newPassword: tempPassword,
+            })
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Password reset',
+                html: `
+                    <p style="margin-bottom:12px;">Share this new password with ${student.fullName} directly (in person, by phone, etc). It will not be shown again.</p>
+                    <code style="display:block;padding:10px 14px;background:#F3F4F6;border-radius:8px;font-size:16px;font-weight:700;letter-spacing:1px;">${tempPassword}</code>
+                `,
+                confirmButtonText: 'Done',
+                confirmButtonColor: '#123B78',
+            })
+
+        } catch (err) {
+            console.error('RESET STUDENT PASSWORD ERROR:', err)
+            notifyError(err.message || 'Failed to reset password.')
+        } finally {
+            setResettingPassword(false)
+        }
+    }
+
     if (loading) {
         return (
             <div>
@@ -361,6 +405,20 @@ function StudentDetails() {
                         <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
                     </div>
                 )}
+            </div>
+
+            <div className="admin-card">
+                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Account</h2>
+                <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
+                    Set a new login password for this student if they can't use the email-based Forgot Password link.
+                </p>
+                <button
+                    className="admin-danger-button"
+                    onClick={handleResetPassword}
+                    disabled={resettingPassword}
+                >
+                    {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                </button>
             </div>
 
             <h2 style={{ fontSize: 17, margin: '24px 0 14px' }}>Request History</h2>
