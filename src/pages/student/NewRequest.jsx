@@ -688,10 +688,74 @@ function StudentInfoRow({ y = 110, student }) {
     )
 }
 
+// Two sample major-subject rows [code, title] tailored to the student's actual
+// program, so the sample preview never shows a mismatched major (e.g. IT
+// subjects for a Psychology student). Falls back to generic GE subjects for
+// any program not recognized below.
+function getMajorSubjects(programName = '') {
+    const p = programName.toLowerCase()
+    const has = (...keywords) => keywords.every((k) => p.includes(k))
+
+    // Graduate degree titles that would otherwise false-match a bare-word check below.
+    if (has('educational management')) return [['EDUC 201', 'Educational Leadership'], ['EDUC 202', 'School Administration']]
+    if (has('theology')) return [['THEO 101', 'Foundations of Theology'], ['THEO 102', 'Biblical Studies']]
+    if (has('guidance and counseling')) return [['GC 101', 'Theories of Counseling'], ['GC 102', 'Psychological Assessment']]
+    if (has('sped')) return [['SNED 101', 'Foundations of Special and Inclusive Education'], ['SNED 102', 'Assessment of Learners with Disabilities']]
+
+    if (has('information technology')) return [['IT 101', 'Introduction to Computing'], ['IT 102', 'Computer Programming 1']]
+    if (has('computer science')) return [['CS 101', 'Discrete Mathematics'], ['CS 102', 'Programming Logic and Design']]
+    if (has('computer engineering')) return [['CPE 101', 'Electrical Circuits'], ['CPE 102', 'Digital Logic Design']]
+    if (has('electronics engineering')) return [['ECE 101', 'Electricity and Magnetism'], ['ECE 102', 'Electronic Circuits']]
+
+    if (has('criminology')) return [['CRIM 101', 'Introduction to Criminology'], ['CRIM 102', 'Philippine Criminal Justice System']]
+    if (has('psychology')) return [['PSYCH 101', 'General Psychology'], ['PSYCH 102', 'Abnormal Psychology']]
+    if (has('social work')) return [['SW 101', 'Introduction to Social Work'], ['SW 102', 'Social Welfare and Development']]
+
+    if (has('management accounting')) return [['ACC 101', 'Financial Accounting and Reporting'], ['MA 102', 'Management Accounting']]
+    if (has('accountancy')) return [['ACC 101', 'Financial Accounting and Reporting'], ['ACC 102', 'Cost Accounting']]
+    if (has('financial management')) return [['BA 101', 'Principles of Management'], ['FM 102', 'Financial Management']]
+    if (has('human resource management')) return [['BA 101', 'Principles of Management'], ['HRM 102', 'Human Resource Management']]
+    if (has('marketing management')) return [['BA 101', 'Principles of Management'], ['MKT 102', 'Marketing Management']]
+    if (has('hospitality management')) return [['HM 101', 'Introduction to Hospitality Management'], ['HM 102', 'Food and Beverage Services']]
+    if (has('tourism management')) return [['TM 101', 'Introduction to Tourism'], ['TM 102', 'Tourism Planning and Development']]
+    if (has('customs administration')) return [['CA 101', 'Customs Laws and Regulations'], ['CA 102', 'Tariff and Trade Policy']]
+    if (has('real estate management')) return [['REM 101', 'Real Estate Fundamentals'], ['REM 102', 'Property Appraisal']]
+    if (has('management')) return [['MGT 201', 'Strategic Management'], ['MGT 202', 'Organizational Behavior']]
+
+    if (has('marine transportation')) return [['MT 101', 'Marine Navigation'], ['MT 102', 'Seamanship']]
+    if (has('economics')) return [['ECON 101', 'Principles of Economics'], ['ECON 102', 'Microeconomics']]
+
+    if (has('english language studies')) return [['ENG 101', 'Introduction to Linguistics'], ['ENG 102', 'Survey of English Literature']]
+    if (has('history')) return [['HIST 101', 'Philippine History'], ['HIST 102', 'World History']]
+    if (has('arts in philosophy')) return [['PHIL 101', 'Introduction to Philosophy'], ['PHIL 102', 'Logic']]
+    if (has('political science')) return [['POLS 101', 'Introduction to Political Science'], ['POLS 102', 'Philippine Government and Constitution']]
+
+    if (has('journalism')) return [['COM 101', 'Introduction to Mass Communication'], ['COM 102', 'Broadcast Journalism']]
+    if (has('new media')) return [['COM 101', 'Introduction to Mass Communication'], ['COM 102', 'Digital and New Media']]
+    if (has('communication')) return [['COM 101', 'Introduction to Mass Communication'], ['COM 102', 'Communication Research']]
+
+    if (has('library and information science')) return [['LIS 101', 'Introduction to Library Science'], ['LIS 102', 'Cataloguing and Classification']]
+    if (has('physical education')) return [['PE 101', 'Foundations of Physical Education'], ['PE 102', 'Kinesiology']]
+
+    if (has('early childhood education')) return [['ECED 101', 'Child Growth and Development'], ['ECED 102', 'Early Childhood Curriculum']]
+    if (has('elementary education')) return [['EDUC 101', 'Principles of Teaching'], ['EDUC 102', 'Child and Adolescent Development']]
+    if (has('secondary education', 'english')) return [['EDUC 101', 'Principles of Teaching'], ['ENG 102', 'Teaching English']]
+    if (has('secondary education', 'filipino')) return [['EDUC 101', 'Principles of Teaching'], ['FIL 102', 'Pagtuturo ng Filipino']]
+    if (has('secondary education', 'mathematics')) return [['EDUC 101', 'Principles of Teaching'], ['MATH 102', 'Teaching Mathematics']]
+    if (has('secondary education', 'science')) return [['EDUC 101', 'Principles of Teaching'], ['SCI 102', 'Teaching Science']]
+    if (has('secondary education', 'social studies')) return [['EDUC 101', 'Principles of Teaching'], ['SS 102', 'Teaching Social Studies']]
+    if (has('secondary education', 'values education')) return [['EDUC 101', 'Principles of Teaching'], ['VE 102', 'Values Education']]
+    if (has('special needs education') || has('special education')) return [['SNED 101', 'Foundations of Special and Inclusive Education'], ['SNED 102', 'Assessment of Learners with Disabilities']]
+    if (has('education')) return [['EDUC 201', 'Curriculum Development'], ['EDUC 202', 'Educational Research']]
+
+    return [['GE 103', 'Purposive Communication'], ['GE 104', 'Mathematics in the Modern World']]
+}
+
 function GradesBody({ student }) {
+    const [major1, major2] = getMajorSubjects(student?.programName)
     const rows = [
-        ['GE 101', 'Understanding the Self', '3.0', '1.75', 'Passed'],
-        ['GE 102', 'Readings in Philippine History', '3.0', '1.50', 'Passed'],
+        [major1[0], major1[1], '3.0', '1.75', 'Passed'],
+        [major2[0], major2[1], '3.0', '1.50', 'Passed'],
         ['NSTP 101', 'National Service Training Program 1', '3.0', '2.00', 'Passed'],
         ['PE 101', 'Physical Fitness', '2.0', '1.25', 'Passed'],
     ]
@@ -737,10 +801,11 @@ function GwaBody({ student }) {
 }
 
 function ScheduleBody({ student }) {
+    const [major1, major2] = getMajorSubjects(student?.programName)
     const rows = [
-        ['MON / WED', '8:00 – 9:30 AM', 'Data Structures', 'Rm 301'],
-        ['TUE / THU', '9:30 – 11:00 AM', 'Web Development', 'Lab 2'],
-        ['MON / WED', '1:00 – 2:30 PM', 'Database Systems', 'Rm 205'],
+        ['MON / WED', '8:00 – 9:30 AM', major1[1], 'Rm 301'],
+        ['TUE / THU', '9:30 – 11:00 AM', major2[1], 'Lab 2'],
+        ['MON / WED', '1:00 – 2:30 PM', 'Purposive Communication', 'Rm 205'],
         ['FRIDAY', '3:00 – 5:00 PM', 'Physical Education', 'Gym'],
     ]
 
