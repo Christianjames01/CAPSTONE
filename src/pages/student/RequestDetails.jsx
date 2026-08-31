@@ -78,6 +78,7 @@ function RequestDetails() {
     const navigate = useNavigate()
 
     const [request, setRequest] = useState(null)
+    const [documentName, setDocumentName] = useState('')
     const [requirements, setRequirements] = useState([])
     const [credential, setCredential] = useState(null)
     const [claimSchedule, setClaimSchedule] = useState(null)
@@ -230,6 +231,16 @@ function RequestDetails() {
             )
 
             setRequest(requestData)
+
+            if (requestData.document_type_id) {
+                const { data: doc } = await supabase
+                    .from('document_types')
+                    .select('document_name')
+                    .eq('document_type_id', requestData.document_type_id)
+                    .single()
+
+                setDocumentName(doc?.document_name || 'Document')
+            }
 
             if (requestData.assigned_employee_id) {
                 const { data: employeeRow } = await supabase
@@ -427,7 +438,7 @@ function RequestDetails() {
             </button>
 
             <div className="student-page-header">
-                <h1>Request Details</h1>
+                <h1>{documentName || 'Request Details'}</h1>
                 <p>View the status and details of your document request.</p>
             </div>
 
@@ -448,6 +459,11 @@ function RequestDetails() {
                 <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '16px 0' }} />
 
                 <div className="student-info-grid">
+                    <div className="student-info-field">
+                        <span>Document Requested</span>
+                        <strong>{documentName || 'N/A'}</strong>
+                    </div>
+
                     <div className="student-info-field">
                         <span>Quantity</span>
                         <strong>{request.quantity}</strong>
