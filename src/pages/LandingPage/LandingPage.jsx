@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Swal from "sweetalert2";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
@@ -103,9 +104,26 @@ const PROCESS_STEPS = [
     ["06", <IconCalendar />, "Claim your document", "Receive your claiming schedule and present a valid ID when claiming."],
 ];
 
+const LANDING_FAQ = [
+    ["Do I need to create an account to request a document?", "Yes. A free CertiChain account lets you submit requests, upload requirements, track status, and message the Registrar directly."],
+    ["How do I pay for my request?", "Submit your request first, then upload your official receipt from your account. Registrar staff verify it before processing begins."],
+    ["How long does processing take?", "It varies by document type and current volume. You'll see real-time status updates in your account at every step, with no need to keep calling to check."],
+    ["How do I know a document is genuine?", "Every document CertiChain issues carries a unique verification code and QR code. Anyone — an employer, another school — can confirm it's authentic in seconds, no account required."],
+    ["What do I bring when claiming my document?", "Your official receipt and a valid ID. You'll get a claiming date and time in your account once your document is ready."],
+];
+
 const LandingPage = () => {
+    const [verifyCode, setVerifyCode] = useState("");
+
     const scrollToSection = (id) => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const handleVerifySubmit = (e) => {
+        e.preventDefault();
+        const code = verifyCode.trim();
+        if (!code) return;
+        window.location.href = `/verify/${encodeURIComponent(code)}`;
     };
 
     const openHelpModal = () => {
@@ -174,6 +192,7 @@ const LandingPage = () => {
                         <a href="#documents" onClick={(e) => { e.preventDefault(); scrollToSection("documents"); }}>Documents</a>
                         <a href="#process" onClick={(e) => { e.preventDefault(); scrollToSection("process"); }}>How it works</a>
                         <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection("about"); }}>About</a>
+                        <a href="#verify" onClick={(e) => { e.preventDefault(); scrollToSection("verify"); }}>Verify</a>
                     </nav>
 
                     <div className="navbar-actions">
@@ -445,6 +464,63 @@ const LandingPage = () => {
                             </div>
 
                         </div>
+                    </div>
+                </section>
+
+
+                {/* =========================
+            VERIFY
+        ========================= */}
+                <section id="verify" className="section verify-section">
+                    <div className="section-container">
+
+                        <div className="section-heading">
+                            <span className="section-label">Verification</span>
+                            <h2>Every credential, <br /><span>verified.</span></h2>
+                            <p>
+                                Every document CertiChain issues carries a unique verification
+                                code and QR code. Anyone — an employer, another school —
+                                can confirm it's genuine in seconds, no account required.
+                            </p>
+                        </div>
+
+                        <form className="verify-cta-form" onSubmit={handleVerifySubmit}>
+                            <input
+                                type="text"
+                                value={verifyCode}
+                                onChange={(e) => setVerifyCode(e.target.value)}
+                                placeholder="Enter a credential number, e.g. CERT-1735689600000-1234"
+                                className="verify-cta-input"
+                            />
+                            <button type="submit" className="verify-cta-button">
+                                Verify <span>→</span>
+                            </button>
+                        </form>
+
+                    </div>
+                </section>
+
+
+                {/* =========================
+            FAQ
+        ========================= */}
+                <section id="faq" className="section faq-section">
+                    <div className="section-container">
+
+                        <div className="section-heading">
+                            <span className="section-label">FAQ</span>
+                            <h2>Frequently asked <br /><span>questions.</span></h2>
+                        </div>
+
+                        <div className="faq-list">
+                            {LANDING_FAQ.map(([question, answer]) => (
+                                <details className="faq-item" key={question}>
+                                    <summary>{question}</summary>
+                                    <p>{answer}</p>
+                                </details>
+                            ))}
+                        </div>
+
                     </div>
                 </section>
 
