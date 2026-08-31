@@ -174,6 +174,7 @@ function EmployeeRegister() {
                 )}
 
                 <button type="submit" className="auth-submit" disabled={loading}>
+                    {loading && <span className="auth-spinner" />}
                     {loading ? 'Submitting...' : 'Register'}
                 </button>
 

@@ -382,6 +382,7 @@ function CompleteProfile() {
                 )}
 
                 <button type="submit" className="auth-submit" disabled={loading}>
+                    {loading && <span className="auth-spinner" />}
                     {loading ? 'Saving...' : 'Finish setting up my account'}
                 </button>
 
