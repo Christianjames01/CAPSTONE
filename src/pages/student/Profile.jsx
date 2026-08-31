@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -518,8 +519,32 @@ function Profile() {
                     )}
                 </div>
 
-                {editing ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                <div className="student-info-grid" style={{ marginTop: 16 }}>
+                    <div className="student-info-field">
+                        <span>Phone Number</span>
+                        <strong>{profile?.phone_number || 'Not set'}</strong>
+                    </div>
+
+                    <div className="student-info-field">
+                        <span>Address</span>
+                        <strong>{student?.address || 'Not set'}</strong>
+                    </div>
+
+                    <div className="student-info-field">
+                        <span>Emergency Contact Name</span>
+                        <strong>{student?.emergency_contact_name || 'Not set'}</strong>
+                    </div>
+
+                    <div className="student-info-field">
+                        <span>Emergency Contact Number</span>
+                        <strong>{student?.emergency_contact_number || 'Not set'}</strong>
+                    </div>
+                </div>
+            </div>
+
+            {editing && (
+                <Modal title="Edit Contact Information" onClose={cancelEditing}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
@@ -569,6 +594,8 @@ function Profile() {
                             />
                         </div>
 
+                        {error && <div className="student-error-box">{error}</div>}
+
                         <div style={{ display: 'flex', gap: 10 }}>
                             <button className="auth-submit" style={{ width: 'auto', padding: '11px 20px' }} onClick={saveChanges} disabled={saving}>
                                 {saving ? 'Saving...' : 'Save changes'}
@@ -584,44 +611,36 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <div className="student-info-grid" style={{ marginTop: 16 }}>
-                        <div className="student-info-field">
-                            <span>Phone Number</span>
-                            <strong>{profile?.phone_number || 'Not set'}</strong>
-                        </div>
-
-                        <div className="student-info-field">
-                            <span>Address</span>
-                            <strong>{student?.address || 'Not set'}</strong>
-                        </div>
-
-                        <div className="student-info-field">
-                            <span>Emergency Contact Name</span>
-                            <strong>{student?.emergency_contact_name || 'Not set'}</strong>
-                        </div>
-
-                        <div className="student-info-field">
-                            <span>Emergency Contact Number</span>
-                            <strong>{student?.emergency_contact_number || 'Not set'}</strong>
-                        </div>
-                    </div>
-                )}
-            </div>
+                </Modal>
+            )}
 
             <div className="student-card">
                 <div className="student-page-header-row">
                     <h2 style={{ fontSize: 16 }}>Password</h2>
 
-                    {!changingPassword && (
-                        <button className="student-link-button" onClick={() => setChangingPassword(true)}>
-                            Change password
-                        </button>
-                    )}
+                    <button className="student-link-button" onClick={() => setChangingPassword(true)}>
+                        Change password
+                    </button>
                 </div>
 
-                {changingPassword ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                {passwordMessage && <div className="student-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
+                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
+                    Change your account password.
+                </p>
+            </div>
+
+            {changingPassword && (
+                <Modal
+                    title="Change Password"
+                    onClose={() => {
+                        setCurrentPassword('')
+                        setNewPassword('')
+                        setConfirmNewPassword('')
+                        setPasswordError('')
+                        setChangingPassword(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div className="form-group">
                             <label className="form-label">Current Password</label>
                             <input
@@ -683,15 +702,8 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <>
-                        {passwordMessage && <div className="student-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
-                        <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
-                            Change your account password.
-                        </p>
-                    </>
-                )}
-            </div>
+                </Modal>
+            )}
         </div>
     )
 }
