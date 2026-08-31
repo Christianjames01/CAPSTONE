@@ -180,8 +180,8 @@ function NewRequest() {
             return
         }
 
-        if (quantity < 1) {
-            setError('Quantity must be at least 1.')
+        if (quantity < 1 || quantity > 2) {
+            setError('Quantity must be between 1 and 2.')
             return
         }
 
@@ -474,8 +474,9 @@ function NewRequest() {
                             className="form-input"
                             type="number"
                             min="1"
+                            max="2"
                             value={quantity}
-                            onChange={(e) => setQuantity(Number(e.target.value))}
+                            onChange={(e) => setQuantity(Math.min(2, Number(e.target.value)))}
                             disabled={loading}
                         />
                     </div>
