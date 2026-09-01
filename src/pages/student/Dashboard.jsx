@@ -223,7 +223,7 @@ function Dashboard() {
             <div className="student-dashboard-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                 <div>
                     <h1>{!loading && name ? `Welcome back, ${name}` : 'Welcome back'}</h1>
-                    <p>Here's what you can do with your Registrar Services account today.</p>
+                    <p>Here's what you can do with your CertiChain account today.</p>
                 </div>
 
                 <button

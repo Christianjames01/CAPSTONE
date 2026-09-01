@@ -244,7 +244,7 @@ function Reports() {
                 avgTurnaroundDays: d.avgDays.toFixed(1),
             }))
 
-            await exportToExcel(`registrar-services-requests-${new Date().toISOString().slice(0, 10)}`, [
+            await exportToExcel(`certichain-requests-${new Date().toISOString().slice(0, 10)}`, [
                 {
                     name: 'By Document (Summary)',
                     columns: [

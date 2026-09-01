@@ -96,7 +96,7 @@ const IconCheck = () => (
 );
 
 const PROCESS_STEPS = [
-    ["01", <IconUser />, "Create an account", "Register your Registrar Services account and provide your student information."],
+    ["01", <IconUser />, "Create an account", "Register your CertiChain account and provide your student information."],
     ["02", <IconDocument />, "Submit a request", "Select the academic document you need and submit your request online."],
     ["03", <IconUpload />, "Upload requirements", "Provide supporting documents and an official receipt when applicable."],
     ["04", <IconSearch />, "Verification", "Registrar personnel review your request and verify your student records."],
@@ -105,10 +105,10 @@ const PROCESS_STEPS = [
 ];
 
 const LANDING_FAQ = [
-    ["Do I need to create an account to request a document?", "Yes. A free Registrar Services account lets you submit requests, upload requirements, track status, and message the Registrar directly."],
+    ["Do I need to create an account to request a document?", "Yes. A free CertiChain account lets you submit requests, upload requirements, track status, and message the Registrar directly."],
     ["How do I pay for my request?", "Submit your request first, then upload your official receipt from your account. Registrar staff verify it before processing begins."],
     ["How long does processing take?", "It varies by document type and current volume. You'll see real-time status updates in your account at every step, with no need to keep calling to check."],
-    ["How do I know a document is genuine?", "Every document Registrar Services issues carries a unique verification code and QR code. Anyone — an employer, another school — can confirm it's authentic in seconds, no account required."],
+    ["How do I know a document is genuine?", "Every document CertiChain issues carries a unique verification code and QR code. Anyone — an employer, another school — can confirm it's authentic in seconds, no account required."],
     ["What do I bring when claiming my document?", "Your official receipt and a valid ID. You'll get a claiming date and time in your account once your document is ready."],
 ];
 
@@ -156,7 +156,7 @@ const LandingPage = () => {
             html: `
                 <p style="text-align:left;color:#57616F;">
                     For questions about a specific request, log in and message your
-                    assigned registrar staff directly from your Registrar Services account.
+                    assigned registrar staff directly from your CertiChain account.
                 </p>
                 <p style="text-align:left;color:#57616F;">
                     For anything else, please reach out to the Office of Registration
@@ -182,8 +182,8 @@ const LandingPage = () => {
                             <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         </div>
                         <div className="brand-text">
-                            <div className="brand-name">Registrar Services</div>
-                            <div className="brand-subtitle">Holy Cross of Davao College</div>
+                            <div className="brand-name">CertiChain</div>
+                            <div className="brand-subtitle">HCDC Registrar Services</div>
                         </div>
                     </div>
 
@@ -266,7 +266,7 @@ const LandingPage = () => {
                                             <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                                         </div>
                                         <div>
-                                            <strong>Registrar Services</strong>
+                                            <strong>CertiChain</strong>
                                             <span>Academic Credential</span>
                                         </div>
                                     </div>
@@ -317,7 +317,7 @@ const LandingPage = () => {
                             <span className="section-label">Registrar Services</span>
                             <h2>Everything you need, <br /><span>without the counter line.</span></h2>
                             <p>
-                                Registrar Services centralizes academic document requests so
+                                CertiChain centralizes academic document requests so
                                 students and alumni can submit, pay for, and track
                                 registrar transactions from one account.
                             </p>
@@ -337,7 +337,7 @@ const LandingPage = () => {
                                 <div className="service-icon"><IconCalendar /></div>
                                 <h3>Claim scheduling</h3>
                                 <p>Get an estimated processing date and a scheduled
-                                    claiming window through your Registrar Services account.</p>
+                                    claiming window through your CertiChain account.</p>
                                 <a href="#process">Learn more →</a>
                             </div>
 
@@ -440,17 +440,17 @@ const LandingPage = () => {
                         <div className="about-card">
 
                             <div className="about-content">
-                                <span className="section-label">About Registrar Services</span>
+                                <span className="section-label">About CertiChain</span>
                                 <h2>Modernizing <br /><span>registrar services.</span></h2>
                                 <p>
-                                    Registrar Services is a web-based platform built for the
-                                    Holy Cross of Davao College Registrar Office, giving
-                                    students and alumni a single place to request academic
-                                    certificates and credentials.
+                                    CertiChain is a web-based registrar services system
+                                    built for the Holy Cross of Davao College Registrar
+                                    Office, giving students and alumni a single place to
+                                    request academic certificates and credentials.
                                 </p>
                                 <p>
                                     Instead of relying entirely on manual transactions,
-                                    Registrar Services organizes requests, requirements, processing
+                                    CertiChain organizes requests, requirements, processing
                                     status, claiming schedules, verification, and registrar
                                     activity records in one system.
                                 </p>
@@ -478,7 +478,7 @@ const LandingPage = () => {
                             <span className="section-label">Verification</span>
                             <h2>Every credential, <br /><span>verified.</span></h2>
                             <p>
-                                Every document Registrar Services issues carries a unique verification
+                                Every document CertiChain issues carries a unique verification
                                 code and QR code. Anyone — an employer, another school —
                                 can confirm it's genuine in seconds, no account required.
                             </p>
@@ -536,7 +536,7 @@ const LandingPage = () => {
                         <span className="cta-label">HCDC Registrar Services</span>
                         <h2>Ready to request <br /><span>your document?</span></h2>
                         <p>
-                            Create your Registrar Services account and manage your academic
+                            Create your CertiChain account and manage your academic
                             document requests through a secure, verified, and convenient
                             online platform.
                         </p>
@@ -571,8 +571,8 @@ const LandingPage = () => {
                                     <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                                 </div>
                                 <div className="brand-text">
-                                    <div className="brand-name">Registrar Services</div>
-                                    <div className="brand-subtitle">Holy Cross of Davao College</div>
+                                    <div className="brand-name">CertiChain</div>
+                                    <div className="brand-subtitle">HCDC Registrar Services</div>
                                 </div>
                             </div>
                             <p>
@@ -597,7 +597,7 @@ const LandingPage = () => {
 
                         <div className="footer-column">
                             <h4>Registrar</h4>
-                            <a href="#about">About Registrar Services</a>
+                            <a href="#about">About CertiChain</a>
                             <a href="#documents">Document catalog</a>
                             <button type="button" onClick={openContactModal}>Contact</button>
                         </div>
@@ -605,7 +605,7 @@ const LandingPage = () => {
                     </div>
 
                     <div className="footer-bottom">
-                        <span>© {new Date().getFullYear()} HCDC Registrar Services. All rights reserved.</span>
+                        <span>© {new Date().getFullYear()} CertiChain. All rights reserved.</span>
                         <span>
                             <a href="/terms">Terms of Service</a>
                             {' · '}

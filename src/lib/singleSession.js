@@ -1,7 +1,7 @@
 import Swal from 'sweetalert2'
 import { supabase } from './supabase'
 
-const STORAGE_KEY = 'registrar_services_session_id'
+const STORAGE_KEY = 'certichain_session_id'
 
 // Shown to whoever just logged in, when establishStudentSession() reports
 // a session was already active elsewhere.

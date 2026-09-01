@@ -123,7 +123,7 @@ function AdminLayout() {
 
                 <Link to="/admin/dashboard" className="admin-mobile-brand">
                     <img src={hcdcLogo} alt="" />
-                    <span>Registrar Services</span>
+                    <span>CertiChain</span>
                 </Link>
             </header>
 
@@ -140,7 +140,7 @@ function AdminLayout() {
                                 <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
-                                <div className="admin-sidebar-name">Registrar Services</div>
+                                <div className="admin-sidebar-name">CertiChain</div>
                                 <div className="admin-sidebar-subtitle">Registrar Head Portal</div>
                             </div>
                         </Link>

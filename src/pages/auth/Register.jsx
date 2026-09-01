@@ -184,7 +184,7 @@ function Register() {
         setStatus('success')
         setMessage(
             'Registration successful! Check your email to confirm your account. ' +
-            "Once confirmed, the Registrar's Office will need to verify your enrollment before you can use Registrar Services — check back later to see if your account has been approved."
+            "Once confirmed, the Registrar's Office will need to verify your enrollment before you can use CertiChain — check back later to see if your account has been approved."
         )
         setLoading(false)
     }
@@ -451,7 +451,7 @@ function Register() {
                 )}
 
                 <p style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginBottom: 14 }}>
-                    By creating an account, you agree to Registrar Services's{' '}
+                    By creating an account, you agree to CertiChain's{' '}
                     <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and{' '}
                     <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </p>

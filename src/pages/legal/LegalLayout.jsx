@@ -10,8 +10,8 @@ function LegalLayout({ title, updated, children }) {
                     <Link to="/" className="legal-brand">
                         <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         <div>
-                            <div className="legal-brand-name">Registrar Services</div>
-                            <div className="legal-brand-subtitle">Holy Cross of Davao College</div>
+                            <div className="legal-brand-name">CertiChain</div>
+                            <div className="legal-brand-subtitle">HCDC Registrar Services</div>
                         </div>
                     </Link>
                     <Link to="/" className="legal-back-link">← Back to home</Link>

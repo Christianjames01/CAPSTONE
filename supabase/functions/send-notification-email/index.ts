@@ -44,12 +44,12 @@ Deno.serve(async (req) => {
 
         const result = await sendEmail({
             to: profile.email,
-            subject: notification.title || 'Registrar Services Notification',
+            subject: notification.title || 'CertiChain Notification',
             html: `
                 <p>Hi ${profile.first_name || 'there'},</p>
                 <p>${notification.message}</p>
                 <p style="color:#57616F;font-size:12px;margin-top:24px;">
-                    This is an automated notification from HCDC Registrar Services.
+                    This is an automated notification from CertiChain — HCDC Registrar Services.
                     You can also view this in your account's Notifications page.
                 </p>
             `,

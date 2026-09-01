@@ -127,7 +127,7 @@ function EmployeeLayout() {
 
                 <Link to="/employee/dashboard" className="employee-mobile-brand">
                     <img src={hcdcLogo} alt="" />
-                    <span>Registrar Services</span>
+                    <span>CertiChain</span>
                 </Link>
             </header>
 
@@ -144,7 +144,7 @@ function EmployeeLayout() {
                                 <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
-                                <div className="employee-sidebar-name">Registrar Services</div>
+                                <div className="employee-sidebar-name">CertiChain</div>
                                 <div className="employee-sidebar-subtitle">Registrar Employee Portal</div>
                             </div>
                         </Link>
