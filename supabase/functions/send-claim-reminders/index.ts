@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
                         is scheduled for claiming tomorrow, <strong>${claimDate}</strong> at <strong>${claimTime}</strong>.</p>
                         <p>Please bring your official receipt and a valid ID.</p>
                         <p style="color:#57616F;font-size:12px;margin-top:24px;">
-                            This is an automated reminder from CertiChain — HCDC Registrar Services.
+                            This is an automated reminder from HCDC Registrar Services.
                         </p>
                     `,
                 })

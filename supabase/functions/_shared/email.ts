@@ -6,7 +6,7 @@ import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 const GMAIL_USER = Deno.env.get('GMAIL_USER')
 const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD')
 
-export const FROM_EMAIL = Deno.env.get('NOTIFICATION_FROM_EMAIL') || `CertiChain <${GMAIL_USER}>`
+export const FROM_EMAIL = Deno.env.get('NOTIFICATION_FROM_EMAIL') || `HCDC Registrar Services <${GMAIL_USER}>`
 
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
     if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {

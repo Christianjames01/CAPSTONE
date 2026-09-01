@@ -15,7 +15,7 @@ const STRIPE_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F
 export async function exportToExcel(filename, sheets) {
     const { default: ExcelJS } = await import('exceljs')
     const workbook = new ExcelJS.Workbook()
-    workbook.creator = 'CertiChain'
+    workbook.creator = 'HCDC Registrar Services'
     workbook.created = new Date()
 
     for (const sheet of sheets) {

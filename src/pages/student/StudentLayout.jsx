@@ -165,7 +165,7 @@ function StudentLayout() {
 
                 <Link to="/student/dashboard" className="student-mobile-brand">
                     <img src={hcdcLogo} alt="" />
-                    <span>CertiChain</span>
+                    <span>Registrar Services</span>
                 </Link>
             </header>
 
@@ -182,7 +182,7 @@ function StudentLayout() {
                                 <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
-                                <div className="student-sidebar-name">CertiChain</div>
+                                <div className="student-sidebar-name">Registrar Services</div>
                                 <div className="student-sidebar-subtitle">Student Portal</div>
                             </div>
                         </Link>

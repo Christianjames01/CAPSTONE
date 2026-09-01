@@ -114,7 +114,7 @@ function Students() {
                 studentId: student.student_id,
                 title: decision === 'approved' ? 'Account verified' : 'Registration not verified',
                 message: decision === 'approved'
-                    ? "Your enrollment has been verified. You can now log in and use CertiChain."
+                    ? "Your enrollment has been verified. You can now log in and use Registrar Services."
                     : `Your registration could not be verified: ${reason}. Contact the Registrar's Office for help.`,
             })
 

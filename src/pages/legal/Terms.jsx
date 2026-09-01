@@ -5,16 +5,16 @@ function Terms() {
     return (
         <LegalLayout title="Terms of Service" updated="August 29, 2026">
 
-            <h2>1. About CertiChain</h2>
+            <h2>1. About Registrar Services</h2>
             <p>
-                CertiChain is the online registrar services platform of Holy Cross of Davao College (HCDC),
+                Registrar Services is the online registrar services platform of Holy Cross of Davao College (HCDC),
                 used to request, track, and process academic documents. By creating an account or using
-                CertiChain, you agree to these Terms of Service.
+                Registrar Services, you agree to these Terms of Service.
             </p>
 
             <h2>2. Who can use it</h2>
             <p>
-                CertiChain is for current HCDC students and authorized registrar staff. Student and Google
+                Registrar Services is for current HCDC students and authorized registrar staff. Student and Google
                 sign-in accounts must use a valid <strong>@hcdc.edu.ph</strong> email address. Creating an
                 account under a false identity, on behalf of someone else, or using a non-HCDC email is not
                 allowed.
@@ -60,13 +60,13 @@ function Terms() {
 
             <h2>7. Availability</h2>
             <p>
-                CertiChain is provided on an "as available" basis. We don't guarantee uninterrupted access,
+                Registrar Services is provided on an "as available" basis. We don't guarantee uninterrupted access,
                 and features, fees, or processing times may change without prior notice.
             </p>
 
             <h2>8. Changes to these terms</h2>
             <p>
-                These terms may be updated from time to time. Continuing to use CertiChain after a change
+                These terms may be updated from time to time. Continuing to use Registrar Services after a change
                 means you accept the updated terms.
             </p>
 

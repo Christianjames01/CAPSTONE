@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from('notifications').insert({
             user_id: studentUserId,
             title: 'Your password was reset',
-            message: `Your CertiChain password was reset by ${actorName} from the Registrar's Office. If you did not request this or don't recognize this change, contact the Registrar's Office immediately.`,
+            message: `Your Registrar Services password was reset by ${actorName} from the Registrar's Office. If you did not request this or don't recognize this change, contact the Registrar's Office immediately.`,
             notification_type: 'system',
             is_read: false,
         })

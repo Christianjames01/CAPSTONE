@@ -6,7 +6,7 @@ function PrivacyPolicy() {
         <LegalLayout title="Privacy Policy" updated="August 29, 2026">
 
             <p>
-                This Privacy Policy explains how Holy Cross of Davao College (HCDC), through the CertiChain
+                This Privacy Policy explains how Holy Cross of Davao College (HCDC), through the Registrar Services
                 platform, collects, uses, and protects your personal information, in line with the
                 Philippine Data Privacy Act of 2012 (Republic Act No. 10173).
             </p>
@@ -69,14 +69,14 @@ function PrivacyPolicy() {
 
             <h2>7. Cookies and local storage</h2>
             <p>
-                CertiChain uses your browser's local storage to keep you signed in and to remember small
+                Registrar Services uses your browser's local storage to keep you signed in and to remember small
                 preferences (like a collapsed menu state). It does not use third-party advertising or
                 tracking cookies.
             </p>
 
             <h2>8. Changes to this policy</h2>
             <p>
-                This policy may be updated from time to time to reflect changes in how CertiChain operates.
+                This policy may be updated from time to time to reflect changes in how Registrar Services operates.
                 Continued use of the platform after an update means you accept the revised policy.
             </p>
 
@@ -87,7 +87,7 @@ function PrivacyPolicy() {
             </p>
 
             <div className="legal-cross-link">
-                Also see our <Link to="/terms">Terms of Service</Link> for the rules of using CertiChain.
+                Also see our <Link to="/terms">Terms of Service</Link> for the rules of using Registrar Services.
             </div>
 
         </LegalLayout>

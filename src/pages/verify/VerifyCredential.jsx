@@ -70,7 +70,7 @@ function VerifyCredential() {
                     <Link to="/" className="verify-brand">
                         <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         <div>
-                            <div className="verify-brand-name">CertiChain</div>
+                            <div className="verify-brand-name">Registrar Services</div>
                             <div className="verify-brand-subtitle">Credential Verification</div>
                         </div>
                     </Link>

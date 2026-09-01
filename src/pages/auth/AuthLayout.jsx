@@ -12,8 +12,8 @@ function AuthLayout({ title, subtitle, footer, children }) {
                         <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                     </div>
                     <div>
-                        <div className="auth-brand-name">CertiChain</div>
-                        <div className="auth-brand-subtitle">HCDC Registrar Services</div>
+                        <div className="auth-brand-name">Registrar Services</div>
+                        <div className="auth-brand-subtitle">Holy Cross of Davao College</div>
                     </div>
                 </Link>
 
