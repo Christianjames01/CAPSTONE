@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
@@ -6,7 +6,6 @@ import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../li
 import { checkLoginLock, recordLoginAttempt, formatLockMessage } from '../../lib/loginGuard'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
-import Turnstile from '../../components/Turnstile'
 
 function Login() {
     const navigate = useNavigate()
@@ -18,17 +17,9 @@ function Login() {
     const [messageType, setMessageType] = useState(location.state?.type || 'error')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
-    const [captchaToken, setCaptchaToken] = useState('')
-    const turnstileRef = useRef(null)
 
     const handleLogin = async (e) => {
         e.preventDefault()
-
-        if (!captchaToken) {
-            setMessage('Please complete the verification check before logging in.')
-            setMessageType('error')
-            return
-        }
 
         setLoading(true)
         setMessage('')
@@ -48,13 +39,7 @@ function Login() {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
-            options: { captchaToken },
         })
-
-        // Turnstile tokens are single-use -- any failure past this point
-        // needs a fresh solve before the user can retry.
-        turnstileRef.current?.reset()
-        setCaptchaToken('')
 
         if (error) {
             const attempt = await recordLoginAttempt(email, false)
@@ -180,11 +165,9 @@ function Login() {
                     </Link>
                 </div>
 
-                <Turnstile ref={turnstileRef} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken('')} />
-
                 {message && <p className={`form-message ${messageType}`}>{message}</p>}
 
-                <button type="submit" className="auth-submit" disabled={loading || !captchaToken}>
+                <button type="submit" className="auth-submit" disabled={loading}>
                     {loading && <span className="auth-spinner" />}
                     {loading ? 'Logging in...' : 'Log in'}
                 </button>

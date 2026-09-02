@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
-import Turnstile from '../../components/Turnstile'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -26,8 +25,6 @@ function Profile() {
     const [passwordSaving, setPasswordSaving] = useState(false)
     const [passwordError, setPasswordError] = useState('')
     const [passwordMessage, setPasswordMessage] = useState('')
-    const [passwordCaptchaToken, setPasswordCaptchaToken] = useState('')
-    const passwordTurnstileRef = useRef(null)
 
     useEffect(() => {
         loadProfile()
@@ -173,11 +170,6 @@ function Profile() {
             return
         }
 
-        if (!passwordCaptchaToken) {
-            setPasswordError('Please complete the verification check before submitting.')
-            return
-        }
-
         try {
             setPasswordSaving(true)
 
@@ -187,11 +179,7 @@ function Profile() {
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: profile.email,
                 password: currentPassword,
-                options: { captchaToken: passwordCaptchaToken },
             })
-
-            passwordTurnstileRef.current?.reset()
-            setPasswordCaptchaToken('')
 
             if (signInError) {
                 throw new Error('Current password is incorrect.')
@@ -437,8 +425,6 @@ function Profile() {
                             />
                         </div>
 
-                        <Turnstile ref={passwordTurnstileRef} onVerify={setPasswordCaptchaToken} onExpire={() => setPasswordCaptchaToken('')} />
-
                         {passwordError && <div className="employee-error-box">{passwordError}</div>}
 
                         <div style={{ display: 'flex', gap: 10 }}>
@@ -446,7 +432,7 @@ function Profile() {
                                 className="auth-submit"
                                 style={{ width: 'auto', padding: '11px 20px' }}
                                 onClick={changePassword}
-                                disabled={passwordSaving || !passwordCaptchaToken}
+                                disabled={passwordSaving}
                             >
                                 {passwordSaving ? 'Saving...' : 'Save new password'}
                             </button>
