@@ -206,6 +206,33 @@ function EmployeeDashboard() {
                 </p>
             </div>
 
+            {(missedCount > 0 || rescheduleRequestCount > 0) && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
+                    {[
+                        { label: 'Missed Claims', value: missedCount, to: '/employee/claim-schedule' },
+                        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/employee/claim-schedule' },
+                    ].filter((s) => s.value > 0).map((stat) => (
+                        <button
+                            key={stat.label}
+                            onClick={() => navigate(stat.to)}
+                            style={{
+                                textAlign: 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 14,
+                                padding: '16px 18px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(200, 16, 46, 0.25)',
+                                background: 'rgba(200, 16, 46, 0.06)',
+                            }}
+                        >
+                            <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--red)' }}>{stat.value}</span>
+                            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--red-dark)' }}>{stat.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className="employee-info-grid" style={{ marginBottom: 24 }}>
                 {[
                     { label: 'Pending', value: pendingCount, to: '/employee/verification' },
@@ -213,8 +240,6 @@ function EmployeeDashboard() {
                     { label: 'Processing', value: processingCount, to: '/employee/processing' },
                     { label: 'Completed', value: completedCount, to: '/employee/requests?status=completed' },
                     { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },
-                    { label: 'Missed Claims', value: missedCount, to: '/employee/claim-schedule', urgent: true },
-                    { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/employee/claim-schedule', urgent: true },
                 ].map((stat) => (
                     <button
                         key={stat.label}
@@ -227,7 +252,7 @@ function EmployeeDashboard() {
                                 display: 'block',
                                 fontSize: 26,
                                 fontWeight: 700,
-                                color: stat.urgent && stat.value > 0 ? 'var(--red)' : 'var(--blue)',
+                                color: 'var(--blue)',
                                 marginBottom: 4,
                             }}
                         >
