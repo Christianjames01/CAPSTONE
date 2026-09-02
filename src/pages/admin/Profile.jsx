@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import MfaSetup from '../../components/MfaSetup'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -203,6 +204,11 @@ function Profile() {
                         <div className="admin-info-field"><span>Phone Number</span><strong>{profile?.phone_number || 'Not set'}</strong></div>
                     </div>
                 )}
+            </div>
+
+            <div className="admin-card">
+                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
+                <MfaSetup linkButtonClassName="admin-link-button" />
             </div>
         </div>
     )
