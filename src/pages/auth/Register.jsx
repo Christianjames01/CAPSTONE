@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
+import PasswordRequirements from '../../components/PasswordRequirements'
+import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function Register() {
     // Account
@@ -116,6 +118,12 @@ function Register() {
     const handleRegister = async (e) => {
         e.preventDefault()
 
+        if (!passwordMeetsRequirements(password)) {
+            setStatus('error')
+            setMessage(passwordRequirementMessage())
+            return
+        }
+
         setLoading(true)
         setMessage('')
         setStatus('idle')
@@ -226,6 +234,7 @@ function Register() {
                             placeholder="Create a password"
                             required
                         />
+                        <PasswordRequirements password={password} />
                     </div>
                 </div>
 

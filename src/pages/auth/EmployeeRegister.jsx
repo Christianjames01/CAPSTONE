@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
+import PasswordRequirements from '../../components/PasswordRequirements'
+import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function EmployeeRegister() {
     const [firstName, setFirstName] = useState('')
@@ -17,6 +19,12 @@ function EmployeeRegister() {
 
     const handleRegister = async (e) => {
         e.preventDefault()
+
+        if (!passwordMeetsRequirements(password)) {
+            setStatus('error')
+            setMessage(passwordRequirementMessage())
+            return
+        }
 
         setLoading(true)
         setMessage('')
@@ -165,6 +173,7 @@ function EmployeeRegister() {
                         placeholder="Create a password"
                         required
                     />
+                    <PasswordRequirements password={password} />
                 </div>
 
                 {message && (

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import MfaSetup from '../../components/MfaSetup'
+import PasswordRequirements from '../../components/PasswordRequirements'
+import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -168,6 +170,11 @@ function Profile() {
 
         if (newPassword !== confirmNewPassword) {
             setPasswordError("New passwords don't match.")
+            return
+        }
+
+        if (!passwordMeetsRequirements(newPassword)) {
+            setPasswordError(passwordRequirementMessage())
             return
         }
 
@@ -413,6 +420,7 @@ function Profile() {
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 disabled={passwordSaving}
                             />
+                            <PasswordRequirements password={newPassword} />
                         </div>
 
                         <div className="form-group">

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
+import PasswordRequirements from '../../components/PasswordRequirements'
+import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function ResetPassword() {
     const navigate = useNavigate()
@@ -31,6 +33,12 @@ function ResetPassword() {
         if (password !== confirmPassword) {
             setStatus('error')
             setMessage("Passwords don't match.")
+            return
+        }
+
+        if (!passwordMeetsRequirements(password)) {
+            setStatus('error')
+            setMessage(passwordRequirementMessage())
             return
         }
 
@@ -96,6 +104,7 @@ function ResetPassword() {
                         placeholder="Enter a new password"
                         required
                     />
+                    <PasswordRequirements password={password} />
                 </div>
 
                 <div className="form-group">
