@@ -1,8 +1,7 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
-import Turnstile from '../../components/Turnstile'
 
 function EmployeeRegister() {
     const [firstName, setFirstName] = useState('')
@@ -15,17 +14,9 @@ function EmployeeRegister() {
     const [message, setMessage] = useState('')
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
-    const [captchaToken, setCaptchaToken] = useState('')
-    const turnstileRef = useRef(null)
 
     const handleRegister = async (e) => {
         e.preventDefault()
-
-        if (!captchaToken) {
-            setStatus('error')
-            setMessage('Please complete the verification check before submitting.')
-            return
-        }
 
         setLoading(true)
         setMessage('')
@@ -34,7 +25,6 @@ function EmployeeRegister() {
             email,
             password,
             options: {
-                captchaToken,
                 emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     role: 'employee',
@@ -43,11 +33,6 @@ function EmployeeRegister() {
                 },
             },
         })
-
-        // Turnstile tokens are single-use -- any failure past this point
-        // needs a fresh solve before the user can retry.
-        turnstileRef.current?.reset()
-        setCaptchaToken('')
 
         if (error) {
             setStatus('error')
@@ -188,9 +173,7 @@ function EmployeeRegister() {
                     </p>
                 )}
 
-                <Turnstile ref={turnstileRef} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken('')} />
-
-                <button type="submit" className="auth-submit" disabled={loading || !captchaToken}>
+                <button type="submit" className="auth-submit" disabled={loading}>
                     {loading && <span className="auth-spinner" />}
                     {loading ? 'Submitting...' : 'Register'}
                 </button>
