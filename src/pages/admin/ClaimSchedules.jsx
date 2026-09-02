@@ -14,6 +14,15 @@ const CHIPS = [
     { key: 'all', label: 'All' },
 ]
 
+// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
+function formatTime(time) {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes), 0, 0)
+    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
 function ClaimSchedules() {
     const navigate = useNavigate()
 
@@ -255,7 +264,7 @@ function ClaimSchedules() {
                             </div>
                             <div className="admin-info-field">
                                 <span>Time</span>
-                                <strong>{s.claim_time || s.scheduled_time || 'N/A'}</strong>
+                                <strong>{formatTime(s.claim_time || s.scheduled_time) || 'N/A'}</strong>
                             </div>
                         </div>
 

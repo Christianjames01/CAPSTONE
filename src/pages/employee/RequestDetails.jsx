@@ -16,6 +16,15 @@ const OVERDUE_ELIGIBLE_STATUSES = [
 ]
 const OVERDUE_DAYS = 2
 
+// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
+function formatTime(time) {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes), 0, 0)
+    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
 function EmployeeRequestDetails() {
     const { requestId } = useParams()
     const navigate = useNavigate()
@@ -1866,7 +1875,7 @@ function EmployeeRequestDetails() {
                                 <strong>Claiming Scheduled</strong>
                                 <p>
                                     {claimSchedule.claim_date || claimSchedule.scheduled_date} at{' '}
-                                    {claimSchedule.claim_time || claimSchedule.scheduled_time}
+                                    {formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time)}
                                 </p>
                                 {claimSchedule.reschedule_requested_at && (
                                     <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
