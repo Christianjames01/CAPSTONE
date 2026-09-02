@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.verify-credential]
 verify_jwt = false
+
+[functions.mark-missed-claims]
+verify_jwt = false

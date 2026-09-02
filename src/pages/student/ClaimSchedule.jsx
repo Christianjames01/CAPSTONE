@@ -191,6 +191,14 @@ function ClaimSchedule() {
                                         </strong>
                                     </div>
                                 </div>
+                            ) : schedule.status === 'missed' ? (
+                                <div className="student-notice tone-danger">
+                                    <strong>Missed Appointment</strong>
+                                    <p>
+                                        You didn't claim this document on {formatDate(schedule.claim_date || schedule.scheduled_date)}.
+                                        Please contact the Registrar's Office to reschedule.
+                                    </p>
+                                </div>
                             ) : (
                                 <div className="student-info-grid">
                                     <div className="student-info-field">
