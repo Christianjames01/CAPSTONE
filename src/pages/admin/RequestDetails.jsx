@@ -35,6 +35,7 @@ function AdminRequestDetails() {
     const [requirementUrls, setRequirementUrls] = useState({})
     const [previewFile, setPreviewFile] = useState(null)
     const [requestActivity, setRequestActivity] = useState([])
+    const [claimSchedule, setClaimSchedule] = useState(null)
     const [employees, setEmployees] = useState([])
     const [currentEmployeeName, setCurrentEmployeeName] = useState('Unassigned')
 
@@ -175,6 +176,25 @@ function AdminRequestDetails() {
 
             const current = employeeList.find((e) => e.employee_id === requestData.assigned_employee_id)
             setCurrentEmployeeName(current ? current.name : 'Unassigned')
+
+            // ==========================================
+            // LOAD CLAIM SCHEDULE
+            // ==========================================
+
+            const { data: scheduleRow, error: scheduleError } = await supabase
+                .from('claim_schedules')
+                .select('claim_schedule_id, status, scheduled_date, scheduled_time, claim_date, claim_time, claimed_at, reschedule_requested_at, reschedule_reason')
+                .eq('request_id', requestId)
+                .neq('status', 'cancelled')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            if (scheduleError) {
+                console.error('CLAIM SCHEDULE LOAD ERROR:', scheduleError)
+            } else {
+                setClaimSchedule(scheduleRow || null)
+            }
 
             // ==========================================
             // LOAD ACTIVITY HISTORY FOR THIS REQUEST
@@ -632,6 +652,52 @@ function AdminRequestDetails() {
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {claimSchedule && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Claiming Schedule</h2>
+
+                    {claimSchedule.status === 'missed' ? (
+                        <div className="admin-notice tone-danger">
+                            <strong>✕ Claiming Appointment Missed</strong>
+                            <p>
+                                The student did not claim this document on{' '}
+                                {claimSchedule.claim_date || claimSchedule.scheduled_date}.
+                            </p>
+                            {claimSchedule.reschedule_requested_at && (
+                                <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
+                            )}
+                        </div>
+                    ) : claimSchedule.status === 'claimed' ? (
+                        <div className="admin-notice tone-success">
+                            <strong>✓ Document Claimed</strong>
+                            <p>
+                                Claimed on{' '}
+                                {claimSchedule.claimed_at
+                                    ? new Date(claimSchedule.claimed_at).toLocaleString()
+                                    : (claimSchedule.claim_date || claimSchedule.scheduled_date)}.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="admin-info-grid">
+                            <div className="admin-info-field">
+                                <span>Scheduled Date</span>
+                                <strong>{claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}</strong>
+                            </div>
+                            <div className="admin-info-field">
+                                <span>Scheduled Time</span>
+                                <strong>{claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}</strong>
+                            </div>
+                            {claimSchedule.reschedule_requested_at && (
+                                <div className="admin-info-field">
+                                    <span>Reschedule Requested</span>
+                                    <strong>{claimSchedule.reschedule_reason}</strong>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
