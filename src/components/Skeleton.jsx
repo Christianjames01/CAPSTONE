@@ -1,8 +1,5 @@
 import './Skeleton.css'
 
-// Generic shimmer block -- the building block every other skeleton
-// composes from. Style-agnostic on purpose so it looks at home in the
-// student, employee, and admin portals without needing their CSS.
 export function Skeleton({ width = '100%', height = 14, radius = 6, style, className = '' }) {
     return (
         <div
@@ -12,7 +9,6 @@ export function Skeleton({ width = '100%', height = 14, radius = 6, style, class
     )
 }
 
-// A page's <h1>/<p> header, before real content is known.
 export function SkeletonPageHeader() {
     return (
         <div className="skeleton-page-header">
@@ -22,7 +18,6 @@ export function SkeletonPageHeader() {
     )
 }
 
-// The stat-card grids used on every dashboard.
 export function SkeletonStatGrid({ count = 5 }) {
     return (
         <div className="skeleton-stat-grid">
@@ -39,9 +34,6 @@ export function SkeletonStatGrid({ count = 5 }) {
     )
 }
 
-// The list-card pattern used throughout (requests, students, messages,
-// employees, receipts, etc.) -- a header row (title + status pill) plus
-// a small grid of labeled fields underneath.
 export function SkeletonList({ count = 3, fields = 3 }) {
     return (
         <>
@@ -68,7 +60,6 @@ export function SkeletonList({ count = 3, fields = 3 }) {
     )
 }
 
-// A short form (login, forgot password, small edit forms).
 export function SkeletonForm({ rows = 3 }) {
     return (
         <div>
@@ -82,7 +73,6 @@ export function SkeletonForm({ rows = 3 }) {
     )
 }
 
-// A two-column form row (register/complete-profile style forms).
 export function SkeletonFormRow({ rows = 2 }) {
     return (
         <div>
@@ -102,7 +92,6 @@ export function SkeletonFormRow({ rows = 2 }) {
     )
 }
 
-// A single detail card (profile pages, request/employee/student details).
 export function SkeletonDetailCard({ fields = 6 }) {
     return (
         <div className="skeleton-list-card">

@@ -27,10 +27,6 @@ function AuthCallback() {
         }
 
         if (!user.email || !user.email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN)) {
-            // Reject non-HCDC accounts. The profile row already exists at this
-            // point (auto-created by the on_auth_user_created trigger), so
-            // deactivate it too -- otherwise a retry would silently sign back
-            // in past this check next time.
             await supabase.from('profiles').update({ status: 'inactive' }).eq('user_id', user.id)
             await supabase.auth.signOut()
 

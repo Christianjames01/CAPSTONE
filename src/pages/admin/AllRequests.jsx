@@ -21,9 +21,6 @@ const STATUS_CHIPS = [
     { key: 'cancelled', label: 'Cancelled' },
 ]
 
-// Bulk target statuses -- deliberately a subset of STATUS_CHIPS. "Cancelled"
-// is student-initiated only, and "pending"/"payment_pending" aren't things
-// staff would ever move a batch of requests backward into.
 const BULK_STATUS_OPTIONS = [
     'receipt_verified',
     'processing',

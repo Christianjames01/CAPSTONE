@@ -34,9 +34,6 @@ const DOCUMENTS = [
     { name: "Certificate of Grade for Cross-Enrollee", code: "CGCE" },
 ];
 
-/* =========================
-    ICONS (custom line set)
-========================= */
 const IconDocument = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
@@ -171,9 +168,6 @@ const LandingPage = () => {
     return (
         <div className="landing-page">
 
-            {/* =========================
-          NAVBAR
-      ========================= */}
             <header className="landing-navbar">
                 <div className="navbar-container">
 
@@ -205,9 +199,6 @@ const LandingPage = () => {
 
             <main>
 
-                {/* =========================
-            HERO
-        ========================= */}
                 <section id="home" className="hero-section">
 
                     <div className="hero-container">
@@ -256,7 +247,6 @@ const LandingPage = () => {
 
                         </div>
 
-                        {/* HERO CARD */}
                         <div className="hero-visual">
                             <div className="hero-card">
 
@@ -306,10 +296,6 @@ const LandingPage = () => {
 
                 </section>
 
-
-                {/* =========================
-            SERVICES
-        ========================= */}
                 <section id="services" className="section services-section">
                     <div className="section-container">
 
@@ -362,10 +348,6 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-
-                {/* =========================
-            DOCUMENTS
-        ========================= */}
                 <section id="documents" className="documents-section">
                     <div className="section-container">
                         <div className="documents-layout">
@@ -398,10 +380,6 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-
-                {/* =========================
-            PROCESS / VERIFICATION
-        ========================= */}
                 <section id="process" className="section process-section">
                     <div className="section-container">
 
@@ -431,10 +409,6 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-
-                {/* =========================
-            ABOUT
-        ========================= */}
                 <section id="about" className="section about-section">
                     <div className="section-container">
                         <div className="about-card">
@@ -467,10 +441,6 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-
-                {/* =========================
-            VERIFY
-        ========================= */}
                 <section id="verify" className="section verify-section">
                     <div className="section-container">
 
@@ -500,10 +470,6 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-
-                {/* =========================
-            FAQ
-        ========================= */}
                 <section id="faq" className="section faq-section">
                     <div className="section-container">
 
@@ -524,10 +490,6 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-
-                {/* =========================
-            CTA
-        ========================= */}
                 <section className="cta-section">
                     <div className="cta-container">
                         <div className="cta-icon">
@@ -556,10 +518,6 @@ const LandingPage = () => {
 
             </main>
 
-
-            {/* =========================
-          FOOTER
-      ========================= */}
             <footer className="landing-footer">
                 <div className="footer-container">
 

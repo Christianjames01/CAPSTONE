@@ -15,14 +15,11 @@ const STATUS_OPTIONS = [
     'processing', 'lacking_requirements', 'ready_for_claiming', 'completed', 'rejected',
 ]
 
-// Statuses where the request is still awaiting something and hasn't been
-// flagged yet -- these are the ones eligible for the "overdue" warning.
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
 ]
 const OVERDUE_DAYS = 2
 
-// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
 function formatTime(time) {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -186,10 +183,6 @@ function AdminRequestDetails() {
             const current = employeeList.find((e) => e.employee_id === requestData.assigned_employee_id)
             setCurrentEmployeeName(current ? current.name : 'Unassigned')
 
-            // ==========================================
-            // LOAD CLAIM SCHEDULE
-            // ==========================================
-
             const { data: scheduleRow, error: scheduleError } = await supabase
                 .from('claim_schedules')
                 .select('claim_schedule_id, status, scheduled_date, scheduled_time, claim_date, claim_time, claimed_at, reschedule_requested_at, reschedule_reason')
@@ -204,13 +197,6 @@ function AdminRequestDetails() {
             } else {
                 setClaimSchedule(scheduleRow || null)
             }
-
-            // ==========================================
-            // LOAD ACTIVITY HISTORY FOR THIS REQUEST
-            // Log entries don't share one foreign key across every
-            // action type, but every description embeds the quoted
-            // request number, so match on that instead.
-            // ==========================================
 
             const { data: activityRows, error: activityError } = await supabase
                 .from('activity_logs')
@@ -401,8 +387,6 @@ function AdminRequestDetails() {
         await applyOverride(newStatus, overrideReason)
     }
 
-    // Quick action from the "overdue" warning banner -- skips the generic
-    // override form and asks directly for what's missing.
     const flagLackingRequirements = async () => {
         const { value: reason } = await Swal.fire({
             title: 'Flag as Lacking Requirements',

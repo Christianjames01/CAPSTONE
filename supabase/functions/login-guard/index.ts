@@ -1,8 +1,3 @@
-// Brute-force protection for password login. Called from Login.jsx before
-// (action: "check") and after (action: "record") each sign-in attempt.
-// Runs with the service role because a failed attempt, by definition,
-// happens before the browser has an authenticated session -- there's no
-// RLS-scoped way to read/write this from the client directly.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const MAX_ATTEMPTS = 5
@@ -38,8 +33,6 @@ Deno.serve(async (req) => {
             .eq('email', email)
             .maybeSingle()
 
-        // Unknown email: report "not locked" either way, so this endpoint
-        // can't be used to enumerate which emails have accounts.
         if (!profile) {
             return json({ locked: false })
         }
@@ -61,9 +54,6 @@ Deno.serve(async (req) => {
                 return json({ ok: true })
             }
 
-            // A locked account that keeps getting hit shouldn't have its
-            // lock extended by every subsequent attempt -- only count
-            // fresh failures once the previous lock has expired.
             if (isLocked) {
                 return json({ locked: true, lockedUntil: lockedUntil!.toISOString() })
             }

@@ -8,10 +8,6 @@ import './StudentVerificationGate.css'
 const REGISTRAR_EMAIL = 'registrar@hcdc.edu.ph'
 const REGISTRAR_PHONE = '0912345677'
 
-// Sits between ProtectedRoute and StudentLayout. A newly-registered
-// student's verification_status starts "pending" until registrar staff
-// manually confirm their enrollment -- this blocks the dashboard (and so
-// every student page, including submitting requests) until that happens.
 function StudentVerificationGate({ children }) {
     const navigate = useNavigate()
 
@@ -41,10 +37,6 @@ function StudentVerificationGate({ children }) {
             setStatus(data.verification_status)
             setNote(data.verification_note || '')
         } else {
-            // No student record at all -- they signed up but never
-            // finished "Complete your profile". Send them to finish it
-            // instead of defaulting to "approved" and letting them
-            // through to a dashboard with no student data behind it.
             navigate('/complete-profile', { replace: true })
             return
         }

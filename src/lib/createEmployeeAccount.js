@@ -4,12 +4,6 @@ import { supabase } from './supabase'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-// Registrar Head account creation for employees.
-//
-// supabase.auth.signUp() on the shared client would replace the Head's own
-// logged-in session with the new employee's session. To avoid that, this
-// signs up the new user on a throwaway client that never persists a session,
-// so the Head's session in the main `supabase` client is untouched.
 export async function createEmployeeAccount({
     email,
     password,

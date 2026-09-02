@@ -1,9 +1,3 @@
-// Public credential verification, rate-limited per IP. Credential numbers
-// are short and sequential (CERT-000123), so unlimited direct table access
-// would let anyone script through the whole number space and harvest every
-// graduate's name, college, and program from public_credential_verification.
-// This function is now the ONLY way to read that view -- anon/authenticated
-// grants on it have been revoked (see the accompanying migration).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const MAX_ATTEMPTS = 20

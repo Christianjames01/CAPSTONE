@@ -58,10 +58,6 @@ function EmployeeRegister() {
             return
         }
 
-        // Best-effort: create the employee record. This will only succeed
-        // if row-level security allows a newly-registered user to insert
-        // their own employees row — if it doesn't, the Registrar Head will
-        // need to finish setup manually from the Employees page.
         const { error: employeeError } = await supabase
             .from('employees')
             .insert({

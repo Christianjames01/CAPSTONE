@@ -4,9 +4,6 @@ import { supabase } from './supabase'
 const CONFIRM_COLOR = '#0d6efd'
 const CANCEL_COLOR = '#6c757d'
 
-// Best-effort in-app notification write (a DB trigger emails the user off
-// this insert). Never throws — a notification failure should not block the
-// action that triggered it.
 export async function notify({ userId, title, message, notificationType, relatedRequestId }) {
     try {
         await supabase.from('notifications').insert({

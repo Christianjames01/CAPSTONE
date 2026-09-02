@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-// Two-factor authentication (TOTP) enrollment/management, shared by the
-// employee and admin Profile pages. Uses Supabase Auth's native MFA API --
-// no Edge Function or extra table needed, and unlike a project-wide toggle
-// (e.g. CAPTCHA), enabling this only affects the account that opts in.
 function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
     const [factors, setFactors] = useState([])
     const [loading, setLoading] = useState(true)
@@ -44,10 +40,6 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
         setMessage('')
         setEnrolling(true)
 
-        // A previous enrollment attempt that was never verified (e.g. the
-        // user closed the QR step, or it failed to render) leaves an
-        // "unverified" factor behind, which blocks re-enrolling under the
-        // same name. Clear those out first so this always starts fresh.
         const { data: existingFactors } = await supabase.auth.mfa.listFactors()
         const stale = (existingFactors?.totp || []).filter((f) => f.status === 'unverified')
         for (const factor of stale) {

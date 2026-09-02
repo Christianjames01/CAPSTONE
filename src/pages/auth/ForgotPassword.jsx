@@ -28,8 +28,6 @@ function ForgotPassword() {
             return
         }
 
-        // Don't reveal whether the email is registered -- always show the
-        // same success message either way.
         setStatus('success')
         setMessage('If an account exists for that email, a password reset link has been sent. Check your inbox.')
     }

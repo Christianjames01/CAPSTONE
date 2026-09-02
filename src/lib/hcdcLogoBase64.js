@@ -2,9 +2,6 @@ import hcdcLogo from '../assets/hcdc-logo.png'
 
 let cached = null
 
-// Fetches the bundled HCDC logo and returns it as bare base64 (no data:
-// prefix) — the shape exceljs' workbook.addImage({ base64, extension })
-// expects for embedding a real image into a spreadsheet.
 export async function getHcdcLogoBase64() {
     if (cached) return cached
 

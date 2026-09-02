@@ -258,10 +258,6 @@ function Documents() {
                     ['category', original?.category, payload.category],
                 ])
 
-                // Carry the new fee over to requests that haven't been paid
-                // yet. Once a receipt is uploaded the amount stays locked to
-                // whatever was actually quoted, so it can't drift from what
-                // the student paid.
                 const { data: updatedRequests, error: propagateError } = await supabase
                     .from('document_requests')
                     .update({ unit_fee: payload.fee })

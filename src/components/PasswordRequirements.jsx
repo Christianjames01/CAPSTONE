@@ -1,7 +1,5 @@
 import { PASSWORD_REQUIREMENTS } from '../lib/passwordStrength'
 
-// Live checklist shown under a "new password" field -- each rule ticks
-// green as soon as it's satisfied, red/grey otherwise.
 function PasswordRequirements({ password }) {
     return (
         <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0', fontSize: 12 }}>

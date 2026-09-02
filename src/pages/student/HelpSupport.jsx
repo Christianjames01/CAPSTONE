@@ -67,7 +67,6 @@ function HelpSupport() {
                 <p>Frequently asked questions, processing times, and Registrar contact information.</p>
             </div>
 
-            {/* FAQ */}
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Frequently Asked Questions</h2>
 
@@ -114,7 +113,6 @@ function HelpSupport() {
                 </div>
             </div>
 
-            {/* PROCESSING TIMES & FEES */}
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Document Processing Times &amp; Fees</h2>
 
@@ -152,7 +150,6 @@ function HelpSupport() {
                 )}
             </div>
 
-            {/* CONTACT */}
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 4 }}>Registrar Contact Information</h2>
                 <p style={{ fontSize: 13, marginBottom: 16 }}>{REGISTRAR_CONTACT.office}</p>

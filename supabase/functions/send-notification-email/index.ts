@@ -1,5 +1,3 @@
-// Fires on every INSERT into "notifications" (via a Database trigger) and
-// emails the notified user, mirroring whatever the in-app notification says.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendEmail } from '../_shared/email.ts'
 
@@ -11,9 +9,6 @@ const supabaseAdmin = createClient(
 )
 
 Deno.serve(async (req) => {
-    // JWT verification is off for this function (it's called by a DB
-    // trigger, not a logged-in user, so there's no user JWT to check).
-    // This shared secret is the replacement gate.
     if (WEBHOOK_SECRET && req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }

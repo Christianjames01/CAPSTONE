@@ -181,9 +181,6 @@ function Profile() {
         try {
             setPasswordSaving(true)
 
-            // Re-verify the current password before allowing the change,
-            // since the employee's account was originally set up by the
-            // Registrar Head with a password the employee didn't choose.
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: profile.email,
                 password: currentPassword,

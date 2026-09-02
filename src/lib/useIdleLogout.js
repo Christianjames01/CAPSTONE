@@ -6,9 +6,6 @@ import { supabase } from './supabase'
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000
 const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
 
-// Signs the user out after a period of no activity -- this app handles
-// student PII and is often used on shared/public computers (library,
-// computer lab), where a session left open indefinitely is a real risk.
 export function useIdleLogout() {
     const navigate = useNavigate()
 

@@ -173,8 +173,6 @@ function ClaimSchedule() {
         try {
             setRequestingRescheduleId(schedule.claim_schedule_id)
 
-            // Records the request and blocks a second one for this
-            // schedule server-side (not just via the disabled button).
             const { error: rpcError } = await supabase.rpc('request_claim_reschedule', {
                 p_claim_schedule_id: schedule.claim_schedule_id,
                 p_reason: reason.trim(),

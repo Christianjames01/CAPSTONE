@@ -54,7 +54,6 @@ function MyRequest() {
 
     useEffect(() => {
         loadRequests()
-        // Clear the "just submitted" flag from history so a refresh doesn't re-show it
         if (location.state?.justSubmitted) {
             window.history.replaceState({}, document.title)
         }

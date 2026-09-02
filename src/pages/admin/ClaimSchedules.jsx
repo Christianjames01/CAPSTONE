@@ -15,7 +15,6 @@ const CHIPS = [
     { key: 'all', label: 'All' },
 ]
 
-// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
 function formatTime(time) {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -96,8 +95,6 @@ function ClaimSchedules() {
                 console.error('UNCLAIMED ERROR:', unclaimedError)
             }
 
-            // A request stays "ready_for_claiming" even after a schedule is
-            // created, so exclude requests that already have an active schedule.
             const scheduledRequestIds = new Set(
                 rows.filter((s) => s.status !== 'cancelled').map((s) => s.request_id)
             )

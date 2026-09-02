@@ -29,10 +29,6 @@ function ClaimSchedule() {
     const [saving, setSaving] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
 
-    // ==========================================
-    // LOAD PAGE
-    // ==========================================
-
     useEffect(() => {
         if (!requestId) {
             setErrorMessage('Request ID is missing.')
@@ -43,18 +39,10 @@ function ClaimSchedule() {
         loadData()
     }, [requestId])
 
-    // ==========================================
-    // LOAD REQUEST + STUDENT + EXISTING SCHEDULE
-    // ==========================================
-
     const loadData = async () => {
         try {
             setLoading(true)
             setErrorMessage('')
-
-            // ==========================================
-            // AUTHENTICATED USER
-            // ==========================================
 
             const {
                 data: { user },
@@ -64,10 +52,6 @@ function ClaimSchedule() {
             if (authError || !user) {
                 throw new Error('You are not logged in.')
             }
-
-            // ==========================================
-            // CURRENT EMPLOYEE
-            // ==========================================
 
             const {
                 data: employee,
@@ -89,10 +73,6 @@ function ClaimSchedule() {
                     'Employee record could not be found.'
                 )
             }
-
-            // ==========================================
-            // REQUEST
-            // ==========================================
 
             const {
                 data: requestData,
@@ -133,10 +113,6 @@ function ClaimSchedule() {
 
             setRequest(requestData)
 
-            // ==========================================
-            // CHECK REQUEST STATUS
-            // ==========================================
-
             if (
                 requestData.status !== 'ready_for_claiming'
             ) {
@@ -144,10 +120,6 @@ function ClaimSchedule() {
                     `This request cannot be scheduled while its status is "${requestData.status}".`
                 )
             }
-
-            // ==========================================
-            // STUDENT
-            // ==========================================
 
             const {
                 data: studentData,
@@ -173,10 +145,6 @@ function ClaimSchedule() {
             }
 
             setStudent(studentData || null)
-
-            // ==========================================
-            // EXISTING CLAIM SCHEDULE
-            // ==========================================
 
             const {
                 data: scheduleData,
@@ -265,10 +233,6 @@ function ClaimSchedule() {
         }
     }
 
-    // ==========================================
-    // GET CURRENT EMPLOYEE
-    // ==========================================
-
     const getCurrentEmployee = async () => {
         const {
             data: { user },
@@ -302,10 +266,6 @@ function ClaimSchedule() {
         return employee
     }
 
-    // ==========================================
-    // GET TODAY
-    // ==========================================
-
     const getToday = () => {
         const today = new Date()
 
@@ -319,10 +279,6 @@ function ClaimSchedule() {
 
         return `${year}-${month}-${day}`
     }
-
-    // ==========================================
-    // VALIDATE FORM
-    // ==========================================
 
     const validateForm = () => {
         if (!scheduledDate) {
@@ -355,7 +311,6 @@ function ClaimSchedule() {
             return false
         }
 
-        // Prevent scheduling in the past
         const today = getToday()
 
         if (
@@ -369,10 +324,6 @@ function ClaimSchedule() {
 
         return true
     }
-
-    // ==========================================
-    // CREATE / UPDATE SCHEDULE
-    // ==========================================
 
     const saveSchedule = async () => {
         if (!request) {
@@ -401,10 +352,6 @@ function ClaimSchedule() {
 
             const now =
                 new Date().toISOString()
-
-            // ==========================================
-            // UPDATE EXISTING SCHEDULE
-            // ==========================================
 
             if (existingSchedule) {
 
@@ -438,8 +385,6 @@ function ClaimSchedule() {
                         status:
                             'scheduled',
 
-                        // Clears any pending student reschedule request --
-                        // this update *is* the reschedule.
                         reschedule_requested_at:
                             null,
 
@@ -462,10 +407,6 @@ function ClaimSchedule() {
                         updateError.message
                     )
                 }
-
-                // ==========================================
-                // UPDATE REQUEST STATUS
-                // ==========================================
 
                 const {
                     error: requestUpdateError
@@ -528,10 +469,6 @@ function ClaimSchedule() {
 
             } else {
 
-                // ==========================================
-                // CREATE NEW SCHEDULE
-                // ==========================================
-
                 const {
                     data: newSchedule,
                     error: insertError
@@ -583,10 +520,6 @@ function ClaimSchedule() {
                         insertError.message
                     )
                 }
-
-                // ==========================================
-                // UPDATE REQUEST STATUS
-                // ==========================================
 
                 const {
                     error: requestUpdateError
@@ -663,10 +596,6 @@ function ClaimSchedule() {
             setSaving(false)
         }
     }
-
-    // ==========================================
-    // CANCEL SCHEDULE
-    // ==========================================
 
     const cancelSchedule = async () => {
         if (!existingSchedule) {
@@ -795,10 +724,6 @@ function ClaimSchedule() {
         }
     }
 
-    // ==========================================
-    // FORMAT DATE
-    // ==========================================
-
     const formatDate = (date) => {
         if (!date) {
             return 'N/A'
@@ -815,10 +740,6 @@ function ClaimSchedule() {
             }
         )
     }
-
-    // ==========================================
-    // FORMAT TIME
-    // ==========================================
 
     const formatTime = (time) => {
         if (!time) {
@@ -846,10 +767,6 @@ function ClaimSchedule() {
         )
     }
 
-    // ==========================================
-    // LOADING
-    // ==========================================
-
     if (loading) {
         return (
             <div>
@@ -859,10 +776,6 @@ function ClaimSchedule() {
             </div>
         )
     }
-
-    // ==========================================
-    // ERROR
-    // ==========================================
 
     if (errorMessage) {
         return (
@@ -886,10 +799,6 @@ function ClaimSchedule() {
         return null
     }
 
-    // ==========================================
-    // MAIN
-    // ==========================================
-
     return (
         <div>
             <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/employee/requests/${requestId}`)}>
@@ -900,10 +809,6 @@ function ClaimSchedule() {
                 <h1>Claim Schedule</h1>
                 <p>Schedule the student's date and time for claiming the requested academic document.</p>
             </div>
-
-            {/* ==========================================
-                REQUEST INFORMATION
-            ========================================== */}
 
             <div className="employee-card">
                 <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
@@ -942,10 +847,6 @@ function ClaimSchedule() {
                 </div>
             </div>
 
-                {/* ==========================================
-                    EXISTING SCHEDULE
-                ========================================== */}
-
                 {existingSchedule &&
                     existingSchedule.status !== 'cancelled' && (
                         <div className="employee-card">
@@ -982,10 +883,6 @@ function ClaimSchedule() {
                         </div>
                     )}
 
-                {/* ==========================================
-                    SCHEDULE FORM
-                ========================================== */}
-
                 <div className="employee-card">
                     <h2 style={{ fontSize: 16, marginBottom: 6 }}>
                         {existingSchedule ? 'Update Claim Schedule' : 'Create Claim Schedule'}
@@ -1003,7 +900,6 @@ function ClaimSchedule() {
                     )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 18 }}>
-                        {/* DATE */}
                         <div className="form-group">
                             <label className="form-label">
                                 Claiming Date<span className="employee-required">*</span>
@@ -1021,7 +917,6 @@ function ClaimSchedule() {
                             <small className="employee-help-text">The student will be instructed to claim the document on this date.</small>
                         </div>
 
-                        {/* TIME */}
                         <div className="form-group">
                             <label className="form-label">
                                 Claiming Time<span className="employee-required">*</span>
@@ -1038,7 +933,6 @@ function ClaimSchedule() {
                             <small className="employee-help-text">Use the student's assigned claiming time.</small>
                         </div>
 
-                        {/* DURATION */}
                         <div className="form-group">
                             <label className="form-label">
                                 Estimated Duration<span className="employee-required">*</span>
@@ -1060,7 +954,6 @@ function ClaimSchedule() {
                         </div>
                     </div>
 
-                    {/* REMARKS */}
                     <div className="form-group" style={{ marginBottom: 18 }}>
                         <label className="form-label">Remarks</label>
                         <textarea
@@ -1072,14 +965,12 @@ function ClaimSchedule() {
                         />
                     </div>
 
-                    {/* REMINDER */}
                     <div className="employee-notice tone-info" style={{ marginBottom: 20 }}>
                         <strong>Claiming Reminder</strong>
                         <p>The student must present their official receipt (OR) from the Finance Office when claiming the academic document.</p>
                         <p>The student should also bring a valid ID for identity verification.</p>
                     </div>
 
-                    {/* ACTIONS */}
                     <div className="employee-actions-row" style={{ marginTop: 0 }}>
                         {existingSchedule && existingSchedule.status !== 'cancelled' && (
                             <button className="employee-danger-button" onClick={cancelSchedule} disabled={saving}>
@@ -1092,10 +983,6 @@ function ClaimSchedule() {
                         </button>
                     </div>
                 </div>
-
-                {/* ==========================================
-                    WORKFLOW INFORMATION
-                ========================================== */}
 
                 <div className="employee-card">
                     <h2 style={{ fontSize: 16, marginBottom: 16 }}>Claiming Workflow</h2>

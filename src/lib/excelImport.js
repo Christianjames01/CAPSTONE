@@ -1,6 +1,3 @@
-// Reads the first sheet of an .xlsx file into an array of row objects,
-// keyed by the header row. exceljs is loaded on demand (see excelExport.js
-// for why) — only paid for when someone actually imports a file.
 export async function parseExcelFile(file) {
     const { default: ExcelJS } = await import('exceljs')
     const workbook = new ExcelJS.Workbook()

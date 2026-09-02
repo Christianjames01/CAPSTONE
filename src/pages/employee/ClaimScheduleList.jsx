@@ -46,7 +46,6 @@ function ClaimScheduleList() {
 
             setEmployee(employeeData)
 
-            // Requests ready for claiming that still need a schedule
             const { data: requests, error: requestError } = await supabase
                 .from('document_requests')
                 .select(`
@@ -90,8 +89,6 @@ function ClaimScheduleList() {
                 (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
             )
 
-            // Surface what needs attention first: missed appointments and
-            // pending reschedule requests, ahead of ones already on track.
             const priority = (schedule) => {
                 if (!schedule) return 1
                 if (schedule.status === 'missed') return 0
@@ -109,7 +106,6 @@ function ClaimScheduleList() {
                     .sort((a, b) => priority(a.schedule) - priority(b.schedule))
             )
 
-            // Today's appointments
             const today = new Date().toISOString().slice(0, 10)
 
             const { data: todaySchedules, error: todayError } = await supabase

@@ -363,7 +363,6 @@ function Profile() {
             {error && <div className="student-error-box">{error}</div>}
             {message && <div className="student-success-box">{message}</div>}
 
-            {/* IDENTITY */}
             <div className="student-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div
@@ -446,7 +445,6 @@ function Profile() {
                 </div>
             </div>
 
-            {/* ACADEMIC INFORMATION (read-only) */}
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Academic Information</h2>
 
@@ -483,7 +481,6 @@ function Profile() {
                 </div>
             </div>
 
-            {/* PERSONAL INFORMATION (read-only) */}
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Personal Information</h2>
 
@@ -515,7 +512,6 @@ function Profile() {
                 </p>
             </div>
 
-            {/* CONTACT INFORMATION (editable) */}
             <div className="student-card">
                 <div className="student-page-header-row">
                     <h2 style={{ fontSize: 16 }}>Contact Information</h2>

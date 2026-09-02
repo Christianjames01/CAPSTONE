@@ -3,8 +3,6 @@ import './HighlightedText.css'
 const FROM_TO_PATTERN = /from\s+"([^"]+)"\s+to\s+"([^"]+)"/gi
 const SEGMENT_PATTERN = /("[^"]+"|₱[\d,]+(?:\.\d+)?)/g
 
-// Wraps quoted values and peso amounts in styled spans so they stand out
-// from the surrounding sentence.
 function highlightSegments(text, keyPrefix) {
     if (!text) return []
 
@@ -23,9 +21,6 @@ function highlightSegments(text, keyPrefix) {
     })
 }
 
-// Renders an activity log description with the "what changed" part(s)
-// highlighted -- old value struck through, new value bolded in green for
-// each "from X to Y" change, otherwise just quoted values/amounts.
 function HighlightedText({ text }) {
     if (!text) return null
 

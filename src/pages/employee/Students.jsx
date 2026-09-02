@@ -25,9 +25,6 @@ function Students() {
         loadPendingVerifications()
     }, [])
 
-    // Only students in a college/program this employee is assigned to show
-    // up here -- approving someone's enrollment is a bigger deal than the
-    // general "any employee can edit any student" permission elsewhere.
     const loadPendingVerifications = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -419,7 +416,6 @@ function Students() {
                     {term.trim() ? `No students matched "${term}".` : 'No students found.'}
                 </div>
             ) : term.trim() ? (
-                // Search results: show matches directly, grouped by program.
                 groupedResults.map((group) => (
                     <div key={group.key} style={{ marginBottom: 28 }}>
                         <div className="employee-page-header-row" style={{ marginBottom: 14 }}>
@@ -436,7 +432,6 @@ function Students() {
                     </div>
                 ))
             ) : selectedGroup ? (
-                // Drilled into one college/course: show just its students.
                 <>
                     <button
                         className="employee-link-button"
@@ -459,8 +454,6 @@ function Students() {
                     {selectedGroup.students.map(renderStudentCard)}
                 </>
             ) : (
-                // Default browse view: a table of colleges & courses, not
-                // every student's card at once -- click a row to drill in.
                 <div className="employee-table-wrapper">
                     <table className="employee-table">
                         <thead>

@@ -63,7 +63,6 @@ function CompleteProfile() {
             return
         }
 
-        // Already has a student record -- nothing left to complete.
         const { data: existingStudent } = await supabase
             .from('students')
             .select('student_id')

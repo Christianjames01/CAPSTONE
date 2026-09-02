@@ -1,9 +1,3 @@
-// Runs once a day on a Cron Trigger. A claim schedule that's still
-// "scheduled" after its date has passed means the student never showed up
-// -- nothing in the system flagged that before. Marks those "missed",
-// notifies the student (in-app + email, via the notifications insert
-// trigger) that they need to reschedule, and notifies the assigned
-// employee so they know to follow up.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
@@ -19,8 +13,6 @@ Deno.serve(async (req) => {
     }
 
     try {
-        // PH is UTC+8 -- compute "today" in PH time so a schedule for
-        // today isn't marked missed while it's still today there.
         const nowPH = new Date(Date.now() + 8 * 60 * 60 * 1000)
         const todayPH = nowPH.toISOString().slice(0, 10)
 

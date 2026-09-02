@@ -12,14 +12,11 @@ import CompleteProfile from './pages/auth/CompleteProfile'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
 
-// LEGAL
 import Terms from './pages/legal/Terms'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 
-// VERIFY
 import VerifyCredential from './pages/verify/VerifyCredential'
 
-// STUDENT
 import StudentLayout from './pages/student/StudentLayout'
 import Dashboard from './pages/student/Dashboard'
 import NewRequest from './pages/student/NewRequest'
@@ -34,7 +31,6 @@ import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
 import HelpSupport from './pages/student/HelpSupport'
 
-// EMPLOYEE
 import EmployeeLayout from './pages/employee/EmployeeLayout'
 import EmployeeDashboard from './pages/employee/Dashboard'
 import EmployeeRequestDetails from './pages/employee/RequestDetails'
@@ -50,7 +46,6 @@ import EmployeeNotifications from './pages/employee/Notifications'
 import ActivityLogs from './pages/employee/ActivityLogs'
 import EmployeeProfile from './pages/employee/Profile'
 
-// ADMIN / REGISTRAR HEAD
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/Dashboard'
 import AllRequests from './pages/admin/AllRequests'
@@ -75,18 +70,10 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* ========================= */}
-        {/* LANDING PAGE */}
-        {/* ========================= */}
-
         <Route
           path="/"
           element={<HomeRoute />}
         />
-
-        {/* ========================= */}
-        {/* AUTH */}
-        {/* ========================= */}
 
         <Route
           path="/login"
@@ -133,10 +120,6 @@ function App() {
           element={<PrivacyPolicy />}
         />
 
-        {/* ========================= */}
-        {/* PUBLIC CREDENTIAL VERIFICATION */}
-        {/* ========================= */}
-
         <Route
           path="/verify"
           element={<VerifyCredential />}
@@ -146,10 +129,6 @@ function App() {
           path="/verify/:credentialNumber"
           element={<VerifyCredential />}
         />
-
-        {/* ========================= */}
-        {/* STUDENT */}
-        {/* ========================= */}
 
         <Route
           element={
@@ -222,10 +201,6 @@ function App() {
           />
 
         </Route>
-
-        {/* ========================= */}
-        {/* EMPLOYEE */}
-        {/* ========================= */}
 
         <Route
           element={
@@ -301,10 +276,6 @@ function App() {
           />
 
         </Route>
-
-        {/* ========================= */}
-        {/* ADMIN / REGISTRAR HEAD */}
-        {/* ========================= */}
 
         <Route
           element={

@@ -1,6 +1,5 @@
 import './Modal.css'
 
-// Generic centered modal -- backdrop click and the × button both close it.
 function Modal({ title, onClose, children }) {
     return (
         <div className="app-modal-backdrop" onClick={onClose}>

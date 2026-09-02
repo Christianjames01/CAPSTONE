@@ -48,8 +48,6 @@ function Profile() {
             setProfile(profileData)
             setPhoneNumber(profileData.phone_number || '')
 
-            // Registrar Head may or may not also have an employees row —
-            // this is best-effort and not treated as an error if missing.
             const { data: employeeData } = await supabase
                 .from('employees')
                 .select('employee_number, position_title, status')

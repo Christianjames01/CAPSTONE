@@ -18,13 +18,10 @@ function Login() {
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
 
-    // Set once password auth succeeds but a second factor is still needed.
     const [mfaFactorId, setMfaFactorId] = useState(null)
     const [mfaChallengeId, setMfaChallengeId] = useState(null)
     const [mfaCode, setMfaCode] = useState('')
 
-    // Runs after the account is fully authenticated (aal2 satisfied if the
-    // account has 2FA enrolled) -- loads the profile and redirects.
     const completeLogin = async (userId) => {
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -71,9 +68,6 @@ function Login() {
         setMessage('')
         setMessageType('error')
 
-        // Refuse the attempt outright if this account is already locked
-        // out from previous failures, without spending another attempt
-        // against Supabase's own auth rate limit.
         const lockStatus = await checkLoginLock(email)
         if (lockStatus.locked) {
             setMessage(formatLockMessage(lockStatus.lockedUntil))
@@ -81,7 +75,6 @@ function Login() {
             return
         }
 
-        // Login to Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -101,9 +94,6 @@ function Login() {
 
         await recordLoginAttempt(email, true)
 
-        // If this account has two-factor authentication enrolled, the
-        // session is only aal1 at this point -- ask for the code before
-        // treating login as complete.
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
         if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== aal.nextLevel) {
@@ -181,8 +171,6 @@ function Login() {
             setMessage(error.message)
             setGoogleLoading(false)
         }
-        // On success, the browser is redirected to Google, so there's
-        // nothing further to do here.
     }
 
     return (
