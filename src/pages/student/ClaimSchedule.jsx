@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { notify, notifyError, notifySuccess } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
@@ -10,6 +12,7 @@ function ClaimSchedule() {
     const [schedules, setSchedules] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [requestingRescheduleId, setRequestingRescheduleId] = useState(null)
 
     useEffect(() => {
         loadSchedules()
@@ -69,7 +72,7 @@ function ClaimSchedule() {
 
             const { data: requests } = await supabase
                 .from('document_requests')
-                .select('request_id, request_number, document_type_id')
+                .select('request_id, request_number, document_type_id, assigned_employee_id')
                 .in('request_id', requestIds)
 
             const documentTypeIds = [
@@ -98,6 +101,7 @@ function ClaimSchedule() {
                     ...schedule,
                     requestNumber: request?.request_number || 'N/A',
                     documentName: documentNameById[request?.document_type_id] || 'Document',
+                    assignedEmployeeId: request?.assigned_employee_id || null,
                 }
             })
 
@@ -146,6 +150,58 @@ function ClaimSchedule() {
             hour: 'numeric',
             minute: '2-digit'
         })
+    }
+
+    const requestReschedule = async (schedule) => {
+        const { value: reason } = await Swal.fire({
+            title: 'Request a Reschedule',
+            text: 'Tell the Registrar why you need a new date. Mention a preferred date if you have one.',
+            input: 'textarea',
+            inputLabel: 'Reason',
+            inputPlaceholder: 'e.g. I have a class conflict, could I come next Monday instead?',
+            inputValidator: (value) => {
+                if (!value || !value.trim()) return 'Please enter a reason.'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Send Request',
+            confirmButtonColor: '#123B78',
+        })
+
+        if (!reason) return
+
+        try {
+            setRequestingRescheduleId(schedule.claim_schedule_id)
+
+            if (!schedule.assignedEmployeeId) {
+                throw new Error('No registrar employee is assigned to this request yet.')
+            }
+
+            const { data: employeeRow, error: employeeError } = await supabase
+                .from('employees')
+                .select('user_id')
+                .eq('employee_id', schedule.assignedEmployeeId)
+                .single()
+
+            if (employeeError || !employeeRow) {
+                throw new Error('Could not find the assigned employee to notify.')
+            }
+
+            await notify({
+                userId: employeeRow.user_id,
+                title: 'Reschedule requested',
+                message: `Student requested to reschedule claiming for request ${schedule.requestNumber} (currently ${formatDate(schedule.claim_date || schedule.scheduled_date)}). Reason: "${reason.trim()}"`,
+                notificationType: 'request_update',
+                relatedRequestId: schedule.request_id,
+            })
+
+            notifySuccess('Your reschedule request has been sent to the Registrar\'s Office.')
+
+        } catch (err) {
+            console.error('REQUEST RESCHEDULE ERROR:', err)
+            notifyError(err.message || 'Failed to send your reschedule request.')
+        } finally {
+            setRequestingRescheduleId(null)
+        }
     }
 
     return (
@@ -231,12 +287,26 @@ function ClaimSchedule() {
                                 </div>
                             )}
 
-                            <button
-                                className="student-link-button"
-                                onClick={() => navigate(`/student/request/${schedule.request_id}`)}
-                            >
-                                View request details →
-                            </button>
+                            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                <button
+                                    className="student-link-button"
+                                    onClick={() => navigate(`/student/request/${schedule.request_id}`)}
+                                >
+                                    View request details →
+                                </button>
+
+                                {(schedule.status === 'scheduled' || schedule.status === 'missed') && (
+                                    <button
+                                        className="student-link-button"
+                                        onClick={() => requestReschedule(schedule)}
+                                        disabled={requestingRescheduleId === schedule.claim_schedule_id}
+                                    >
+                                        {requestingRescheduleId === schedule.claim_schedule_id
+                                            ? 'Sending...'
+                                            : 'Request reschedule'}
+                                    </button>
+                                )}
+                            </div>
 
                         </div>
                     ))}

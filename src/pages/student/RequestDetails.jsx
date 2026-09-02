@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
-import { notify, notifyError } from '../../lib/notify'
+import { notify, notifyError, notifySuccess } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import CredentialQr from '../../components/CredentialQr'
 import '../auth/Auth.css'
@@ -87,6 +87,7 @@ function RequestDetails() {
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
     const [cancelling, setCancelling] = useState(false)
+    const [requestingReschedule, setRequestingReschedule] = useState(false)
 
     useEffect(() => {
         console.log('URL REQUEST ID:', requestId)
@@ -399,6 +400,58 @@ function RequestDetails() {
         }
     }
 
+    const requestReschedule = async () => {
+        const { value: reason } = await Swal.fire({
+            title: 'Request a Reschedule',
+            text: 'Tell the Registrar why you need a new date. Mention a preferred date if you have one.',
+            input: 'textarea',
+            inputLabel: 'Reason',
+            inputPlaceholder: 'e.g. I have a class conflict, could I come next Monday instead?',
+            inputValidator: (value) => {
+                if (!value || !value.trim()) return 'Please enter a reason.'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Send Request',
+            confirmButtonColor: '#123B78',
+        })
+
+        if (!reason) return
+
+        try {
+            setRequestingReschedule(true)
+
+            if (!request.assigned_employee_id) {
+                throw new Error('No registrar employee is assigned to this request yet.')
+            }
+
+            const { data: employeeRow, error: employeeError } = await supabase
+                .from('employees')
+                .select('user_id')
+                .eq('employee_id', request.assigned_employee_id)
+                .single()
+
+            if (employeeError || !employeeRow) {
+                throw new Error('Could not find the assigned employee to notify.')
+            }
+
+            await notify({
+                userId: employeeRow.user_id,
+                title: 'Reschedule requested',
+                message: `Student requested to reschedule claiming for request ${request.request_number} (currently ${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}). Reason: "${reason.trim()}"`,
+                notificationType: 'request_update',
+                relatedRequestId: request.request_id,
+            })
+
+            notifySuccess('Your reschedule request has been sent to the Registrar\'s Office.')
+
+        } catch (err) {
+            console.error('REQUEST RESCHEDULE ERROR:', err)
+            notifyError(err.message || 'Failed to send your reschedule request.')
+        } finally {
+            setRequestingReschedule(false)
+        }
+    }
+
     // ==========================================
     // LOADING
     // ==========================================
@@ -664,6 +717,17 @@ function RequestDetails() {
 
                         {claimSchedule.remarks && (
                             <p style={{ color: 'var(--slate)', fontSize: 13.5, marginTop: 6 }}>{claimSchedule.remarks}</p>
+                        )}
+
+                        {(claimSchedule.status === 'scheduled' || claimSchedule.status === 'missed') && (
+                            <button
+                                className="student-link-button"
+                                style={{ marginTop: 10 }}
+                                onClick={requestReschedule}
+                                disabled={requestingReschedule}
+                            >
+                                {requestingReschedule ? 'Sending...' : 'Request reschedule'}
+                            </button>
                         )}
                     </div>
                 )}
