@@ -22,6 +22,8 @@ function AdminDashboard() {
 
     const [requests, setRequests] = useState([])
     const [todayCount, setTodayCount] = useState(0)
+    const [missedCount, setMissedCount] = useState(0)
+    const [rescheduleRequestCount, setRescheduleRequestCount] = useState(0)
     const [recentActivity, setRecentActivity] = useState([])
     const [studentCount, setStudentCount] = useState(0)
     const [recentStudents, setRecentStudents] = useState([])
@@ -56,6 +58,21 @@ function AdminDashboard() {
                 .neq('status', 'cancelled')
 
             setTodayCount(count || 0)
+
+            const { count: missed } = await supabase
+                .from('claim_schedules')
+                .select('claim_schedule_id', { count: 'exact', head: true })
+                .eq('status', 'missed')
+
+            setMissedCount(missed || 0)
+
+            const { count: rescheduleRequests } = await supabase
+                .from('claim_schedules')
+                .select('claim_schedule_id', { count: 'exact', head: true })
+                .not('reschedule_requested_at', 'is', null)
+                .neq('status', 'cancelled')
+
+            setRescheduleRequestCount(rescheduleRequests || 0)
 
             const { data: logs, error: logsError } = await supabase
                 .from('activity_logs')
@@ -196,6 +213,8 @@ function AdminDashboard() {
         { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected' },
         { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled' },
         { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules' },
+        { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules', urgent: true },
+        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules', urgent: true },
     ]
 
     if (loading) {
@@ -227,7 +246,15 @@ function AdminDashboard() {
                         style={{ textAlign: 'left', margin: 0 }}
                         onClick={() => navigate(stat.to)}
                     >
-                        <span style={{ display: 'block', fontSize: 26, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>
+                        <span
+                            style={{
+                                display: 'block',
+                                fontSize: 26,
+                                fontWeight: 700,
+                                color: stat.urgent && stat.value > 0 ? 'var(--red)' : 'var(--blue)',
+                                marginBottom: 4,
+                            }}
+                        >
                             {stat.value}
                         </span>
                         <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>{stat.label}</span>

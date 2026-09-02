@@ -20,6 +20,8 @@ function EmployeeDashboard() {
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
     const [todaySchedules, setTodaySchedules] = useState([])
+    const [missedCount, setMissedCount] = useState(0)
+    const [rescheduleRequestCount, setRescheduleRequestCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
 
@@ -95,6 +97,20 @@ function EmployeeDashboard() {
             }
 
             setRequests(requestData || [])
+
+            const myRequestIds = (requestData || []).map((r) => r.request_id)
+
+            if (myRequestIds.length > 0) {
+                const { data: attentionSchedules } = await supabase
+                    .from('claim_schedules')
+                    .select('claim_schedule_id, request_id, status, reschedule_requested_at')
+                    .in('request_id', myRequestIds)
+                    .neq('status', 'cancelled')
+
+                const rows = attentionSchedules || []
+                setMissedCount(rows.filter((s) => s.status === 'missed').length)
+                setRescheduleRequestCount(rows.filter((s) => s.reschedule_requested_at).length)
+            }
 
             const today = new Date().toISOString().slice(0, 10)
 
@@ -197,6 +213,8 @@ function EmployeeDashboard() {
                     { label: 'Processing', value: processingCount, to: '/employee/processing' },
                     { label: 'Completed', value: completedCount, to: '/employee/requests?status=completed' },
                     { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },
+                    { label: 'Missed Claims', value: missedCount, to: '/employee/claim-schedule', urgent: true },
+                    { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/employee/claim-schedule', urgent: true },
                 ].map((stat) => (
                     <button
                         key={stat.label}
@@ -204,7 +222,15 @@ function EmployeeDashboard() {
                         style={{ textAlign: 'left', margin: 0 }}
                         onClick={() => navigate(stat.to)}
                     >
-                        <span style={{ display: 'block', fontSize: 26, fontWeight: 700, color: 'var(--blue)', marginBottom: 4 }}>
+                        <span
+                            style={{
+                                display: 'block',
+                                fontSize: 26,
+                                fontWeight: 700,
+                                color: stat.urgent && stat.value > 0 ? 'var(--red)' : 'var(--blue)',
+                                marginBottom: 4,
+                            }}
+                        >
                             {stat.value}
                         </span>
                         <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>{stat.label}</span>
