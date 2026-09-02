@@ -44,6 +44,16 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
         setMessage('')
         setEnrolling(true)
 
+        // A previous enrollment attempt that was never verified (e.g. the
+        // user closed the QR step, or it failed to render) leaves an
+        // "unverified" factor behind, which blocks re-enrolling under the
+        // same name. Clear those out first so this always starts fresh.
+        const { data: existingFactors } = await supabase.auth.mfa.listFactors()
+        const stale = (existingFactors?.totp || []).filter((f) => f.status === 'unverified')
+        for (const factor of stale) {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id })
+        }
+
         const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
 
         if (enrollError) {
