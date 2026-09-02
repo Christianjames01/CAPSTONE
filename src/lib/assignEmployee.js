@@ -5,11 +5,6 @@ const OPEN_STATUSES = [
     'processing', 'lacking_requirements', 'ready_for_claiming',
 ]
 
-// Finds the employee assigned to a given college/program. If more than one
-// active employee is assigned to the same college/program (e.g. two
-// employees both marked primary for the same program), picks the one with
-// the fewest currently open requests so workload stays balanced instead of
-// arbitrarily picking whichever row the database happens to return first.
 export async function findAssignedEmployee(collegeId, programId) {
     const { data: assignments, error: assignmentError } = await supabase
         .from('employee_assignments')

@@ -44,10 +44,6 @@ function StudentLayout() {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
 
-    // Lock background scrolling while the drawer is open -- otherwise
-    // scrolling the page behind it can make the fixed-position drawer
-    // visibly jump on mobile browsers (address bar collapsing shifts the
-    // fixed-position reference frame).
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
         return () => { document.body.style.overflow = '' }
@@ -66,8 +62,6 @@ function StudentLayout() {
         }
     }, [])
 
-    // Students are limited to one active device -- if another login stamps
-    // a new session id on this account, sign this tab out immediately.
     useEffect(() => {
         let unwatch = () => {}
 

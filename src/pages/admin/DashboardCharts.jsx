@@ -1,10 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import './DashboardCharts.css'
 
-// ==========================================
-// SHARED HELPERS
-// ==========================================
-
 const formatDayLabel = (isoDate) =>
     new Date(`${isoDate}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
 
@@ -35,10 +31,6 @@ const donutSegmentPath = (cx, cy, rOuter, rInner, startAngle, endAngle) => {
         'Z',
     ].join(' ')
 }
-
-// ==========================================
-// STATUS DONUT CHART (part-to-whole, <= 6 segments)
-// ==========================================
 
 export function StatusDonutChart({ data }) {
     const [hoverKey, setHoverKey] = useState(null)
@@ -161,10 +153,6 @@ export function StatusDonutChart({ data }) {
         </div>
     )
 }
-
-// ==========================================
-// REQUESTS TREND LINE CHART (single series, over time)
-// ==========================================
 
 export function RequestsTrendChart({ data }) {
     const [hoverIndex, setHoverIndex] = useState(null)

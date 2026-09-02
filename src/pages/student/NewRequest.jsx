@@ -8,8 +8,6 @@ import { IconX } from './icons'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
-// Maps a document's code to which sample layout best represents it.
-// Anything not listed falls back to 'letter' (a formal certification body).
 const SAMPLE_LAYOUT_BY_CODE = {
     TOR: 'grades',
     COG: 'grades',
@@ -142,7 +140,6 @@ function NewRequest() {
         } else {
             setDocuments(data || [])
 
-            // Pre-select a document type when arriving via a "Request again" link.
             const requestedTypeId = searchParams.get('document')
             if (requestedTypeId && (data || []).some((d) => d.document_type_id === requestedTypeId)) {
                 setSelectedDocument(requestedTypeId)
@@ -188,7 +185,6 @@ function NewRequest() {
         setLoading(true)
 
         try {
-            // 1. Get logged-in user
             const {
                 data: { user },
                 error: userError
@@ -198,7 +194,6 @@ function NewRequest() {
                 throw new Error('You are not logged in.')
             }
 
-            // 2. Get student's record
             const { data: student, error: studentError } = await supabase
                 .from('students')
                 .select(`
@@ -213,8 +208,6 @@ function NewRequest() {
                 throw new Error('Student record could not be found.')
             }
 
-            // 2.5. Enforce request limit: at most 2 active requests per
-            // document type at once.
             const { data: existingRequests, error: existingError } = await supabase
                 .from('document_requests')
                 .select('document_type_id, status')
@@ -239,9 +232,6 @@ function NewRequest() {
                 )
             }
 
-            // 3. Find the registrar assigned to this college/program. If more
-            // than one active employee is assigned to the same college/program,
-            // this picks whichever currently has the fewest open requests.
             const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
 
             if (!assignedEmployeeId) {
@@ -250,7 +240,6 @@ function NewRequest() {
                 )
             }
 
-            // 4. Get selected document
             const document = documents.find(
                 (item) =>
                     item.document_type_id === selectedDocument
@@ -260,11 +249,8 @@ function NewRequest() {
                 throw new Error('Selected document could not be found.')
             }
 
-            // 5. Calculate amount
             const unitFee = Number(document.fee || 0)
 
-            // 6. Insert request -- request_number is assigned by a
-            // database trigger (short, sequential, collision-free).
             const { data: request, error: requestError } =
                 await supabase
                     .from('document_requests')
@@ -288,8 +274,6 @@ function NewRequest() {
                 )
             }
 
-            // 8. Seed the requirements this document type needs so the
-            // student can upload them and the registrar can review them.
             const { data: requiredDocs, error: requirementsError } = await supabase
                 .from('document_requirements')
                 .select('requirement_id')
@@ -313,7 +297,6 @@ function NewRequest() {
                 }
             }
 
-            // 9. Notify the assigned employee that a new request is pending.
             const { data: assignedEmployeeRow } = await supabase
                 .from('employees')
                 .select('user_id')
@@ -569,12 +552,6 @@ function NewRequest() {
     )
 }
 
-// ==========================================
-// SAMPLE DOCUMENT PREVIEW
-// Each layout renders a distinct, structured mockup (like TOR's grades
-// table) instead of one flat placeholder reused for every document.
-// ==========================================
-
 function SealImage({ cx, cy, r, grayscale = false }) {
     const clipId = `seal-clip-${cx}-${cy}-${r}`
     const filterId = `seal-gray-${cx}-${cy}-${r}`
@@ -625,10 +602,6 @@ function SampleHeader({ title }) {
 const REGISTRAR_HEAD_NAME = 'Jen Yee'
 const REGISTRAR_HEAD_TITLE = 'Registrar Head'
 
-// Long values (e.g. a full program or college name) shouldn't be cut off --
-// past a natural-fit length, compress the glyph spacing so the whole string
-// still renders on one line within the column's width instead of
-// truncating it.
 const fitProps = (text, naturalFitChars, pxWidth) =>
     text && text.length > naturalFitChars
         ? { textLength: pxWidth, lengthAdjust: 'spacingAndGlyphs' }
@@ -691,17 +664,10 @@ function StudentInfoRow({ y = 110, student }) {
     )
 }
 
-// Two sample major-subject rows [prefix, title] tailored to the student's
-// actual program, so the sample preview never shows a mismatched major (e.g.
-// IT subjects for a Psychology student). Falls back to generic GE subjects
-// for any program not recognized below. The course code's year digit is
-// filled in separately by buildCourseCode() based on the student's actual
-// year level, so a 4th year Psychology student sees "PSYCH 401", not "101".
 function getMajorSubjectPrefixes(programName = '') {
     const p = programName.toLowerCase()
     const has = (...keywords) => keywords.every((k) => p.includes(k))
 
-    // Graduate degree titles that would otherwise false-match a bare-word check below.
     if (has('educational management')) return [['EDUC', 'Educational Leadership'], ['EDUC', 'School Administration']]
     if (has('theology')) return [['THEO', 'Foundations of Theology'], ['THEO', 'Biblical Studies']]
     if (has('guidance and counseling')) return [['GC', 'Theories of Counseling'], ['GC', 'Psychological Assessment']]
@@ -756,16 +722,11 @@ function getMajorSubjectPrefixes(programName = '') {
     return [['GE', 'Purposive Communication'], ['GE', 'Mathematics in the Modern World']]
 }
 
-// Builds a course code like "PSYCH 401" -- the middle digit reflects the
-// student's actual year level (defaulting to 1st year when unknown), and the
-// trailing digit distinguishes the two sample subjects.
 function buildCourseCode(prefix, yearLevel, seq) {
     const yearDigit = String(parseInt(yearLevel, 10) || 1)
     return `${prefix} ${yearDigit}0${seq}`
 }
 
-// Returns two sample [code, title] rows tailored to both the student's
-// program and year level.
 function getMajorSubjects(programName, yearLevel) {
     const [[prefix1, title1], [prefix2, title2]] = getMajorSubjectPrefixes(programName)
     return [

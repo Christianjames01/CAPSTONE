@@ -2,9 +2,6 @@ import { supabase } from './supabase'
 import { logActivity } from './activityLog'
 import { notifyStudentByStudentId } from './notify'
 
-// Marks a credential revoked and tells the student why. The public verify
-// page reads credentials.status directly, so this is what actually stops
-// a revoked credential from showing as valid.
 export async function revokeCredential({ credentialId, credentialNumber, requestNumber, studentId, reason, employeeId, userId }) {
     const { data: { user } } = await supabase.auth.getUser()
 

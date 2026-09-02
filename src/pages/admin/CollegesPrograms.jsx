@@ -59,8 +59,6 @@ function CollegesPrograms() {
         await logActivity({ userId: user.id, action, tableName, recordId, description })
     }
 
-    // ===================== COLLEGES =====================
-
     const openNewCollege = () => { setCollegeForm(EMPTY_COLLEGE); setShowCollegeForm(true) }
     const openEditCollege = (c) => { setCollegeForm(c); setShowCollegeForm(true) }
 
@@ -122,8 +120,6 @@ function CollegesPrograms() {
             notifyError(err.message || 'Failed to update college status.')
         }
     }
-
-    // ===================== PROGRAMS =====================
 
     const openNewProgram = () => { setProgramForm(EMPTY_PROGRAM); setShowProgramForm(true) }
     const openEditProgram = (p) => { setProgramForm(p); setShowProgramForm(true) }

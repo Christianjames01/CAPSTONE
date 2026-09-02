@@ -13,8 +13,6 @@ const IN_PROGRESS_STATUSES = [
     'processing', 'lacking_requirements',
 ]
 
-// Statuses where the ball is in the student's court, and what to tell them
-// to do about it.
 const ACTION_NEEDED = {
     payment_pending: { label: 'Payment needed', cta: 'Upload receipt →', to: (id) => `/student/request/${id}/upload-receipt` },
     lacking_requirements: { label: 'Requirement needs fixing', cta: 'Submit requirements →', to: (id) => `/student/request/${id}/requirements` },
@@ -22,8 +20,6 @@ const ACTION_NEEDED = {
 
 const STEPPER_STEPS = ['Submitted', 'Processing', 'Ready', 'Completed']
 
-// Which stepper index (0-3) a request's status maps to, or null for
-// rejected/cancelled requests where the linear stepper doesn't apply.
 const stepperStage = (status) => {
     if (status === 'rejected' || status === 'cancelled') return null
     if (status === 'completed') return 3

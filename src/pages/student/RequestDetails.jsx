@@ -74,7 +74,6 @@ const STATUS_META = {
 const statusMeta = (status) =>
     STATUS_META[status] || { label: status, tone: 'info', title: 'Status Update', message: '' }
 
-// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
 function formatTime(time) {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -122,19 +121,11 @@ function RequestDetails() {
             console.log('REQUEST ID:', requestId)
             console.log('================================')
 
-            // ==========================================
-            // 1. CHECK REQUEST ID
-            // ==========================================
-
             if (!requestId || requestId === 'undefined') {
                 throw new Error(
                     'Invalid request ID. No request ID was provided.'
                 )
             }
-
-            // ==========================================
-            // 2. GET CURRENT USER
-            // ==========================================
 
             const {
                 data: { user },
@@ -155,10 +146,6 @@ function RequestDetails() {
             }
 
             console.log('AUTH USER:', user.id)
-
-            // ==========================================
-            // 3. FIND STUDENT
-            // ==========================================
 
             const {
                 data: student,
@@ -190,10 +177,6 @@ function RequestDetails() {
                 'STUDENT ID:',
                 student.student_id
             )
-
-            // ==========================================
-            // 4. LOAD REQUEST
-            // ==========================================
 
             const {
                 data: requestData,
@@ -429,8 +412,6 @@ function RequestDetails() {
         try {
             setRequestingReschedule(true)
 
-            // Records the request and blocks a second one for this
-            // schedule server-side (not just via the disabled button).
             const { error: rpcError } = await supabase.rpc('request_claim_reschedule', {
                 p_claim_schedule_id: claimSchedule.claim_schedule_id,
                 p_reason: reason.trim(),
@@ -470,10 +451,6 @@ function RequestDetails() {
         }
     }
 
-    // ==========================================
-    // LOADING
-    // ==========================================
-
     if (loading) {
         return (
             <div>
@@ -483,10 +460,6 @@ function RequestDetails() {
             </div>
         )
     }
-
-    // ==========================================
-    // ERROR
-    // ==========================================
 
     if (errorMessage) {
         return (
@@ -506,10 +479,6 @@ function RequestDetails() {
         )
     }
 
-    // ==========================================
-    // REQUEST NOT FOUND
-    // ==========================================
-
     if (!request) {
         return (
             <div>
@@ -524,10 +493,6 @@ function RequestDetails() {
         )
     }
 
-    // ==========================================
-    // MAIN PAGE
-    // ==========================================
-
     return (
         <div>
             <button className="student-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/student/my-requests')}>
@@ -538,8 +503,6 @@ function RequestDetails() {
                 <h1>{documentName || 'Request Details'}</h1>
                 <p>View the status and details of your document request.</p>
             </div>
-
-            {/* REQUEST CARD */}
 
             <div className="student-card">
                 <div className="student-list-card-header" style={{ marginBottom: 16 }}>
@@ -672,8 +635,6 @@ function RequestDetails() {
                     </div>
                 )}
 
-                {/* STATUS */}
-
                 <div className={`student-notice tone-${statusMeta(request.status).tone}`}>
                     <strong>{statusMeta(request.status).title}</strong>
                     <p>{statusMeta(request.status).message}</p>
@@ -689,8 +650,6 @@ function RequestDetails() {
                         {cancelling ? 'Cancelling...' : 'Cancel this request'}
                     </button>
                 )}
-
-                {/* CLAIM SCHEDULE */}
 
                 {claimSchedule && (
                     <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
@@ -756,8 +715,6 @@ function RequestDetails() {
                     </div>
                 )}
 
-                {/* REQUIREMENTS */}
-
                 {requirements.length > 0 && (
                     <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
                         <h3 style={{ fontSize: 15, marginBottom: 10 }}>Requirements</h3>
@@ -781,8 +738,6 @@ function RequestDetails() {
                         </button>
                     </div>
                 )}
-
-                {/* UPLOAD RECEIPT */}
 
                 {(request.status === 'pending' || request.status === 'processing') && (
                     <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>

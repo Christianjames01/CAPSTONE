@@ -18,9 +18,6 @@ function ResetPassword() {
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-        // The reset link's #access_token is picked up automatically by the
-        // Supabase client on load and turned into a (recovery-scoped)
-        // session -- if that didn't happen, the link is invalid/expired.
         supabase.auth.getSession().then(({ data: { session } }) => {
             setLinkValid(!!session)
             setCheckingLink(false)

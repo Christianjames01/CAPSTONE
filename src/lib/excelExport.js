@@ -3,15 +3,6 @@ const HEADER_FONT = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 }
 const BORDER = { style: 'thin', color: { argb: 'FFE1E4EA' } }
 const STRIPE_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F9FC' } }
 
-// sheets: [{
-//   name, columns: [{ header, key, width }], rows: [{...}],
-//   letterhead?: { logoBase64, title, subtitle } — when set, draws the HCDC
-//   logo + a title/subtitle above the table instead of starting the header
-//   row at the very top of the sheet.
-// }]
-//
-// exceljs is ~1MB — loaded on demand here so students/employees never pay
-// for it; only the Head, only when they actually click an export button.
 export async function exportToExcel(filename, sheets) {
     const { default: ExcelJS } = await import('exceljs')
     const workbook = new ExcelJS.Workbook()

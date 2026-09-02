@@ -1,11 +1,3 @@
-// Lets an active employee/registrar_head/admin set a new password for a
-// student's account directly, as a fallback when the student can't
-// receive (or never gets) the email-based Forgot Password link. Runs
-// with the service role, since only the Auth admin API can set another
-// user's password -- this is never something the client SDK can do.
-//
-// verify_jwt is left on (the default) so only a genuinely logged-in user
-// can call this at all; the caller's own role is then checked below.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -59,9 +51,6 @@ Deno.serve(async (req) => {
             return json({ error: 'A student user ID and a password of at least 6 characters are required.' }, 400)
         }
 
-        // Confirm the target is actually a student -- staff resetting a
-        // fellow staff member's or admin's password is not this endpoint's
-        // job, and allowing it would be a privilege-escalation path.
         const { data: studentRow } = await supabaseAdmin
             .from('students')
             .select('student_id, student_number')
@@ -97,9 +86,6 @@ Deno.serve(async (req) => {
             description: `Reset the login password for student "${studentRow.student_number}" (by ${actorName}).`,
         })
 
-        // Notify the student directly (in-app + email) so they know this
-        // happened, even though they weren't the one who requested it --
-        // if it wasn't legitimate, this is how they'd find out.
         await supabaseAdmin.from('notifications').insert({
             user_id: studentUserId,
             title: 'Your password was reset',

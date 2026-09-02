@@ -5,8 +5,6 @@ import { notifyError, notifyWarning } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonStatGrid } from '../../components/Skeleton'
 import './AdminPages.css'
 
-// Days between a request being submitted and marked completed, or null
-// if either timestamp is missing (not yet completed).
 const turnaroundDays = (r) => {
     if (!r.completed_at || !r.requested_at) return null
     const ms = new Date(r.completed_at).getTime() - new Date(r.requested_at).getTime()
@@ -15,8 +13,6 @@ const turnaroundDays = (r) => {
 
 const average = (nums) => (nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null)
 
-// Shows the smallest sensible unit -- minutes/hours for fast turnarounds
-// instead of a confusing fraction of a day like "0.3d".
 const formatTurnaround = (days) => {
     if (days === null) return 'N/A'
 
@@ -148,8 +144,6 @@ function Reports() {
         }
     }
 
-    // Shared loader: pulls every request plus the student/document/employee
-    // details needed to build a detail row, used by both export buttons.
     const loadDetailedRequestRows = async () => {
         const { data: fullRequests, error: requestError } = await supabase
             .from('document_requests')

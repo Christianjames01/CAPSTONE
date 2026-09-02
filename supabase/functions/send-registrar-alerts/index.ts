@@ -1,9 +1,3 @@
-// Runs once a day on a Cron Trigger. Flags two things a registrar head has
-// no other way of noticing without manually checking: requests stuck too
-// long in an in-progress status, and requests with no employee assigned at
-// all (e.g. left behind after an employee record was deleted -- the FK is
-// ON DELETE SET NULL). One digest notification per active head/admin;
-// inserting into `notifications` also triggers the existing email pipeline.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')

@@ -1,6 +1,3 @@
-// Shared email sender used by both notification email functions.
-// Sends via Gmail SMTP (an app password on a real Gmail/Workspace
-// account), since Mailgun was never activated.
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 
 const GMAIL_USER = Deno.env.get('GMAIL_USER')

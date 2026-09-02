@@ -1,8 +1,5 @@
 import { supabase } from './supabase'
 
-// Brute-force protection: checked before attempting sign-in, and updated
-// after, via the login-guard Edge Function (needs the service role since
-// there's no authenticated session yet at this point).
 export async function checkLoginLock(email) {
     const { data, error } = await supabase.functions.invoke('login-guard', {
         body: { email, action: 'check' },

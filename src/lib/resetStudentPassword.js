@@ -2,9 +2,6 @@ import { supabase } from './supabase'
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-student-password`
 
-// Generates a random, easy-to-read temporary password to hand to a
-// student directly (e.g. over the phone or in person) when they can't
-// use the email-based Forgot Password flow.
 export function generateTempPassword() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
     let password = ''

@@ -27,8 +27,6 @@ function Students() {
         loadPendingVerifications()
     }, [])
 
-    // The head/admin sees every pending registration, regardless of
-    // program -- unlike employees, who only see their assigned ones.
     const loadPendingVerifications = async () => {
         const { data: pending } = await supabase
             .from('students')
@@ -163,9 +161,6 @@ function Students() {
         }
     }
 
-    // Accounts that registered (e.g. via Google sign-in) but never finished
-    // the "Complete your profile" step, so they have no row in "students"
-    // yet -- otherwise they'd be invisible here even though they can log in.
     const loadPendingProfiles = async (studentRows) => {
         const { data: studentProfiles, error: profilesError } = await supabase
             .from('profiles')
@@ -268,8 +263,6 @@ function Students() {
                 throw new Error('Failed to update student status: ' + updateError.message)
             }
 
-            // profiles.status is what actually gates login (see Login.jsx / ProtectedRoute.jsx),
-            // so it has to be kept in sync with the student record's status.
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({ status: nextStatus })
@@ -560,7 +553,6 @@ function Students() {
                     {term.trim() ? `No students matched "${term}".` : 'No students found.'}
                 </div>
             ) : term.trim() ? (
-                // Search results: show matches directly, grouped by program.
                 groupedResults.map((group) => (
                     <div key={group.key} style={{ marginBottom: 28 }}>
                         <div className="admin-page-header-row" style={{ marginBottom: 14 }}>
@@ -577,7 +569,6 @@ function Students() {
                     </div>
                 ))
             ) : selectedGroup ? (
-                // Drilled into one college/course: show just its students.
                 <>
                     <button
                         className="admin-link-button"
@@ -600,8 +591,6 @@ function Students() {
                     {selectedGroup.students.map(renderStudentCard)}
                 </>
             ) : (
-                // Default browse view: a table of colleges & courses, not
-                // every student's card at once -- click a row to drill in.
                 <div className="admin-table-wrapper">
                     <table className="admin-table">
                         <thead>

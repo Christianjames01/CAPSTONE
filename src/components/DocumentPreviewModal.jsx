@@ -8,8 +8,6 @@ function getExtension(nameOrUrl) {
     return clean.split('.').pop().toLowerCase()
 }
 
-// Full-screen in-app viewer for a receipt/requirement file, so staff never
-// have to leave the app in a new tab just to look at what a student uploaded.
 function DocumentPreviewModal({ url, fileName, onClose }) {
     if (!url) return null
 

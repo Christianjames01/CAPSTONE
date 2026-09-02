@@ -74,9 +74,6 @@ function ProtectedRoute({ children, allowedRoles }) {
         allowedRoles &&
         !allowedRoles.includes(profile.role)
     ) {
-        // Wrong account for this section (e.g. a student link opened while
-        // signed in as an employee) -- send them to where they actually
-        // belong instead of a dead end.
         return <Navigate to={dashboardPathForRole(profile.role) || '/'} replace />
     }
 

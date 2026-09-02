@@ -2,11 +2,6 @@ import { useEffect, useState } from 'react'
 import { generateQrDataUrl, verificationUrl } from '../lib/qrcode'
 import './CredentialQr.css'
 
-// Shows a credential's verify link as both a QR code and plain text,
-// for staff to hand to a student or for a student to keep with their
-// document -- anyone can scan/visit it to confirm authenticity, no
-// login required. Still shows the QR when revoked, since scanning it
-// is exactly how someone finds out it's no longer valid.
 function CredentialQr({ credentialNumber, status, revocationReason }) {
     const [qrDataUrl, setQrDataUrl] = useState('')
 

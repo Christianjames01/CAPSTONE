@@ -35,10 +35,6 @@ function UploadReceipt() {
             setLoading(true)
             setError('')
 
-            // ================================
-            // GET CURRENT USER
-            // ================================
-
             const {
                 data: { user },
                 error: userError
@@ -53,10 +49,6 @@ function UploadReceipt() {
                     'You are not logged in.'
                 )
             }
-
-            // ================================
-            // FIND STUDENT
-            // ================================
 
             const {
                 data: studentData,
@@ -78,10 +70,6 @@ function UploadReceipt() {
             }
 
             setStudent(studentData)
-
-            // ================================
-            // FIND REQUEST
-            // ================================
 
             const {
                 data: requestData,
@@ -114,10 +102,6 @@ function UploadReceipt() {
             }
 
             setRequest(requestData)
-
-            // ================================
-            // CHECK EXISTING RECEIPT
-            // ================================
 
             const {
                 data: existingReceipt,
@@ -175,10 +159,6 @@ function UploadReceipt() {
         setError('')
         setMessage('')
 
-        // ================================
-        // VALIDATION
-        // ================================
-
         if (!receiptFile) {
             setError(
                 'Please select your official receipt file.'
@@ -194,10 +174,6 @@ function UploadReceipt() {
         }
 
         const paid = Number(request.total_amount)
-
-        // ================================
-        // FILE VALIDATION
-        // ================================
 
         const allowedTypes = [
             'image/jpeg',
@@ -230,10 +206,6 @@ function UploadReceipt() {
         try {
             setUploading(true)
 
-            // ================================
-            // CREATE UNIQUE FILE NAME
-            // ================================
-
             const fileExtension =
                 receiptFile.name
                     .split('.')
@@ -250,10 +222,6 @@ function UploadReceipt() {
                 'Uploading receipt:',
                 filePath
             )
-
-            // ================================
-            // UPLOAD TO SUPABASE STORAGE
-            // ================================
 
             const {
                 error: uploadError
@@ -275,10 +243,6 @@ function UploadReceipt() {
                 )
             }
 
-            // ================================
-            // SAVE DATABASE RECORD
-            // ================================
-
             const {
                 data: existingReceipt
             } = await supabase
@@ -297,10 +261,6 @@ function UploadReceipt() {
             let databaseError = null
 
             if (existingReceipt) {
-
-                // ============================
-                // UPDATE EXISTING RECEIPT
-                // ============================
 
                 const {
                     error
@@ -340,10 +300,6 @@ function UploadReceipt() {
 
             } else {
 
-                // ============================
-                // CREATE NEW RECEIPT
-                // ============================
-
                 const {
                     error
                 } = await supabase
@@ -378,7 +334,6 @@ function UploadReceipt() {
             }
 
             if (databaseError) {
-                // Remove uploaded file if DB insert fails
                 await supabase.storage
                     .from('official-receipts')
                     .remove([filePath])
@@ -388,12 +343,6 @@ function UploadReceipt() {
                     databaseError.message
                 )
             }
-
-            // ================================
-            // MOVE REQUEST TO "RECEIPT UPLOADED"
-            // SO IT SHOWS UP IN THE REGISTRAR'S
-            // VERIFICATION QUEUE
-            // ================================
 
             const { error: requestStatusError } = await supabase
                 .from('document_requests')
@@ -411,17 +360,12 @@ function UploadReceipt() {
                 )
             }
 
-            // ================================
-            // SUCCESS
-            // ================================
-
             setMessage(
                 'Official receipt uploaded successfully. Please wait for the Registrar to verify your payment.'
             )
 
             setReceiptFile(null)
 
-            // Clear file input
             const fileInput =
                 document.getElementById(
                     'receipt-file'
@@ -447,10 +391,6 @@ function UploadReceipt() {
         }
     }
 
-    // ================================
-    // LOADING
-    // ================================
-
     if (loading) {
         return (
             <div>
@@ -459,10 +399,6 @@ function UploadReceipt() {
             </div>
         )
     }
-
-    // ================================
-    // ERROR
-    // ================================
 
     if (error && !request) {
         return (
@@ -478,10 +414,6 @@ function UploadReceipt() {
         )
     }
 
-    // ================================
-    // MAIN PAGE
-    // ================================
-
     return (
         <div>
             <button className="student-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/student/request/${requestId}`)}>
@@ -492,8 +424,6 @@ function UploadReceipt() {
                 <h1>Upload Official Receipt</h1>
                 <p>Submit your official receipt for Registrar verification.</p>
             </div>
-
-            {/* REQUEST SUMMARY */}
 
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Request Information</h2>
@@ -537,8 +467,6 @@ function UploadReceipt() {
                 )}
             </div>
 
-            {/* UPLOAD FORM */}
-
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
 
@@ -546,7 +474,6 @@ function UploadReceipt() {
                 {message && <div className="student-success-box">{message}</div>}
 
                 <form onSubmit={handleUpload}>
-                    {/* FILE */}
                     <div className="form-group">
                         <label className="form-label">Receipt File</label>
 
@@ -570,7 +497,6 @@ function UploadReceipt() {
                         )}
                     </div>
 
-                    {/* SUBMIT */}
                     <button type="submit" className="auth-submit" style={{ width: 'auto', padding: '11px 20px', marginTop: 20 }} disabled={uploading}>
                         {uploading ? 'Uploading...' : 'Upload Official Receipt'}
                     </button>

@@ -7,11 +7,9 @@ import PasswordRequirements from '../../components/PasswordRequirements'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function Register() {
-    // Account
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
-    // Personal
     const [firstName, setFirstName] = useState('')
     const [middleName, setMiddleName] = useState('')
     const [lastName, setLastName] = useState('')
@@ -20,13 +18,11 @@ function Register() {
     const [birthDate, setBirthDate] = useState('')
     const [birthPlace, setBirthPlace] = useState('')
 
-    // Academic
     const [studentNumber, setStudentNumber] = useState('')
     const [collegeId, setCollegeId] = useState('')
     const [programId, setProgramId] = useState('')
     const [yearLevel, setYearLevel] = useState('')
 
-    // Contact
     const [address, setAddress] = useState('')
     const [emergencyContactName, setEmergencyContactName] = useState('')
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
@@ -39,7 +35,6 @@ function Register() {
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
 
-    // Strips non-digits and caps PH mobile numbers at 11 digits (09XXXXXXXXX)
     const handlePhoneInput = (setter) => (e) => {
         setter(e.target.value.replace(/\D/g, '').slice(0, 11))
     }
@@ -111,8 +106,6 @@ function Register() {
             setMessage(error.message)
             setGoogleLoading(false)
         }
-        // On success, the browser is redirected to Google, so there's
-        // nothing further to do here.
     }
 
     const handleRegister = async (e) => {
@@ -128,8 +121,6 @@ function Register() {
         setMessage('')
         setStatus('idle')
 
-        // 1. Create the auth user. Name/suffix/phone are passed as signup
-        // metadata so the existing "profiles" trigger can populate them.
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -159,9 +150,6 @@ function Register() {
             return
         }
 
-        // 2. "students" has no auto-create trigger, so insert it directly.
-        // NOTE: if this project requires email confirmation, there is no
-        // active session yet and this insert may be blocked by RLS.
         const { error: studentError } = await supabase
             .from('students')
             .insert({

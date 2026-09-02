@@ -9,14 +9,11 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import './EmployeePages.css'
 
-// Statuses where the request is still awaiting something and hasn't been
-// flagged yet -- these are the ones eligible for the "overdue" warning.
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
 ]
 const OVERDUE_DAYS = 2
 
-// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
 function formatTime(time) {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -67,10 +64,6 @@ function EmployeeRequestDetails() {
         loadRequest()
     }, [requestId])
 
-    // ==========================================
-    // LOAD REQUEST
-    // ==========================================
-
     const loadRequest = async () => {
         try {
             setLoading(true)
@@ -86,10 +79,6 @@ function EmployeeRequestDetails() {
             if (authError || !user) {
                 throw new Error('You are not logged in.')
             }
-
-            // ==========================================
-            // EMPLOYEE
-            // ==========================================
 
             const {
                 data: employee,
@@ -111,10 +100,6 @@ function EmployeeRequestDetails() {
                     'Employee record could not be found.'
                 )
             }
-
-            // ==========================================
-            // REQUEST
-            // ==========================================
 
             const {
                 data: requestData,
@@ -168,10 +153,6 @@ function EmployeeRequestDetails() {
                 setDocumentName(doc?.document_name || 'Document')
             }
 
-            // ==========================================
-            // STUDENT
-            // ==========================================
-
             const {
                 data: studentData,
                 error: studentError
@@ -196,10 +177,6 @@ function EmployeeRequestDetails() {
             }
 
             setStudent(studentData || null)
-
-            // ==========================================
-            // OFFICIAL RECEIPT
-            // ==========================================
 
             const {
                 data: receiptData,
@@ -246,10 +223,6 @@ function EmployeeRequestDetails() {
                 receiptData || null
             )
 
-            // ==========================================
-            // RECEIPT STORAGE URL
-            // ==========================================
-
             if (
                 receiptData &&
                 receiptData.receipt_file_path
@@ -278,15 +251,7 @@ function EmployeeRequestDetails() {
                 }
             }
 
-            // ==========================================
-            // LOAD REQUIREMENTS
-            // ==========================================
-
             await loadRequirements(requestId)
-
-            // ==========================================
-            // LOAD CLAIM SCHEDULE
-            // ==========================================
 
             const { data: scheduleRow, error: scheduleError } = await supabase
                 .from('claim_schedules')
@@ -302,14 +267,6 @@ function EmployeeRequestDetails() {
             } else {
                 setClaimSchedule(scheduleRow || null)
             }
-
-            // ==========================================
-            // LOAD ACTIVITY HISTORY FOR THIS REQUEST
-            // Log entries don't share one foreign key across every
-            // action type (some point to a requirement, a credential,
-            // a claim schedule...), but every description embeds the
-            // quoted request number, so match on that instead.
-            // ==========================================
 
             const { data: activityRows, error: activityError } = await supabase
                 .from('activity_logs')
@@ -367,10 +324,6 @@ function EmployeeRequestDetails() {
         }
     }
 
-    // ==========================================
-    // LOAD REQUIREMENTS
-    // ==========================================
-
     const loadRequirements = async (currentRequestId) => {
         try {
             const {
@@ -424,10 +377,6 @@ function EmployeeRequestDetails() {
 
             setRequirements(data || [])
 
-            // ==========================================
-            // CREATE SIGNED URL FOR EACH FILE
-            // ==========================================
-
             const urls = {}
 
             for (const requirement of data || []) {
@@ -469,10 +418,6 @@ function EmployeeRequestDetails() {
             setRequirements([])
         }
     }
-
-    // ==========================================
-    // VERIFY PAYMENT
-    // ==========================================
 
     const verifyPayment = async () => {
         if (!receipt) {
@@ -592,10 +537,6 @@ function EmployeeRequestDetails() {
             setProcessing(false)
         }
     }
-
-    // ==========================================
-    // REJECT PAYMENT
-    // ==========================================
 
     const rejectPayment = async () => {
         if (!receipt) {
@@ -723,10 +664,6 @@ function EmployeeRequestDetails() {
         }
     }
 
-    // ==========================================
-    // GET CURRENT EMPLOYEE
-    // ==========================================
-
     const getCurrentEmployee = async () => {
         const {
             data: { user },
@@ -759,10 +696,6 @@ function EmployeeRequestDetails() {
 
         return employee
     }
-
-    // ==========================================
-    // APPROVE REQUIREMENT
-    // ==========================================
 
     const approveRequirement = async (
         requirement
@@ -846,10 +779,6 @@ function EmployeeRequestDetails() {
             setRequirementProcessing(false)
         }
     }
-
-    // ==========================================
-    // REJECT REQUIREMENT
-    // ==========================================
 
     const rejectRequirement = async () => {
         if (!selectedRequirement) {
@@ -939,10 +868,6 @@ function EmployeeRequestDetails() {
         }
     }
 
-    // ==========================================
-    // CHECK REQUIREMENTS
-    // ==========================================
-
     const getRequirementState = () => {
         const requiredRequirements =
             requirements.filter(
@@ -995,10 +920,6 @@ function EmployeeRequestDetails() {
             uploaded
         }
     }
-
-    // ==========================================
-    // START DOCUMENT PROCESSING
-    // ==========================================
 
     const startProcessing = async () => {
         if (!request) {
@@ -1126,10 +1047,6 @@ function EmployeeRequestDetails() {
         }
     }
 
-    // ==========================================
-    // GENERATE DIGITAL CREDENTIAL
-    // ==========================================
-
     const generateDigitalCredential = async () => {
         if (!request) {
             return
@@ -1155,12 +1072,6 @@ function EmployeeRequestDetails() {
 
             const employee =
                 await getCurrentEmployee()
-
-            // ==========================================
-            // CREATE CREDENTIAL RECORD
-            // credential_number is assigned by a database trigger
-            // (short, sequential, collision-free).
-            // ==========================================
 
             const {
                 data: credential,
@@ -1189,10 +1100,6 @@ function EmployeeRequestDetails() {
                     credentialError.message
                 )
             }
-
-            // ==========================================
-            // UPDATE REQUEST STATUS
-            // ==========================================
 
             const {
                 error: requestError
@@ -1263,10 +1170,6 @@ function EmployeeRequestDetails() {
         }
     }
 
-    // ==========================================
-    // CHANGE STATUS (MANUAL)
-    // ==========================================
-
     const applyStatusChange = async (targetStatus, reasonText) => {
         try {
             setChangingStatus(true)
@@ -1335,8 +1238,6 @@ function EmployeeRequestDetails() {
         await applyStatusChange(manualStatus, statusReason)
     }
 
-    // Quick action from the "overdue" warning banner -- skips the generic
-    // dropdown and asks directly for what's missing.
     const flagLackingRequirements = async () => {
         const { value: reason } = await Swal.fire({
             title: 'Flag as Lacking Requirements',
@@ -1353,10 +1254,6 @@ function EmployeeRequestDetails() {
         await applyStatusChange('lacking_requirements', reason)
     }
 
-    // ==========================================
-    // LOADING
-    // ==========================================
-
     if (loading) {
         return (
             <div>
@@ -1366,10 +1263,6 @@ function EmployeeRequestDetails() {
             </div>
         )
     }
-
-    // ==========================================
-    // ERROR
-    // ==========================================
 
     if (errorMessage) {
         return (
@@ -1402,10 +1295,6 @@ function EmployeeRequestDetails() {
 
     const isOverdue = daysSinceRequested >= OVERDUE_DAYS && OVERDUE_ELIGIBLE_STATUSES.includes(request.status)
 
-    // ==========================================
-    // MAIN
-    // ==========================================
-
     return (
         <div>
             <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/employee/dashboard')}>
@@ -1433,10 +1322,6 @@ function EmployeeRequestDetails() {
                     </button>
                 </div>
             )}
-
-            {/* ==========================================
-                REQUEST INFORMATION
-            ========================================== */}
 
             <div className="employee-card">
                 <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
@@ -1514,10 +1399,6 @@ function EmployeeRequestDetails() {
                     </div>
                 )}
             </div>
-
-                {/* ==========================================
-                    OFFICIAL RECEIPT
-                ========================================== */}
 
                 <div className="employee-card">
                     <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
@@ -1616,10 +1497,6 @@ function EmployeeRequestDetails() {
                         </>
                     )}
                 </div>
-
-                {/* ==========================================
-                    REQUIRED DOCUMENTS
-                ========================================== */}
 
                 <div className="employee-card">
                     <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
@@ -1737,8 +1614,6 @@ function EmployeeRequestDetails() {
                         </div>
                     )}
 
-                    {/* REQUIREMENT SUMMARY */}
-
                     {requirements.length > 0 && (
                         <div className={`employee-notice tone-${
                             requirementState.allApproved ? 'success' : requirementState.rejected ? 'danger' : 'warning'
@@ -1757,10 +1632,6 @@ function EmployeeRequestDetails() {
                         </div>
                     )}
                 </div>
-
-                {/* ==========================================
-                    START PROCESSING
-                ========================================== */}
 
                 {request.status === 'receipt_verified' && (
                     <div className="employee-card">
@@ -1796,10 +1667,6 @@ function EmployeeRequestDetails() {
                     </div>
                 )}
 
-                {/* ==========================================
-                    PROCESSING STATUS
-                ========================================== */}
-
                 {request.status === 'processing' && (
                     <div className="employee-card">
                         <div className="employee-notice tone-info">
@@ -1817,10 +1684,6 @@ function EmployeeRequestDetails() {
                         </div>
                     </div>
                 )}
-
-                {/* ==========================================
-                    DIGITAL CREDENTIAL
-                ========================================== */}
 
                 {request.status === 'ready_for_claiming' && (
                     <div className="employee-card">
@@ -1892,10 +1755,6 @@ function EmployeeRequestDetails() {
                     </div>
                 )}
 
-                {/* ==========================================
-                    REJECTION FORM
-                ========================================== */}
-
                 {showReject && (
                     <div className="employee-card">
                         <h2 style={{ fontSize: 16, marginBottom: 8 }}>
@@ -1942,10 +1801,6 @@ function EmployeeRequestDetails() {
                     </div>
                 )}
 
-                {/* ==========================================
-                    ACTIVITY HISTORY
-                ========================================== */}
-
                 {requestActivity.length > 0 && (
                     <div className="employee-card">
                         <h2 style={{ fontSize: 16, marginBottom: 16 }}>Activity History</h2>
@@ -1968,10 +1823,6 @@ function EmployeeRequestDetails() {
                         </div>
                     </div>
                 )}
-
-                {/* ==========================================
-                    CHANGE STATUS
-                ========================================== */}
 
                 <div className="employee-card">
                     <h2 style={{ fontSize: 16, marginBottom: 8 }}>Change Status</h2>

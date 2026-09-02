@@ -1,7 +1,5 @@
 import { supabase } from './supabase'
 
-// Best-effort activity log write. Never throws — a logging failure
-// should not block the action it's recording.
 export async function logActivity({ employeeId, userId, action, tableName, recordId, description }) {
     try {
         await supabase.from('activity_logs').insert({
