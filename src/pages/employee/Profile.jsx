@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import MfaSetup from '../../components/MfaSetup'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -461,6 +462,11 @@ function Profile() {
                         </p>
                     </>
                 )}
+            </div>
+
+            <div className="employee-card">
+                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
+                <MfaSetup />
             </div>
         </div>
     )
