@@ -127,7 +127,8 @@
 }
 
 .status-rejected,
-.status-cancelled {
+.status-cancelled,
+.status-missed {
     background: rgba(200, 16, 46, 0.1);
     color: var(--red-dark);
 }

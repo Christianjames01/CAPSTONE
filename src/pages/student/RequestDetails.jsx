@@ -635,6 +635,11 @@ function RequestDetails() {
                                             : `${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'} at ${claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}`}
                                     </strong>
                                 </>
+                            ) : claimSchedule.status === 'missed' ? (
+                                <span style={{ color: 'var(--red-dark)' }}>
+                                    Missed appointment on{' '}
+                                    <strong>{claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}</strong>
+                                </span>
                             ) : (
                                 <>
                                     Scheduled for{' '}
@@ -647,7 +652,11 @@ function RequestDetails() {
                             )}
                         </p>
 
-                        {claimSchedule.status !== 'claimed' && (
+                        {claimSchedule.status === 'missed' ? (
+                            <p style={{ color: 'var(--slate)', fontSize: 13.5 }}>
+                                Please contact the Registrar's Office to reschedule your claiming appointment.
+                            </p>
+                        ) : claimSchedule.status !== 'claimed' && (
                             <p style={{ color: 'var(--slate)', fontSize: 13.5 }}>
                                 Bring your official receipt and a valid ID when you claim your document.
                             </p>
