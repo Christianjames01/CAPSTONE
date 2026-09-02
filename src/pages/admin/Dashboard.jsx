@@ -213,8 +213,11 @@ function AdminDashboard() {
         { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected' },
         { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled' },
         { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules' },
-        { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules', urgent: true },
-        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules', urgent: true },
+    ]
+
+    const attentionStats = [
+        { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules' },
+        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules' },
     ]
 
     if (loading) {
@@ -238,6 +241,30 @@ function AdminDashboard() {
                 <p>System-wide overview of document requests and registrar activity.</p>
             </div>
 
+            {(attentionStats[0].value > 0 || attentionStats[1].value > 0) && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
+                    {attentionStats.filter((s) => s.value > 0).map((stat) => (
+                        <button
+                            key={stat.label}
+                            onClick={() => navigate(stat.to)}
+                            style={{
+                                textAlign: 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 14,
+                                padding: '16px 18px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(200, 16, 46, 0.25)',
+                                background: 'rgba(200, 16, 46, 0.06)',
+                            }}
+                        >
+                            <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--red)' }}>{stat.value}</span>
+                            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--red-dark)' }}>{stat.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className="admin-info-grid" style={{ marginBottom: 28 }}>
                 {stats.map((stat) => (
                     <button
@@ -251,7 +278,7 @@ function AdminDashboard() {
                                 display: 'block',
                                 fontSize: 26,
                                 fontWeight: 700,
-                                color: stat.urgent && stat.value > 0 ? 'var(--red)' : 'var(--blue)',
+                                color: 'var(--blue)',
                                 marginBottom: 4,
                             }}
                         >
