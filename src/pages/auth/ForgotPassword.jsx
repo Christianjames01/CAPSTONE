@@ -1,25 +1,16 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
-import Turnstile from '../../components/Turnstile'
 
 function ForgotPassword() {
     const [email, setEmail] = useState('')
     const [message, setMessage] = useState('')
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
-    const [captchaToken, setCaptchaToken] = useState('')
-    const turnstileRef = useRef(null)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-
-        if (!captchaToken) {
-            setStatus('error')
-            setMessage('Please complete the verification check before submitting.')
-            return
-        }
 
         setLoading(true)
         setMessage('')
@@ -27,11 +18,8 @@ function ForgotPassword() {
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
-            captchaToken,
         })
 
-        turnstileRef.current?.reset()
-        setCaptchaToken('')
         setLoading(false)
 
         if (error) {
@@ -70,15 +58,11 @@ function ForgotPassword() {
                     />
                 </div>
 
-                {status !== 'success' && (
-                    <Turnstile ref={turnstileRef} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken('')} />
-                )}
-
                 {message && (
                     <p className={`form-message ${status === 'error' ? 'error' : 'success'}`}>{message}</p>
                 )}
 
-                <button type="submit" className="auth-submit" disabled={loading || status === 'success' || !captchaToken}>
+                <button type="submit" className="auth-submit" disabled={loading || status === 'success'}>
                     {loading ? 'Sending...' : 'Send reset link'}
                 </button>
 

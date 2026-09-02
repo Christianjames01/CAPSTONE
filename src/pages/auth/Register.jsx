@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
-import Turnstile from '../../components/Turnstile'
 
 function Register() {
     // Account
@@ -37,8 +36,6 @@ function Register() {
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
-    const [captchaToken, setCaptchaToken] = useState('')
-    const turnstileRef = useRef(null)
 
     // Strips non-digits and caps PH mobile numbers at 11 digits (09XXXXXXXXX)
     const handlePhoneInput = (setter) => (e) => {
@@ -119,12 +116,6 @@ function Register() {
     const handleRegister = async (e) => {
         e.preventDefault()
 
-        if (!captchaToken) {
-            setStatus('error')
-            setMessage('Please complete the verification check before submitting.')
-            return
-        }
-
         setLoading(true)
         setMessage('')
         setStatus('idle')
@@ -135,7 +126,6 @@ function Register() {
             email,
             password,
             options: {
-                captchaToken,
                 emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     first_name: firstName.trim(),
@@ -146,11 +136,6 @@ function Register() {
                 },
             },
         })
-
-        // Turnstile tokens are single-use -- any failure past this point
-        // needs a fresh solve before the user can retry.
-        turnstileRef.current?.reset()
-        setCaptchaToken('')
 
         if (error) {
             setStatus('error')
@@ -471,9 +456,7 @@ function Register() {
                     <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </p>
 
-                <Turnstile ref={turnstileRef} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken('')} />
-
-                <button type="submit" className="auth-submit" disabled={loading || !captchaToken}>
+                <button type="submit" className="auth-submit" disabled={loading}>
                     {loading && <span className="auth-spinner" />}
                     {loading ? 'Creating account...' : 'Create account'}
                 </button>
