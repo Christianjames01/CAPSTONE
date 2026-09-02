@@ -74,6 +74,15 @@ const STATUS_META = {
 const statusMeta = (status) =>
     STATUS_META[status] || { label: status, tone: 'info', title: 'Status Update', message: '' }
 
+// Postgres "time" values come back as "14:30:00" -- render them 12-hour.
+function formatTime(time) {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes), 0, 0)
+    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
 function RequestDetails() {
     const { requestId } = useParams()
     const navigate = useNavigate()
@@ -694,7 +703,7 @@ function RequestDetails() {
                                     <strong>
                                         {claimSchedule.claimed_at
                                             ? new Date(claimSchedule.claimed_at).toLocaleString()
-                                            : `${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'} at ${claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}`}
+                                            : `${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'} at ${formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}`}
                                     </strong>
                                 </>
                             ) : claimSchedule.status === 'missed' ? (
@@ -708,7 +717,7 @@ function RequestDetails() {
                                     <strong>
                                         {claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}
                                         {' at '}
-                                        {claimSchedule.claim_time || claimSchedule.scheduled_time || 'N/A'}
+                                        {formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}
                                     </strong>
                                 </>
                             )}
