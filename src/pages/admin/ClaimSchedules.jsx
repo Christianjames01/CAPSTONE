@@ -9,6 +9,7 @@ import './AdminPages.css'
 const CHIPS = [
     { key: 'upcoming', label: 'Upcoming' },
     { key: 'today', label: 'Today' },
+    { key: 'missed', label: 'Missed' },
     { key: 'claimed', label: 'Claimed' },
     { key: 'cancelled', label: 'Cancelled' },
     { key: 'all', label: 'All' },
@@ -44,7 +45,7 @@ function ClaimSchedules() {
 
             const { data: scheduleRows, error: scheduleError } = await supabase
                 .from('claim_schedules')
-                .select('claim_schedule_id, request_id, student_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks')
+                .select('claim_schedule_id, request_id, student_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks, reschedule_requested_at, reschedule_reason')
                 .order('claim_date', { ascending: true })
 
             if (scheduleError) {
@@ -190,6 +191,7 @@ function ClaimSchedules() {
         if (activeChip === 'all') return true
         if (activeChip === 'today') return date === today && s.status !== 'cancelled'
         if (activeChip === 'upcoming') return date >= today && s.status === 'scheduled'
+        if (activeChip === 'missed') return s.status === 'missed'
         if (activeChip === 'claimed') return s.status === 'claimed'
         if (activeChip === 'cancelled') return s.status === 'cancelled'
         return true
@@ -267,6 +269,13 @@ function ClaimSchedules() {
                                 <strong>{formatTime(s.claim_time || s.scheduled_time) || 'N/A'}</strong>
                             </div>
                         </div>
+
+                        {s.reschedule_requested_at && (
+                            <div className="admin-notice tone-warning" style={{ marginBottom: 12 }}>
+                                <strong>Student requested a reschedule</strong>
+                                <p>{s.reschedule_reason}</p>
+                            </div>
+                        )}
 
                         <div style={{ display: 'flex', gap: 16 }}>
                             <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${s.request_id}`)}>

@@ -70,7 +70,7 @@ function ClaimScheduleList() {
             const { data: schedules } = requestIds.length
                 ? await supabase
                     .from('claim_schedules')
-                    .select('claim_schedule_id, request_id, claim_date, claim_time, scheduled_date, scheduled_time, status')
+                    .select('claim_schedule_id, request_id, claim_date, claim_time, scheduled_date, scheduled_time, status, reschedule_requested_at, reschedule_reason')
                     .in('request_id', requestIds)
                 : { data: [] }
 
@@ -90,12 +90,23 @@ function ClaimScheduleList() {
                 (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
             )
 
+            // Surface what needs attention first: missed appointments and
+            // pending reschedule requests, ahead of ones already on track.
+            const priority = (schedule) => {
+                if (!schedule) return 1
+                if (schedule.status === 'missed') return 0
+                if (schedule.reschedule_requested_at) return 0
+                return 2
+            }
+
             setNeedsScheduling(
-                (requests || []).map((r) => ({
-                    ...r,
-                    documentName: documentNameById[r.document_type_id] || 'Document',
-                    schedule: scheduleByRequestId[r.request_id] || null,
-                }))
+                (requests || [])
+                    .map((r) => ({
+                        ...r,
+                        documentName: documentNameById[r.document_type_id] || 'Document',
+                        schedule: scheduleByRequestId[r.request_id] || null,
+                    }))
+                    .sort((a, b) => priority(a.schedule) - priority(b.schedule))
             )
 
             // Today's appointments
@@ -323,6 +334,13 @@ function ClaimScheduleList() {
                                 {request.schedule ? request.schedule.status : 'Not scheduled'}
                             </span>
                         </div>
+
+                        {request.schedule?.reschedule_requested_at && (
+                            <div className="employee-notice tone-warning" style={{ marginBottom: 12 }}>
+                                <strong>Student requested a reschedule</strong>
+                                <p>{request.schedule.reschedule_reason}</p>
+                            </div>
+                        )}
 
                         <button
                             className="employee-link-button"
