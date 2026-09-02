@@ -290,7 +290,7 @@ function RequestDetails() {
                 error: scheduleError
             } = await supabase
                 .from('claim_schedules')
-                .select('claim_schedule_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks, claimed_at')
+                .select('claim_schedule_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks, claimed_at, reschedule_requested_at')
                 .eq('request_id', requestId)
                 .neq('status', 'cancelled')
                 .order('claim_date', { ascending: false })
@@ -420,27 +420,36 @@ function RequestDetails() {
         try {
             setRequestingReschedule(true)
 
-            if (!request.assigned_employee_id) {
-                throw new Error('No registrar employee is assigned to this request yet.')
-            }
-
-            const { data: employeeRow, error: employeeError } = await supabase
-                .from('employees')
-                .select('user_id')
-                .eq('employee_id', request.assigned_employee_id)
-                .single()
-
-            if (employeeError || !employeeRow) {
-                throw new Error('Could not find the assigned employee to notify.')
-            }
-
-            await notify({
-                userId: employeeRow.user_id,
-                title: 'Reschedule requested',
-                message: `Student requested to reschedule claiming for request ${request.request_number} (currently ${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}). Reason: "${reason.trim()}"`,
-                notificationType: 'request_update',
-                relatedRequestId: request.request_id,
+            // Records the request and blocks a second one for this
+            // schedule server-side (not just via the disabled button).
+            const { error: rpcError } = await supabase.rpc('request_claim_reschedule', {
+                p_claim_schedule_id: claimSchedule.claim_schedule_id,
+                p_reason: reason.trim(),
             })
+
+            if (rpcError) {
+                throw new Error(rpcError.message || 'Failed to record your reschedule request.')
+            }
+
+            if (request.assigned_employee_id) {
+                const { data: employeeRow } = await supabase
+                    .from('employees')
+                    .select('user_id')
+                    .eq('employee_id', request.assigned_employee_id)
+                    .single()
+
+                if (employeeRow) {
+                    await notify({
+                        userId: employeeRow.user_id,
+                        title: 'Reschedule requested',
+                        message: `Student requested to reschedule claiming for request ${request.request_number} (currently ${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}). Reason: "${reason.trim()}"`,
+                        notificationType: 'request_update',
+                        relatedRequestId: request.request_id,
+                    })
+                }
+            }
+
+            setClaimSchedule((prev) => ({ ...prev, reschedule_requested_at: new Date().toISOString() }))
 
             notifySuccess('Your reschedule request has been sent to the Registrar\'s Office.')
 
@@ -720,14 +729,20 @@ function RequestDetails() {
                         )}
 
                         {(claimSchedule.status === 'scheduled' || claimSchedule.status === 'missed') && (
-                            <button
-                                className="student-link-button"
-                                style={{ marginTop: 10 }}
-                                onClick={requestReschedule}
-                                disabled={requestingReschedule}
-                            >
-                                {requestingReschedule ? 'Sending...' : 'Request reschedule'}
-                            </button>
+                            claimSchedule.reschedule_requested_at ? (
+                                <p style={{ fontSize: 13, color: 'var(--slate)', marginTop: 10 }}>
+                                    Reschedule requested — awaiting the Registrar's Office.
+                                </p>
+                            ) : (
+                                <button
+                                    className="student-link-button"
+                                    style={{ marginTop: 10 }}
+                                    onClick={requestReschedule}
+                                    disabled={requestingReschedule}
+                                >
+                                    {requestingReschedule ? 'Sending...' : 'Request reschedule'}
+                                </button>
+                            )
                         )}
                     </div>
                 )}

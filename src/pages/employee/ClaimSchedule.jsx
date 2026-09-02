@@ -198,6 +198,8 @@ function ClaimSchedule() {
                     remarks,
                     claim_date,
                     claim_time,
+                    reschedule_requested_at,
+                    reschedule_reason,
                     created_at,
                     updated_at
                 `)
@@ -435,6 +437,14 @@ function ClaimSchedule() {
 
                         status:
                             'scheduled',
+
+                        // Clears any pending student reschedule request --
+                        // this update *is* the reschedule.
+                        reschedule_requested_at:
+                            null,
+
+                        reschedule_reason:
+                            null,
 
                         updated_at:
                             now
@@ -984,6 +994,13 @@ function ClaimSchedule() {
                     <p style={{ marginBottom: 18 }}>
                         Choose the exact date and time when the student should arrive at the Registrar's Office.
                     </p>
+
+                    {existingSchedule?.reschedule_requested_at && (
+                        <div className="employee-notice tone-warning" style={{ marginBottom: 18 }}>
+                            <strong>Student Requested a Reschedule</strong>
+                            <p>{existingSchedule.reschedule_reason}</p>
+                        </div>
+                    )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 18 }}>
                         {/* DATE */}

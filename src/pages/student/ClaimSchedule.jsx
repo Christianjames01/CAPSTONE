@@ -53,6 +53,7 @@ function ClaimSchedule() {
                     claim_date,
                     claim_time,
                     remarks,
+                    reschedule_requested_at,
                     claimed_at,
                     created_at
                 `)
@@ -172,27 +173,42 @@ function ClaimSchedule() {
         try {
             setRequestingRescheduleId(schedule.claim_schedule_id)
 
-            if (!schedule.assignedEmployeeId) {
-                throw new Error('No registrar employee is assigned to this request yet.')
-            }
-
-            const { data: employeeRow, error: employeeError } = await supabase
-                .from('employees')
-                .select('user_id')
-                .eq('employee_id', schedule.assignedEmployeeId)
-                .single()
-
-            if (employeeError || !employeeRow) {
-                throw new Error('Could not find the assigned employee to notify.')
-            }
-
-            await notify({
-                userId: employeeRow.user_id,
-                title: 'Reschedule requested',
-                message: `Student requested to reschedule claiming for request ${schedule.requestNumber} (currently ${formatDate(schedule.claim_date || schedule.scheduled_date)}). Reason: "${reason.trim()}"`,
-                notificationType: 'request_update',
-                relatedRequestId: schedule.request_id,
+            // Records the request and blocks a second one for this
+            // schedule server-side (not just via the disabled button).
+            const { error: rpcError } = await supabase.rpc('request_claim_reschedule', {
+                p_claim_schedule_id: schedule.claim_schedule_id,
+                p_reason: reason.trim(),
             })
+
+            if (rpcError) {
+                throw new Error(rpcError.message || 'Failed to record your reschedule request.')
+            }
+
+            if (schedule.assignedEmployeeId) {
+                const { data: employeeRow } = await supabase
+                    .from('employees')
+                    .select('user_id')
+                    .eq('employee_id', schedule.assignedEmployeeId)
+                    .single()
+
+                if (employeeRow) {
+                    await notify({
+                        userId: employeeRow.user_id,
+                        title: 'Reschedule requested',
+                        message: `Student requested to reschedule claiming for request ${schedule.requestNumber} (currently ${formatDate(schedule.claim_date || schedule.scheduled_date)}). Reason: "${reason.trim()}"`,
+                        notificationType: 'request_update',
+                        relatedRequestId: schedule.request_id,
+                    })
+                }
+            }
+
+            setSchedules((prev) =>
+                prev.map((s) =>
+                    s.claim_schedule_id === schedule.claim_schedule_id
+                        ? { ...s, reschedule_requested_at: new Date().toISOString() }
+                        : s
+                )
+            )
 
             notifySuccess('Your reschedule request has been sent to the Registrar\'s Office.')
 
@@ -296,15 +312,21 @@ function ClaimSchedule() {
                                 </button>
 
                                 {(schedule.status === 'scheduled' || schedule.status === 'missed') && (
-                                    <button
-                                        className="student-link-button"
-                                        onClick={() => requestReschedule(schedule)}
-                                        disabled={requestingRescheduleId === schedule.claim_schedule_id}
-                                    >
-                                        {requestingRescheduleId === schedule.claim_schedule_id
-                                            ? 'Sending...'
-                                            : 'Request reschedule'}
-                                    </button>
+                                    schedule.reschedule_requested_at ? (
+                                        <span style={{ fontSize: 13, color: 'var(--slate)' }}>
+                                            Reschedule requested — awaiting the Registrar
+                                        </span>
+                                    ) : (
+                                        <button
+                                            className="student-link-button"
+                                            onClick={() => requestReschedule(schedule)}
+                                            disabled={requestingRescheduleId === schedule.claim_schedule_id}
+                                        >
+                                            {requestingRescheduleId === schedule.claim_schedule_id
+                                                ? 'Sending...'
+                                                : 'Request reschedule'}
+                                        </button>
+                                    )
                                 )}
                             </div>
 
