@@ -159,10 +159,15 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
                     </p>
 
                     <img
-                        src={`data:image/svg+xml;utf-8,${encodeURIComponent(enrollData.totp.qr_code)}`}
+                        src={enrollData.totp.qr_code}
                         alt="Two-factor authentication QR code"
                         style={{ width: 180, height: 180, alignSelf: 'flex-start', border: '1px solid var(--line)', borderRadius: 8 }}
                     />
+
+                    <p style={{ fontSize: 12, color: 'var(--slate)' }}>
+                        Can't scan it? Enter this code manually in your app:{' '}
+                        <code style={{ wordBreak: 'break-all' }}>{enrollData.totp.secret}</code>
+                    </p>
 
                     <div className="form-group">
                         <label className="form-label">Verification Code</label>
