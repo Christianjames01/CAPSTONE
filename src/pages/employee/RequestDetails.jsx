@@ -46,6 +46,7 @@ function EmployeeRequestDetails() {
 
     const [previewFile, setPreviewFile] = useState(null)
     const [requestActivity, setRequestActivity] = useState([])
+    const [claimSchedule, setClaimSchedule] = useState(null)
 
     useEffect(() => {
         if (!requestId) {
@@ -273,6 +274,25 @@ function EmployeeRequestDetails() {
             // ==========================================
 
             await loadRequirements(requestId)
+
+            // ==========================================
+            // LOAD CLAIM SCHEDULE
+            // ==========================================
+
+            const { data: scheduleRow, error: scheduleError } = await supabase
+                .from('claim_schedules')
+                .select('claim_schedule_id, status, scheduled_date, scheduled_time, claim_date, claim_time, claimed_at, reschedule_requested_at, reschedule_reason')
+                .eq('request_id', requestId)
+                .neq('status', 'cancelled')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            if (scheduleError) {
+                console.error('CLAIM SCHEDULE LOAD ERROR:', scheduleError)
+            } else {
+                setClaimSchedule(scheduleRow || null)
+            }
 
             // ==========================================
             // LOAD ACTIVITY HISTORY FOR THIS REQUEST
@@ -1797,19 +1817,69 @@ function EmployeeRequestDetails() {
                     <div className="employee-card">
                         <h2 style={{ fontSize: 16, marginBottom: 16 }}>Digital Credential</h2>
 
-                        <div className="employee-notice tone-success">
+                        <div className="employee-notice tone-success" style={{ marginBottom: claimSchedule ? 12 : 0 }}>
                             <strong>✓ Digital Credential Generated</strong>
                             <p>The requested academic document has been prepared successfully.</p>
-                            <p>The next step is to schedule the student's claiming date and time.</p>
-
-                            <button
-                                onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
-                                className="employee-primary-button"
-                                style={{ marginTop: 12 }}
-                            >
-                                📅 Schedule Claiming
-                            </button>
                         </div>
+
+                        {!claimSchedule ? (
+                            <div className="employee-notice tone-info">
+                                <p>The next step is to schedule the student's claiming date and time.</p>
+                                <button
+                                    onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
+                                    className="employee-primary-button"
+                                    style={{ marginTop: 12 }}
+                                >
+                                    📅 Schedule Claiming
+                                </button>
+                            </div>
+                        ) : claimSchedule.status === 'missed' ? (
+                            <div className="employee-notice tone-danger">
+                                <strong>✕ Claiming Appointment Missed</strong>
+                                <p>
+                                    The student did not claim this document on{' '}
+                                    {claimSchedule.claim_date || claimSchedule.scheduled_date}.
+                                </p>
+                                {claimSchedule.reschedule_requested_at && (
+                                    <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
+                                )}
+                                <button
+                                    onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
+                                    className="employee-primary-button"
+                                    style={{ marginTop: 12 }}
+                                >
+                                    📅 Reschedule Claiming
+                                </button>
+                            </div>
+                        ) : claimSchedule.status === 'claimed' ? (
+                            <div className="employee-notice tone-success">
+                                <strong>✓ Document Claimed</strong>
+                                <p>
+                                    Claimed on{' '}
+                                    {claimSchedule.claimed_at
+                                        ? new Date(claimSchedule.claimed_at).toLocaleString()
+                                        : (claimSchedule.claim_date || claimSchedule.scheduled_date)}.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="employee-notice tone-info">
+                                <strong>Claiming Scheduled</strong>
+                                <p>
+                                    {claimSchedule.claim_date || claimSchedule.scheduled_date} at{' '}
+                                    {claimSchedule.claim_time || claimSchedule.scheduled_time}
+                                </p>
+                                {claimSchedule.reschedule_requested_at && (
+                                    <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
+                                )}
+                                <button
+                                    onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
+                                    className="employee-secondary-button"
+                                    style={{ marginTop: 12 }}
+                                >
+                                    Update Schedule
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
