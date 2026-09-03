@@ -35,6 +35,9 @@ function Register() {
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
     const [agreedToTerms, setAgreedToTerms] = useState(false)
+    const [showTermsModal, setShowTermsModal] = useState(false)
+    const [modalChecked, setModalChecked] = useState(false)
+    const [legalTab, setLegalTab] = useState('terms')
 
     const handlePhoneInput = (setter) => (e) => {
         setter(e.target.value.replace(/\D/g, '').slice(0, 11))
@@ -109,7 +112,7 @@ function Register() {
         }
     }
 
-    const handleRegister = async (e) => {
+    const handleFormSubmit = (e) => {
         e.preventDefault()
 
         if (!passwordMeetsRequirements(password)) {
@@ -118,12 +121,22 @@ function Register() {
             return
         }
 
-        if (!agreedToTerms) {
-            setStatus('error')
-            setMessage('Please agree to the Terms of Service and Privacy Policy to continue.')
-            return
+        if (agreedToTerms) {
+            submitRegistration()
+        } else {
+            setModalChecked(false)
+            setShowTermsModal(true)
         }
+    }
 
+    const confirmAgreementAndRegister = () => {
+        if (!modalChecked) return
+        setAgreedToTerms(true)
+        setShowTermsModal(false)
+        submitRegistration()
+    }
+
+    const submitRegistration = async () => {
         setLoading(true)
         setMessage('')
         setStatus('idle')
@@ -200,7 +213,7 @@ function Register() {
                 <>Already have an account? <Link to="/login">Log in</Link></>
             }
         >
-            <form className="auth-form" onSubmit={handleRegister}>
+            <form className="auth-form" onSubmit={handleFormSubmit}>
 
                 <p className="auth-form-section-title">Account</p>
 
@@ -454,27 +467,99 @@ function Register() {
                     </p>
                 )}
 
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginBottom: 14, cursor: 'pointer' }}>
-                    <input
-                        type="checkbox"
-                        checked={agreedToTerms}
-                        onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        style={{ marginTop: 2, flexShrink: 0 }}
-                        required
-                    />
-                    <span>
-                        I have read and agree to CertiChain's{' '}
-                        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and{' '}
-                        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
-                    </span>
-                </label>
+                <p style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginBottom: 14 }}>
+                    Before your account is created, you'll be asked to review and agree to CertiChain's{' '}
+                    Terms of Service and Privacy Policy.
+                </p>
 
-                <button type="submit" className="auth-submit" disabled={loading || !agreedToTerms}>
+                <button type="submit" className="auth-submit" disabled={loading}>
                     {loading && <span className="auth-spinner" />}
                     {loading ? 'Creating account...' : 'Create account'}
                 </button>
 
             </form>
+
+            {showTermsModal && (
+                <div
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(10, 20, 40, 0.55)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 20, zIndex: 1000,
+                    }}
+                    onClick={() => setShowTermsModal(false)}
+                >
+                    <div
+                        style={{
+                            background: 'var(--white)', borderRadius: 10, width: '100%', maxWidth: 640,
+                            maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                            boxShadow: '0 20px 60px rgba(10, 20, 40, 0.35)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--line)' }}>
+                            <h2 style={{ fontSize: 18, marginBottom: 4 }}>Terms of Service &amp; Privacy Policy</h2>
+                            <p style={{ fontSize: 13 }}>Please review both before creating your account.</p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 4, padding: '10px 22px 0' }}>
+                            <button
+                                type="button"
+                                onClick={() => setLegalTab('terms')}
+                                className={legalTab === 'terms' ? 'auth-submit' : 'auth-google-button'}
+                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                            >
+                                Terms of Service
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLegalTab('privacy')}
+                                className={legalTab === 'privacy' ? 'auth-submit' : 'auth-google-button'}
+                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                            >
+                                Privacy Policy
+                            </button>
+                        </div>
+
+                        <div style={{ flex: 1, minHeight: 0, padding: '14px 22px' }}>
+                            <iframe
+                                title={legalTab === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
+                                src={legalTab === 'terms' ? '/terms' : '/privacy-policy'}
+                                style={{ width: '100%', height: '100%', minHeight: 320, border: '1px solid var(--line)', borderRadius: 6 }}
+                            />
+                        </div>
+
+                        <div style={{ padding: '16px 22px', borderTop: '1px solid var(--line)' }}>
+                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, lineHeight: 1.5, marginBottom: 14, cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={modalChecked}
+                                    onChange={(e) => setModalChecked(e.target.checked)}
+                                    style={{ marginTop: 2, flexShrink: 0 }}
+                                />
+                                <span>I have read and agree to CertiChain's Terms of Service and Privacy Policy.</span>
+                            </label>
+
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <button
+                                    type="button"
+                                    className="auth-google-button"
+                                    onClick={() => setShowTermsModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="auth-submit"
+                                    disabled={!modalChecked}
+                                    onClick={confirmAgreementAndRegister}
+                                >
+                                    Agree &amp; Create Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="auth-divider">or</div>
 
