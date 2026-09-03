@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import dpoRegisteredBadge from '../../assets/dpo-registered-badge.png'
 import dataPrivacyBadge from '../../assets/data-privacy-badge.png'
@@ -25,6 +25,21 @@ const IconTiktok = () => (
 )
 
 function LegalLayout({ title, updated, children }) {
+    const [searchParams] = useSearchParams()
+    const embed = searchParams.get('embed') === '1'
+
+    if (embed) {
+        return (
+            <div className="legal-page legal-embed">
+                <div className="legal-content">
+                    <h1>{title}</h1>
+                    <p className="legal-updated">Last updated {updated}</p>
+                    {children}
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="legal-page">
             <header className="legal-header">
