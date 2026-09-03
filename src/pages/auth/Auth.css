@@ -21,16 +21,10 @@
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
 
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.auth-shell {
-    flex: 1;
+    height: 100vh;
+    overflow: hidden;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: 0;
 }
 
 .auth-page * {
@@ -66,13 +60,7 @@
     justify-content: center;
     align-items: center;
     padding: 48px;
-    background-image:
-        radial-gradient(circle at 80% 15%, rgba(200, 16, 46, 0.22), transparent 55%),
-        linear-gradient(180deg, rgba(10, 36, 80, 0.88) 0%, rgba(10, 36, 80, 0.82) 100%),
-        url('../../assets/hcdc-background.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: var(--blue-dark);
     overflow: hidden;
 }
 
@@ -80,21 +68,22 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 10% 90%, rgba(18, 59, 120, 0.6), transparent 55%);
+    background: radial-gradient(circle at 80% 15%, rgba(200, 16, 46, 0.22), transparent 55%),
+        radial-gradient(circle at 10% 90%, rgba(18, 59, 120, 0.6), transparent 55%);
 }
 
 .auth-brand-link {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     width: fit-content;
     margin-bottom: 32px;
 }
 
 .auth-brand-seal {
-    width: 68px;
-    height: 68px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     background: var(--white);
     border: 2px solid var(--red);
@@ -102,7 +91,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 6px;
+    padding: 5px;
     flex-shrink: 0;
 }
 
@@ -115,15 +104,15 @@
 .auth-brand-name {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 28px;
+    font-size: 19px;
     color: var(--white);
     line-height: 1;
 }
 
 .auth-brand-subtitle {
-    font-size: 14px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.55);
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 .auth-brand-copy {
@@ -168,6 +157,9 @@
     align-items: flex-start;
     padding: 40px 32px;
     background: var(--bg);
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .auth-card {
@@ -275,69 +267,11 @@
     transition: background 0.2s ease;
 }
 
-@keyframes auth-spinner-spin {
-    to { transform: rotate(360deg); }
-}
-
-.auth-spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-top-color: var(--white);
-    border-radius: 50%;
-    animation: auth-spinner-spin 0.7s linear infinite;
-    flex-shrink: 0;
-}
-
 .auth-submit:hover:not(:disabled) {
     background: var(--blue-dark);
 }
 
 .auth-submit:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-}
-
-.auth-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 18px 0;
-    font-size: 12.5px;
-    color: var(--slate);
-}
-
-.auth-divider::before,
-.auth-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--line);
-}
-
-.auth-google-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    background: var(--white);
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 14.5px;
-    padding: 12px 20px;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.auth-google-button:hover:not(:disabled) {
-    background: var(--paper);
-    border-color: rgba(16, 24, 39, 0.24);
-}
-
-.auth-google-button:disabled {
     opacity: 0.65;
     cursor: not-allowed;
 }
@@ -384,7 +318,7 @@
    RESPONSIVE
 =================================================== */
 @media (max-width: 880px) {
-    .auth-shell {
+    .auth-page {
         grid-template-columns: 1fr;
     }
 
@@ -401,111 +335,15 @@
         display: none;
     }
 
-    .auth-brand-foot {
-        position: static;
-        margin-top: 16px;
-    }
-
     .auth-form-panel {
         padding: 36px 24px 48px;
-    }
-}
-
-/* ===================================================
-   SITE FOOTER (compliance badges + contact)
-=================================================== */
-.auth-site-footer {
-    position: relative;
-    background:
-        linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-        url('../../assets/footer-building.jpg');
-    background-size: cover;
-    background-position: center;
-    color: var(--white);
-    padding: 20px 40px;
-}
-
-.auth-footer-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    max-width: 1300px;
-    margin: 0 auto;
-}
-
-.auth-footer-badges {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.auth-footer-badges img {
-    width: 130px;
-    height: auto;
-    transition: transform 0.2s ease;
-}
-
-.auth-footer-badges a:hover img {
-    transform: translateY(-2px);
-}
-
-.auth-footer-social {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-}
-
-.auth-footer-icons {
-    display: flex;
-    gap: 20px;
-}
-
-.auth-footer-icons a {
-    color: var(--white);
-    font-size: 18px;
-    opacity: 0.85;
-    transition: 0.2s;
-}
-
-.auth-footer-icons a:hover {
-    color: var(--red-light);
-    opacity: 1;
-}
-
-.auth-footer-contact {
-    text-align: right;
-}
-
-.auth-footer-contact p {
-    margin: 2px 0;
-    font-size: 13px;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.auth-footer-bottom {
-    text-align: center;
-    font-size: 11px;
-    opacity: 0.5;
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-@media (max-width: 700px) {
-    .auth-footer-container {
-        flex-direction: column;
-        text-align: center;
+        height: auto;
+        min-height: auto;
+        overflow-y: visible;
     }
 
-    .auth-footer-social {
-        align-items: center;
-    }
-
-    .auth-footer-contact {
-        text-align: center;
+    .auth-page {
+        height: auto;
+        overflow: visible;
     }
 }
