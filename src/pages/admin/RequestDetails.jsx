@@ -49,10 +49,16 @@ function AdminRequestDetails() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
+    const [processing, setProcessing] = useState(false)
+    const [requirementProcessing, setRequirementProcessing] = useState(false)
 
     const [reassignTo, setReassignTo] = useState('')
     const [newStatus, setNewStatus] = useState('')
     const [overrideReason, setOverrideReason] = useState('')
+
+    const [rejectionReason, setRejectionReason] = useState('')
+    const [showReject, setShowReject] = useState(false)
+    const [selectedRequirement, setSelectedRequirement] = useState(null)
 
     useEffect(() => {
         loadRequest()
@@ -267,6 +273,448 @@ function AdminRequestDetails() {
         }
 
         return user
+    }
+
+    const getAdminActor = async () => {
+        const user = await getAdminUser()
+
+        // Best-effort -- a registrar head/admin may or may not also have an
+        // employees row. verified_by/reviewed_by/generated_by have no NOT
+        // NULL constraint, so this is allowed to come back null.
+        const { data: employee } = await supabase
+            .from('employees')
+            .select('employee_id')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+        return { userId: user.id, employeeId: employee?.employee_id || null }
+    }
+
+    const getRequirementState = () => {
+        const requiredRequirements = requirements.filter(
+            (requirement) => requirement.document_requirements?.is_required === true
+        )
+
+        if (requiredRequirements.length === 0) {
+            return { hasRequirements: false, allApproved: false, pending: false, rejected: false, uploaded: false }
+        }
+
+        const pending = requiredRequirements.some((requirement) => requirement.status === 'pending')
+        const uploaded = requiredRequirements.some((requirement) => requirement.status === 'uploaded')
+        const rejected = requiredRequirements.some((requirement) => requirement.status === 'rejected')
+        const allApproved = requiredRequirements.every(
+            (requirement) => requirement.status === 'approved' || requirement.status === 'not_applicable'
+        )
+
+        return { hasRequirements: true, allApproved, pending, rejected, uploaded }
+    }
+
+    const verifyPayment = async () => {
+        if (!receipt) {
+            notifyWarning('There is no official receipt to verify.')
+            return
+        }
+
+        if (receipt.status !== 'uploaded') {
+            notifyWarning('This receipt has already been processed.')
+            return
+        }
+
+        const confirmed = await confirmModal('Are you sure you want to verify this payment?')
+        if (!confirmed) return
+
+        try {
+            setProcessing(true)
+
+            const actor = await getAdminActor()
+
+            const { error: receiptUpdateError } = await supabase
+                .from('official_receipts')
+                .update({
+                    status: 'verified',
+                    verified_by: actor.employeeId,
+                    verified_at: new Date().toISOString(),
+                    rejection_reason: null,
+                })
+                .eq('receipt_id', receipt.receipt_id)
+                .eq('request_id', requestId)
+
+            if (receiptUpdateError) {
+                throw new Error('Failed to verify receipt: ' + receiptUpdateError.message)
+            }
+
+            const { error: requestUpdateError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'receipt_verified',
+                    rejection_reason: null,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('request_id', requestId)
+
+            if (requestUpdateError) {
+                throw new Error('Receipt was verified but request status could not be updated: ' + requestUpdateError.message)
+            }
+
+            await logActivity({
+                userId: actor.userId,
+                employeeId: actor.employeeId,
+                action: 'verify_payment',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Verified payment for request "${request?.request_number || requestId}" (Registrar Head).`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Payment verified',
+                message: `Your payment for request ${request.request_number} has been verified. Your document is now being processed.`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
+
+            notifySuccess('Payment verified successfully.')
+            await loadRequest()
+
+        } catch (err) {
+            console.error('VERIFY PAYMENT ERROR:', err)
+            notifyError(err.message || 'Failed to verify payment.')
+        } finally {
+            setProcessing(false)
+        }
+    }
+
+    const rejectPayment = async () => {
+        if (!receipt) {
+            notifyWarning('There is no official receipt to reject.')
+            return
+        }
+
+        if (!rejectionReason.trim()) {
+            notifyWarning('Please enter a rejection reason.')
+            return
+        }
+
+        const confirmed = await confirmModal('Are you sure you want to reject this payment?')
+        if (!confirmed) return
+
+        try {
+            setProcessing(true)
+
+            const actor = await getAdminActor()
+
+            const { error: receiptUpdateError } = await supabase
+                .from('official_receipts')
+                .update({
+                    status: 'rejected',
+                    verified_by: actor.employeeId,
+                    verified_at: new Date().toISOString(),
+                    rejection_reason: rejectionReason.trim(),
+                })
+                .eq('receipt_id', receipt.receipt_id)
+                .eq('request_id', requestId)
+
+            if (receiptUpdateError) {
+                throw new Error('Failed to reject receipt: ' + receiptUpdateError.message)
+            }
+
+            const { error: requestUpdateError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'rejected',
+                    rejection_reason: rejectionReason.trim(),
+                    employee_remarks: rejectionReason.trim(),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('request_id', requestId)
+
+            if (requestUpdateError) {
+                throw new Error('Receipt was rejected but request status could not be updated: ' + requestUpdateError.message)
+            }
+
+            await logActivity({
+                userId: actor.userId,
+                employeeId: actor.employeeId,
+                action: 'reject_payment',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Rejected payment for request "${request?.request_number || requestId}": "${rejectionReason.trim()}" (Registrar Head).`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Payment rejected',
+                message: `Your payment for request ${request.request_number} was rejected: ${rejectionReason.trim()}`,
+                notificationType: 'payment',
+                relatedRequestId: requestId,
+            })
+
+            notifySuccess('Payment rejected successfully.')
+            setShowReject(false)
+            setRejectionReason('')
+            await loadRequest()
+
+        } catch (err) {
+            console.error('REJECT PAYMENT ERROR:', err)
+            notifyError(err.message || 'Failed to reject payment.')
+        } finally {
+            setProcessing(false)
+        }
+    }
+
+    const approveRequirement = async (requirement) => {
+        if (requirement.status !== 'uploaded') {
+            notifyWarning('Only uploaded requirements can be approved.')
+            return
+        }
+
+        const confirmed = await confirmModal(
+            `Approve "${requirement.document_requirements?.requirement_name || 'this requirement'}"?`
+        )
+        if (!confirmed) return
+
+        try {
+            setRequirementProcessing(true)
+
+            const actor = await getAdminActor()
+
+            const { error: reqError } = await supabase
+                .from('request_requirements')
+                .update({
+                    status: 'approved',
+                    reviewed_by: actor.employeeId,
+                    reviewed_at: new Date().toISOString(),
+                    rejection_reason: null,
+                })
+                .eq('request_requirement_id', requirement.request_requirement_id)
+                .eq('request_id', requestId)
+
+            if (reqError) {
+                throw new Error('Failed to approve requirement: ' + reqError.message)
+            }
+
+            await logActivity({
+                userId: actor.userId,
+                employeeId: actor.employeeId,
+                action: 'approve_requirement',
+                tableName: 'request_requirements',
+                recordId: requirement.request_requirement_id,
+                description: `Approved "${requirement.document_requirements?.requirement_name || 'requirement'}" for request "${request?.request_number || requestId}" (Registrar Head).`,
+            })
+
+            notifySuccess('Requirement approved.')
+            await loadRequest()
+
+        } catch (err) {
+            console.error('APPROVE REQUIREMENT ERROR:', err)
+            notifyError(err.message || 'Failed to approve requirement.')
+        } finally {
+            setRequirementProcessing(false)
+        }
+    }
+
+    const rejectRequirement = async () => {
+        if (!selectedRequirement) return
+
+        if (!rejectionReason.trim()) {
+            notifyWarning('Please enter a rejection reason.')
+            return
+        }
+
+        try {
+            setRequirementProcessing(true)
+
+            const actor = await getAdminActor()
+
+            const { error: reqError } = await supabase
+                .from('request_requirements')
+                .update({
+                    status: 'rejected',
+                    reviewed_by: actor.employeeId,
+                    reviewed_at: new Date().toISOString(),
+                    rejection_reason: rejectionReason.trim(),
+                })
+                .eq('request_requirement_id', selectedRequirement.request_requirement_id)
+                .eq('request_id', requestId)
+
+            if (reqError) {
+                throw new Error('Failed to reject requirement: ' + reqError.message)
+            }
+
+            await logActivity({
+                userId: actor.userId,
+                employeeId: actor.employeeId,
+                action: 'reject_requirement',
+                tableName: 'request_requirements',
+                recordId: selectedRequirement.request_requirement_id,
+                description: `Rejected "${selectedRequirement.document_requirements?.requirement_name || 'requirement'}" for request "${request?.request_number || requestId}": "${rejectionReason.trim()}" (Registrar Head).`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Requirement rejected',
+                message: `"${selectedRequirement.document_requirements?.requirement_name || 'A requirement'}" for request ${request.request_number} was rejected: ${rejectionReason.trim()}. Please re-upload it.`,
+                notificationType: 'requirement',
+                relatedRequestId: requestId,
+            })
+
+            notifySuccess('Requirement rejected.')
+            setSelectedRequirement(null)
+            setShowReject(false)
+            setRejectionReason('')
+            await loadRequest()
+
+        } catch (err) {
+            console.error('REJECT REQUIREMENT ERROR:', err)
+            notifyError(err.message || 'Failed to reject requirement.')
+        } finally {
+            setRequirementProcessing(false)
+        }
+    }
+
+    const startProcessing = async () => {
+        if (!request) return
+
+        if (request.status !== 'receipt_verified') {
+            notifyWarning('This request is not ready for document processing.')
+            return
+        }
+
+        const requirementState = getRequirementState()
+
+        if (!requirementState.hasRequirements) {
+            notifyWarning('No required documents have been created for this request yet.')
+            return
+        }
+
+        if (!requirementState.allApproved) {
+            if (requirementState.rejected) {
+                notifyWarning('A required document has been rejected. The student must submit a new document before processing can start.')
+            } else if (requirementState.pending || requirementState.uploaded) {
+                notifyWarning('Not all required documents have been approved yet.')
+            } else {
+                notifyWarning('All required documents must be approved before processing.')
+            }
+            return
+        }
+
+        const confirmed = await confirmModal('All required documents are approved. Start document processing for this request?')
+        if (!confirmed) return
+
+        try {
+            setProcessing(true)
+
+            const actor = await getAdminActor()
+
+            const { error: updateError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'processing',
+                    processed_at: new Date().toISOString(),
+                    rejection_reason: null,
+                    employee_remarks: 'Document processing started (Registrar Head).',
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('request_id', requestId)
+                .eq('status', 'receipt_verified')
+
+            if (updateError) {
+                throw new Error('Failed to start document processing: ' + updateError.message)
+            }
+
+            await logActivity({
+                userId: actor.userId,
+                employeeId: actor.employeeId,
+                action: 'start_processing',
+                tableName: 'document_requests',
+                recordId: requestId,
+                description: `Started document processing for request "${request?.request_number || requestId}" (Registrar Head).`,
+            })
+
+            notifySuccess('Document processing has started.')
+            await loadRequest()
+
+        } catch (err) {
+            console.error('START PROCESSING ERROR:', err)
+            notifyError(err.message || 'Failed to start document processing.')
+        } finally {
+            setProcessing(false)
+        }
+    }
+
+    const generateDigitalCredential = async () => {
+        if (!request) return
+
+        if (request.status !== 'processing') {
+            notifyWarning('This request is not currently being processed.')
+            return
+        }
+
+        const confirmed = await confirmModal('Have you verified the student record and prepared the requested academic document?')
+        if (!confirmed) return
+
+        try {
+            setProcessing(true)
+
+            const actor = await getAdminActor()
+
+            const { data: credential, error: credentialError } = await supabase
+                .from('credentials')
+                .insert({
+                    request_id: request.request_id,
+                    student_id: request.student_id,
+                    document_type_id: request.document_type_id,
+                    status: 'generated',
+                    generated_by: actor.employeeId,
+                    generated_at: new Date().toISOString(),
+                })
+                .select()
+                .single()
+
+            if (credentialError) {
+                throw new Error('Failed to create credential record: ' + credentialError.message)
+            }
+
+            const { error: requestError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'ready_for_claiming',
+                    employee_remarks: 'Digital credential generated and recorded (Registrar Head).',
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('request_id', requestId)
+                .eq('status', 'processing')
+
+            if (requestError) {
+                throw new Error('Credential was created but request status could not be updated: ' + requestError.message)
+            }
+
+            await logActivity({
+                userId: actor.userId,
+                employeeId: actor.employeeId,
+                action: 'generate_credential',
+                tableName: 'credentials',
+                recordId: credential.credential_id,
+                description: `Generated digital credential "${credential.credential_number}" for request "${request?.request_number || requestId}" (Registrar Head).`,
+            })
+
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Ready to claim',
+                message: `Your document for request ${request.request_number} is ready to claim. You'll be notified separately once a claiming date and time is scheduled.`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
+
+            notifySuccess(`Digital credential generated successfully.\n\nCredential Number: ${credential.credential_number}`)
+            await loadRequest()
+
+        } catch (err) {
+            console.error('GENERATE DIGITAL CREDENTIAL ERROR:', err)
+            notifyError(err.message || 'Failed to generate digital credential.')
+        } finally {
+            setProcessing(false)
+        }
     }
 
     const reassignEmployee = async () => {
@@ -571,7 +1019,7 @@ function AdminRequestDetails() {
                             </div>
                         )}
 
-                        <div style={{ marginTop: 16 }}>
+                        <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                             {receiptUrl ? (
                                 <button
                                     className="admin-primary-button"
@@ -581,6 +1029,26 @@ function AdminRequestDetails() {
                                 </button>
                             ) : (
                                 <p style={{ fontSize: 13, color: 'var(--slate)' }}>Receipt file could not be opened.</p>
+                            )}
+
+                            {receipt.status === 'uploaded' && (
+                                <>
+                                    <button className="admin-primary-button" onClick={verifyPayment} disabled={processing}>
+                                        {processing ? 'Processing...' : '✓ Verify Payment'}
+                                    </button>
+
+                                    <button
+                                        className="admin-danger-button"
+                                        onClick={() => {
+                                            setShowReject(true)
+                                            setSelectedRequirement(null)
+                                            setRejectionReason('')
+                                        }}
+                                        disabled={processing}
+                                    >
+                                        ✕ Reject Payment
+                                    </button>
+                                </>
                             )}
                         </div>
                     </>
@@ -630,21 +1098,166 @@ function AdminRequestDetails() {
                                         </div>
                                     )}
 
-                                    {fileUrl && (
-                                        <button
-                                            className="admin-link-button"
-                                            style={{ marginTop: 12 }}
-                                            onClick={() => setPreviewFile({ url: fileUrl, name: requirement.file_name })}
-                                        >
-                                            View Document →
-                                        </button>
-                                    )}
+                                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+                                        {fileUrl && (
+                                            <button
+                                                className="admin-link-button"
+                                                onClick={() => setPreviewFile({ url: fileUrl, name: requirement.file_name })}
+                                            >
+                                                View Document →
+                                            </button>
+                                        )}
+
+                                        {requirement.status === 'uploaded' && (
+                                            <>
+                                                <button
+                                                    className="admin-primary-button"
+                                                    onClick={() => approveRequirement(requirement)}
+                                                    disabled={requirementProcessing}
+                                                >
+                                                    {requirementProcessing ? 'Processing...' : '✓ Approve'}
+                                                </button>
+
+                                                <button
+                                                    className="admin-danger-button"
+                                                    onClick={() => {
+                                                        setSelectedRequirement(requirement)
+                                                        setRejectionReason('')
+                                                        setShowReject(true)
+                                                    }}
+                                                    disabled={requirementProcessing}
+                                                >
+                                                    ✕ Reject
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             )
                         })}
                     </div>
                 )}
+
+                {requirements.length > 0 && (() => {
+                    const requirementState = getRequirementState()
+                    return (
+                        <div className={`admin-notice tone-${requirementState.allApproved ? 'success' : requirementState.rejected ? 'danger' : 'warning'}`} style={{ marginTop: 20 }}>
+                            <strong>Requirement Review</strong>
+                            {requirementState.allApproved ? (
+                                <p>✓ All required documents have been approved. This request is ready for document processing.</p>
+                            ) : requirementState.rejected ? (
+                                <p>✕ One or more required documents have been rejected. The student must submit a replacement.</p>
+                            ) : requirementState.pending ? (
+                                <p>⚠ Some required documents are still waiting for the student to upload them.</p>
+                            ) : (
+                                <p>⚠ Some uploaded documents still need to be reviewed.</p>
+                            )}
+                        </div>
+                    )
+                })()}
             </div>
+
+            {request.status === 'receipt_verified' && (() => {
+                const requirementState = getRequirementState()
+                return (
+                    <div className="admin-card">
+                        <h2 style={{ fontSize: 16, marginBottom: 8 }}>Document Processing</h2>
+                        <p style={{ fontSize: 13, marginBottom: 16 }}>
+                            Once the payment and all required documents are verified, you can begin processing
+                            the requested academic document.
+                        </p>
+
+                        {!requirementState.hasRequirements && (
+                            <div className="admin-notice tone-warning">
+                                <strong>Requirements are not ready</strong>
+                                <p>Create the request's required documents before starting processing.</p>
+                            </div>
+                        )}
+
+                        {requirementState.hasRequirements && !requirementState.allApproved && (
+                            <div className="admin-notice tone-warning">
+                                <strong>Processing is not available yet.</strong>
+                                <p>All required documents must be approved before processing can begin.</p>
+                            </div>
+                        )}
+
+                        {requirementState.allApproved && (
+                            <div className="admin-notice tone-success">
+                                <strong>✓ Ready for Document Processing</strong>
+                                <p>Payment is verified and all required documents have been approved.</p>
+                                <button onClick={startProcessing} disabled={processing} className="admin-primary-button" style={{ marginTop: 12 }}>
+                                    {processing ? 'Starting Processing...' : '▶ Start Document Processing'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )
+            })()}
+
+            {request.status === 'processing' && (
+                <div className="admin-card">
+                    <div className="admin-notice tone-info">
+                        <h2 style={{ fontSize: 16, marginBottom: 8 }}>Document Processing</h2>
+                        <strong>Processing has started.</strong>
+                        <p>Prepare the student's requested academic document, then generate the digital credential.</p>
+
+                        {request.processed_at && (
+                            <p><strong>Processing Started:</strong> {new Date(request.processed_at).toLocaleString()}</p>
+                        )}
+
+                        <button onClick={generateDigitalCredential} disabled={processing} className="admin-primary-button" style={{ marginTop: 12 }}>
+                            {processing ? 'Generating Credential...' : '📄 Generate Digital Credential'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {showReject && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 8 }}>
+                        {selectedRequirement ? 'Reject Requirement' : 'Reject Payment'}
+                    </h2>
+
+                    <p style={{ fontSize: 13, marginBottom: 12 }}>
+                        {selectedRequirement
+                            ? `Enter the reason why "${selectedRequirement.document_requirements?.requirement_name || 'this requirement'}" is being rejected.`
+                            : 'Enter the reason why the official receipt is being rejected.'}
+                    </p>
+
+                    <textarea
+                        className="admin-search-input"
+                        style={{ width: '100%', minHeight: 90, marginBottom: 12 }}
+                        value={rejectionReason}
+                        onChange={(event) => setRejectionReason(event.target.value)}
+                        placeholder={
+                            selectedRequirement
+                                ? 'Example: School ID is blurry and cannot be verified.'
+                                : 'Enter rejection reason...'
+                        }
+                    />
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button
+                            className="admin-secondary-button"
+                            onClick={() => {
+                                setShowReject(false)
+                                setSelectedRequirement(null)
+                                setRejectionReason('')
+                            }}
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            className="admin-danger-button"
+                            onClick={selectedRequirement ? rejectRequirement : rejectPayment}
+                            disabled={processing || requirementProcessing}
+                        >
+                            {processing || requirementProcessing ? 'Rejecting...' : 'Confirm Rejection'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {requestActivity.length > 0 && (
                 <div className="admin-card">

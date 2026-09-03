@@ -81,6 +81,11 @@
     color: #1e8a5f;
 }
 
+.admin-notice.tone-info {
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+}
+
 .admin-success-box {
     padding: 14px 16px;
     border-radius: 8px;
