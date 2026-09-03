@@ -523,7 +523,7 @@ function Register() {
                         <div style={{ flex: 1, minHeight: 0, padding: '14px 22px' }}>
                             <iframe
                                 title={legalTab === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
-                                src={legalTab === 'terms' ? '/terms' : '/privacy-policy'}
+                                src={legalTab === 'terms' ? '/terms?embed=1' : '/privacy-policy?embed=1'}
                                 style={{ width: '100%', height: '100%', minHeight: 320, border: '1px solid var(--line)', borderRadius: 6 }}
                             />
                         </div>
@@ -570,7 +570,7 @@ function Register() {
                 disabled={googleLoading}
             >
                 <GoogleIcon />
-                {googleLoading ? 'Redirecting...' : 'Continue with Google'}
+                {googleLoading ? 'Redirecting...' : 'Continue with your HCDC Google account'}
             </button>
         </AuthLayout>
     )

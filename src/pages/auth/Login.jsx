@@ -261,7 +261,7 @@ function Login() {
                         disabled={googleLoading}
                     >
                         <GoogleIcon />
-                        {googleLoading ? 'Redirecting...' : 'Continue with Google'}
+                        {googleLoading ? 'Redirecting...' : 'Continue with your HCDC Google account'}
                     </button>
                 </>
             )}
