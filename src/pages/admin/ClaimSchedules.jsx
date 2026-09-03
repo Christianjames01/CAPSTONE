@@ -133,6 +133,58 @@ function ClaimSchedules() {
         }
     }
 
+    const dismissSchedule = async (schedule) => {
+        const confirmed = await confirmModal(
+            `Dismiss the missed claiming appointment for ${schedule.requestNumber}? The student will need a new schedule if they still want to claim it.`
+        )
+        if (!confirmed) return
+
+        try {
+            setMarking(schedule.claim_schedule_id)
+
+            const { data: { user } } = await supabase.auth.getUser()
+            const now = new Date().toISOString()
+
+            const { error: scheduleError } = await supabase
+                .from('claim_schedules')
+                .update({
+                    status: 'cancelled',
+                    updated_at: now,
+                    remarks: schedule.remarks ? `${schedule.remarks} | Dismissed by Registrar Head.` : 'Dismissed by Registrar Head.',
+                })
+                .eq('claim_schedule_id', schedule.claim_schedule_id)
+
+            if (scheduleError) throw new Error(scheduleError.message)
+
+            const { error: requestError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'ready_for_claiming',
+                    employee_remarks: 'Missed claiming appointment dismissed by Registrar Head.',
+                    updated_at: now,
+                })
+                .eq('request_id', schedule.request_id)
+
+            if (requestError) throw new Error(requestError.message)
+
+            await logActivity({
+                userId: user?.id,
+                action: 'dismiss_missed_claim',
+                tableName: 'claim_schedules',
+                recordId: schedule.claim_schedule_id,
+                description: `Dismissed missed claiming appointment for "${schedule.requestNumber}" (Registrar Head).`,
+            })
+
+            await loadData()
+
+        } catch (err) {
+            console.error('DISMISS SCHEDULE ERROR:', err)
+            notifyError(err.message || 'Failed to dismiss schedule.')
+        } finally {
+            setMarking(null)
+        }
+    }
+
     const markAsClaimed = async (schedule) => {
         const confirmed = await confirmModal(`Mark ${schedule.requestNumber} as claimed?`)
         if (!confirmed) return
@@ -285,6 +337,12 @@ function ClaimSchedules() {
                             {s.status !== 'claimed' && s.status !== 'cancelled' && (
                                 <button className="admin-link-button" onClick={() => markAsClaimed(s)} disabled={marking === s.claim_schedule_id}>
                                     {marking === s.claim_schedule_id ? 'Marking...' : 'Mark as claimed'}
+                                </button>
+                            )}
+
+                            {s.status === 'missed' && (
+                                <button className="admin-link-button" style={{ color: 'var(--red-dark)' }} onClick={() => dismissSchedule(s)} disabled={marking === s.claim_schedule_id}>
+                                    {marking === s.claim_schedule_id ? 'Dismissing...' : 'Dismiss'}
                                 </button>
                             )}
                         </div>

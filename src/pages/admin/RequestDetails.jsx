@@ -844,6 +844,61 @@ function AdminRequestDetails() {
         await applyOverride(newStatus, overrideReason)
     }
 
+    const dismissMissedClaim = async () => {
+        if (!claimSchedule || claimSchedule.status !== 'missed') return
+
+        const confirmed = await confirmModal(
+            'Dismiss this missed claiming appointment? The student will need a new schedule if they still want to claim it.'
+        )
+        if (!confirmed) return
+
+        try {
+            setSaving(true)
+
+            const user = await getAdminUser()
+            const now = new Date().toISOString()
+
+            const { error: scheduleError } = await supabase
+                .from('claim_schedules')
+                .update({ status: 'cancelled', updated_at: now, remarks: 'Dismissed by Registrar Head.' })
+                .eq('claim_schedule_id', claimSchedule.claim_schedule_id)
+
+            if (scheduleError) {
+                throw new Error('Failed to dismiss schedule: ' + scheduleError.message)
+            }
+
+            const { error: requestError } = await supabase
+                .from('document_requests')
+                .update({
+                    status: 'ready_for_claiming',
+                    employee_remarks: 'Missed claiming appointment dismissed by Registrar Head.',
+                    updated_at: now,
+                })
+                .eq('request_id', requestId)
+
+            if (requestError) {
+                throw new Error('Schedule was dismissed but request status could not be updated: ' + requestError.message)
+            }
+
+            await logActivity({
+                userId: user.id,
+                action: 'dismiss_missed_claim',
+                tableName: 'claim_schedules',
+                recordId: claimSchedule.claim_schedule_id,
+                description: `Dismissed missed claiming appointment for request "${request?.request_number || requestId}" (Registrar Head).`,
+            })
+
+            notifySuccess('Missed claiming appointment dismissed.')
+            await loadRequest()
+
+        } catch (err) {
+            console.error('DISMISS MISSED CLAIM ERROR:', err)
+            notifyError(err.message || 'Failed to dismiss schedule.')
+        } finally {
+            setSaving(false)
+        }
+    }
+
     const flagLackingRequirements = async () => {
         const { value: reason } = await Swal.fire({
             title: 'Flag as Lacking Requirements',
@@ -1327,15 +1382,27 @@ function AdminRequestDetails() {
                     )}
 
                     {claimSchedule.status !== 'claimed' && (
-                        <button
-                            className="admin-link-button"
-                            style={{ marginTop: 14 }}
-                            onClick={() => navigate(`/admin/requests/${requestId}/claim-schedule`)}
-                        >
-                            {claimSchedule.status === 'missed' || claimSchedule.reschedule_requested_at
-                                ? 'Reschedule claiming →'
-                                : 'Edit claiming schedule →'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
+                            <button
+                                className="admin-link-button"
+                                onClick={() => navigate(`/admin/requests/${requestId}/claim-schedule`)}
+                            >
+                                {claimSchedule.status === 'missed' || claimSchedule.reschedule_requested_at
+                                    ? 'Reschedule claiming →'
+                                    : 'Edit claiming schedule →'}
+                            </button>
+
+                            {claimSchedule.status === 'missed' && (
+                                <button
+                                    className="admin-link-button"
+                                    style={{ color: 'var(--red-dark)' }}
+                                    onClick={dismissMissedClaim}
+                                    disabled={saving}
+                                >
+                                    {saving ? 'Dismissing...' : 'Dismiss'}
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
             )}
