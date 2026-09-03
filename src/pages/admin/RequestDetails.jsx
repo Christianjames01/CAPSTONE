@@ -42,6 +42,7 @@ function AdminRequestDetails() {
     const [previewFile, setPreviewFile] = useState(null)
     const [requestActivity, setRequestActivity] = useState([])
     const [claimSchedule, setClaimSchedule] = useState(null)
+    const [rating, setRating] = useState(null)
     const [employees, setEmployees] = useState([])
     const [currentEmployeeName, setCurrentEmployeeName] = useState('Unassigned')
 
@@ -197,6 +198,14 @@ function AdminRequestDetails() {
             } else {
                 setClaimSchedule(scheduleRow || null)
             }
+
+            const { data: ratingRow } = await supabase
+                .from('request_ratings')
+                .select('rating, comment')
+                .eq('request_id', requestId)
+                .maybeSingle()
+
+            setRating(ratingRow || null)
 
             const { data: activityRows, error: activityError } = await supabase
                 .from('activity_logs')
@@ -516,6 +525,18 @@ function AdminRequestDetails() {
                     </div>
                 )}
             </div>
+
+            {rating && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Student Rating</h2>
+                    <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue)' }}>
+                        {'★'.repeat(rating.rating)}{'☆'.repeat(5 - rating.rating)}
+                    </p>
+                    {rating.comment && (
+                        <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: 4 }}>"{rating.comment}"</p>
+                    )}
+                </div>
+            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Official Receipt</h2>
