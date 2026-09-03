@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
@@ -10,6 +10,7 @@ const CHIPS = [
     { key: 'upcoming', label: 'Upcoming' },
     { key: 'today', label: 'Today' },
     { key: 'missed', label: 'Missed' },
+    { key: 'reschedule', label: 'Reschedule Requests' },
     { key: 'claimed', label: 'Claimed' },
     { key: 'cancelled', label: 'Cancelled' },
     { key: 'all', label: 'All' },
@@ -25,12 +26,13 @@ function formatTime(time) {
 
 function ClaimSchedules() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
 
     const [schedules, setSchedules] = useState([])
     const [unclaimed, setUnclaimed] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [activeChip, setActiveChip] = useState('upcoming')
+    const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'upcoming')
     const [marking, setMarking] = useState(null)
 
     useEffect(() => {
@@ -189,6 +191,7 @@ function ClaimSchedules() {
         if (activeChip === 'today') return date === today && s.status !== 'cancelled'
         if (activeChip === 'upcoming') return date >= today && s.status === 'scheduled'
         if (activeChip === 'missed') return s.status === 'missed'
+        if (activeChip === 'reschedule') return !!s.reschedule_requested_at && s.status !== 'cancelled'
         if (activeChip === 'claimed') return s.status === 'claimed'
         if (activeChip === 'cancelled') return s.status === 'cancelled'
         return true
