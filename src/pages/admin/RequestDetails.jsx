@@ -712,6 +712,33 @@ function AdminRequestDetails() {
                             )}
                         </div>
                     )}
+
+                    {claimSchedule.status !== 'claimed' && (
+                        <button
+                            className="admin-link-button"
+                            style={{ marginTop: 14 }}
+                            onClick={() => navigate(`/admin/requests/${requestId}/claim-schedule`)}
+                        >
+                            {claimSchedule.status === 'missed' || claimSchedule.reschedule_requested_at
+                                ? 'Reschedule claiming →'
+                                : 'Edit claiming schedule →'}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {!claimSchedule && request?.status === 'ready_for_claiming' && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 6 }}>Claiming Schedule</h2>
+                    <p style={{ fontSize: 13, marginBottom: 14 }}>
+                        This document is ready but has not been scheduled for claiming yet.
+                    </p>
+                    <button
+                        className="admin-primary-button"
+                        onClick={() => navigate(`/admin/requests/${requestId}/claim-schedule`)}
+                    >
+                        📅 Schedule Claiming
+                    </button>
                 </div>
             )}
 
