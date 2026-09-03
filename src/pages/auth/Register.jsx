@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
@@ -8,6 +8,8 @@ import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function Register() {
+    const navigate = useNavigate()
+
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -196,6 +198,11 @@ function Register() {
                 studentError.message
             )
             setLoading(false)
+            return
+        }
+
+        if (data.session) {
+            navigate('/student/dashboard', { replace: true })
             return
         }
 
