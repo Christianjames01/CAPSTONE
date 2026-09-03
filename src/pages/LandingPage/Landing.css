@@ -1011,8 +1011,53 @@ h2 span {
    FOOTER
 =================================================== */
 .landing-footer {
-    background: var(--blue-dark);
+    position: relative;
+    background:
+        linear-gradient(rgba(10, 20, 40, 0.88), rgba(10, 20, 40, 0.88)),
+        url('../../assets/footer-building.jpg');
+    background-size: cover;
+    background-position: center;
     padding: 70px 0 30px;
+}
+
+.footer-compliance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 26px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-badges {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.footer-badges img {
+    width: 110px;
+    height: auto;
+    transition: transform 0.2s ease;
+}
+
+.footer-badges a:hover img {
+    transform: translateY(-2px);
+}
+
+.footer-social-icons {
+    display: flex;
+    gap: 18px;
+}
+
+.footer-social-icons a {
+    color: rgba(255, 255, 255, 0.75);
+    transition: color 0.15s ease;
+}
+
+.footer-social-icons a:hover {
+    color: var(--red-light);
 }
 
 .footer-container {
