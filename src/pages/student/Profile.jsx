@@ -83,7 +83,6 @@ function Profile() {
                     year_level,
                     enrollment_status,
                     birth_date,
-                    birth_place,
                     address,
                     emergency_contact_name,
                     emergency_contact_number,
@@ -498,11 +497,6 @@ function Profile() {
                     <div className="student-info-field">
                         <span>Birth Date</span>
                         <strong>{formatDate(student?.birth_date)}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Birth Place</span>
-                        <strong>{student?.birth_place || 'N/A'}</strong>
                     </div>
                 </div>
 

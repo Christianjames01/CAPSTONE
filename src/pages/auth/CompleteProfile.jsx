@@ -19,7 +19,6 @@ function CompleteProfile() {
     const [yearLevel, setYearLevel] = useState('')
 
     const [birthDate, setBirthDate] = useState('')
-    const [birthPlace, setBirthPlace] = useState('')
     const [address, setAddress] = useState('')
     const [emergencyContactName, setEmergencyContactName] = useState('')
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
@@ -152,7 +151,6 @@ function CompleteProfile() {
                 year_level: yearLevel,
                 enrollment_status: 'active',
                 birth_date: birthDate || null,
-                birth_place: birthPlace.trim() || null,
                 address: address.trim() || null,
                 emergency_contact_name: emergencyContactName.trim() || null,
                 emergency_contact_number: emergencyContactNumber.trim() || null,
@@ -239,18 +237,6 @@ function CompleteProfile() {
                             onChange={(e) => setBirthDate(e.target.value)}
                         />
                     </div>
-                </div>
-
-                <div className="form-group">
-                    <label className="form-label" htmlFor="birth-place">Birth Place</label>
-                    <input
-                        id="birth-place"
-                        type="text"
-                        className="form-input"
-                        value={birthPlace}
-                        onChange={(e) => setBirthPlace(e.target.value)}
-                        autoComplete="off"
-                    />
                 </div>
 
                 <p className="auth-form-section-title">Academic Information</p>
