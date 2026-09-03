@@ -52,7 +52,7 @@ function EmployeeRegister() {
         if (!data.user) {
             setStatus('success')
             setMessage(
-                'Registration submitted. Check your email to confirm your account, then contact the Registrar Head to activate your employee profile.'
+                'Registration submitted. Contact the Registrar Head to activate your employee profile.'
             )
             setLoading(false)
             return
