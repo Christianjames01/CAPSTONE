@@ -894,7 +894,7 @@ h2 span {
    CTA
 =================================================== */
 .cta-section {
-    background: var(--blue-dark);
+    background: var(--white);
     padding: 100px 0;
     text-align: center;
     position: relative;
@@ -905,7 +905,7 @@ h2 span {
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(200, 16, 46, 0.2), transparent 60%);
+    background: radial-gradient(circle at 50% 0%, rgba(200, 16, 46, 0.08), transparent 60%);
 }
 
 .cta-container {
@@ -921,6 +921,7 @@ h2 span {
     border-radius: 50%;
     background: var(--white);
     border: 2px solid var(--red);
+    box-shadow: 0 4px 16px rgba(16, 24, 39, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -941,22 +942,22 @@ h2 span {
     font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--red-light);
+    color: var(--red);
     margin-bottom: 16px;
 }
 
 .cta-section h2 {
-    color: var(--white);
+    color: var(--blue-dark);
     font-size: 34px;
     margin-bottom: 16px;
 }
 
 .cta-section h2 span {
-    color: var(--red-light);
+    color: var(--red);
 }
 
 .cta-section>.cta-container>p {
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--slate);
     font-size: 16px;
     margin-bottom: 34px;
 }
@@ -990,8 +991,8 @@ h2 span {
     align-items: center;
     gap: 8px;
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: var(--white);
+    border: 1px solid var(--line);
+    color: var(--blue-dark);
     font-weight: 600;
     font-size: 15px;
     padding: 14px 22px;
@@ -1004,7 +1005,8 @@ h2 span {
 }
 
 .cta-secondary:hover {
-    border-color: var(--red-light);
+    border-color: var(--red);
+    color: var(--red);
 }
 
 /* ===================================================
