@@ -570,7 +570,7 @@ function Register() {
                 disabled={googleLoading}
             >
                 <GoogleIcon />
-                {googleLoading ? 'Redirecting...' : 'Continue with your HCDC Google account'}
+                {googleLoading ? 'Redirecting...' : 'Continue with Google'}
             </button>
         </AuthLayout>
     )
