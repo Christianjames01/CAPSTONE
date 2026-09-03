@@ -216,8 +216,8 @@ function AdminDashboard() {
     ]
 
     const attentionStats = [
-        { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules' },
-        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules' },
+        { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules?status=missed' },
+        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules?status=reschedule' },
     ]
 
     if (loading) {

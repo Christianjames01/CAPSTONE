@@ -96,6 +96,10 @@ function RequestDetails() {
     const [errorMessage, setErrorMessage] = useState('')
     const [cancelling, setCancelling] = useState(false)
     const [requestingReschedule, setRequestingReschedule] = useState(false)
+    const [rating, setRating] = useState(null)
+    const [ratingValue, setRatingValue] = useState(0)
+    const [ratingComment, setRatingComment] = useState('')
+    const [submittingRating, setSubmittingRating] = useState(false)
 
     useEffect(() => {
         console.log('URL REQUEST ID:', requestId)
@@ -305,6 +309,14 @@ function RequestDetails() {
 
             setCredential(credentialData || null)
 
+            const { data: ratingRow } = await supabase
+                .from('request_ratings')
+                .select('rating_id, rating, comment')
+                .eq('request_id', requestId)
+                .maybeSingle()
+
+            setRating(ratingRow || null)
+
         } catch (error) {
             console.error(
                 'REQUEST DETAILS ERROR:',
@@ -448,6 +460,41 @@ function RequestDetails() {
             notifyError(err.message || 'Failed to send your reschedule request.')
         } finally {
             setRequestingReschedule(false)
+        }
+    }
+
+    const submitRating = async () => {
+        if (!ratingValue) {
+            notifyError('Please select a star rating before submitting.')
+            return
+        }
+
+        try {
+            setSubmittingRating(true)
+
+            const { data, error: ratingError } = await supabase
+                .from('request_ratings')
+                .insert({
+                    request_id: request.request_id,
+                    student_id: request.student_id,
+                    rating: ratingValue,
+                    comment: ratingComment.trim() || null,
+                })
+                .select('rating_id, rating, comment')
+                .single()
+
+            if (ratingError) {
+                throw new Error(ratingError.message || 'Failed to submit your rating.')
+            }
+
+            setRating(data)
+            notifySuccess('Thanks for rating your experience!')
+
+        } catch (err) {
+            console.error('SUBMIT RATING ERROR:', err)
+            notifyError(err.message || 'Failed to submit your rating.')
+        } finally {
+            setSubmittingRating(false)
         }
     }
 
@@ -639,6 +686,74 @@ function RequestDetails() {
                     <strong>{statusMeta(request.status).title}</strong>
                     <p>{statusMeta(request.status).message}</p>
                 </div>
+
+                {request.status === 'completed' && (
+                    <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
+                        <h3 style={{ fontSize: 15, marginBottom: 10 }}>Rate Your Experience</h3>
+
+                        {rating ? (
+                            <>
+                                <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue)' }}>
+                                    {'★'.repeat(rating.rating)}{'☆'.repeat(5 - rating.rating)}
+                                </p>
+                                {rating.comment && (
+                                    <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: 4 }}>
+                                        "{rating.comment}"
+                                    </p>
+                                )}
+                                <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 8 }}>
+                                    Thanks for your feedback!
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginBottom: 10 }}>
+                                    How was your experience with this request?
+                                </p>
+
+                                <div style={{ marginBottom: 12 }}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRatingValue(star)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: 26,
+                                                lineHeight: 1,
+                                                padding: 2,
+                                                color: star <= ratingValue ? 'var(--blue)' : 'var(--line)',
+                                            }}
+                                            aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                                        >
+                                            {star <= ratingValue ? '★' : '☆'}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <textarea
+                                    className="form-input"
+                                    style={{ width: '100%', minHeight: 70, marginBottom: 12, resize: 'vertical' }}
+                                    placeholder="Optional comment..."
+                                    value={ratingComment}
+                                    onChange={(e) => setRatingComment(e.target.value)}
+                                    maxLength={500}
+                                />
+
+                                <button
+                                    className="auth-submit"
+                                    style={{ width: 'auto', padding: '11px 20px' }}
+                                    onClick={submitRating}
+                                    disabled={submittingRating}
+                                >
+                                    {submittingRating ? 'Submitting...' : 'Submit Rating'}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {request.status === 'pending' && (
                     <button
