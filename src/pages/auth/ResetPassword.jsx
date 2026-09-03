@@ -15,6 +15,7 @@ function ResetPassword() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [message, setMessage] = useState('')
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
@@ -114,14 +115,14 @@ function ResetPassword() {
                     <div className="password-field">
                         <input
                             id="reset-confirm-password"
-                            type={showPassword ? 'text' : 'password'}
+                            type={showConfirmPassword ? 'text' : 'password'}
                             className="form-input"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Re-enter your new password"
                             required
                         />
-                        <PasswordToggleButton show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+                        <PasswordToggleButton show={showConfirmPassword} onToggle={() => setShowConfirmPassword((v) => !v)} />
                     </div>
                 </div>
 
