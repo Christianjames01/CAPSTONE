@@ -27,6 +27,81 @@
     margin-bottom: 16px;
 }
 
+/* ===================================================
+   HELP PAGE FOOTER (compliance badges + contact)
+=================================================== */
+.student-help-footer {
+    position: relative;
+    background:
+        linear-gradient(rgba(10, 20, 40, 0.85), rgba(10, 20, 40, 0.85)),
+        url('../../assets/footer-building.jpg');
+    background-size: cover;
+    background-position: center;
+    color: var(--white);
+    border-radius: 12px;
+    padding: 22px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.student-help-footer-badges {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.student-help-footer-badges img {
+    width: 100px;
+    height: auto;
+    transition: transform 0.2s ease;
+}
+
+.student-help-footer-badges a:hover img {
+    transform: translateY(-2px);
+}
+
+.student-help-footer-social {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.student-help-footer-icons {
+    display: flex;
+    gap: 16px;
+}
+
+.student-help-footer-icons a {
+    color: var(--white);
+    opacity: 0.85;
+    transition: 0.2s;
+}
+
+.student-help-footer-icons a:hover {
+    color: var(--red-light);
+    opacity: 1;
+}
+
+.student-help-footer-copyright {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 560px) {
+    .student-help-footer {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .student-help-footer-social {
+        align-items: center;
+    }
+}
+
 .student-empty {
     text-align: center;
     padding: 48px 24px;
