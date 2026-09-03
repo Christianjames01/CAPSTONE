@@ -30,6 +30,8 @@ function Reports() {
     const [documentBreakdown, setDocumentBreakdown] = useState([])
     const [documentTurnaround, setDocumentTurnaround] = useState([])
     const [avgTurnaroundDays, setAvgTurnaroundDays] = useState(null)
+    const [avgRating, setAvgRating] = useState(null)
+    const [ratingCount, setRatingCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [exporting, setExporting] = useState(false)
@@ -63,6 +65,19 @@ function Reports() {
 
             setSchedules(scheduleRows || [])
 
+            const { data: ratingRows, error: ratingError } = await supabase
+                .from('request_ratings')
+                .select('request_id, rating')
+
+            if (ratingError) {
+                throw new Error('Failed to load ratings: ' + ratingError.message)
+            }
+
+            const ratingByRequestId = Object.fromEntries((ratingRows || []).map((r) => [r.request_id, r.rating]))
+
+            setAvgRating(average((ratingRows || []).map((r) => r.rating)))
+            setRatingCount((ratingRows || []).length)
+
             const { data: employeeRows } = await supabase
                 .from('employees')
                 .select('employee_id, user_id, employee_number, status')
@@ -90,6 +105,11 @@ function Reports() {
                     completedCount: completed.length,
                     rejectedCount: rejected.length,
                     avgTurnaroundDays: average(completed.map(turnaroundDays).filter((d) => d !== null)),
+                    avgRating: average(
+                        completed
+                            .map((r) => ratingByRequestId[r.request_id])
+                            .filter((v) => v !== undefined)
+                    ),
                 }
             })
 
@@ -399,6 +419,14 @@ function Reports() {
                     </span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Avg Turnaround</span>
                 </div>
+                <div className="admin-card" style={{ margin: 0 }}>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
+                        {avgRating === null ? 'N/A' : `${avgRating.toFixed(1)} ★`}
+                    </span>
+                    <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>
+                        Avg Satisfaction {ratingCount > 0 ? `(${ratingCount} rated)` : ''}
+                    </span>
+                </div>
             </div>
 
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Turnaround Time by Document</h2>
@@ -443,7 +471,7 @@ function Reports() {
             <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
                 <table className="admin-table">
                     <thead>
-                        <tr><th>Employee</th><th>Assigned</th><th>Completed</th><th>Rejected</th><th>Avg Turnaround</th></tr>
+                        <tr><th>Employee</th><th>Assigned</th><th>Completed</th><th>Rejected</th><th>Avg Turnaround</th><th>Avg Rating</th></tr>
                     </thead>
                     <tbody>
                         {employeePerformance.map((e) => (
@@ -453,6 +481,7 @@ function Reports() {
                                 <td>{e.completedCount}</td>
                                 <td>{e.rejectedCount}</td>
                                 <td>{formatTurnaround(e.avgTurnaroundDays)}</td>
+                                <td>{e.avgRating === null ? 'N/A' : `${e.avgRating.toFixed(1)} ★`}</td>
                             </tr>
                         ))}
                     </tbody>
