@@ -34,6 +34,7 @@ function Register() {
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
+    const [agreedToTerms, setAgreedToTerms] = useState(false)
 
     const handlePhoneInput = (setter) => (e) => {
         setter(e.target.value.replace(/\D/g, '').slice(0, 11))
@@ -114,6 +115,12 @@ function Register() {
         if (!passwordMeetsRequirements(password)) {
             setStatus('error')
             setMessage(passwordRequirementMessage())
+            return
+        }
+
+        if (!agreedToTerms) {
+            setStatus('error')
+            setMessage('Please agree to the Terms of Service and Privacy Policy to continue.')
             return
         }
 
@@ -447,13 +454,22 @@ function Register() {
                     </p>
                 )}
 
-                <p style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginBottom: 14 }}>
-                    By creating an account, you agree to CertiChain's{' '}
-                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and{' '}
-                    <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
-                </p>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginBottom: 14, cursor: 'pointer' }}>
+                    <input
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        style={{ marginTop: 2, flexShrink: 0 }}
+                        required
+                    />
+                    <span>
+                        I have read and agree to CertiChain's{' '}
+                        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and{' '}
+                        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+                    </span>
+                </label>
 
-                <button type="submit" className="auth-submit" disabled={loading}>
+                <button type="submit" className="auth-submit" disabled={loading || !agreedToTerms}>
                     {loading && <span className="auth-spinner" />}
                     {loading ? 'Creating account...' : 'Create account'}
                 </button>
