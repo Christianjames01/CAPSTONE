@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
 import PasswordRequirements from '../../components/PasswordRequirements'
+import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function ResetPassword() {
@@ -13,6 +14,7 @@ function ResetPassword() {
 
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [message, setMessage] = useState('')
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
@@ -92,29 +94,35 @@ function ResetPassword() {
 
                 <div className="form-group">
                     <label className="form-label" htmlFor="reset-password">New password</label>
-                    <input
-                        id="reset-password"
-                        type="password"
-                        className="form-input"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter a new password"
-                        required
-                    />
+                    <div className="password-field">
+                        <input
+                            id="reset-password"
+                            type={showPassword ? 'text' : 'password'}
+                            className="form-input"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter a new password"
+                            required
+                        />
+                        <PasswordToggleButton show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+                    </div>
                     <PasswordRequirements password={password} />
                 </div>
 
                 <div className="form-group">
                     <label className="form-label" htmlFor="reset-confirm-password">Confirm new password</label>
-                    <input
-                        id="reset-confirm-password"
-                        type="password"
-                        className="form-input"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter your new password"
-                        required
-                    />
+                    <div className="password-field">
+                        <input
+                            id="reset-confirm-password"
+                            type={showPassword ? 'text' : 'password'}
+                            className="form-input"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Re-enter your new password"
+                            required
+                        />
+                        <PasswordToggleButton show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+                    </div>
                 </div>
 
                 {message && <p className="form-message error">{message}</p>}
