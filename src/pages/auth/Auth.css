@@ -256,6 +256,37 @@
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
+.password-field {
+    position: relative;
+}
+
+.password-field .form-input {
+    padding-right: 42px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.password-toggle:hover {
+    color: var(--blue);
+    background: var(--paper);
+}
+
 .auth-submit {
     display: inline-flex;
     align-items: center;

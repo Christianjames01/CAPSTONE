@@ -4,11 +4,13 @@ import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordRequirements from '../../components/PasswordRequirements'
+import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
 function Register() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
 
     const [firstName, setFirstName] = useState('')
     const [middleName, setMiddleName] = useState('')
@@ -232,15 +234,18 @@ function Register() {
 
                     <div className="form-group">
                         <label className="form-label" htmlFor="register-password">Password</label>
-                        <input
-                            id="register-password"
-                            type="password"
-                            className="form-input"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Create a password"
-                            required
-                        />
+                        <div className="password-field">
+                            <input
+                                id="register-password"
+                                type={showPassword ? 'text' : 'password'}
+                                className="form-input"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Create a password"
+                                required
+                            />
+                            <PasswordToggleButton show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+                        </div>
                         <PasswordRequirements password={password} />
                     </div>
                 </div>

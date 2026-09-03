@@ -6,6 +6,7 @@ import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../li
 import { checkLoginLock, recordLoginAttempt, formatLockMessage } from '../../lib/loginGuard'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
+import PasswordToggleButton from './PasswordToggleButton'
 
 function Login() {
     const navigate = useNavigate()
@@ -17,6 +18,8 @@ function Login() {
     const [messageType, setMessageType] = useState(location.state?.type || 'error')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
+
+    const [showPassword, setShowPassword] = useState(false)
 
     const [mfaFactorId, setMfaFactorId] = useState(null)
     const [mfaChallengeId, setMfaChallengeId] = useState(null)
@@ -229,15 +232,18 @@ function Login() {
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="login-password">Password</label>
-                            <input
-                                id="login-password"
-                                type="password"
-                                className="form-input"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
-                                required
-                            />
+                            <div className="password-field">
+                                <input
+                                    id="login-password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    className="form-input"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Enter your password"
+                                    required
+                                />
+                                <PasswordToggleButton show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
+                            </div>
                             <Link to="/forgot-password" style={{ fontSize: 12.5, display: 'block', textAlign: 'right', marginTop: 6 }}>
                                 Forgot password?
                             </Link>
