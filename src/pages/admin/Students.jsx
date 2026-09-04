@@ -75,6 +75,8 @@ function Students() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('You are not logged in.')
 
+            const nextStatus = decision === 'approved' ? 'active' : 'inactive'
+
             const { error: updateError } = await supabase
                 .from('students')
                 .update({
@@ -82,10 +84,18 @@ function Students() {
                     verification_note: reason || null,
                     verified_by: user.id,
                     verified_at: new Date().toISOString(),
+                    status: nextStatus,
                 })
                 .eq('student_id', student.student_id)
 
             if (updateError) throw new Error(updateError.message)
+
+            const { error: profileStatusError } = await supabase
+                .from('profiles')
+                .update({ status: nextStatus })
+                .eq('user_id', student.user_id)
+
+            if (profileStatusError) throw new Error(profileStatusError.message)
 
             await notifyStudentByStudentId({
                 studentId: student.student_id,
@@ -104,6 +114,7 @@ function Students() {
             })
 
             setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
+            applyToResults(student.student_id, { status: nextStatus })
 
         } catch (err) {
             console.error('REVIEW STUDENT ERROR:', err)
@@ -175,7 +186,7 @@ function Students() {
     const loadPendingProfiles = async (studentRows) => {
         const { data: studentProfiles, error: profilesError } = await supabase
             .from('profiles')
-            .select('user_id, first_name, last_name, email, created_at')
+            .select('user_id, first_name, last_name, email, created_at, status')
             .eq('role', 'student')
             .order('created_at', { ascending: false })
 
@@ -494,6 +505,7 @@ function Students() {
                     <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Setup</h2>
                     <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
                         These accounts signed in but haven't finished the "Complete your profile" step yet, so they don't have a student record and can't submit requests.
+                        Accounts left incomplete for 3 working days are automatically deactivated.
                     </p>
 
                     {pendingProfiles.map((p) => (
@@ -503,7 +515,11 @@ function Students() {
                                     <h3>{`${p.first_name} ${p.last_name}`.trim() || 'Unknown'}</h3>
                                     <p>{p.email}</p>
                                 </div>
-                                <span className="admin-status-pill status-pending">Setup incomplete</span>
+                                {p.status === 'inactive' ? (
+                                    <span className="admin-status-pill status-rejected">Auto-declined</span>
+                                ) : (
+                                    <span className="admin-status-pill status-pending">Setup incomplete</span>
+                                )}
                             </div>
 
                             <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>
