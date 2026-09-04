@@ -208,7 +208,7 @@ function AdminDashboard() {
         { label: 'Total Students', value: studentCount, to: '/admin/students' },
         { label: 'Total Requests', value: requests.length, to: '/admin/requests' },
         { label: 'Pending', value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending' },
-        { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/claim-schedules' },
+        { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming' },
         { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests?status=completed' },
         { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected' },
         { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled' },
