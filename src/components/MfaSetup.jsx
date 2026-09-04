@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Modal from './Modal'
 
 function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
     const [factors, setFactors] = useState([])
@@ -132,8 +133,8 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
                 Add an authenticator app (Google Authenticator, Authy, etc.) as a second step when logging in.
             </p>
 
-            {error && <p className="form-message error" style={{ marginBottom: 12 }}>{error}</p>}
-            {message && <p className="form-message success" style={{ marginBottom: 12 }}>{message}</p>}
+            {!enrolling && error && <p className="form-message error" style={{ marginBottom: 12 }}>{error}</p>}
+            {!enrolling && message && <p className="form-message success" style={{ marginBottom: 12 }}>{message}</p>}
 
             {hasVerifiedFactor ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -148,64 +149,72 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
                         {unenrolling ? 'Disabling...' : 'Disable'}
                     </button>
                 </div>
-            ) : !enrolling ? (
+            ) : (
                 <button type="button" className={linkButtonClassName} onClick={startEnroll}>
                     Enable Two-Factor Authentication
                 </button>
-            ) : !enrollData ? (
-                <p style={{ fontSize: 13, color: 'var(--slate)' }}>Setting up...</p>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 320 }}>
-                    <p style={{ fontSize: 13 }}>
-                        Scan this QR code with your authenticator app, then enter the 6-digit code it shows.
-                    </p>
+            )}
 
-                    <img
-                        src={enrollData.totp.qr_code}
-                        alt="Two-factor authentication QR code"
-                        style={{ width: 180, height: 180, alignSelf: 'flex-start', border: '1px solid var(--line)', borderRadius: 8 }}
-                    />
+            {enrolling && (
+                <Modal title="Set Up Two-Factor Authentication" onClose={cancelEnroll}>
+                    {error && <p className="form-message error" style={{ marginBottom: 12 }}>{error}</p>}
 
-                    <p style={{ fontSize: 12, color: 'var(--slate)' }}>
-                        Can't scan it? Enter this code manually in your app:{' '}
-                        <code style={{ wordBreak: 'break-all' }}>{enrollData.totp.secret}</code>
-                    </p>
+                    {!enrollData ? (
+                        <p style={{ fontSize: 13, color: 'var(--slate)' }}>Setting up...</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                            <p style={{ fontSize: 13 }}>
+                                Scan this QR code with your authenticator app, then enter the 6-digit code it shows.
+                            </p>
 
-                    <div className="form-group">
-                        <label className="form-label">Verification Code</label>
-                        <input
-                            className="form-input"
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={6}
-                            value={verifyCode}
-                            onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            placeholder="123456"
-                            disabled={verifying}
-                        />
-                    </div>
+                            <img
+                                src={enrollData.totp.qr_code}
+                                alt="Two-factor authentication QR code"
+                                style={{ width: 180, height: 180, alignSelf: 'flex-start', border: '1px solid var(--line)', borderRadius: 8 }}
+                            />
 
-                    <div style={{ display: 'flex', gap: 10 }}>
-                        <button
-                            type="button"
-                            className="auth-submit"
-                            style={{ width: 'auto', padding: '11px 20px' }}
-                            onClick={confirmEnroll}
-                            disabled={verifying}
-                        >
-                            {verifying ? 'Verifying...' : 'Verify & Enable'}
-                        </button>
-                        <button
-                            type="button"
-                            className={linkButtonClassName}
-                            style={{ color: 'var(--slate)' }}
-                            onClick={cancelEnroll}
-                            disabled={verifying}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
+                            <p style={{ fontSize: 12, color: 'var(--slate)' }}>
+                                Can't scan it? Enter this code manually in your app:{' '}
+                                <code style={{ wordBreak: 'break-all' }}>{enrollData.totp.secret}</code>
+                            </p>
+
+                            <div className="form-group">
+                                <label className="form-label">Verification Code</label>
+                                <input
+                                    className="form-input"
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    value={verifyCode}
+                                    onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder="123456"
+                                    disabled={verifying}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <button
+                                    type="button"
+                                    className="auth-submit"
+                                    style={{ width: 'auto', padding: '11px 20px' }}
+                                    onClick={confirmEnroll}
+                                    disabled={verifying}
+                                >
+                                    {verifying ? 'Verifying...' : 'Verify & Enable'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className={linkButtonClassName}
+                                    style={{ color: 'var(--slate)' }}
+                                    onClick={cancelEnroll}
+                                    disabled={verifying}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </Modal>
             )}
         </div>
     )
