@@ -11,7 +11,7 @@ function Students() {
     const navigate = useNavigate()
 
     const [term, setTerm] = useState('')
-    const [results, setResults] = useState([])
+    const [allStudents, setAllStudents] = useState([])
     const [pendingProfiles, setPendingProfiles] = useState([])
     const [pendingVerifications, setPendingVerifications] = useState([])
     const [reviewingId, setReviewingId] = useState(null)
@@ -148,7 +148,7 @@ function Students() {
                 throw new Error('Failed to load students: ' + studentsError.message)
             }
 
-            setResults(await enrichStudents(rows || []))
+            setAllStudents(await enrichStudents(rows || []))
             setSearched(true)
 
             await loadPendingProfiles(rows || [])
@@ -178,60 +178,25 @@ function Students() {
         setPendingProfiles((studentProfiles || []).filter((p) => !studentUserIds.has(p.user_id)))
     }
 
-    const search = async (e) => {
-        e.preventDefault()
-
-        const query = term.trim()
-
-        if (!query) {
-            setSelectedProgramKey(null)
-            await loadAllStudents()
-            return
-        }
-
+    const onSearchTermChange = (value) => {
+        setTerm(value)
         setSelectedProgramKey(null)
-
-        try {
-            setLoading(true)
-            setError('')
-            setSearched(true)
-
-            const { data: byNumber } = await supabase
-                .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
-                .ilike('student_number', `%${query}%`)
-                .limit(20)
-
-            const { data: matchingProfiles } = await supabase
-                .from('profiles')
-                .select('user_id, first_name, last_name, email')
-                .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
-                .limit(20)
-
-            const matchingUserIds = (matchingProfiles || []).map((p) => p.user_id)
-
-            const { data: byName } = matchingUserIds.length
-                ? await supabase
-                    .from('students')
-                    .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
-                    .in('user_id', matchingUserIds)
-                : { data: [] }
-
-            const merged = [...(byNumber || []), ...(byName || [])]
-            const uniqueByStudentId = Object.values(Object.fromEntries(merged.map((s) => [s.student_id, s])))
-
-            setResults(await enrichStudents(uniqueByStudentId))
-
-        } catch (err) {
-            console.error('ADMIN STUDENT SEARCH ERROR:', err)
-            setError(err.message || 'Search failed.')
-        } finally {
-            setLoading(false)
-        }
     }
 
+    const results = (() => {
+        const query = term.trim().toLowerCase()
+
+        if (!query) return allStudents
+
+        return allStudents.filter((s) =>
+            s.student_number.toLowerCase().includes(query) ||
+            s.fullName.toLowerCase().includes(query) ||
+            s.email.toLowerCase().includes(query)
+        )
+    })()
+
     const applyToResults = (studentId, changes) => {
-        setResults((prev) => prev.map((s) => (s.student_id === studentId ? { ...s, ...changes } : s)))
+        setAllStudents((prev) => prev.map((s) => (s.student_id === studentId ? { ...s, ...changes } : s)))
     }
 
     const toggleStatus = async (student) => {
@@ -342,7 +307,7 @@ function Students() {
                 description: `Deleted student record for "${student.fullName}" (${student.student_number}).`,
             })
 
-            setResults((prev) => prev.filter((s) => s.student_id !== student.student_id))
+            setAllStudents((prev) => prev.filter((s) => s.student_id !== student.student_id))
 
         } catch (err) {
             console.error('REMOVE STUDENT ERROR:', err)
@@ -439,18 +404,14 @@ function Students() {
                 <p>All enrolled students. Search to narrow the list, or view a student's information, request history, and submitted requirements.</p>
             </div>
 
-            <form onSubmit={search} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-                <input
-                    className="admin-search-input"
-                    type="text"
-                    value={term}
-                    onChange={(e) => setTerm(e.target.value)}
-                    placeholder="Search by student number or name"
-                />
-                <button type="submit" className="admin-primary-button" disabled={loading}>
-                    {loading ? 'Searching...' : 'Search'}
-                </button>
-            </form>
+            <input
+                className="admin-search-input"
+                type="text"
+                value={term}
+                onChange={(e) => onSearchTermChange(e.target.value)}
+                placeholder="Search by student number or name"
+                style={{ marginBottom: 24 }}
+            />
 
             {error && <div className="admin-error-box">{error}</div>}
 
