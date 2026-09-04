@@ -10,6 +10,22 @@ import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
+const DOCUMENT_CATEGORIES = [
+    { value: 'enrollment', label: 'Enrollment' },
+    { value: 'academic_records', label: 'Academic Records' },
+    { value: 'graduation', label: 'Graduation' },
+    { value: 'diploma', label: 'Diploma' },
+    { value: 'transfer', label: 'Transfer' },
+    { value: 'authentication', label: 'Authentication' },
+    { value: 'curriculum', label: 'Curriculum' },
+    { value: 'special_purpose', label: 'Special Purpose' },
+    { value: 'clearance', label: 'Clearance' },
+    { value: 'printout', label: 'Printout' },
+    { value: 'maritime', label: 'Maritime' },
+]
+
+const DOCUMENT_CATEGORY_VALUES = new Set(DOCUMENT_CATEGORIES.map((c) => c.value))
+
 const IMPORT_COLUMNS = [
     { header: 'document_code', key: 'document_code', width: 16 },
     { header: 'document_name', key: 'document_name', width: 34 },
@@ -97,7 +113,7 @@ function Documents() {
                     {
                         document_code: 'TOR',
                         document_name: 'Transcript of Records',
-                        category: 'Academic Records',
+                        category: 'academic_records',
                         description: 'Official record of courses taken and grades earned.',
                         fee: '150',
                         processing_days_min: '5',
@@ -105,6 +121,14 @@ function Documents() {
                         is_available: 'yes',
                     },
                 ],
+            },
+            {
+                name: 'Valid Categories',
+                columns: [
+                    { header: 'category', key: 'value', width: 20 },
+                    { header: 'label', key: 'label', width: 24 },
+                ],
+                rows: DOCUMENT_CATEGORIES,
             },
         ])
     }
@@ -143,10 +167,17 @@ function Documents() {
                     continue
                 }
 
+                const category = (row.category || '').trim()
+
+                if (!DOCUMENT_CATEGORY_VALUES.has(category)) {
+                    failed.push(`${code}: invalid category "${category}" — must be one of ${[...DOCUMENT_CATEGORY_VALUES].join(', ')}`)
+                    continue
+                }
+
                 const payload = {
                     document_code: code,
                     document_name: name,
-                    category: row.category?.trim() || null,
+                    category,
                     description: row.description?.trim() || null,
                     fee: row.fee ? Number(row.fee) : 0,
                     processing_days_min: row.processing_days_min ? Number(row.processing_days_min) : null,
@@ -230,13 +261,18 @@ function Documents() {
             return
         }
 
+        if (!DOCUMENT_CATEGORY_VALUES.has(form.category)) {
+            notifyWarning('Please select a category.')
+            return
+        }
+
         try {
             setSaving(true)
 
             const payload = {
                 document_code: form.document_code.trim(),
                 document_name: form.document_name.trim(),
-                category: form.category.trim() || null,
+                category: form.category,
                 description: form.description.trim() || null,
                 fee: form.fee === '' ? 0 : Number(form.fee),
                 processing_days_min: form.processing_days_min === '' ? null : Number(form.processing_days_min),
@@ -427,6 +463,8 @@ function Documents() {
         }
     }
 
+    const categoryLabel = (value) => DOCUMENT_CATEGORIES.find((c) => c.value === value)?.label || value || 'Uncategorized'
+
     const visibleDocuments = documents.filter((doc) => {
         if (availabilityFilter === 'available') return doc.is_available
         if (availabilityFilter === 'unavailable') return !doc.is_available
@@ -507,7 +545,12 @@ function Documents() {
 
                         <div className="form-group">
                             <label className="form-label">Category</label>
-                            <input className="form-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={saving} />
+                            <select className="form-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={saving}>
+                                <option value="">-- Select category --</option>
+                                {DOCUMENT_CATEGORIES.map((c) => (
+                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="form-group">
@@ -577,7 +620,7 @@ function Documents() {
                         <div className="admin-list-card-header">
                             <div>
                                 <h3>{doc.document_name}</h3>
-                                <p>{doc.document_code} · {doc.category || 'Uncategorized'}</p>
+                                <p>{doc.document_code} · {categoryLabel(doc.category)}</p>
                             </div>
 
                             <span className={`admin-status-pill status-${doc.is_available ? 'active' : 'inactive'}`}>
