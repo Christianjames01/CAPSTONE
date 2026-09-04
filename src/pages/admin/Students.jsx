@@ -38,6 +38,12 @@ function Students() {
     }
 
     const approveStudent = async (student) => {
+        const confirmed = await confirmModal(
+            `Approve ${student.fullName}'s registration? They will be able to log in and submit requests.`,
+            { title: 'Approve registration?', confirmButtonText: 'Approve', icon: 'question' }
+        )
+        if (!confirmed) return
+
         await reviewStudent(student, 'approved')
     }
 
@@ -48,11 +54,16 @@ function Students() {
             inputLabel: 'Reason (shown to the student)',
             inputPlaceholder: 'e.g. Student number not found in enrollment records',
             showCancelButton: true,
-            confirmButtonText: 'Reject',
-            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Next',
         })
 
         if (!reason) return
+
+        const confirmed = await confirmModal(
+            `Reject ${student.fullName}'s registration with reason: "${reason}"?`,
+            { title: 'Reject registration?', confirmButtonText: 'Reject', icon: 'warning' }
+        )
+        if (!confirmed) return
 
         await reviewStudent(student, 'rejected', reason)
     }
