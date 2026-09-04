@@ -70,7 +70,7 @@ function Assignments() {
                 }))
             )
 
-            const unassignedRequests = (allRequests || []).filter((r) => !r.assigned_employee_id)
+            const unassignedRequests = openRequests.filter((r) => !r.assigned_employee_id)
 
             const studentIds = [...new Set(unassignedRequests.map((r) => r.student_id).filter(Boolean))]
             const documentTypeIds = [...new Set(unassignedRequests.map((r) => r.document_type_id).filter(Boolean))]
