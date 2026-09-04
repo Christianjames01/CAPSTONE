@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyError, notifyWarning } from '../../lib/notify'
+import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
@@ -110,6 +110,13 @@ function Assignments() {
             notifyWarning('Please select an employee first.')
             return
         }
+
+        const employeeName = employees.find((e) => e.employee_id === employeeId)?.name || 'this employee'
+
+        const confirmed = await confirmModal(
+            `Assign request "${request.request_number}" to ${employeeName}?`
+        )
+        if (!confirmed) return
 
         try {
             const {
