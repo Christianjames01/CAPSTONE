@@ -193,7 +193,7 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
                             <img
                                 src={enrollData.totp.qr_code}
                                 alt="Two-factor authentication QR code"
-                                style={{ width: 180, height: 180, alignSelf: 'flex-start', border: '1px solid var(--line)', borderRadius: 8 }}
+                                style={{ width: 260, height: 260, alignSelf: 'center', border: '1px solid var(--line)', borderRadius: 8 }}
                             />
 
                             <p style={{ fontSize: 12, color: 'var(--slate)' }}>
