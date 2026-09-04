@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import MfaSetup from '../../components/MfaSetup'
+import PasswordRequirements from '../../components/PasswordRequirements'
+import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -16,6 +19,14 @@ function Profile() {
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
     const [phoneNumber, setPhoneNumber] = useState('')
+
+    const [changingPassword, setChangingPassword] = useState(false)
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmNewPassword, setConfirmNewPassword] = useState('')
+    const [passwordSaving, setPasswordSaving] = useState(false)
+    const [passwordError, setPasswordError] = useState('')
+    const [passwordMessage, setPasswordMessage] = useState('')
 
     useEffect(() => {
         loadProfile()
@@ -100,6 +111,57 @@ function Profile() {
         }
     }
 
+    const changePassword = async () => {
+        setPasswordError('')
+        setPasswordMessage('')
+
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            setPasswordError('Please fill in all password fields.')
+            return
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            setPasswordError("New passwords don't match.")
+            return
+        }
+
+        if (!passwordMeetsRequirements(newPassword)) {
+            setPasswordError(passwordRequirementMessage())
+            return
+        }
+
+        try {
+            setPasswordSaving(true)
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: profile.email,
+                password: currentPassword,
+            })
+
+            if (signInError) {
+                throw new Error('Current password is incorrect.')
+            }
+
+            const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+
+            if (updateError) {
+                throw new Error(updateError.message)
+            }
+
+            setPasswordMessage('Your password has been changed.')
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmNewPassword('')
+            setChangingPassword(false)
+
+        } catch (err) {
+            console.error('CHANGE PASSWORD ERROR:', err)
+            setPasswordError(err.message || 'Failed to change password.')
+        } finally {
+            setPasswordSaving(false)
+        }
+    }
+
     const fullName = profile
         ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ')
         : ''
@@ -165,11 +227,25 @@ function Profile() {
             <div className="admin-card">
                 <div className="admin-page-header-row">
                     <h2 style={{ fontSize: 16 }}>Contact Information</h2>
-                    {!editing && <button className="admin-link-button" onClick={() => setEditing(true)}>Edit</button>}
+                    <button className="admin-link-button" onClick={() => setEditing(true)}>Edit</button>
                 </div>
 
-                {editing ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                <div className="admin-info-grid" style={{ marginTop: 16 }}>
+                    <div className="admin-info-field"><span>Email</span><strong>{profile?.email || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Phone Number</span><strong>{profile?.phone_number || 'Not set'}</strong></div>
+                </div>
+            </div>
+
+            {editing && (
+                <Modal
+                    title="Edit Contact Information"
+                    onClose={() => {
+                        if (saving) return
+                        setPhoneNumber(profile?.phone_number || '')
+                        setEditing(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
                             <input
@@ -181,6 +257,8 @@ function Profile() {
                                 disabled={saving}
                             />
                         </div>
+
+                        {error && <div className="admin-error-box">{error}</div>}
 
                         <div style={{ display: 'flex', gap: 10 }}>
                             <button className="auth-submit" style={{ width: 'auto', padding: '11px 20px' }} onClick={saveChanges} disabled={saving}>
@@ -196,13 +274,100 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <div className="admin-info-grid" style={{ marginTop: 16 }}>
-                        <div className="admin-info-field"><span>Email</span><strong>{profile?.email || 'N/A'}</strong></div>
-                        <div className="admin-info-field"><span>Phone Number</span><strong>{profile?.phone_number || 'Not set'}</strong></div>
-                    </div>
-                )}
+                </Modal>
+            )}
+
+            <div className="admin-card">
+                <div className="admin-page-header-row">
+                    <h2 style={{ fontSize: 16 }}>Password</h2>
+                    <button className="admin-link-button" onClick={() => setChangingPassword(true)}>
+                        Change password
+                    </button>
+                </div>
+
+                {passwordMessage && <div className="admin-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
+                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
+                    Change your account password.
+                </p>
             </div>
+
+            {changingPassword && (
+                <Modal
+                    title="Change Password"
+                    onClose={() => {
+                        if (passwordSaving) return
+                        setCurrentPassword('')
+                        setNewPassword('')
+                        setConfirmNewPassword('')
+                        setPasswordError('')
+                        setChangingPassword(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div className="form-group">
+                            <label className="form-label">Current Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                disabled={passwordSaving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">New Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                disabled={passwordSaving}
+                            />
+                            <PasswordRequirements password={newPassword} />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Confirm New Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                disabled={passwordSaving}
+                            />
+                        </div>
+
+                        {passwordError && <div className="admin-error-box">{passwordError}</div>}
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                className="auth-submit"
+                                style={{ width: 'auto', padding: '11px 20px' }}
+                                onClick={changePassword}
+                                disabled={passwordSaving}
+                            >
+                                {passwordSaving ? 'Saving...' : 'Save new password'}
+                            </button>
+
+                            <button
+                                className="admin-link-button"
+                                style={{ color: 'var(--slate)' }}
+                                onClick={() => {
+                                    setCurrentPassword('')
+                                    setNewPassword('')
+                                    setConfirmNewPassword('')
+                                    setPasswordError('')
+                                    setChangingPassword(false)
+                                }}
+                                disabled={passwordSaving}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>

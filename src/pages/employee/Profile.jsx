@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import MfaSetup from '../../components/MfaSetup'
 import PasswordRequirements from '../../components/PasswordRequirements'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
@@ -325,15 +326,34 @@ function Profile() {
                 <div className="employee-page-header-row">
                     <h2 style={{ fontSize: 16 }}>Contact Information</h2>
 
-                    {!editing && (
-                        <button className="employee-link-button" onClick={() => setEditing(true)}>
-                            Edit
-                        </button>
-                    )}
+                    <button className="employee-link-button" onClick={() => setEditing(true)}>
+                        Edit
+                    </button>
                 </div>
 
-                {editing ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                <div className="employee-info-grid" style={{ marginTop: 16 }}>
+                    <div className="employee-info-field">
+                        <span>Email</span>
+                        <strong>{profile?.email || 'N/A'}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Phone Number</span>
+                        <strong>{profile?.phone_number || 'Not set'}</strong>
+                    </div>
+                </div>
+            </div>
+
+            {editing && (
+                <Modal
+                    title="Edit Contact Information"
+                    onClose={() => {
+                        if (saving) return
+                        setPhoneNumber(profile?.phone_number || '')
+                        setEditing(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
                             <input
@@ -345,6 +365,8 @@ function Profile() {
                                 disabled={saving}
                             />
                         </div>
+
+                        {error && <div className="employee-error-box">{error}</div>}
 
                         <div style={{ display: 'flex', gap: 10 }}>
                             <button
@@ -369,34 +391,37 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <div className="employee-info-grid" style={{ marginTop: 16 }}>
-                        <div className="employee-info-field">
-                            <span>Email</span>
-                            <strong>{profile?.email || 'N/A'}</strong>
-                        </div>
-
-                        <div className="employee-info-field">
-                            <span>Phone Number</span>
-                            <strong>{profile?.phone_number || 'Not set'}</strong>
-                        </div>
-                    </div>
-                )}
-            </div>
+                </Modal>
+            )}
 
             <div className="employee-card">
                 <div className="employee-page-header-row">
                     <h2 style={{ fontSize: 16 }}>Password</h2>
 
-                    {!changingPassword && (
-                        <button className="employee-link-button" onClick={() => setChangingPassword(true)}>
-                            Change password
-                        </button>
-                    )}
+                    <button className="employee-link-button" onClick={() => setChangingPassword(true)}>
+                        Change password
+                    </button>
                 </div>
 
-                {changingPassword ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                {passwordMessage && <div className="employee-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
+                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
+                    Change the password the Registrar Head set for your account.
+                </p>
+            </div>
+
+            {changingPassword && (
+                <Modal
+                    title="Change Password"
+                    onClose={() => {
+                        if (passwordSaving) return
+                        setCurrentPassword('')
+                        setNewPassword('')
+                        setConfirmNewPassword('')
+                        setPasswordError('')
+                        setChangingPassword(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div className="form-group">
                             <label className="form-label">Current Password</label>
                             <input
@@ -459,15 +484,8 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <>
-                        {passwordMessage && <div className="employee-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
-                        <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
-                            Change the password the Registrar Head set for your account.
-                        </p>
-                    </>
-                )}
-            </div>
+                </Modal>
+            )}
 
             <div className="employee-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
