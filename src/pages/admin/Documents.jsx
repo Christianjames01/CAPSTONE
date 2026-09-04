@@ -469,7 +469,12 @@ function Documents() {
 
             {importSummary && (
                 <div className="admin-card" style={{ marginTop: 16 }}>
-                    <h2 style={{ fontSize: 15, marginBottom: 8 }}>Import Complete</h2>
+                    <div className="admin-page-header-row" style={{ marginBottom: 8 }}>
+                        <h2 style={{ fontSize: 15 }}>Import Complete</h2>
+                        <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setImportSummary(null)}>
+                            Dismiss
+                        </button>
+                    </div>
                     <p style={{ marginBottom: importSummary.failed.length ? 10 : 0 }}>
                         {importSummary.added} added · {importSummary.updated} updated
                         {importSummary.failed.length > 0 ? ` · ${importSummary.failed.length} failed` : ''}
