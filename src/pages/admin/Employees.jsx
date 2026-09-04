@@ -5,6 +5,7 @@ import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
 import { notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import './AdminPages.css'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
@@ -336,20 +337,23 @@ function Employees() {
 
                 <button
                     className="admin-primary-button"
-                    onClick={() => { setShowAddForm((v) => !v); setAddError(''); setAddMessage('') }}
+                    onClick={() => { setShowAddForm(true); setAddError(''); setAddMessage('') }}
                 >
-                    {showAddForm ? 'Cancel' : '+ Add Employee'}
+                    + Add Employee
                 </button>
             </div>
 
             {showAddForm && (
-                <div className="admin-card" style={{ marginTop: 20 }}>
-                    <h2 style={{ fontSize: 16, marginBottom: 6 }}>Add Employee</h2>
+                <Modal
+                    title="Add Employee"
+                    maxWidth={720}
+                    onClose={() => { if (creating) return; setShowAddForm(false); setForm(BLANK_FORM); setAddError(''); setAddMessage('') }}
+                >
                     <p style={{ fontSize: 13, marginBottom: 16 }}>
                         Creates a login account and an active employee profile immediately — no separate activation step needed.
                     </p>
 
-                    <form onSubmit={addEmployee} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px 20px', maxWidth: 700 }}>
+                    <form onSubmit={addEmployee} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px 20px' }}>
                         <div className="form-group">
                             <label className="form-label">First Name</label>
                             <input className="form-input" type="text" value={form.firstName} onChange={(e) => updateForm('firstName', e.target.value)} disabled={creating} />
@@ -422,7 +426,7 @@ function Employees() {
                             {creating ? 'Creating...' : 'Create Employee Account'}
                         </button>
                     </form>
-                </div>
+                </Modal>
             )}
 
             <input

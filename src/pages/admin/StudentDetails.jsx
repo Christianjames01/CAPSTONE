@@ -7,6 +7,7 @@ import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -343,97 +344,95 @@ function StudentDetails() {
             <div className="admin-card">
                 <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
                     <h2 style={{ fontSize: 16 }}>Student Information</h2>
-                    {!editing && (
-                        <button className="admin-link-button" onClick={startEditing}>
-                            Edit →
-                        </button>
-                    )}
+                    <button className="admin-link-button" onClick={startEditing}>
+                        Edit →
+                    </button>
                 </div>
 
-                {editing ? (
-                    <>
-                        <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                            <div className="form-group">
-                                <label className="form-label">First Name</label>
-                                <input className="admin-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Last Name</label>
-                                <input className="admin-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Student Number</label>
-                                <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Phone Number</label>
-                                <input className="admin-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">College</label>
-                                <select className="admin-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
-                                    <option value="">-- None --</option>
-                                    {colleges.map((c) => (
-                                        <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Program</label>
-                                <select className="admin-search-input" value={form.programId} onChange={(e) => setForm({ ...form, programId: e.target.value })} disabled={saving || !form.collegeId}>
-                                    <option value="">{form.collegeId ? '-- None --' : 'Select a college first'}</option>
-                                    {programs.map((p) => (
-                                        <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Year Level</label>
-                                <select className="admin-search-input" value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} disabled={saving}>
-                                    <option value="">-- None --</option>
-                                    <option value="1">1st Year</option>
-                                    <option value="2">2nd Year</option>
-                                    <option value="3">3rd Year</option>
-                                    <option value="4">4th Year</option>
-                                    <option value="5">5th Year</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Address</label>
-                                <input className="admin-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Emergency Contact Name</label>
-                                <input className="admin-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Emergency Contact Number</label>
-                                <input className="admin-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="admin-primary-button" onClick={saveEdits} disabled={saving}>
-                                {saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setEditing(false)} disabled={saving}>
-                                Cancel
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="admin-info-grid">
-                        <div className="admin-info-field"><span>Student Number</span><strong>{student.student_number}</strong></div>
-                        <div className="admin-info-field"><span>College</span><strong>{student.collegeName || 'N/A'}</strong></div>
-                        <div className="admin-info-field"><span>Program</span><strong>{student.programName || 'N/A'}</strong></div>
-                        <div className="admin-info-field"><span>Year Level</span><strong>{student.year_level || 'N/A'}</strong></div>
-                        <div className="admin-info-field"><span>Phone Number</span><strong>{student.phoneNumber || 'N/A'}</strong></div>
-                        <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
-                        <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
-                        <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
-                    </div>
-                )}
+                <div className="admin-info-grid">
+                    <div className="admin-info-field"><span>Student Number</span><strong>{student.student_number}</strong></div>
+                    <div className="admin-info-field"><span>College</span><strong>{student.collegeName || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Program</span><strong>{student.programName || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Year Level</span><strong>{student.year_level || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Phone Number</span><strong>{student.phoneNumber || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
+                    <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
+                </div>
             </div>
+
+            {editing && form && (
+                <Modal title="Edit Student Information" maxWidth={640} onClose={() => !saving && setEditing(false)}>
+                    <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                        <div className="form-group">
+                            <label className="form-label">First Name</label>
+                            <input className="admin-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Last Name</label>
+                            <input className="admin-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Student Number</label>
+                            <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Phone Number</label>
+                            <input className="admin-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">College</label>
+                            <select className="admin-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
+                                <option value="">-- None --</option>
+                                {colleges.map((c) => (
+                                    <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Program</label>
+                            <select className="admin-search-input" value={form.programId} onChange={(e) => setForm({ ...form, programId: e.target.value })} disabled={saving || !form.collegeId}>
+                                <option value="">{form.collegeId ? '-- None --' : 'Select a college first'}</option>
+                                {programs.map((p) => (
+                                    <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Year Level</label>
+                            <select className="admin-search-input" value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} disabled={saving}>
+                                <option value="">-- None --</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                                <option value="5">5th Year</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Address</label>
+                            <input className="admin-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Emergency Contact Name</label>
+                            <input className="admin-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Emergency Contact Number</label>
+                            <input className="admin-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button className="admin-primary-button" onClick={saveEdits} disabled={saving}>
+                            {saving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setEditing(false)} disabled={saving}>
+                            Cancel
+                        </button>
+                    </div>
+                </Modal>
+            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Account</h2>
