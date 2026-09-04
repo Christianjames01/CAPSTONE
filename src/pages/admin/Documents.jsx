@@ -597,58 +597,62 @@ function Documents() {
                                 {doc.is_available ? 'Mark unavailable' : 'Mark available'}
                             </button>
                             <button className="admin-link-button" onClick={() => loadRequirements(doc.document_type_id)}>
-                                {expandedId === doc.document_type_id ? 'Hide requirements' : 'Manage requirements'}
+                                Manage requirements
                             </button>
                         </div>
-
-                        {expandedId === doc.document_type_id && (
-                            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16, marginTop: 4 }}>
-                                {requirements.length === 0 ? (
-                                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>No requirements set.</p>
-                                ) : (
-                                    <div style={{ marginBottom: 14 }}>
-                                        {requirements.map((r) => (
-                                            <div key={r.requirement_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
-                                                <div>
-                                                    <strong style={{ fontSize: 13.5 }}>{r.requirement_name}</strong>
-                                                    <span style={{ fontSize: 12, color: 'var(--slate)', marginLeft: 8 }}>
-                                                        {r.is_required ? 'Required' : 'Optional'}
-                                                    </span>
-                                                </div>
-                                                <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => removeRequirement(r, doc.document_type_id)}>
-                                                    Remove
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                                    <input
-                                        className="admin-search-input"
-                                        style={{ maxWidth: 220 }}
-                                        placeholder="Requirement name"
-                                        value={newRequirement.requirement_name}
-                                        onChange={(e) => setNewRequirement({ ...newRequirement, requirement_name: e.target.value })}
-                                    />
-
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={newRequirement.is_required}
-                                            onChange={(e) => setNewRequirement({ ...newRequirement, is_required: e.target.checked })}
-                                        />
-                                        Required
-                                    </label>
-
-                                    <button className="admin-primary-button" onClick={() => addRequirement(doc.document_type_id)}>
-                                        Add requirement
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 ))
+            )}
+
+            {expandedId && (
+                <Modal
+                    title={`Requirements — ${documents.find((d) => d.document_type_id === expandedId)?.document_name || ''}`}
+                    maxWidth={560}
+                    onClose={() => setExpandedId(null)}
+                >
+                    {requirements.length === 0 ? (
+                        <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>No requirements set.</p>
+                    ) : (
+                        <div style={{ marginBottom: 14 }}>
+                            {requirements.map((r) => (
+                                <div key={r.requirement_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
+                                    <div>
+                                        <strong style={{ fontSize: 13.5 }}>{r.requirement_name}</strong>
+                                        <span style={{ fontSize: 12, color: 'var(--slate)', marginLeft: 8 }}>
+                                            {r.is_required ? 'Required' : 'Optional'}
+                                        </span>
+                                    </div>
+                                    <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => removeRequirement(r, expandedId)}>
+                                        Remove
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <input
+                            className="admin-search-input"
+                            style={{ maxWidth: 220 }}
+                            placeholder="Requirement name"
+                            value={newRequirement.requirement_name}
+                            onChange={(e) => setNewRequirement({ ...newRequirement, requirement_name: e.target.value })}
+                        />
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                            <input
+                                type="checkbox"
+                                checked={newRequirement.is_required}
+                                onChange={(e) => setNewRequirement({ ...newRequirement, is_required: e.target.checked })}
+                            />
+                            Required
+                        </label>
+
+                        <button className="admin-primary-button" onClick={() => addRequirement(expandedId)}>
+                            Add requirement
+                        </button>
+                    </div>
+                </Modal>
             )}
         </div>
     )
