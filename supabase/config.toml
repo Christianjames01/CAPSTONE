@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.mark-missed-claims]
 verify_jwt = false
+
+[functions.decline-incomplete-setups]
+verify_jwt = false
