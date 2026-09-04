@@ -13,6 +13,7 @@ const EMPTY_PROGRAM = { program_id: null, college_id: '', program_code: '', prog
 
 function CollegesPrograms() {
     const [tab, setTab] = useState('colleges')
+    const [search, setSearch] = useState('')
 
     const [colleges, setColleges] = useState([])
     const [programs, setPrograms] = useState([])
@@ -217,6 +218,19 @@ function CollegesPrograms() {
 
     const collegeName = (id) => colleges.find((c) => c.college_id === id)?.college_name || 'N/A'
 
+    const query = search.trim().toLowerCase()
+
+    const visibleColleges = colleges.filter((c) =>
+        !query || c.college_name.toLowerCase().includes(query) || c.college_code.toLowerCase().includes(query)
+    )
+
+    const visiblePrograms = programs.filter((p) =>
+        !query ||
+        p.program_name.toLowerCase().includes(query) ||
+        p.program_code.toLowerCase().includes(query) ||
+        collegeName(p.college_id).toLowerCase().includes(query)
+    )
+
     return (
         <div>
             <div className="admin-page-header">
@@ -225,9 +239,18 @@ function CollegesPrograms() {
             </div>
 
             <div className="admin-filter-row">
-                <button className={`admin-filter-chip${tab === 'colleges' ? ' active' : ''}`} onClick={() => setTab('colleges')}>Colleges</button>
-                <button className={`admin-filter-chip${tab === 'programs' ? ' active' : ''}`} onClick={() => setTab('programs')}>Programs</button>
+                <button className={`admin-filter-chip${tab === 'colleges' ? ' active' : ''}`} onClick={() => { setTab('colleges'); setSearch('') }}>Colleges</button>
+                <button className={`admin-filter-chip${tab === 'programs' ? ' active' : ''}`} onClick={() => { setTab('programs'); setSearch('') }}>Programs</button>
             </div>
+
+            <input
+                className="admin-search-input"
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={tab === 'colleges' ? 'Search by college name or code' : 'Search by program name, code, or college'}
+                style={{ margin: '16px 0' }}
+            />
 
             {error && <div className="admin-error-box">{error}</div>}
 
@@ -270,8 +293,12 @@ function CollegesPrograms() {
 
                     {loading ? (
                         <SkeletonList count={3} />
+                    ) : visibleColleges.length === 0 ? (
+                        <div className="admin-empty">
+                            {query ? `No colleges matched "${search.trim()}".` : 'No colleges found.'}
+                        </div>
                     ) : (
-                        colleges.map((c) => (
+                        visibleColleges.map((c) => (
                             <div className="admin-list-card" key={c.college_id}>
                                 <div className="admin-list-card-header">
                                     <div>
@@ -345,8 +372,12 @@ function CollegesPrograms() {
 
                     {loading ? (
                         <SkeletonList count={3} />
+                    ) : visiblePrograms.length === 0 ? (
+                        <div className="admin-empty">
+                            {query ? `No programs matched "${search.trim()}".` : 'No programs found.'}
+                        </div>
                     ) : (
-                        programs.map((p) => (
+                        visiblePrograms.map((p) => (
                             <div className="admin-list-card" key={p.program_id}>
                                 <div className="admin-list-card-header">
                                     <div>
