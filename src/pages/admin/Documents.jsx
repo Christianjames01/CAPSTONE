@@ -58,6 +58,7 @@ function Documents() {
     const [form, setForm] = useState(EMPTY_FORM)
     const [showForm, setShowForm] = useState(false)
     const [availabilityFilter, setAvailabilityFilter] = useState('all')
+    const [search, setSearch] = useState('')
 
     const [expandedId, setExpandedId] = useState(null)
     const [requirements, setRequirements] = useState([])
@@ -465,10 +466,19 @@ function Documents() {
 
     const categoryLabel = (value) => DOCUMENT_CATEGORIES.find((c) => c.value === value)?.label || value || 'Uncategorized'
 
+    const query = search.trim().toLowerCase()
+
     const visibleDocuments = documents.filter((doc) => {
-        if (availabilityFilter === 'available') return doc.is_available
-        if (availabilityFilter === 'unavailable') return !doc.is_available
-        return true
+        if (availabilityFilter === 'available' && !doc.is_available) return false
+        if (availabilityFilter === 'unavailable' && doc.is_available) return false
+
+        if (!query) return true
+
+        return (
+            doc.document_name.toLowerCase().includes(query) ||
+            doc.document_code.toLowerCase().includes(query) ||
+            categoryLabel(doc.category).toLowerCase().includes(query)
+        )
     })
 
     return (
@@ -592,7 +602,16 @@ function Documents() {
 
             {error && <div className="admin-error-box" style={{ marginTop: 20 }}>{error}</div>}
 
-            <div className="admin-filter-row" style={{ marginTop: 20 }}>
+            <input
+                className="admin-search-input"
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by document name, code, or category"
+                style={{ margin: '20px 0 16px' }}
+            />
+
+            <div className="admin-filter-row">
                 {[
                     { key: 'all', label: 'All' },
                     { key: 'available', label: 'Available' },
@@ -612,7 +631,9 @@ function Documents() {
                 <SkeletonList count={3} />
             ) : visibleDocuments.length === 0 ? (
                 <div className="admin-empty" style={{ marginTop: 16 }}>
-                    {availabilityFilter === 'unavailable' ? 'No unavailable document types.' : 'No document types found.'}
+                    {query
+                        ? `No document types matched "${search.trim()}".`
+                        : availabilityFilter === 'unavailable' ? 'No unavailable document types.' : 'No document types found.'}
                 </div>
             ) : (
                 visibleDocuments.map((doc) => (
