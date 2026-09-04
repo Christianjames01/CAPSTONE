@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
+import { getInactiveAccountMessage } from '../../lib/accountStatusMessage'
 import AuthLayout from './AuthLayout'
 
 const ALLOWED_EMAIL_DOMAIN = '@hcdc.edu.ph'
@@ -48,10 +49,9 @@ function AuthCallback() {
         }
 
         if (profile.status !== 'active') {
+            const inactiveMessage = await getInactiveAccountMessage(user.id, profile.role)
             await supabase.auth.signOut()
-            navigate('/login', {
-                state: { message: 'Your account has been deactivated. Please contact the Registrar\'s Office for assistance.' },
-            })
+            navigate('/login', { state: { message: inactiveMessage } })
             return
         }
 

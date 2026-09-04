@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import { checkLoginLock, recordLoginAttempt, formatLockMessage } from '../../lib/loginGuard'
+import { getInactiveAccountMessage } from '../../lib/accountStatusMessage'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordToggleButton from './PasswordToggleButton'
@@ -40,8 +41,9 @@ function Login() {
         }
 
         if (profile.status !== 'active') {
+            const inactiveMessage = await getInactiveAccountMessage(userId, profile.role)
             await supabase.auth.signOut()
-            setMessage("Your account has been deactivated. Please contact the Registrar's Office for assistance.")
+            setMessage(inactiveMessage)
             setLoading(false)
             return
         }
