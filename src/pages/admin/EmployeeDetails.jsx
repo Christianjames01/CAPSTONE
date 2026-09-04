@@ -195,6 +195,20 @@ function EmployeeDetails() {
             return
         }
 
+        const isDuplicate = assignments.some(
+            (a) => a.status === 'active' && a.college_id === newCollegeId && a.program_id === newProgramId
+        )
+
+        if (isDuplicate) {
+            notifyWarning('This employee is already assigned to that college and program.')
+            return
+        }
+
+        const confirmed = await confirmModal(
+            `Assign ${employee.first_name} ${employee.last_name} to "${collegeName(newCollegeId)}" · "${programName(newProgramId)}"?`
+        )
+        if (!confirmed) return
+
         try {
             const {
                 data: { user },
