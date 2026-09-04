@@ -5,6 +5,7 @@ import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -21,6 +22,9 @@ function EmployeeDetails() {
     const [employeeNumber, setEmployeeNumber] = useState('')
     const [positionTitle, setPositionTitle] = useState('')
     const [assignedCollegeId, setAssignedCollegeId] = useState('')
+
+    const [editing, setEditing] = useState(false)
+    const [form, setForm] = useState(null)
 
     const [newCollegeId, setNewCollegeId] = useState('')
     const [newProgramId, setNewProgramId] = useState('')
@@ -121,6 +125,15 @@ function EmployeeDetails() {
         }
     }
 
+    const startEditing = () => {
+        setForm({
+            employeeNumber,
+            positionTitle,
+            assignedCollegeId,
+        })
+        setEditing(true)
+    }
+
     const saveEmployee = async () => {
         try {
             setSaving(true)
@@ -139,9 +152,9 @@ function EmployeeDetails() {
             const { error: updateError } = await supabase
                 .from('employees')
                 .update({
-                    employee_number: employeeNumber.trim(),
-                    position_title: positionTitle.trim(),
-                    assigned_college_id: assignedCollegeId || null,
+                    employee_number: form.employeeNumber.trim(),
+                    position_title: form.positionTitle.trim(),
+                    assigned_college_id: form.assignedCollegeId || null,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('employee_id', employeeId)
@@ -151,9 +164,9 @@ function EmployeeDetails() {
             }
 
             const changes = describeChanges([
-                ['employee number', employee.employee_number, employeeNumber.trim()],
-                ['position', employee.position_title, positionTitle.trim()],
-                ['assigned college', collegeName(employee.assigned_college_id), collegeName(assignedCollegeId || null)],
+                ['employee number', employee.employee_number, form.employeeNumber.trim()],
+                ['position', employee.position_title, form.positionTitle.trim()],
+                ['assigned college', collegeName(employee.assigned_college_id), collegeName(form.assignedCollegeId || null)],
             ])
 
             await logActivity({
@@ -165,6 +178,7 @@ function EmployeeDetails() {
             })
 
             setMessage('Employee information updated.')
+            setEditing(false)
             await loadEmployee()
 
         } catch (err) {
@@ -302,51 +316,71 @@ function EmployeeDetails() {
             {message && <div className="admin-success-box">{message}</div>}
 
             <div className="admin-card">
-                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Employment Information</h2>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 420 }}>
-                    <div className="form-group">
-                        <label className="form-label">Employee Number</label>
-                        <input
-                            className="form-input"
-                            type="text"
-                            value={employeeNumber}
-                            onChange={(e) => setEmployeeNumber(e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Position Title</label>
-                        <input
-                            className="form-input"
-                            type="text"
-                            value={positionTitle}
-                            onChange={(e) => setPositionTitle(e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Assigned College</label>
-                        <select
-                            className="form-input"
-                            value={assignedCollegeId}
-                            onChange={(e) => setAssignedCollegeId(e.target.value)}
-                            disabled={saving}
-                        >
-                            <option value="">-- None --</option>
-                            {colleges.map((c) => (
-                                <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <button className="auth-submit" style={{ width: 'auto', padding: '11px 20px' }} onClick={saveEmployee} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save changes'}
+                <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
+                    <h2 style={{ fontSize: 16 }}>Employment Information</h2>
+                    <button className="admin-link-button" onClick={startEditing}>
+                        Edit →
                     </button>
                 </div>
+
+                <div className="admin-info-grid">
+                    <div className="admin-info-field"><span>Employee Number</span><strong>{employeeNumber}</strong></div>
+                    <div className="admin-info-field"><span>Position Title</span><strong>{positionTitle}</strong></div>
+                    <div className="admin-info-field"><span>Assigned College</span><strong>{collegeName(assignedCollegeId || null)}</strong></div>
+                </div>
             </div>
+
+            {editing && form && (
+                <Modal title="Edit Employment Information" onClose={() => !saving && setEditing(false)}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div className="form-group">
+                            <label className="form-label">Employee Number</label>
+                            <input
+                                className="form-input"
+                                type="text"
+                                value={form.employeeNumber}
+                                onChange={(e) => setForm({ ...form, employeeNumber: e.target.value })}
+                                disabled={saving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Position Title</label>
+                            <input
+                                className="form-input"
+                                type="text"
+                                value={form.positionTitle}
+                                onChange={(e) => setForm({ ...form, positionTitle: e.target.value })}
+                                disabled={saving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Assigned College</label>
+                            <select
+                                className="form-input"
+                                value={form.assignedCollegeId}
+                                onChange={(e) => setForm({ ...form, assignedCollegeId: e.target.value })}
+                                disabled={saving}
+                            >
+                                <option value="">-- None --</option>
+                                {colleges.map((c) => (
+                                    <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="admin-primary-button" onClick={saveEmployee} disabled={saving}>
+                                {saving ? 'Saving...' : 'Save changes'}
+                            </button>
+                            <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setEditing(false)} disabled={saving}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>College/Program Assignments</h2>
