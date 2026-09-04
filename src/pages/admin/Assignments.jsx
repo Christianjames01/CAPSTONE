@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
@@ -17,6 +17,10 @@ function Assignments() {
     const [assigning, setAssigning] = useState({})
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+
+    const [selectedIds, setSelectedIds] = useState(new Set())
+    const [bulkEmployeeId, setBulkEmployeeId] = useState('')
+    const [applyingBulk, setApplyingBulk] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -155,6 +159,90 @@ function Assignments() {
         }
     }
 
+    const allSelected = unassigned.length > 0 && unassigned.every((r) => selectedIds.has(r.request_id))
+
+    const toggleSelected = (requestId) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(requestId)) next.delete(requestId)
+            else next.add(requestId)
+            return next
+        })
+    }
+
+    const toggleSelectAll = () => {
+        setSelectedIds((prev) => {
+            if (allSelected) return new Set()
+            return new Set(unassigned.map((r) => r.request_id))
+        })
+    }
+
+    const clearSelection = () => setSelectedIds(new Set())
+
+    const applyBulkAssign = async () => {
+        if (!bulkEmployeeId) {
+            notifyWarning('Please select an employee first.')
+            return
+        }
+
+        const targets = unassigned.filter((r) => selectedIds.has(r.request_id))
+        if (targets.length === 0) return
+
+        const employee = employees.find((e) => e.employee_id === bulkEmployeeId)
+
+        const confirmed = await confirmModal(
+            `Assign ${targets.length} selected request(s) to ${employee?.name || 'this employee'}?`
+        )
+        if (!confirmed) return
+
+        try {
+            setApplyingBulk(true)
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const requestIds = targets.map((r) => r.request_id)
+
+            const { error: updateError } = await supabase
+                .from('document_requests')
+                .update({ assigned_employee_id: bulkEmployeeId, updated_at: new Date().toISOString() })
+                .in('request_id', requestIds)
+
+            if (updateError) {
+                throw new Error('Failed to assign requests: ' + updateError.message)
+            }
+
+            await Promise.all(
+                targets.map((r) =>
+                    logActivity({
+                        userId: user.id,
+                        action: 'assign_request',
+                        tableName: 'document_requests',
+                        recordId: r.request_id,
+                        description: `Bulk-assigned request "${r.request_number}" to "${employee?.name || bulkEmployeeId}".`,
+                    })
+                )
+            )
+
+            notifySuccess(`${targets.length} request(s) assigned to ${employee?.name || 'the employee'}.`)
+            clearSelection()
+            setBulkEmployeeId('')
+            await loadData()
+
+        } catch (err) {
+            console.error('BULK ASSIGN ERROR:', err)
+            notifyError(err.message || 'Failed to assign selected requests.')
+        } finally {
+            setApplyingBulk(false)
+        }
+    }
+
     return (
         <div>
             <div className="admin-page-header">
@@ -193,15 +281,30 @@ function Assignments() {
 
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Unassigned Requests</h2>
 
+            {!loading && unassigned.length > 0 && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--slate)', marginBottom: 12, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                    Select all {unassigned.length} unassigned
+                </label>
+            )}
+
             {!loading && unassigned.length === 0 ? (
                 <div className="admin-empty">All requests currently have an assigned employee.</div>
             ) : (
                 unassigned.map((request) => (
                     <div className="admin-list-card" key={request.request_id}>
                         <div className="admin-list-card-header">
-                            <div>
-                                <h3>{request.documentName}</h3>
-                                <p>{request.request_number} · Student {request.studentNumber}</p>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(request.request_id)}
+                                    onChange={() => toggleSelected(request.request_id)}
+                                    style={{ marginTop: 4 }}
+                                />
+                                <div>
+                                    <h3>{request.documentName}</h3>
+                                    <p>{request.request_number} · Student {request.studentNumber}</p>
+                                </div>
                             </div>
 
                             <span className={`admin-status-pill status-${request.status}`}>
@@ -236,6 +339,53 @@ function Assignments() {
                         </div>
                     </div>
                 ))
+            )}
+
+            {selectedIds.size > 0 && (
+                <div style={{
+                    position: 'sticky',
+                    bottom: 16,
+                    marginTop: 16,
+                    background: 'var(--ink)',
+                    color: 'var(--white)',
+                    borderRadius: 12,
+                    padding: '14px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    flexWrap: 'wrap',
+                    boxShadow: '0 12px 32px rgba(16, 24, 39, 0.25)',
+                }}>
+                    <strong style={{ fontSize: 13.5 }}>{selectedIds.size} selected</strong>
+
+                    <select
+                        className="admin-search-input"
+                        style={{ maxWidth: 260 }}
+                        value={bulkEmployeeId}
+                        onChange={(e) => setBulkEmployeeId(e.target.value)}
+                        disabled={applyingBulk}
+                    >
+                        <option value="">-- Select employee --</option>
+                        {employees.map((e) => (
+                            <option key={e.employee_id} value={e.employee_id}>
+                                {e.name} ({e.openCount ?? 0} open)
+                            </option>
+                        ))}
+                    </select>
+
+                    <button className="admin-primary-button" onClick={applyBulkAssign} disabled={applyingBulk}>
+                        {applyingBulk ? 'Assigning...' : 'Assign selected'}
+                    </button>
+
+                    <button
+                        className="admin-link-button"
+                        style={{ color: 'var(--white)', textDecoration: 'underline' }}
+                        onClick={clearSelection}
+                        disabled={applyingBulk}
+                    >
+                        Clear selection
+                    </button>
+                </div>
             )}
         </div>
     )
