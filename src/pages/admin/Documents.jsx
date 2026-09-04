@@ -41,6 +41,7 @@ function Documents() {
 
     const [form, setForm] = useState(EMPTY_FORM)
     const [showForm, setShowForm] = useState(false)
+    const [availabilityFilter, setAvailabilityFilter] = useState('all')
 
     const [expandedId, setExpandedId] = useState(null)
     const [requirements, setRequirements] = useState([])
@@ -304,6 +305,14 @@ function Documents() {
     }
 
     const toggleAvailability = async (doc) => {
+        const confirmed = await confirmModal(
+            doc.is_available
+                ? `Mark "${doc.document_name}" as unavailable? Students will no longer be able to request it.`
+                : `Mark "${doc.document_name}" as available? Students will be able to request it again.`,
+            { title: doc.is_available ? 'Mark unavailable?' : 'Mark available?', confirmButtonText: doc.is_available ? 'Mark unavailable' : 'Mark available' }
+        )
+        if (!confirmed) return
+
         try {
             const { error: updateError } = await supabase
                 .from('document_types')
@@ -412,6 +421,12 @@ function Documents() {
             notifyError(err.message || 'Failed to remove requirement.')
         }
     }
+
+    const visibleDocuments = documents.filter((doc) => {
+        if (availabilityFilter === 'available') return doc.is_available
+        if (availabilityFilter === 'unavailable') return !doc.is_available
+        return true
+    })
 
     return (
         <div>
@@ -524,10 +539,30 @@ function Documents() {
 
             {error && <div className="admin-error-box" style={{ marginTop: 20 }}>{error}</div>}
 
+            <div className="admin-filter-row" style={{ marginTop: 20 }}>
+                {[
+                    { key: 'all', label: 'All' },
+                    { key: 'available', label: 'Available' },
+                    { key: 'unavailable', label: `Unavailable (${documents.filter((d) => !d.is_available).length})` },
+                ].map((chip) => (
+                    <button
+                        key={chip.key}
+                        className={`admin-filter-chip${availabilityFilter === chip.key ? ' active' : ''}`}
+                        onClick={() => setAvailabilityFilter(chip.key)}
+                    >
+                        {chip.label}
+                    </button>
+                ))}
+            </div>
+
             {loading ? (
                 <SkeletonList count={3} />
+            ) : visibleDocuments.length === 0 ? (
+                <div className="admin-empty" style={{ marginTop: 16 }}>
+                    {availabilityFilter === 'unavailable' ? 'No unavailable document types.' : 'No document types found.'}
+                </div>
             ) : (
-                documents.map((doc) => (
+                visibleDocuments.map((doc) => (
                     <div className="admin-list-card" key={doc.document_type_id} style={{ marginTop: 16 }}>
                         <div className="admin-list-card-header">
                             <div>
