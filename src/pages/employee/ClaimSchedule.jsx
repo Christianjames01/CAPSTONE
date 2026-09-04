@@ -443,8 +443,8 @@ function ClaimSchedule() {
                 )
 
                 const scheduleChanges = describeChanges([
-                    ['date', existingSchedule.scheduled_date, scheduledDate],
-                    ['time', existingSchedule.scheduled_time, scheduledTime],
+                    ['date', formatDate(existingSchedule.scheduled_date), formatDate(scheduledDate)],
+                    ['time', formatTime(existingSchedule.scheduled_time), formatTime(scheduledTime)],
                 ])
 
                 await logActivity({
