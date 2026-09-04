@@ -364,6 +364,11 @@ function Documents() {
             return
         }
 
+        const confirmed = await confirmModal(
+            `Add "${newRequirement.requirement_name.trim()}" as a${newRequirement.is_required ? ' required' : 'n optional'} requirement?`
+        )
+        if (!confirmed) return
+
         try {
             const { error: insertError } = await supabase
                 .from('document_requirements')
