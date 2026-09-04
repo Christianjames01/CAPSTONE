@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
-import { notifyError, notifyWarning } from '../../lib/notify'
+import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -68,6 +69,13 @@ function CollegesPrograms() {
             return
         }
 
+        const confirmed = await confirmModal(
+            collegeForm.college_id
+                ? `Save changes to "${collegeForm.college_name.trim()}"?`
+                : `Add "${collegeForm.college_name.trim()}" as a new college?`
+        )
+        if (!confirmed) return
+
         try {
             setSaving(true)
 
@@ -111,6 +119,13 @@ function CollegesPrograms() {
     const toggleCollegeStatus = async (college) => {
         const nextStatus = college.status === 'active' ? 'inactive' : 'active'
 
+        const confirmed = await confirmModal(
+            nextStatus === 'inactive'
+                ? `Deactivate "${college.college_name}"? Its programs will remain, but this college won't be selectable for new students or employees.`
+                : `Activate "${college.college_name}"?`
+        )
+        if (!confirmed) return
+
         try {
             const { error: updateError } = await supabase.from('colleges').update({ status: nextStatus }).eq('college_id', college.college_id)
             if (updateError) throw new Error(updateError.message)
@@ -129,6 +144,13 @@ function CollegesPrograms() {
             notifyWarning('College, program code, and program name are required.')
             return
         }
+
+        const confirmed = await confirmModal(
+            programForm.program_id
+                ? `Save changes to "${programForm.program_name.trim()}"?`
+                : `Add "${programForm.program_name.trim()}" as a new program?`
+        )
+        if (!confirmed) return
 
         try {
             setSaving(true)
@@ -176,6 +198,13 @@ function CollegesPrograms() {
     const toggleProgramStatus = async (program) => {
         const nextStatus = program.status === 'active' ? 'inactive' : 'active'
 
+        const confirmed = await confirmModal(
+            nextStatus === 'inactive'
+                ? `Deactivate "${program.program_name}"? It won't be selectable for new students or employees.`
+                : `Activate "${program.program_name}"?`
+        )
+        if (!confirmed) return
+
         try {
             const { error: updateError } = await supabase.from('programs').update({ status: nextStatus }).eq('program_id', program.program_id)
             if (updateError) throw new Error(updateError.message)
@@ -210,9 +239,11 @@ function CollegesPrograms() {
                     </div>
 
                     {showCollegeForm && (
-                        <div className="admin-card">
-                            <h3 style={{ fontSize: 15, marginBottom: 14 }}>{collegeForm.college_id ? 'Edit College' : 'New College'}</h3>
-
+                        <Modal
+                            title={collegeForm.college_id ? 'Edit College' : 'New College'}
+                            maxWidth={560}
+                            onClose={() => { if (saving) return; setShowCollegeForm(false) }}
+                        >
                             <div className="admin-info-grid" style={{ marginBottom: 14 }}>
                                 <div className="form-group">
                                     <label className="form-label">Code</label>
@@ -234,7 +265,7 @@ function CollegesPrograms() {
                                 <button className="admin-primary-button" onClick={saveCollege} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                                 <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setShowCollegeForm(false)}>Cancel</button>
                             </div>
-                        </div>
+                        </Modal>
                     )}
 
                     {loading ? (
@@ -268,9 +299,11 @@ function CollegesPrograms() {
                     </div>
 
                     {showProgramForm && (
-                        <div className="admin-card">
-                            <h3 style={{ fontSize: 15, marginBottom: 14 }}>{programForm.program_id ? 'Edit Program' : 'New Program'}</h3>
-
+                        <Modal
+                            title={programForm.program_id ? 'Edit Program' : 'New Program'}
+                            maxWidth={560}
+                            onClose={() => { if (saving) return; setShowProgramForm(false) }}
+                        >
                             <div className="admin-info-grid" style={{ marginBottom: 14 }}>
                                 <div className="form-group">
                                     <label className="form-label">College</label>
@@ -307,7 +340,7 @@ function CollegesPrograms() {
                                 <button className="admin-primary-button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                                 <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setShowProgramForm(false)}>Cancel</button>
                             </div>
-                        </div>
+                        </Modal>
                     )}
 
                     {loading ? (
