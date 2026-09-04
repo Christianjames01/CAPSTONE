@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyError, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
+import { notifyError, notifySuccess, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
+import { deleteStudentAccount } from '../../lib/deleteStudentAccount'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
@@ -292,43 +293,35 @@ function Students() {
 
             if (requestCount > 0) {
                 notifyError(
-                    `${student.fullName} has ${requestCount} document request${requestCount === 1 ? '' : 's'} on file, so their record can't be deleted. Deactivate the account instead.`,
+                    `${student.fullName} has ${requestCount} document request${requestCount === 1 ? '' : 's'} on file, so their account can't be deleted. Deactivate the account instead.`,
                     "Can't delete"
                 )
                 return
             }
 
             const confirmed = await confirmModal(
-                `Delete ${student.fullName}'s student record? This does not delete their login account, only their student profile. This cannot be undone.`
+                `Permanently delete ${student.fullName}'s account? This removes their login, profile, and student record entirely. This cannot be undone.`,
+                { title: 'Delete this account?', confirmButtonText: 'Delete account', icon: 'warning' }
             )
             if (!confirmed) return
 
-            const {
-                data: { user },
-                error: userError
-            } = await supabase.auth.getUser()
-
-            if (userError || !user) {
-                throw new Error('You are not logged in.')
-            }
-
-            const { error: deleteError } = await supabase
-                .from('students')
-                .delete()
-                .eq('student_id', student.student_id)
-
-            if (deleteError) {
-                throw new Error('Failed to delete student: ' + deleteError.message)
-            }
-
-            await logActivity({
-                userId: user.id,
-                action: 'remove_student',
-                tableName: 'students',
-                recordId: student.student_id,
-                description: `Deleted student record for "${student.fullName}" (${student.student_number}).`,
+            const { value: password } = await Swal.fire({
+                title: 'Confirm your password',
+                text: 'For your security, enter your own password to permanently delete this account.',
+                input: 'password',
+                inputLabel: 'Your password',
+                inputPlaceholder: 'Enter your password',
+                showCancelButton: true,
+                confirmButtonText: 'Delete account',
+                confirmButtonColor: '#dc3545',
+                inputValidator: (value) => (!value ? 'Password is required.' : undefined),
             })
 
+            if (!password) return
+
+            await deleteStudentAccount({ studentUserId: student.user_id, password })
+
+            notifySuccess(`${student.fullName}'s account has been permanently deleted.`)
             setAllStudents((prev) => prev.filter((s) => s.student_id !== student.student_id))
 
         } catch (err) {
@@ -413,7 +406,7 @@ function Students() {
                     onClick={() => removeStudent(student)}
                     disabled={removing === student.student_id}
                 >
-                    {removing === student.student_id ? 'Checking...' : 'Delete'}
+                    {removing === student.student_id ? 'Deleting...' : 'Delete'}
                 </button>
             </div>
         </div>
