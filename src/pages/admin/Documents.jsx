@@ -6,6 +6,7 @@ import { exportToExcel } from '../../lib/excelExport'
 import { parseExcelFile } from '../../lib/excelImport'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -463,11 +464,11 @@ function Documents() {
             )}
 
             {showForm && (
-                <div className="admin-card" style={{ marginTop: 20 }}>
-                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>
-                        {form.document_type_id ? 'Edit Document Type' : 'New Document Type'}
-                    </h2>
-
+                <Modal
+                    title={form.document_type_id ? 'Edit Document Type' : 'New Document Type'}
+                    maxWidth={640}
+                    onClose={() => { if (saving) return; setShowForm(false); setForm(EMPTY_FORM) }}
+                >
                     <div className="admin-info-grid" style={{ marginBottom: 16 }}>
                         <div className="form-group">
                             <label className="form-label">Code</label>
@@ -518,7 +519,7 @@ function Documents() {
                             Cancel
                         </button>
                     </div>
-                </div>
+                </Modal>
             )}
 
             {error && <div className="admin-error-box" style={{ marginTop: 20 }}>{error}</div>}
