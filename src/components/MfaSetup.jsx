@@ -36,18 +36,41 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
         }
     }
 
+    const removeUnverifiedFactors = async () => {
+        const { data: existingFactors, error: listError } = await supabase.auth.mfa.listFactors()
+
+        if (listError) {
+            console.error('LIST MFA FACTORS ERROR:', listError)
+            return
+        }
+
+        const stale = (existingFactors?.totp || []).filter((f) => f.status === 'unverified')
+
+        for (const factor of stale) {
+            const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId: factor.id })
+            if (unenrollError) {
+                console.error('UNENROLL STALE FACTOR ERROR:', unenrollError)
+            }
+        }
+    }
+
     const startEnroll = async () => {
+        if (enrolling) return
+
         setError('')
         setMessage('')
         setEnrolling(true)
 
-        const { data: existingFactors } = await supabase.auth.mfa.listFactors()
-        const stale = (existingFactors?.totp || []).filter((f) => f.status === 'unverified')
-        for (const factor of stale) {
-            await supabase.auth.mfa.unenroll({ factorId: factor.id })
-        }
+        await removeUnverifiedFactors()
 
-        const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+        let { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+
+        if (enrollError?.message?.toLowerCase().includes('already exists')) {
+            // A stale factor survived the cleanup above (e.g. left over from another
+            // browser/session) -- clean up again and give it one more try.
+            await removeUnverifiedFactors()
+            ;({ data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' }))
+        }
 
         if (enrollError) {
             setError(enrollError.message)
@@ -150,7 +173,7 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
                     </button>
                 </div>
             ) : (
-                <button type="button" className={linkButtonClassName} onClick={startEnroll}>
+                <button type="button" className={linkButtonClassName} onClick={startEnroll} disabled={enrolling}>
                     Enable Two-Factor Authentication
                 </button>
             )}
