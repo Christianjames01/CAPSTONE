@@ -8,7 +8,10 @@ import { IconX } from './icons'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
-const YEAR_LEVEL_TO_CURRICULUM_LABEL = { 1: 'First Year', 2: 'Second Year', 3: 'Third Year', 4: 'Fourth Year' }
+// Alphabetical order puts "Fourth Year" right after "First Year" (both
+// start with "F"), so year_level needs an explicit chronological order
+// rather than relying on a plain SQL `.order('year_level')`.
+const YEAR_LEVEL_ORDER = ['First Year', 'Second Year', 'Third Year', 'Fourth Year']
 
 const SAMPLE_LAYOUT_BY_CODE = {
     TOR: 'grades',
@@ -108,11 +111,13 @@ function NewRequest() {
                     : Promise.resolve({ data: null }),
             ])
 
+            // A TOR covers the student's whole academic history, not just their
+            // current year -- fetch every year of their curriculum so the sample
+            // preview can show a course from each year instead of only the
+            // current one.
             let curriculumCourses = []
 
-            const yearLabel = YEAR_LEVEL_TO_CURRICULUM_LABEL[parseInt(student.year_level, 10)]
-
-            if (student.program_id && yearLabel) {
+            if (student.program_id) {
                 const { data: curriculum } = await supabase
                     .from('curricula')
                     .select('curriculum_id')
@@ -123,13 +128,13 @@ function NewRequest() {
                 if (curriculum) {
                     const { data: courses } = await supabase
                         .from('curriculum_courses')
-                        .select('course_code, course_name, units, term, display_order')
+                        .select('course_code, course_name, units, year_level, term, display_order')
                         .eq('curriculum_id', curriculum.curriculum_id)
-                        .eq('year_level', yearLabel)
-                        .order('term')
                         .order('display_order')
 
-                    curriculumCourses = courses || []
+                    curriculumCourses = (courses || []).sort(
+                        (a, b) => YEAR_LEVEL_ORDER.indexOf(a.year_level) - YEAR_LEVEL_ORDER.indexOf(b.year_level)
+                    )
                 }
             }
 
@@ -765,17 +770,24 @@ function getMajorSubjects(programName, yearLevel) {
 
 const SAMPLE_GRADES = ['1.75', '1.50', '2.00', '1.25']
 
-function groupCoursesByTerm(courses) {
-    const groups = []
-    for (const c of courses) {
-        let group = groups.find((g) => g.term === c.term)
-        if (!group) {
-            group = { term: c.term, courses: [] }
-            groups.push(group)
-        }
-        group.courses.push(c)
+// A TOR lists the student's whole academic history, so the sample should
+// span every year rather than repeat courses from just one -- pick a
+// handful of courses spread across the years actually in the curriculum,
+// evenly spaced, so all years get represented within a fixed row budget.
+function sampleAcrossYears(courses, maxRows) {
+    const years = [...new Set(courses.map((c) => c.year_level))]
+    if (years.length === 0) return []
+
+    const perYear = Math.max(1, Math.floor(maxRows / years.length))
+    const sample = []
+
+    for (const year of years) {
+        const coursesForYear = courses.filter((c) => c.year_level === year)
+        sample.push(...coursesForYear.slice(0, perYear))
+        if (sample.length >= maxRows) break
     }
-    return groups
+
+    return sample.slice(0, maxRows)
 }
 
 function GradesBody({ student }) {
@@ -792,39 +804,9 @@ function GradesBody({ student }) {
     )
 
     if (realCourses.length > 0) {
-        // This preview is a small fixed-size canvas -- cap how many real
-        // courses it tries to show so a year with many subjects (1st/2nd
-        // year can have 9-10 per term) can't push rows past the footer.
-        const termGroups = groupCoursesByTerm(realCourses.slice(0, 4))
-        const elements = []
-        let y = 224
-        let gradeIndex = 0
-
-        termGroups.forEach((group) => {
-            elements.push(
-                <text key={`term-${group.term}`} x="24" y={y} fontSize="9" fontWeight="700" fill="var(--blue)">
-                    {group.term}
-                </text>
-            )
-            y += 16
-
-            group.courses.forEach((c) => {
-                const grade = SAMPLE_GRADES[gradeIndex % SAMPLE_GRADES.length]
-                gradeIndex++
-                elements.push(
-                    <g key={c.course_code} fontSize="9.5" fill="var(--ink)">
-                        <text x="24" y={y}>{c.course_code}</text>
-                        <text x="110" y={y}>{c.course_name}</text>
-                        <text x="380" y={y}>{Number(c.units).toFixed(1)}</text>
-                        <text x="440" y={y}>{grade}</text>
-                        <text x="490" y={y} fill="var(--slate)">Passed</text>
-                    </g>
-                )
-                y += 18
-            })
-
-            y += 6
-        })
+        // This preview is a small fixed-size canvas -- cap how many rows it
+        // tries to show so it can't push content past the footer.
+        const sample = sampleAcrossYears(realCourses, 5)
 
         return (
             <>
@@ -832,7 +814,16 @@ function GradesBody({ student }) {
                 <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
                 {headerRow}
                 <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
-                {elements}
+
+                {sample.map((c, i) => (
+                    <g key={c.course_code} fontSize="9.5" fill="var(--ink)">
+                        <text x="24" y={222 + i * 18}>{c.course_code}</text>
+                        <text x="110" y={222 + i * 18}>{c.course_name}</text>
+                        <text x="380" y={222 + i * 18}>{Number(c.units).toFixed(1)}</text>
+                        <text x="440" y={222 + i * 18}>{SAMPLE_GRADES[i % SAMPLE_GRADES.length]}</text>
+                        <text x="490" y={222 + i * 18} fill="var(--slate)">Passed</text>
+                    </g>
+                ))}
             </>
         )
     }
