@@ -56,7 +56,7 @@ function AuthCallback() {
         }
 
         if (profile.role === 'employee' || profile.role === 'registrar_head') {
-            const issue = await getEmployeeAccountIssue(user.id)
+            const issue = await getEmployeeAccountIssue(user.id, profile.role)
             if (issue) {
                 await supabase.auth.signOut()
                 navigate('/login', { state: { message: employeeIssueMessage(issue, profile.role) } })

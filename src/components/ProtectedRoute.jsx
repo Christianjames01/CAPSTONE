@@ -36,7 +36,7 @@ function ProtectedRoute({ children, allowedRoles }) {
         let employeeIssue = null
 
         if (effectiveStatus === 'active' && (data.role === 'employee' || data.role === 'registrar_head')) {
-            employeeIssue = await getEmployeeAccountIssue(user.id)
+            employeeIssue = await getEmployeeAccountIssue(user.id, data.role)
             if (employeeIssue) {
                 effectiveStatus = 'inactive'
             }

@@ -49,7 +49,7 @@ function Login() {
         }
 
         if (profile.role === 'employee' || profile.role === 'registrar_head') {
-            const issue = await getEmployeeAccountIssue(userId)
+            const issue = await getEmployeeAccountIssue(userId, profile.role)
             if (issue) {
                 await supabase.auth.signOut()
                 setMessage(employeeIssueMessage(issue, profile.role))
