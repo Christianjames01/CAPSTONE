@@ -98,7 +98,7 @@ function NewRequest() {
 
             const { data: student } = await supabase
                 .from('students')
-                .select('student_number, program_id, year_level, user_id')
+                .select('student_id, student_number, program_id, year_level, user_id')
                 .eq('user_id', user.id)
                 .single()
 
@@ -126,15 +126,25 @@ function NewRequest() {
                     .maybeSingle()
 
                 if (curriculum) {
-                    const { data: courses } = await supabase
-                        .from('curriculum_courses')
-                        .select('course_code, course_name, units, year_level, term, display_order')
-                        .eq('curriculum_id', curriculum.curriculum_id)
-                        .order('display_order')
+                    const [{ data: courses }, { data: grades }] = await Promise.all([
+                        supabase
+                            .from('curriculum_courses')
+                            .select('curriculum_course_id, course_code, course_name, units, year_level, term, display_order')
+                            .eq('curriculum_id', curriculum.curriculum_id)
+                            .order('display_order'),
+                        supabase
+                            .from('student_grades')
+                            .select('curriculum_course_id, grade')
+                            .eq('student_id', student.student_id),
+                    ])
 
-                    curriculumCourses = (courses || []).sort(
-                        (a, b) => YEAR_LEVEL_ORDER.indexOf(a.year_level) - YEAR_LEVEL_ORDER.indexOf(b.year_level)
+                    const gradeByCourseId = Object.fromEntries(
+                        (grades || []).map((g) => [g.curriculum_course_id, g.grade])
                     )
+
+                    curriculumCourses = (courses || [])
+                        .map((c) => ({ ...c, grade: gradeByCourseId[c.curriculum_course_id] || '' }))
+                        .sort((a, b) => YEAR_LEVEL_ORDER.indexOf(a.year_level) - YEAR_LEVEL_ORDER.indexOf(b.year_level))
                 }
             }
 
@@ -640,18 +650,18 @@ const fitProps = (text, naturalFitChars, pxWidth) =>
         ? { textLength: pxWidth, lengthAdjust: 'spacingAndGlyphs' }
         : {}
 
-function SampleFooter() {
+function SampleFooter({ y = 312 }) {
     return (
         <>
-            <line x1="24" y1="312" x2="536" y2="312" stroke="var(--line)" />
-            <line x1="380" y1="340" x2="536" y2="340" stroke="var(--slate)" />
-            <text x="458" y="354" textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--ink)">
+            <line x1="24" y1={y} x2="536" y2={y} stroke="var(--line)" />
+            <line x1="380" y1={y + 28} x2="536" y2={y + 28} stroke="var(--slate)" />
+            <text x="458" y={y + 42} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--ink)">
                 {REGISTRAR_HEAD_NAME}
             </text>
-            <text x="458" y="366" textAnchor="middle" fontSize="8" fill="var(--slate)">
+            <text x="458" y={y + 54} textAnchor="middle" fontSize="8" fill="var(--slate)">
                 {REGISTRAR_HEAD_TITLE}
             </text>
-            <SealImage cx={60} cy={345} r={18} grayscale />
+            <SealImage cx={60} cy={y + 33} r={18} grayscale />
         </>
     )
 }
@@ -768,26 +778,52 @@ function getMajorSubjects(programName, yearLevel) {
     ]
 }
 
-const SAMPLE_GRADES = ['1.75', '1.50', '2.00', '1.25']
+const GRADES_TERM_ORDER = ['1st Semester', '2nd Semester', 'Summer']
+const GRADES_TOP = 224
+const GRADES_YEAR_LABEL_H = 18
+const GRADES_TERM_LABEL_H = 14
+const GRADES_ROW_H = 15
+const GRADES_FOOTER_SPACE = 90
 
-// A TOR lists the student's whole academic history, so the sample should
-// span every year rather than repeat courses from just one -- pick a
-// handful of courses spread across the years actually in the curriculum,
-// evenly spaced, so all years get represented within a fixed row budget.
-function sampleAcrossYears(courses, maxRows) {
-    const years = [...new Set(courses.map((c) => c.year_level))]
-    if (years.length === 0) return []
-
-    const perYear = Math.max(1, Math.floor(maxRows / years.length))
-    const sample = []
-
-    for (const year of years) {
-        const coursesForYear = courses.filter((c) => c.year_level === year)
-        sample.push(...coursesForYear.slice(0, perYear))
-        if (sample.length >= maxRows) break
+// A real TOR lists every course across the student's whole academic
+// history -- group all of it by year then term (like the school's own
+// evaluation form) instead of sampling a handful of rows.
+function groupCoursesByYearAndTerm(courses) {
+    const yearMap = new Map()
+    for (const c of courses) {
+        if (!yearMap.has(c.year_level)) yearMap.set(c.year_level, new Map())
+        const termMap = yearMap.get(c.year_level)
+        if (!termMap.has(c.term)) termMap.set(c.term, [])
+        termMap.get(c.term).push(c)
     }
 
-    return sample.slice(0, maxRows)
+    return YEAR_LEVEL_ORDER
+        .filter((year) => yearMap.has(year))
+        .map((year) => ({
+            year,
+            terms: [...yearMap.get(year).entries()]
+                .sort(([a], [b]) => GRADES_TERM_ORDER.indexOf(a) - GRADES_TERM_ORDER.indexOf(b))
+                .map(([term, rows]) => ({
+                    term,
+                    rows: rows.sort((a, b) => a.display_order - b.display_order),
+                })),
+        }))
+}
+
+// Used both to size the SVG (DocumentSample) and to render it (GradesBody)
+// so the two can never drift out of sync with each other.
+function calcGradesContentHeight(student) {
+    const courses = student?.curriculumCourses || []
+    if (courses.length === 0) return 380
+
+    let y = GRADES_TOP
+    for (const yearGroup of groupCoursesByYearAndTerm(courses)) {
+        y += GRADES_YEAR_LABEL_H
+        for (const termGroup of yearGroup.terms) {
+            y += GRADES_TERM_LABEL_H + termGroup.rows.length * GRADES_ROW_H
+        }
+    }
+    return y + GRADES_FOOTER_SPACE
 }
 
 function GradesBody({ student }) {
@@ -804,9 +840,39 @@ function GradesBody({ student }) {
     )
 
     if (realCourses.length > 0) {
-        // This preview is a small fixed-size canvas -- cap how many rows it
-        // tries to show so it can't push content past the footer.
-        const sample = sampleAcrossYears(realCourses, 5)
+        const elements = []
+        let y = GRADES_TOP
+
+        groupCoursesByYearAndTerm(realCourses).forEach((yearGroup) => {
+            elements.push(
+                <text key={`year-${yearGroup.year}`} x="24" y={y} fontSize="10" fontWeight="700" fill="var(--ink)">
+                    {yearGroup.year}
+                </text>
+            )
+            y += GRADES_YEAR_LABEL_H
+
+            yearGroup.terms.forEach((termGroup) => {
+                elements.push(
+                    <text key={`term-${yearGroup.year}-${termGroup.term}`} x="24" y={y} fontSize="9" fontWeight="700" fill="var(--blue)">
+                        {termGroup.term}
+                    </text>
+                )
+                y += GRADES_TERM_LABEL_H
+
+                termGroup.rows.forEach((c) => {
+                    elements.push(
+                        <g key={c.curriculum_course_id} fontSize="9" fill="var(--ink)">
+                            <text x="24" y={y}>{c.course_code}</text>
+                            <text x="110" y={y}>{c.course_name}</text>
+                            <text x="380" y={y}>{Number(c.units).toFixed(1)}</text>
+                            <text x="440" y={y}>{c.grade || '-'}</text>
+                            <text x="490" y={y} fill="var(--slate)">{c.grade ? 'Passed' : ''}</text>
+                        </g>
+                    )
+                    y += GRADES_ROW_H
+                })
+            })
+        })
 
         return (
             <>
@@ -814,16 +880,7 @@ function GradesBody({ student }) {
                 <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
                 {headerRow}
                 <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
-
-                {sample.map((c, i) => (
-                    <g key={c.course_code} fontSize="9.5" fill="var(--ink)">
-                        <text x="24" y={222 + i * 18}>{c.course_code}</text>
-                        <text x="110" y={222 + i * 18}>{c.course_name}</text>
-                        <text x="380" y={222 + i * 18}>{Number(c.units).toFixed(1)}</text>
-                        <text x="440" y={222 + i * 18}>{SAMPLE_GRADES[i % SAMPLE_GRADES.length]}</text>
-                        <text x="490" y={222 + i * 18} fill="var(--slate)">Passed</text>
-                    </g>
-                ))}
+                {elements}
             </>
         )
     }
@@ -997,12 +1054,18 @@ const SAMPLE_BODY = {
 function DocumentSample({ layout, name, student }) {
     const Body = SAMPLE_BODY[layout] || LetterBody
 
+    // Every other layout is a short, fixed illustrative mockup -- only
+    // 'grades' (TOR/COG/POG/CGCE) renders the student's real, full-length
+    // curriculum, which needs a canvas sized to fit however long that is.
+    const height = layout === 'grades' ? calcGradesContentHeight(student) : 380
+    const footerY = height - 68
+
     return (
-        <svg viewBox="0 0 560 380" style={{ width: '100%', height: 'auto' }} role="img" aria-label={`Sample layout of ${name}`}>
-            <rect x="0.5" y="0.5" width="559" height="379" rx="8" fill="var(--white)" stroke="var(--line)" />
+        <svg viewBox={`0 0 560 ${height}`} style={{ width: '100%', height: 'auto' }} role="img" aria-label={`Sample layout of ${name}`}>
+            <rect x="0.5" y="0.5" width="559" height={height - 1} rx="8" fill="var(--white)" stroke="var(--line)" />
             <SampleHeader title={name.toUpperCase()} />
             <Body name={name} student={student} />
-            <SampleFooter />
+            <SampleFooter y={footerY} />
         </svg>
     )
 }
