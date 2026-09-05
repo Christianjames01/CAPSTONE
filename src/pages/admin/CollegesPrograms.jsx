@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { HCDC_COLLEGES, HCDC_PROGRAMS } from '../../lib/hcdcCatalog'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
@@ -66,8 +67,16 @@ function CollegesPrograms() {
 
     const saveCollege = async () => {
         if (!collegeForm.college_code.trim() || !collegeForm.college_name.trim()) {
-            notifyWarning('College code and name are required.')
+            notifyWarning('Select a college.')
             return
+        }
+
+        if (!collegeForm.college_id) {
+            const duplicate = colleges.find((c) => c.college_code === collegeForm.college_code.trim())
+            if (duplicate) {
+                notifyWarning(`"${duplicate.college_name}" has already been added.`)
+                return
+            }
         }
 
         const confirmed = await confirmModal(
@@ -142,8 +151,16 @@ function CollegesPrograms() {
 
     const saveProgram = async () => {
         if (!programForm.college_id || !programForm.program_code.trim() || !programForm.program_name.trim()) {
-            notifyWarning('College, program code, and program name are required.')
+            notifyWarning('Select a program.')
             return
+        }
+
+        if (!programForm.program_id) {
+            const duplicate = programs.find((p) => p.program_code === programForm.program_code.trim())
+            if (duplicate) {
+                notifyWarning(`"${duplicate.program_name}" has already been added.`)
+                return
+            }
         }
 
         const confirmed = await confirmModal(
@@ -267,17 +284,41 @@ function CollegesPrograms() {
                             maxWidth={560}
                             onClose={() => { if (saving) return; setShowCollegeForm(false) }}
                         >
-                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                <div className="form-group">
-                                    <label className="form-label">Code</label>
-                                    <input className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
-                                </div>
+                            {collegeForm.college_id ? (
+                                <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Code</label>
+                                        <input className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
+                                    </div>
 
-                                <div className="form-group">
-                                    <label className="form-label">Name</label>
-                                    <input className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
+                                    <div className="form-group">
+                                        <label className="form-label">Name</label>
+                                        <input className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="form-group" style={{ marginBottom: 14 }}>
+                                    <label className="form-label">College</label>
+                                    <select
+                                        className="form-input"
+                                        value={collegeForm.college_code}
+                                        onChange={(e) => {
+                                            const picked = HCDC_COLLEGES.find((c) => c.code === e.target.value)
+                                            setCollegeForm({
+                                                ...collegeForm,
+                                                college_code: picked?.code || '',
+                                                college_name: picked?.name || '',
+                                            })
+                                        }}
+                                        disabled={saving}
+                                    >
+                                        <option value="">-- Select college --</option>
+                                        {HCDC_COLLEGES.map((c) => (
+                                            <option key={c.code} value={c.code}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="form-group" style={{ marginBottom: 14 }}>
                                 <label className="form-label">Description</label>
@@ -331,37 +372,76 @@ function CollegesPrograms() {
                             maxWidth={560}
                             onClose={() => { if (saving) return; setShowProgramForm(false) }}
                         >
-                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                <div className="form-group">
-                                    <label className="form-label">College</label>
-                                    <select className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
-                                        <option value="">-- Select college --</option>
-                                        {colleges.map((c) => (
-                                            <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            {programForm.program_id ? (
+                                <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                                    <div className="form-group">
+                                        <label className="form-label">College</label>
+                                        <select className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
+                                            <option value="">-- Select college --</option>
+                                            {colleges.map((c) => (
+                                                <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                                <div className="form-group">
-                                    <label className="form-label">Code</label>
-                                    <input className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
-                                </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Code</label>
+                                        <input className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
+                                    </div>
 
-                                <div className="form-group">
-                                    <label className="form-label">Name</label>
-                                    <input className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
-                                </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Name</label>
+                                        <input className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
+                                    </div>
 
-                                <div className="form-group">
-                                    <label className="form-label">Degree Level</label>
-                                    <input className="form-input" value={programForm.degree_level || ''} onChange={(e) => setProgramForm({ ...programForm, degree_level: e.target.value })} disabled={saving} />
-                                </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Degree Level</label>
+                                        <input className="form-input" value={programForm.degree_level || ''} onChange={(e) => setProgramForm({ ...programForm, degree_level: e.target.value })} disabled={saving} />
+                                    </div>
 
-                                <div className="form-group">
-                                    <label className="form-label">Duration (Years)</label>
-                                    <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
+                                    <div className="form-group">
+                                        <label className="form-label">Duration (Years)</label>
+                                        <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Program</label>
+                                        <select
+                                            className="form-input"
+                                            value={programForm.program_code}
+                                            onChange={(e) => {
+                                                const picked = HCDC_PROGRAMS.find((p) => p.code === e.target.value)
+                                                const college = colleges.find((c) => c.college_code === picked?.collegeCode)
+                                                setProgramForm({
+                                                    ...programForm,
+                                                    program_code: picked?.code || '',
+                                                    program_name: picked?.name || '',
+                                                    degree_level: picked?.degreeLevel || '',
+                                                    college_id: college?.college_id || '',
+                                                })
+                                            }}
+                                            disabled={saving}
+                                        >
+                                            <option value="">-- Select program --</option>
+                                            {HCDC_PROGRAMS.map((p) => (
+                                                <option key={p.code} value={p.code}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">College</label>
+                                        <input className="form-input" value={colleges.find((c) => c.college_id === programForm.college_id)?.college_name || ''} disabled readOnly />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">Duration (Years)</label>
+                                        <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
+                                    </div>
+                                </div>
+                            )}
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <button className="admin-primary-button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
