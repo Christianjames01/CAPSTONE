@@ -358,7 +358,7 @@ function AllRequests() {
                     position: 'sticky',
                     bottom: 16,
                     marginTop: 16,
-                    background: 'var(--ink)',
+                    background: 'var(--blue-dark)',
                     color: 'var(--white)',
                     borderRadius: 12,
                     padding: '14px 18px',

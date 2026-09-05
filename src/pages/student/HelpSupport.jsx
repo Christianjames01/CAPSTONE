@@ -117,7 +117,7 @@ function HelpSupport() {
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
                                         gap: 12,
-                                        background: isOpen ? 'var(--blue-tint)' : 'var(--white)',
+                                        background: isOpen ? 'var(--blue-tint)' : 'var(--surface)',
                                     }}
                                 >
                                     {faq.question}
