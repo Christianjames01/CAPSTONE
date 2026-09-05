@@ -266,6 +266,19 @@ code {
   background: #123B78 !important;
 }
 
+/* .form-input is defined in Auth.css for the login/register pages (which
+   stay light-only) but is also reused throughout the admin/employee/student
+   dashboards for plain text inputs and textareas. Its background was never
+   given a dark-mode override, so it stayed pinned white while its text
+   color (var(--ink), which does flip) turned light -- nearly invisible.
+   Scoped to the dashboard layouts (where --surface exists) so it has no
+   effect on the auth pages themselves. */
+html[data-theme="dark"] .admin-layout .form-input,
+html[data-theme="dark"] .employee-layout .form-input,
+html[data-theme="dark"] .student-layout .form-input {
+  background: var(--surface);
+}
+
 /* SweetAlert2 renders its popup appended to <body>, outside every React
    layout -- so it never picks up any .admin-layout/.employee-layout/
    .student-layout scoped variable, dark or light. This is the only place
