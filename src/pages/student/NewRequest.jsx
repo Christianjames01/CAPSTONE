@@ -420,7 +420,7 @@ function NewRequest() {
                                                         gap: 4,
                                                         cursor: 'pointer',
                                                         border: isSelected ? '1.5px solid var(--blue)' : '1px solid var(--line)',
-                                                        background: isSelected ? 'var(--blue-tint)' : 'var(--white)',
+                                                        background: isSelected ? 'var(--blue-tint)' : 'var(--surface)',
                                                     }}
                                                     onClick={() => setSelectedDocument(document.document_type_id)}
                                                     disabled={loading}
