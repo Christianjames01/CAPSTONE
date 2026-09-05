@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPageHeader, SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
@@ -174,37 +174,39 @@ function Evaluation() {
                 <div className="eval-year-block" key={yearGroup.year}>
                     <div className="eval-year-title">{yearGroup.year}</div>
 
-                    {yearGroup.terms.map((termGroup) => (
-                        <div className="eval-term-block" key={termGroup.term}>
-                            <table className="eval-table">
-                                <thead>
-                                    <tr>
-                                        <th colSpan={2}>{termGroup.term}</th>
-                                        <th>Units</th>
-                                        <th>Prereq</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {termGroup.rows.map((row) => (
-                                        <tr key={row.curriculum_course_id}>
-                                            <td className="eval-grade-cell">{row.grade || '-'}</td>
-                                            <td>
-                                                <strong>{row.course_code}</strong>
-                                                <span className="eval-course-name">{row.course_name}</span>
-                                            </td>
-                                            <td>{Number(row.units).toFixed(1)}</td>
-                                            <td>{row.prereq_course_code || ''}</td>
+                    <div className="eval-year-card">
+                        <table className="eval-table">
+                            <tbody>
+                                {yearGroup.terms.map((termGroup) => (
+                                    <Fragment key={termGroup.term}>
+                                        <tr className="eval-term-row">
+                                            <th colSpan={2}>{termGroup.term}</th>
+                                            <th>Units</th>
+                                            <th>Prereq</th>
                                         </tr>
-                                    ))}
-                                    <tr className="eval-total-row">
-                                        <td colSpan={2}>Total Units</td>
-                                        <td>{termGroup.totalUnits.toFixed(1)}</td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    ))}
+
+                                        {termGroup.rows.map((row) => (
+                                            <tr key={row.curriculum_course_id}>
+                                                <td className="eval-grade-cell">{row.grade || '-'}</td>
+                                                <td>
+                                                    <strong>{row.course_code}</strong>
+                                                    <span className="eval-course-name">{row.course_name}</span>
+                                                </td>
+                                                <td>{Number(row.units).toFixed(1)}</td>
+                                                <td>{row.prereq_course_code || ''}</td>
+                                            </tr>
+                                        ))}
+
+                                        <tr className="eval-total-row">
+                                            <td colSpan={2}>Total Units</td>
+                                            <td>{termGroup.totalUnits.toFixed(1)}</td>
+                                            <td></td>
+                                        </tr>
+                                    </Fragment>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ))}
         </div>
