@@ -13,6 +13,10 @@ import './StudentPages.css'
 // rather than relying on a plain SQL `.order('year_level')`.
 const YEAR_LEVEL_ORDER = ['First Year', 'Second Year', 'Third Year', 'Fourth Year']
 
+// Every document_code in the document_types table gets an explicit entry
+// here so nothing silently falls through to the generic 'letter' layout by
+// accident (that's what happened with "DIP-CTC" and "COGRA" previously --
+// they were listed as "DIP" and "COGR", which never matched anything).
 const SAMPLE_LAYOUT_BY_CODE = {
     TOR: 'grades',
     COG: 'grades',
@@ -24,9 +28,33 @@ const SAMPLE_LAYOUT_BY_CODE = {
     CRUS: 'evaluation',
     CCAR: 'evaluation',
     CUE: 'evaluation',
-    DIP: 'diploma',
-    COGR: 'diploma',
+    'DIP-CTC': 'diploma',
+    COGRA: 'diploma',
     HD: 'diploma',
+    AAD: 'letter',
+    ADC: 'letter',
+    CAAE: 'letter',
+    CCEP: 'letter',
+    CCOM: 'letter',
+    CGS: 'letter',
+    CHON: 'letter',
+    CIRS: 'letter',
+    COE: 'letter',
+    COESE: 'letter',
+    COEUE: 'letter',
+    COR: 'letter',
+    'COR-RES': 'letter',
+    CTC: 'letter',
+    CURR: 'letter',
+    LNO: 'letter',
+    LOC: 'letter',
+    'MAR-CERT': 'letter',
+    PRINT: 'letter',
+    QAC: 'letter',
+    REF: 'letter',
+    SCAN: 'letter',
+    SO: 'letter',
+    VAC: 'letter',
 }
 
 function NewRequest() {
@@ -944,6 +972,7 @@ function GwaBody({ student }) {
         <>
             <StudentInfoRow student={student} />
             <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+            <Watermark centerY={230} />
 
             <rect x="24" y="196" width="512" height="80" rx="6" fill="var(--blue-tint)" />
             <text x="280" y="222" textAnchor="middle" fontSize="10" fill="var(--blue-dark)">GENERAL WEIGHTED AVERAGE</text>
@@ -952,12 +981,16 @@ function GwaBody({ student }) {
     )
 }
 
+// Room names are real, verified facilities from HCDC's own published local
+// directory (IT Laboratory 3, Computer Laboratory, College of Arts and
+// Sciences) rather than invented room numbers -- HCDC doesn't publish a
+// classroom numbering scheme, so a specific "Room 301" would be fabricated.
 function ScheduleBody({ student }) {
     const [major1, major2] = getMajorSubjects(student?.programName, student?.yearLevel)
     const rows = [
-        ['MON / WED', '8:00 – 9:30 AM', major1[1], 'Rm 301'],
-        ['TUE / THU', '9:30 – 11:00 AM', major2[1], 'Lab 2'],
-        ['MON / WED', '1:00 – 2:30 PM', 'Purposive Communication', 'Rm 205'],
+        ['MON / WED', '8:00 – 9:30 AM', major1[1], 'IT Lab 3'],
+        ['TUE / THU', '9:30 – 11:00 AM', major2[1], 'Computer Lab'],
+        ['MON / WED', '1:00 – 2:30 PM', 'Purposive Communication', 'CAS Building'],
         ['FRIDAY', '3:00 – 5:00 PM', 'Physical Education', 'Gym'],
     ]
 
@@ -965,21 +998,22 @@ function ScheduleBody({ student }) {
         <>
             <StudentInfoRow student={student} />
             <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+            <Watermark centerY={230} />
 
             <g fontSize="9.5" fontWeight="700" fill="var(--slate)">
                 <text x="24" y="194">DAY</text>
                 <text x="150" y="194">TIME</text>
                 <text x="300" y="194">SUBJECT</text>
-                <text x="470" y="194">ROOM</text>
+                <text x="450" y="194">ROOM</text>
             </g>
             <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
 
             {rows.map((row, i) => (
-                <g key={row[0] + i} fontSize="9.5" fill="var(--ink)">
+                <g key={row[0] + i} fontSize="9" fill="var(--ink)">
                     <text x="24" y={222 + i * 20}>{row[0]}</text>
                     <text x="150" y={222 + i * 20}>{row[1]}</text>
                     <text x="300" y={222 + i * 20}>{row[2]}</text>
-                    <text x="470" y={222 + i * 20}>{row[3]}</text>
+                    <text x="450" y={222 + i * 20}>{row[3]}</text>
                 </g>
             ))}
         </>
@@ -998,6 +1032,7 @@ function EvaluationBody({ student }) {
         <>
             <StudentInfoRow student={student} />
             <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+            <Watermark centerY={230} />
 
             <g fontSize="9.5" fontWeight="700" fill="var(--slate)">
                 <text x="24" y="194">REQUIREMENT</text>
@@ -1023,6 +1058,7 @@ function DiplomaBody({ name, student }) {
     return (
         <>
             <rect x="14" y="94" width="532" height="200" fill="none" stroke="var(--red)" strokeWidth="1" strokeDasharray="1 3" />
+            <Watermark centerY={230} />
 
             <text x="280" y="130" textAnchor="middle" fontSize="10" fill="var(--slate)">This is to certify that</text>
             <text x="280" y="156" textAnchor="middle" fontSize="16" fontWeight="700" fill="var(--ink)" letterSpacing="0.5">
@@ -1046,10 +1082,13 @@ function DiplomaBody({ name, student }) {
     )
 }
 
-function LetterBody({ student }) {
+function LetterBody({ name, student }) {
+    const programName = student?.programName || 'Bachelor of Science in Information Technology'
+
     return (
         <>
             <line x1="180" y1="94" x2="380" y2="94" stroke="var(--red)" strokeWidth="1.5" />
+            <Watermark centerY={230} />
 
             <g fontSize="9" fill="var(--slate)">
                 <text x="24" y="130">This is to certify that</text>
@@ -1057,10 +1096,10 @@ function LetterBody({ student }) {
                     {student?.fullName || 'Juan Dela Cruz'}
                 </text>
 
-                <line x1="24" y1="172" x2="536" y2="172" stroke="var(--line)" />
-                <line x1="24" y1="192" x2="536" y2="192" stroke="var(--line)" />
-                <line x1="24" y1="212" x2="536" y2="212" stroke="var(--line)" />
-                <line x1="24" y1="232" x2="400" y2="232" stroke="var(--line)" />
+                <text x="24" y="172">is a bona fide student of Holy Cross of Davao College, enrolled under the</text>
+                <text x="24" y="192">{programName} program, and is currently in good academic standing.</text>
+                <text x="24" y="212">This {(name || 'document').toLowerCase()} is issued upon the request of the above-named student</text>
+                <text x="24" y="232">for whatever legitimate purpose it may serve.</text>
             </g>
 
             <StudentInfoRow y={272} student={student} />
