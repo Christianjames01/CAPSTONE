@@ -9,9 +9,6 @@ import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
-const EMPTY_COLLEGE = { college_id: null, college_code: '', college_name: '', description: '', status: 'active' }
-const EMPTY_PROGRAM = { program_id: null, college_id: '', program_code: '', program_name: '', degree_level: '', duration_years: '', status: 'active' }
-
 function CollegesPrograms() {
     const [tab, setTab] = useState('colleges')
     const [search, setSearch] = useState('')
@@ -22,11 +19,20 @@ function CollegesPrograms() {
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
 
-    const [collegeForm, setCollegeForm] = useState(EMPTY_COLLEGE)
+    const [collegeForm, setCollegeForm] = useState(null)
     const [showCollegeForm, setShowCollegeForm] = useState(false)
 
-    const [programForm, setProgramForm] = useState(EMPTY_PROGRAM)
+    const [programForm, setProgramForm] = useState(null)
     const [showProgramForm, setShowProgramForm] = useState(false)
+
+    // Adding colleges/programs one at a time meant repeating the same modal
+    // up to 56 times to seed the real catalog. One shared modal lets an
+    // admin check off any number of colleges and programs from the HCDC
+    // reference catalog and add all of them in a single action.
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [selectedCollegeCodes, setSelectedCollegeCodes] = useState([])
+    const [selectedProgramCodes, setSelectedProgramCodes] = useState([])
+    const [addingBulk, setAddingBulk] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -62,28 +68,15 @@ function CollegesPrograms() {
         await logActivity({ userId: user.id, action, tableName, recordId, description })
     }
 
-    const openNewCollege = () => { setCollegeForm(EMPTY_COLLEGE); setShowCollegeForm(true) }
     const openEditCollege = (c) => { setCollegeForm(c); setShowCollegeForm(true) }
 
     const saveCollege = async () => {
         if (!collegeForm.college_code.trim() || !collegeForm.college_name.trim()) {
-            notifyWarning('Select a college.')
+            notifyWarning('College code and name are required.')
             return
         }
 
-        if (!collegeForm.college_id) {
-            const duplicate = colleges.find((c) => c.college_code === collegeForm.college_code.trim())
-            if (duplicate) {
-                notifyWarning(`"${duplicate.college_name}" has already been added.`)
-                return
-            }
-        }
-
-        const confirmed = await confirmModal(
-            collegeForm.college_id
-                ? `Save changes to "${collegeForm.college_name.trim()}"?`
-                : `Add "${collegeForm.college_name.trim()}" as a new college?`
-        )
+        const confirmed = await confirmModal(`Save changes to "${collegeForm.college_name.trim()}"?`)
         if (!confirmed) return
 
         try {
@@ -96,24 +89,18 @@ function CollegesPrograms() {
                 status: collegeForm.status,
             }
 
-            if (collegeForm.college_id) {
-                const original = colleges.find((c) => c.college_id === collegeForm.college_id)
+            const original = colleges.find((c) => c.college_id === collegeForm.college_id)
 
-                const { error: updateError } = await supabase.from('colleges').update(payload).eq('college_id', collegeForm.college_id)
-                if (updateError) throw new Error(updateError.message)
+            const { error: updateError } = await supabase.from('colleges').update(payload).eq('college_id', collegeForm.college_id)
+            if (updateError) throw new Error(updateError.message)
 
-                const collegeChanges = describeChanges([
-                    ['code', original?.college_code, payload.college_code],
-                    ['name', original?.college_name, payload.college_name],
-                    ['status', original?.status, payload.status],
-                ])
+            const collegeChanges = describeChanges([
+                ['code', original?.college_code, payload.college_code],
+                ['name', original?.college_name, payload.college_name],
+                ['status', original?.status, payload.status],
+            ])
 
-                await logAdmin('edit_college', 'colleges', collegeForm.college_id, `Updated college "${payload.college_name}".${collegeChanges ? ' ' + collegeChanges + '.' : ''}`)
-            } else {
-                const { data, error: insertError } = await supabase.from('colleges').insert(payload).select().single()
-                if (insertError) throw new Error(insertError.message)
-                await logAdmin('add_college', 'colleges', data.college_id, `Added college "${payload.college_name}".`)
-            }
+            await logAdmin('edit_college', 'colleges', collegeForm.college_id, `Updated college "${payload.college_name}".${collegeChanges ? ' ' + collegeChanges + '.' : ''}`)
 
             setShowCollegeForm(false)
             await loadData()
@@ -146,28 +133,15 @@ function CollegesPrograms() {
         }
     }
 
-    const openNewProgram = () => { setProgramForm(EMPTY_PROGRAM); setShowProgramForm(true) }
     const openEditProgram = (p) => { setProgramForm(p); setShowProgramForm(true) }
 
     const saveProgram = async () => {
         if (!programForm.college_id || !programForm.program_code.trim() || !programForm.program_name.trim()) {
-            notifyWarning('Select a program.')
+            notifyWarning('College, program code, and program name are required.')
             return
         }
 
-        if (!programForm.program_id) {
-            const duplicate = programs.find((p) => p.program_code === programForm.program_code.trim())
-            if (duplicate) {
-                notifyWarning(`"${duplicate.program_name}" has already been added.`)
-                return
-            }
-        }
-
-        const confirmed = await confirmModal(
-            programForm.program_id
-                ? `Save changes to "${programForm.program_name.trim()}"?`
-                : `Add "${programForm.program_name.trim()}" as a new program?`
-        )
+        const confirmed = await confirmModal(`Save changes to "${programForm.program_name.trim()}"?`)
         if (!confirmed) return
 
         try {
@@ -182,25 +156,19 @@ function CollegesPrograms() {
                 status: programForm.status,
             }
 
-            if (programForm.program_id) {
-                const original = programs.find((p) => p.program_id === programForm.program_id)
+            const original = programs.find((p) => p.program_id === programForm.program_id)
 
-                const { error: updateError } = await supabase.from('programs').update(payload).eq('program_id', programForm.program_id)
-                if (updateError) throw new Error(updateError.message)
+            const { error: updateError } = await supabase.from('programs').update(payload).eq('program_id', programForm.program_id)
+            if (updateError) throw new Error(updateError.message)
 
-                const programChanges = describeChanges([
-                    ['code', original?.program_code, payload.program_code],
-                    ['name', original?.program_name, payload.program_name],
-                    ['degree level', original?.degree_level, payload.degree_level],
-                    ['status', original?.status, payload.status],
-                ])
+            const programChanges = describeChanges([
+                ['code', original?.program_code, payload.program_code],
+                ['name', original?.program_name, payload.program_name],
+                ['degree level', original?.degree_level, payload.degree_level],
+                ['status', original?.status, payload.status],
+            ])
 
-                await logAdmin('edit_program', 'programs', programForm.program_id, `Updated program "${payload.program_name}".${programChanges ? ' ' + programChanges + '.' : ''}`)
-            } else {
-                const { data, error: insertError } = await supabase.from('programs').insert(payload).select().single()
-                if (insertError) throw new Error(insertError.message)
-                await logAdmin('add_program', 'programs', data.program_id, `Added program "${payload.program_name}".`)
-            }
+            await logAdmin('edit_program', 'programs', programForm.program_id, `Updated program "${payload.program_name}".${programChanges ? ' ' + programChanges + '.' : ''}`)
 
             setShowProgramForm(false)
             await loadData()
@@ -233,6 +201,93 @@ function CollegesPrograms() {
         }
     }
 
+    const availableColleges = HCDC_COLLEGES.filter((c) => !colleges.some((existing) => existing.college_code === c.code))
+    const availablePrograms = HCDC_PROGRAMS.filter((p) => !programs.some((existing) => existing.program_code === p.code))
+
+    const openAddModal = () => {
+        setSelectedCollegeCodes([])
+        setSelectedProgramCodes([])
+        setShowAddModal(true)
+    }
+
+    const toggleCollegeSelection = (code) => {
+        setSelectedCollegeCodes((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
+    }
+
+    const toggleProgramSelection = (code) => {
+        setSelectedProgramCodes((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
+    }
+
+    const saveBulkAdd = async () => {
+        if (selectedCollegeCodes.length === 0 && selectedProgramCodes.length === 0) {
+            notifyWarning('Select at least one college or program to add.')
+            return
+        }
+
+        const confirmed = await confirmModal(
+            `Add ${selectedCollegeCodes.length} college(s) and ${selectedProgramCodes.length} program(s)?`
+        )
+        if (!confirmed) return
+
+        try {
+            setAddingBulk(true)
+
+            let insertedColleges = []
+            if (selectedCollegeCodes.length > 0) {
+                const rows = selectedCollegeCodes.map((code) => {
+                    const c = HCDC_COLLEGES.find((x) => x.code === code)
+                    return { college_code: c.code, college_name: c.name, status: 'active' }
+                })
+                const { data, error: insertError } = await supabase.from('colleges').insert(rows).select()
+                if (insertError) throw new Error('Failed to add colleges: ' + insertError.message)
+                insertedColleges = data || []
+            }
+
+            // A program's college might be one selected in this same batch
+            // (not yet in `colleges` state until after loadData), so resolve
+            // college_id against both the existing list and what was just
+            // inserted above.
+            const collegeIdByCode = Object.fromEntries(
+                [...colleges, ...insertedColleges].map((c) => [c.college_code, c.college_id])
+            )
+
+            let insertedPrograms = []
+            if (selectedProgramCodes.length > 0) {
+                const rows = selectedProgramCodes
+                    .map((code) => {
+                        const p = HCDC_PROGRAMS.find((x) => x.code === code)
+                        const college_id = collegeIdByCode[p.collegeCode]
+                        return college_id
+                            ? { college_id, program_code: p.code, program_name: p.name, degree_level: p.degreeLevel, status: 'active' }
+                            : null
+                    })
+                    .filter(Boolean)
+
+                if (rows.length > 0) {
+                    const { data, error: insertError } = await supabase.from('programs').insert(rows).select()
+                    if (insertError) throw new Error('Failed to add programs: ' + insertError.message)
+                    insertedPrograms = data || []
+                }
+            }
+
+            if (insertedColleges.length > 0) {
+                await logAdmin('add_college', 'colleges', null, `Added ${insertedColleges.length} college(s): ${insertedColleges.map((c) => c.college_name).join(', ')}.`)
+            }
+            if (insertedPrograms.length > 0) {
+                await logAdmin('add_program', 'programs', null, `Added ${insertedPrograms.length} program(s): ${insertedPrograms.map((p) => p.program_name).join(', ')}.`)
+            }
+
+            setShowAddModal(false)
+            await loadData()
+
+        } catch (err) {
+            console.error('BULK ADD ERROR:', err)
+            notifyError(err.message || 'Failed to add selected colleges/programs.')
+        } finally {
+            setAddingBulk(false)
+        }
+    }
+
     const collegeName = (id) => colleges.find((c) => c.college_id === id)?.college_name || 'N/A'
 
     const query = search.trim().toLowerCase()
@@ -250,9 +305,12 @@ function CollegesPrograms() {
 
     return (
         <div>
-            <div className="admin-page-header">
-                <h1>Colleges & Programs</h1>
-                <p>Manage the colleges and academic programs students can belong to.</p>
+            <div className="admin-page-header-row">
+                <div className="admin-page-header">
+                    <h1>Colleges & Programs</h1>
+                    <p>Manage the colleges and academic programs students can belong to.</p>
+                </div>
+                <button className="admin-primary-button" onClick={openAddModal}>+ Add Colleges & Programs</button>
             </div>
 
             <div className="admin-filter-row">
@@ -273,52 +331,25 @@ function CollegesPrograms() {
 
             {tab === 'colleges' ? (
                 <>
-                    <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
-                        <h2 style={{ fontSize: 17 }}>Colleges</h2>
-                        <button className="admin-primary-button" onClick={openNewCollege}>+ Add College</button>
-                    </div>
+                    <h2 style={{ fontSize: 17, marginBottom: 16 }}>Colleges</h2>
 
-                    {showCollegeForm && (
+                    {showCollegeForm && collegeForm && (
                         <Modal
-                            title={collegeForm.college_id ? 'Edit College' : 'New College'}
+                            title="Edit College"
                             maxWidth={560}
                             onClose={() => { if (saving) return; setShowCollegeForm(false) }}
                         >
-                            {collegeForm.college_id ? (
-                                <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                    <div className="form-group">
-                                        <label className="form-label">Code</label>
-                                        <input className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
-                                    </div>
+                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                                <div className="form-group">
+                                    <label className="form-label">Code</label>
+                                    <input className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
+                                </div>
 
-                                    <div className="form-group">
-                                        <label className="form-label">Name</label>
-                                        <input className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
-                                    </div>
+                                <div className="form-group">
+                                    <label className="form-label">Name</label>
+                                    <input className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
                                 </div>
-                            ) : (
-                                <div className="form-group" style={{ marginBottom: 14 }}>
-                                    <label className="form-label">College</label>
-                                    <select
-                                        className="form-input"
-                                        value={collegeForm.college_code}
-                                        onChange={(e) => {
-                                            const picked = HCDC_COLLEGES.find((c) => c.code === e.target.value)
-                                            setCollegeForm({
-                                                ...collegeForm,
-                                                college_code: picked?.code || '',
-                                                college_name: picked?.name || '',
-                                            })
-                                        }}
-                                        disabled={saving}
-                                    >
-                                        <option value="">-- Select college --</option>
-                                        {HCDC_COLLEGES.map((c) => (
-                                            <option key={c.code} value={c.code}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
+                            </div>
 
                             <div className="form-group" style={{ marginBottom: 14 }}>
                                 <label className="form-label">Description</label>
@@ -361,87 +392,45 @@ function CollegesPrograms() {
                 </>
             ) : (
                 <>
-                    <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
-                        <h2 style={{ fontSize: 17 }}>Programs</h2>
-                        <button className="admin-primary-button" onClick={openNewProgram}>+ Add Program</button>
-                    </div>
+                    <h2 style={{ fontSize: 17, marginBottom: 16 }}>Programs</h2>
 
-                    {showProgramForm && (
+                    {showProgramForm && programForm && (
                         <Modal
-                            title={programForm.program_id ? 'Edit Program' : 'New Program'}
+                            title="Edit Program"
                             maxWidth={560}
                             onClose={() => { if (saving) return; setShowProgramForm(false) }}
                         >
-                            {programForm.program_id ? (
-                                <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                    <div className="form-group">
-                                        <label className="form-label">College</label>
-                                        <select className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
-                                            <option value="">-- Select college --</option>
-                                            {colleges.map((c) => (
-                                                <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Code</label>
-                                        <input className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Name</label>
-                                        <input className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Degree Level</label>
-                                        <input className="form-input" value={programForm.degree_level || ''} onChange={(e) => setProgramForm({ ...programForm, degree_level: e.target.value })} disabled={saving} />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Duration (Years)</label>
-                                        <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
-                                    </div>
+                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                                <div className="form-group">
+                                    <label className="form-label">College</label>
+                                    <select className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
+                                        <option value="">-- Select college --</option>
+                                        {colleges.map((c) => (
+                                            <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                            ) : (
-                                <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                    <div className="form-group">
-                                        <label className="form-label">Program</label>
-                                        <select
-                                            className="form-input"
-                                            value={programForm.program_code}
-                                            onChange={(e) => {
-                                                const picked = HCDC_PROGRAMS.find((p) => p.code === e.target.value)
-                                                const college = colleges.find((c) => c.college_code === picked?.collegeCode)
-                                                setProgramForm({
-                                                    ...programForm,
-                                                    program_code: picked?.code || '',
-                                                    program_name: picked?.name || '',
-                                                    degree_level: picked?.degreeLevel || '',
-                                                    college_id: college?.college_id || '',
-                                                })
-                                            }}
-                                            disabled={saving}
-                                        >
-                                            <option value="">-- Select program --</option>
-                                            {HCDC_PROGRAMS.map((p) => (
-                                                <option key={p.code} value={p.code}>{p.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
 
-                                    <div className="form-group">
-                                        <label className="form-label">College</label>
-                                        <input className="form-input" value={colleges.find((c) => c.college_id === programForm.college_id)?.college_name || ''} disabled readOnly />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Duration (Years)</label>
-                                        <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
-                                    </div>
+                                <div className="form-group">
+                                    <label className="form-label">Code</label>
+                                    <input className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
                                 </div>
-                            )}
+
+                                <div className="form-group">
+                                    <label className="form-label">Name</label>
+                                    <input className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Degree Level</label>
+                                    <input className="form-input" value={programForm.degree_level || ''} onChange={(e) => setProgramForm({ ...programForm, degree_level: e.target.value })} disabled={saving} />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Duration (Years)</label>
+                                    <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
+                                </div>
+                            </div>
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <button className="admin-primary-button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
@@ -477,6 +466,70 @@ function CollegesPrograms() {
                         ))
                     )}
                 </>
+            )}
+
+            {showAddModal && (
+                <Modal
+                    title="Add Colleges & Programs"
+                    maxWidth={640}
+                    onClose={() => { if (addingBulk) return; setShowAddModal(false) }}
+                >
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>
+                        Check off any colleges or programs to add. Selecting a program that isn't in the list
+                        below yet requires its college to already exist.
+                    </p>
+
+                    <h3 style={{ fontSize: 14, marginBottom: 8 }}>Colleges</h3>
+                    {availableColleges.length === 0 ? (
+                        <div className="admin-empty" style={{ padding: '16px', marginBottom: 18 }}>
+                            All known colleges have already been added.
+                        </div>
+                    ) : (
+                        <div style={{ maxHeight: 160, overflowY: 'auto', marginBottom: 18, border: '1px solid var(--line)', borderRadius: 8, padding: '4px 12px' }}>
+                            {availableColleges.map((c) => (
+                                <label key={c.code} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', fontSize: 13.5, cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={selectedCollegeCodes.includes(c.code)} onChange={() => toggleCollegeSelection(c.code)} disabled={addingBulk} />
+                                    {c.name}
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
+                    <h3 style={{ fontSize: 14, marginBottom: 8 }}>Programs</h3>
+                    {availablePrograms.length === 0 ? (
+                        <div className="admin-empty" style={{ padding: '16px', marginBottom: 18 }}>
+                            All known programs have already been added.
+                        </div>
+                    ) : (
+                        <div style={{ maxHeight: 240, overflowY: 'auto', marginBottom: 18, border: '1px solid var(--line)', borderRadius: 8, padding: '4px 12px' }}>
+                            {HCDC_COLLEGES.map((college) => {
+                                const collegePrograms = availablePrograms.filter((p) => p.collegeCode === college.code)
+                                if (collegePrograms.length === 0) return null
+
+                                return (
+                                    <div key={college.code} style={{ padding: '8px 0' }}>
+                                        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--slate)', textTransform: 'uppercase', marginBottom: 4 }}>
+                                            {college.name}
+                                        </div>
+                                        {collegePrograms.map((p) => (
+                                            <label key={p.code} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 13.5, cursor: 'pointer' }}>
+                                                <input type="checkbox" checked={selectedProgramCodes.includes(p.code)} onChange={() => toggleProgramSelection(p.code)} disabled={addingBulk} />
+                                                {p.name}
+                                            </label>
+                                        ))}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <button className="admin-primary-button" onClick={saveBulkAdd} disabled={addingBulk}>
+                            {addingBulk ? 'Adding...' : `Add Selected (${selectedCollegeCodes.length + selectedProgramCodes.length})`}
+                        </button>
+                        <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setShowAddModal(false)} disabled={addingBulk}>Cancel</button>
+                    </div>
+                </Modal>
             )}
         </div>
     )
