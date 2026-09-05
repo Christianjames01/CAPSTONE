@@ -6,6 +6,7 @@ import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart } from './icons'
+import ThemeToggle from '../../components/ThemeToggle'
 import './AdminLayout.css'
 
 const NAV_ITEMS = [
@@ -189,6 +190,8 @@ function AdminLayout() {
                             <div className="admin-user-role">{roleLabel || 'Registrar Head'}</div>
                         </div>
                     </div>
+
+                    <ThemeToggle buttonClassName="admin-logout-button" />
 
                     <button className="admin-logout-button" onClick={handleLogout} disabled={loggingOut}>
                         {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}

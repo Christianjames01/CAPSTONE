@@ -19,6 +19,7 @@ import {
     IconMenu,
     IconX,
 } from './icons'
+import ThemeToggle from '../../components/ThemeToggle'
 import './StudentLayout.css'
 
 const NAV_ITEMS = [
@@ -238,6 +239,8 @@ function StudentLayout() {
                             <div className="student-user-role">Student Account</div>
                         </div>
                     </div>
+
+                    <ThemeToggle buttonClassName="student-logout-button" />
 
                     <button className="student-logout-button" onClick={handleLogout} disabled={loggingOut}>
                         {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}

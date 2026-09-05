@@ -9,10 +9,16 @@
     --red-light: #F0596E;
     --bg: #FBFCFE;
     --paper: #F1F4FA;
+    --surface: #FFFFFF;
     --ink: #101827;
     --slate: #57616F;
     --line: rgba(16, 24, 39, 0.12);
     --white: #FFFFFF;
+    --warning-bg: #fff3cd;
+    --warning-text: #856404;
+    --success-bg: rgba(30, 138, 95, 0.12);
+    --success-text: #1e8a5f;
+    --danger-bg-soft: rgba(200, 16, 46, 0.08);
 
     --font-display: 'Fraunces', serif;
     --font-body: 'Inter', -apple-system, sans-serif;

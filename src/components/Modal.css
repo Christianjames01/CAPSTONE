@@ -59,3 +59,25 @@
     padding: 22px;
     overflow-y: auto;
 }
+
+html[data-theme="dark"] .app-modal-card {
+    background: #1a1e28;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] .app-modal-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="dark"] .app-modal-title {
+    color: #E7E9EE;
+}
+
+html[data-theme="dark"] .app-modal-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: #E7E9EE;
+}
+
+html[data-theme="dark"] .app-modal-close:hover {
+    background: rgba(255, 255, 255, 0.16);
+}

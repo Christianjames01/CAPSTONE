@@ -5,6 +5,7 @@ import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory } from './icons'
+import ThemeToggle from '../../components/ThemeToggle'
 import './EmployeeLayout.css'
 
 const NAV_ITEMS = [
@@ -193,6 +194,8 @@ function EmployeeLayout() {
                             <div className="employee-user-role">{positionTitle || 'Registrar Staff'}</div>
                         </div>
                     </div>
+
+                    <ThemeToggle buttonClassName="employee-logout-button" />
 
                     <button className="employee-logout-button" onClick={handleLogout} disabled={loggingOut}>
                         {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}

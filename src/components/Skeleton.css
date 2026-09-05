@@ -63,3 +63,14 @@
     gap: 16px;
     margin-bottom: 18px;
 }
+
+html[data-theme="dark"] .skeleton-block {
+    background: linear-gradient(90deg, #1e222c 25%, #262b38 37%, #1e222c 63%);
+    background-size: 600px 100%;
+}
+
+html[data-theme="dark"] .skeleton-stat-card,
+html[data-theme="dark"] .skeleton-list-card {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: #1a1e28;
+}
