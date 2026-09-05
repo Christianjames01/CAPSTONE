@@ -117,6 +117,8 @@ function EmployeeLayout() {
     return (
         <div className="employee-layout">
 
+            <ThemeToggle />
+
             <header className="employee-mobile-topbar">
                 <button
                     className="employee-mobile-menu-button"
@@ -194,8 +196,6 @@ function EmployeeLayout() {
                             <div className="employee-user-role">{positionTitle || 'Registrar Staff'}</div>
                         </div>
                     </div>
-
-                    <ThemeToggle buttonClassName="employee-logout-button" />
 
                     <button className="employee-logout-button" onClick={handleLogout} disabled={loggingOut}>
                         {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}

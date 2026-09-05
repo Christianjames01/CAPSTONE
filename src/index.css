@@ -306,3 +306,36 @@ html[data-theme="dark"] .swal2-textarea:focus {
   border-color: #6FA8F5 !important;
   box-shadow: 0 0 0 3px rgba(111, 168, 245, 0.2) !important;
 }
+
+/* ===================================================
+   DARK MODE TOGGLE -- fixed top-right on every dashboard.
+   Rendered as a child of .admin-layout / .employee-layout /
+   .student-layout, so it resolves whichever one's scoped
+   --surface/--ink/--line tokens are in effect at its DOM position.
+=================================================== */
+.theme-toggle-fab {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    z-index: 60;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    box-shadow: 0 2px 10px rgba(16, 24, 39, 0.12);
+    transition: background 0.15s ease;
+}
+
+.theme-toggle-fab:hover {
+    background: var(--paper);
+}
+
+.theme-toggle-fab svg {
+    width: 17px;
+    height: 17px;
+}

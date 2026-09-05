@@ -113,6 +113,8 @@ function AdminLayout() {
     return (
         <div className="admin-layout">
 
+            <ThemeToggle />
+
             <header className="admin-mobile-topbar">
                 <button
                     className="admin-mobile-menu-button"
@@ -190,8 +192,6 @@ function AdminLayout() {
                             <div className="admin-user-role">{roleLabel || 'Registrar Head'}</div>
                         </div>
                     </div>
-
-                    <ThemeToggle buttonClassName="admin-logout-button" />
 
                     <button className="admin-logout-button" onClick={handleLogout} disabled={loggingOut}>
                         {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}

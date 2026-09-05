@@ -149,6 +149,8 @@ function StudentLayout() {
     return (
         <div className="student-layout">
 
+            <ThemeToggle />
+
             <header className="student-mobile-topbar">
                 <button
                     className="student-mobile-menu-button"
@@ -239,8 +241,6 @@ function StudentLayout() {
                             <div className="student-user-role">Student Account</div>
                         </div>
                     </div>
-
-                    <ThemeToggle buttonClassName="student-logout-button" />
 
                     <button className="student-logout-button" onClick={handleLogout} disabled={loggingOut}>
                         {loggingOut ? <span className="icon-spinner" /> : <IconLogout />}
