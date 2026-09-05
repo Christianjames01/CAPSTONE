@@ -765,35 +765,91 @@ function getMajorSubjects(programName, yearLevel) {
 
 const SAMPLE_GRADES = ['1.75', '1.50', '2.00', '1.25']
 
+function groupCoursesByTerm(courses) {
+    const groups = []
+    for (const c of courses) {
+        let group = groups.find((g) => g.term === c.term)
+        if (!group) {
+            group = { term: c.term, courses: [] }
+            groups.push(group)
+        }
+        group.courses.push(c)
+    }
+    return groups
+}
+
 function GradesBody({ student }) {
     const realCourses = student?.curriculumCourses || []
 
-    const rows = realCourses.length > 0
-        ? realCourses
-            .slice(0, 4)
-            .map((c, i) => [c.course_code, c.course_name, Number(c.units).toFixed(1), SAMPLE_GRADES[i % SAMPLE_GRADES.length], 'Passed'])
-        : (() => {
-            const [major1, major2] = getMajorSubjects(student?.programName, student?.yearLevel)
-            return [
-                [major1[0], major1[1], '3.0', '1.75', 'Passed'],
-                [major2[0], major2[1], '3.0', '1.50', 'Passed'],
-                ['NSTP 101', 'National Service Training Program 1', '3.0', '2.00', 'Passed'],
-                ['PE 101', 'Physical Fitness', '2.0', '1.25', 'Passed'],
-            ]
-        })()
+    const headerRow = (
+        <g fontSize="9.5" fontWeight="700" fill="var(--slate)">
+            <text x="24" y="194">COURSE CODE</text>
+            <text x="110" y="194">DESCRIPTIVE TITLE</text>
+            <text x="380" y="194">UNITS</text>
+            <text x="440" y="194">GRADE</text>
+            <text x="490" y="194">REMARKS</text>
+        </g>
+    )
+
+    if (realCourses.length > 0) {
+        // This preview is a small fixed-size canvas -- cap how many real
+        // courses it tries to show so a year with many subjects (1st/2nd
+        // year can have 9-10 per term) can't push rows past the footer.
+        const termGroups = groupCoursesByTerm(realCourses.slice(0, 4))
+        const elements = []
+        let y = 224
+        let gradeIndex = 0
+
+        termGroups.forEach((group) => {
+            elements.push(
+                <text key={`term-${group.term}`} x="24" y={y} fontSize="9" fontWeight="700" fill="var(--blue)">
+                    {group.term}
+                </text>
+            )
+            y += 16
+
+            group.courses.forEach((c) => {
+                const grade = SAMPLE_GRADES[gradeIndex % SAMPLE_GRADES.length]
+                gradeIndex++
+                elements.push(
+                    <g key={c.course_code} fontSize="9.5" fill="var(--ink)">
+                        <text x="24" y={y}>{c.course_code}</text>
+                        <text x="110" y={y}>{c.course_name}</text>
+                        <text x="380" y={y}>{Number(c.units).toFixed(1)}</text>
+                        <text x="440" y={y}>{grade}</text>
+                        <text x="490" y={y} fill="var(--slate)">Passed</text>
+                    </g>
+                )
+                y += 18
+            })
+
+            y += 6
+        })
+
+        return (
+            <>
+                <StudentInfoRow student={student} />
+                <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+                {headerRow}
+                <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
+                {elements}
+            </>
+        )
+    }
+
+    const [major1, major2] = getMajorSubjects(student?.programName, student?.yearLevel)
+    const rows = [
+        [major1[0], major1[1], '3.0', '1.75', 'Passed'],
+        [major2[0], major2[1], '3.0', '1.50', 'Passed'],
+        ['NSTP 101', 'National Service Training Program 1', '3.0', '2.00', 'Passed'],
+        ['PE 101', 'Physical Fitness', '2.0', '1.25', 'Passed'],
+    ]
 
     return (
         <>
             <StudentInfoRow student={student} />
             <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
-
-            <g fontSize="9.5" fontWeight="700" fill="var(--slate)">
-                <text x="24" y="194">COURSE CODE</text>
-                <text x="110" y="194">DESCRIPTIVE TITLE</text>
-                <text x="380" y="194">UNITS</text>
-                <text x="440" y="194">GRADE</text>
-                <text x="490" y="194">REMARKS</text>
-            </g>
+            {headerRow}
             <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
 
             {rows.map((row, i) => (
