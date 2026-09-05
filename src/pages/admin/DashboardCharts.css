@@ -12,7 +12,7 @@
 }
 
 .dash-chart-card {
-    background: var(--white);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 22px;
@@ -44,7 +44,7 @@
     padding: 6px 10px;
     border: 1px solid var(--line);
     border-radius: 6px;
-    background: var(--white);
+    background: var(--surface);
 }
 
 .dash-table-toggle:hover {
@@ -187,14 +187,14 @@
 
 .dash-line-end-dot {
     fill: var(--blue);
-    stroke: var(--white);
+    stroke: var(--surface);
     stroke-width: 2;
 }
 
 .dash-line-end-label {
     font-size: 12px;
     font-weight: 700;
-    fill: var(--blue-dark);
+    fill: var(--blue);
     font-family: var(--font-body);
 }
 
@@ -206,7 +206,7 @@
 
 .dash-hover-dot {
     fill: var(--blue);
-    stroke: var(--white);
+    stroke: var(--surface);
     stroke-width: 2;
 }
 

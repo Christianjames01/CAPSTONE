@@ -50,6 +50,49 @@
   }
 }
 
+/* ===================================================
+   DARK MODE -- admin, employee, and student dashboards
+   Toggled via <html data-theme="dark|light">, set by src/lib/theme.js.
+   Each layout (.admin-layout / .employee-layout / .student-layout) defines
+   its own light-mode tokens on its root class; this block redefines the
+   same tokens for all three at once when dark mode is active.
+
+   --white and --blue-dark are deliberately NOT redefined here: both are
+   used as the sidebar's own background/text pair (always a dark navy
+   sidebar with white text, regardless of theme), so overriding them would
+   turn sidebar text invisible against its own background. Every other
+   place that needed --blue-dark as *text* (not sidebar background) was
+   changed to use --blue instead, which does get brightened below.
+=================================================== */
+html[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+html[data-theme="light"] {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] .admin-layout,
+html[data-theme="dark"] .employee-layout,
+html[data-theme="dark"] .student-layout {
+    --blue: #6FA8F5;
+    --blue-tint: rgba(111, 168, 245, 0.18);
+    --red: #FF6B81;
+    --red-dark: #FF95A4;
+    --red-light: #FFB3BE;
+    --bg: #12141B;
+    --paper: #1C202B;
+    --surface: #1A1E28;
+    --ink: #E7E9EE;
+    --slate: #97A0B3;
+    --line: rgba(255, 255, 255, 0.14);
+    --warning-bg: rgba(255, 193, 7, 0.18);
+    --warning-text: #FFCF66;
+    --success-bg: rgba(52, 199, 132, 0.2);
+    --success-text: #4ADE9A;
+    --danger-bg-soft: rgba(255, 107, 129, 0.14);
+}
+
 /* App root: no fixed width, no centering box, no forced flex-column.
    Individual layouts (AdminLayout, StudentLayout, EmployeeLayout, AuthLayout,
    LandingPage) own their own full-width layout rules. */
@@ -221,4 +264,45 @@ code {
 
 .swal2-timer-progress-bar {
   background: #123B78 !important;
+}
+
+/* SweetAlert2 renders its popup appended to <body>, outside every React
+   layout -- so it never picks up any .admin-layout/.employee-layout/
+   .student-layout scoped variable, dark or light. This is the only place
+   that can theme it, hence the flat html[data-theme="dark"] selector
+   instead of a CSS variable. */
+html[data-theme="dark"] .swal2-popup {
+  background: #1A1E28 !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-theme="dark"] .swal2-title {
+  color: #E7E9EE !important;
+}
+
+html[data-theme="dark"] .swal2-html-container,
+html[data-theme="dark"] .swal2-content {
+  color: #97A0B3 !important;
+}
+
+html[data-theme="dark"] .swal2-close {
+  color: #97A0B3 !important;
+}
+
+html[data-theme="dark"] .swal2-cancel {
+  background: #2A2F3B !important;
+  color: #E7E9EE !important;
+}
+
+html[data-theme="dark"] .swal2-input,
+html[data-theme="dark"] .swal2-textarea {
+  background: #12141B !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #E7E9EE !important;
+}
+
+html[data-theme="dark"] .swal2-input:focus,
+html[data-theme="dark"] .swal2-textarea:focus {
+  border-color: #6FA8F5 !important;
+  box-shadow: 0 0 0 3px rgba(111, 168, 245, 0.2) !important;
 }

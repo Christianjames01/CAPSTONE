@@ -20,7 +20,7 @@
 }
 
 .student-card {
-    background: var(--white);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 24px;
@@ -106,7 +106,7 @@
     text-align: center;
     padding: 48px 24px;
     color: var(--slate);
-    background: var(--white);
+    background: var(--surface);
     border: 1px dashed var(--line);
     border-radius: 12px;
     font-size: 14px;
@@ -121,7 +121,7 @@
 .student-error-box {
     padding: 14px 16px;
     border-radius: 8px;
-    background: rgba(200, 16, 46, 0.08);
+    background: var(--danger-bg-soft);
     color: var(--red-dark);
     border: 1px solid rgba(200, 16, 46, 0.2);
     font-size: 13.5px;
@@ -132,7 +132,7 @@
     padding: 14px 16px;
     border-radius: 8px;
     background: var(--blue-tint);
-    color: var(--blue-dark);
+    color: var(--blue);
     border: 1px solid rgba(18, 59, 120, 0.2);
     font-size: 13.5px;
     margin-bottom: 18px;
@@ -167,14 +167,14 @@
 .status-completed,
 .status-claimed,
 .status-verified {
-    background: rgba(30, 138, 95, 0.12);
-    color: #1e8a5f;
+    background: var(--success-bg);
+    color: var(--success-text);
 }
 
 .status-rejected,
 .status-cancelled,
 .status-missed {
-    background: rgba(200, 16, 46, 0.1);
+    background: var(--danger-bg-soft);
     color: var(--red-dark);
 }
 
@@ -211,7 +211,7 @@
     padding: 12px 14px;
     font-size: 14.5px;
     color: var(--ink);
-    background: var(--white);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 6px;
     outline: none;
@@ -234,7 +234,7 @@
     border-radius: 20px;
     font-size: 12.5px;
     font-weight: 600;
-    background: var(--white);
+    background: var(--surface);
     border: 1px solid var(--line);
     color: var(--slate);
 }
@@ -249,7 +249,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    background: var(--white);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 22px;
@@ -276,7 +276,7 @@
 .student-reminder-box {
     padding: 16px 18px;
     border-radius: 8px;
-    background: rgba(200, 16, 46, 0.06);
+    background: var(--danger-bg-soft);
     border: 1px solid rgba(200, 16, 46, 0.16);
     font-size: 13px;
     color: var(--ink);
@@ -296,7 +296,7 @@
 }
 
 .student-link-button:hover {
-    color: var(--blue-dark);
+    color: var(--blue);
 }
 
 .student-notice {
@@ -315,21 +315,21 @@
 
 .student-notice.tone-info {
     background: var(--blue-tint);
-    color: var(--blue-dark);
+    color: var(--blue);
 }
 
 .student-notice.tone-success {
-    background: rgba(30, 138, 95, 0.12);
-    color: #1e8a5f;
+    background: var(--success-bg);
+    color: var(--success-text);
 }
 
 .student-notice.tone-warning {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--warning-bg);
+    color: var(--warning-text);
 }
 
 .student-notice.tone-danger {
-    background: rgba(200, 16, 46, 0.08);
+    background: var(--danger-bg-soft);
     color: var(--red-dark);
 }
 

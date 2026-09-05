@@ -257,7 +257,7 @@ function Dashboard() {
 
                         <button
                             className="student-stat-card"
-                            style={{ '--stat-color': '#B45309', '--stat-tint': '#FEF3C7' }}
+                            style={{ '--stat-color': '#B45309', '--stat-tint': 'rgba(180, 83, 9, 0.14)' }}
                             onClick={() => navigate(`/student/my-requests?status=${IN_PROGRESS_STATUSES.join(',')}`)}
                         >
                             <div className="student-stat-icon"><IconClock /></div>
@@ -281,7 +281,7 @@ function Dashboard() {
 
                         <button
                             className="student-stat-card"
-                            style={{ '--stat-color': 'var(--blue-dark)', '--stat-tint': 'var(--paper)' }}
+                            style={{ '--stat-color': 'var(--blue)', '--stat-tint': 'var(--paper)' }}
                             onClick={() => navigate('/student/my-requests?status=completed')}
                         >
                             <div className="student-stat-icon"><IconDocumentPlus /></div>
