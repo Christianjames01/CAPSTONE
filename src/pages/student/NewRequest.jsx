@@ -1061,8 +1061,29 @@ function DocumentSample({ layout, name, student }) {
     const height = layout === 'grades' ? calcGradesContentHeight(student) : 380
     const footerY = height - 68
 
+    // This mockup represents a physical printed document -- it must always
+    // look like paper (dark ink on a white page), never invert with the
+    // app's dark mode. Re-pinning the tokens it draws with here, rather
+    // than rewriting every fill/stroke inside it, keeps it immune to
+    // whatever dark-mode values are in effect on an ancestor element.
+    const paperColors = {
+        '--white': '#FFFFFF',
+        '--ink': '#101827',
+        '--slate': '#57616F',
+        '--line': 'rgba(16, 24, 39, 0.12)',
+        '--blue': '#123B78',
+        '--blue-dark': '#0A2450',
+        '--blue-tint': '#EAF1FB',
+        '--red': '#C8102E',
+    }
+
     return (
-        <svg viewBox={`0 0 560 ${height}`} style={{ width: '100%', height: 'auto' }} role="img" aria-label={`Sample layout of ${name}`}>
+        <svg
+            viewBox={`0 0 560 ${height}`}
+            style={{ width: '100%', height: 'auto', ...paperColors }}
+            role="img"
+            aria-label={`Sample layout of ${name}`}
+        >
             <rect x="0.5" y="0.5" width="559" height={height - 1} rx="8" fill="var(--white)" stroke="var(--line)" />
             <SampleHeader title={name.toUpperCase()} />
             <Body name={name} student={student} />
