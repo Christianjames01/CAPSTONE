@@ -2,6 +2,7 @@ import { Navigate, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { dashboardPathForRole } from '../lib/roleRedirect'
+import { getEmployeeAccountIssue, employeeIssueMessage } from '../lib/accountStatusMessage'
 
 function ProtectedRoute({ children, allowedRoles }) {
     const [loading, setLoading] = useState(true)
@@ -31,11 +32,21 @@ function ProtectedRoute({ children, allowedRoles }) {
             return
         }
 
-        if (data.status !== 'active') {
+        let effectiveStatus = data.status
+        let employeeIssue = null
+
+        if (effectiveStatus === 'active' && (data.role === 'employee' || data.role === 'registrar_head')) {
+            employeeIssue = await getEmployeeAccountIssue(user.id)
+            if (employeeIssue) {
+                effectiveStatus = 'inactive'
+            }
+        }
+
+        if (effectiveStatus !== 'active') {
             await supabase.auth.signOut()
         }
 
-        setProfile(data)
+        setProfile({ ...data, status: effectiveStatus, employeeIssue })
         setLoading(false)
     }
 
@@ -59,9 +70,12 @@ function ProtectedRoute({ children, allowedRoles }) {
                 padding: 24,
                 gap: 12,
             }}>
-                <h1 style={{ fontSize: 20, margin: 0 }}>Account deactivated</h1>
+                <h1 style={{ fontSize: 20, margin: 0 }}>
+                    {profile.employeeIssue === 'deleted' ? 'Account removed' : 'Account deactivated'}
+                </h1>
                 <p style={{ color: 'var(--slate)', maxWidth: 420, margin: 0 }}>
-                    Your account has been deactivated. Please contact the Registrar's Office for assistance.
+                    {employeeIssueMessage(profile.employeeIssue, profile.role) ||
+                        "Your account has been deactivated. Please contact the Registrar's Office for assistance."}
                 </p>
                 <Link to="/login" style={{ marginTop: 8, color: 'var(--blue)', fontWeight: 600 }}>
                     Back to log in

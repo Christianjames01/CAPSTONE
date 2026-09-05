@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import { checkLoginLock, recordLoginAttempt, formatLockMessage } from '../../lib/loginGuard'
-import { getInactiveAccountMessage } from '../../lib/accountStatusMessage'
+import { getInactiveAccountMessage, getEmployeeAccountIssue, employeeIssueMessage } from '../../lib/accountStatusMessage'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordToggleButton from './PasswordToggleButton'
@@ -46,6 +46,16 @@ function Login() {
             setMessage(inactiveMessage)
             setLoading(false)
             return
+        }
+
+        if (profile.role === 'employee' || profile.role === 'registrar_head') {
+            const issue = await getEmployeeAccountIssue(userId)
+            if (issue) {
+                await supabase.auth.signOut()
+                setMessage(employeeIssueMessage(issue, profile.role))
+                setLoading(false)
+                return
+            }
         }
 
         const dashboardPath = dashboardPathForRole(profile.role)
