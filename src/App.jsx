@@ -26,6 +26,7 @@ import UploadReceipt from './pages/student/UploadReceipt'
 import UploadReceiptList from './pages/student/UploadReceiptList'
 import UploadRequirements from './pages/student/UploadRequirements'
 import StudentClaimSchedule from './pages/student/ClaimSchedule'
+import Evaluation from './pages/student/Evaluation'
 import StudentMessages from './pages/student/Messages'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
@@ -56,6 +57,7 @@ import EmployeeDetails from './pages/admin/EmployeeDetails'
 import AdminStudents from './pages/admin/Students'
 import AdminStudentDetails from './pages/admin/StudentDetails'
 import AdminDocuments from './pages/admin/Documents'
+import AdminGrades from './pages/admin/Grades'
 import CollegesPrograms from './pages/admin/CollegesPrograms'
 import AdminClaimSchedules from './pages/admin/ClaimSchedules'
 import AdminClaimSchedule from './pages/admin/ClaimSchedule'
@@ -179,6 +181,11 @@ function App() {
           <Route
             path="/student/claim-schedule"
             element={<StudentClaimSchedule />}
+          />
+
+          <Route
+            path="/student/evaluation"
+            element={<Evaluation />}
           />
 
           <Route
@@ -334,6 +341,11 @@ function App() {
           <Route
             path="/admin/documents"
             element={<AdminDocuments />}
+          />
+
+          <Route
+            path="/admin/grades"
+            element={<AdminGrades />}
           />
 
           <Route
