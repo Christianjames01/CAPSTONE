@@ -344,7 +344,7 @@ function UploadReceipt() {
                 )
             }
 
-            const { error: requestStatusError } = await supabase
+            const { data: updatedRequest, error: requestStatusError } = await supabase
                 .from('document_requests')
                 .update({
                     status: 'receipt_uploaded',
@@ -352,17 +352,27 @@ function UploadReceipt() {
                 })
                 .eq('request_id', requestId)
                 .in('status', ['pending', 'payment_pending', 'rejected'])
+                .select()
+                .maybeSingle()
 
             if (requestStatusError) {
                 console.error(
                     'UPDATE REQUEST STATUS ERROR:',
                     requestStatusError
                 )
+                setError(
+                    'Your receipt was uploaded, but the request status could not be updated automatically. ' +
+                    'Please contact the Registrar\'s Office so this doesn\'t sit unnoticed: ' + requestStatusError.message
+                )
+            } else {
+                setMessage(
+                    'Official receipt uploaded successfully. Please wait for the Registrar to verify your payment.'
+                )
             }
 
-            setMessage(
-                'Official receipt uploaded successfully. Please wait for the Registrar to verify your payment.'
-            )
+            if (updatedRequest) {
+                setRequest(updatedRequest)
+            }
 
             setReceiptFile(null)
 
