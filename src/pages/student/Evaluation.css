@@ -27,11 +27,22 @@
     overflow: hidden;
 }
 
+/* table-layout: fixed with explicit widths on the numeric columns --
+   otherwise each year renders as its own <table>, and every table
+   auto-sizes its own columns off that year's specific course-name
+   lengths, so "Units" lands at a different x-position per year instead
+   of lining up consistently down the page. */
 .eval-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     font-size: 13px;
 }
+
+.eval-table col.eval-col-grade { width: 56px; }
+.eval-table col.eval-col-course { width: auto; }
+.eval-table col.eval-col-units { width: 80px; }
+.eval-table col.eval-col-prereq { width: 100px; }
 
 .eval-term-row th {
     text-align: left;
@@ -56,6 +67,10 @@
     letter-spacing: 0.03em;
 }
 
+.eval-term-row th:nth-child(2) {
+    text-align: right;
+}
+
 .eval-table td {
     padding: 8px 14px;
     border-bottom: 1px solid var(--line);
@@ -63,10 +78,14 @@
 }
 
 .eval-grade-cell {
-    width: 56px;
     font-weight: 700;
     color: var(--blue);
     white-space: nowrap;
+}
+
+.eval-units-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
 .eval-course-name {
