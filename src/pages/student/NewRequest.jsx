@@ -1054,30 +1054,95 @@ function EvaluationBody({ student }) {
     )
 }
 
-function DiplomaBody({ name, student }) {
+// Generic placeholder badge for the CHED accreditation seal that appears on
+// a real HCDC diploma -- there's no actual CHED emblem asset in this
+// project, so this is a plain labeled circle rather than a fabricated
+// reproduction of the real seal.
+function ChedBadge({ cx, cy, r }) {
+    return (
+        <g>
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--blue)" strokeWidth="1.5" strokeDasharray="2 1.5" />
+            <text x={cx} y={cy - 4} textAnchor="middle" fontSize="7" fontWeight="700" fill="var(--blue)">CHED</text>
+            <text x={cx} y={cy + 7} textAnchor="middle" fontSize="5.5" fill="var(--slate)">ACCREDITED</text>
+        </g>
+    )
+}
+
+// Diploma layout deliberately mirrors the structure of an actual HCDC
+// diploma -- bilingual (Filipino/English) legal-document wording, and
+// signed by the VP for Academic Affairs / Board Chairman / President
+// rather than the Registrar Head every other document uses. Names below
+// are generic placeholders, not the specific individuals who'd actually
+// sign a real one.
+function DiplomaBody({ student }) {
+    const fullName = (student?.fullName || 'Juan Dela Cruz').toUpperCase()
+    const programName = (student?.programName || 'Bachelor of Science in Information Technology').toUpperCase()
+    const year = new Date().getFullYear()
+
     return (
         <>
-            <rect x="14" y="94" width="532" height="200" fill="none" stroke="var(--red)" strokeWidth="1" strokeDasharray="1 3" />
-            <Watermark centerY={230} />
+            <Watermark centerY={330} />
 
-            <text x="280" y="130" textAnchor="middle" fontSize="10" fill="var(--slate)">This is to certify that</text>
-            <text x="280" y="156" textAnchor="middle" fontSize="16" fontWeight="700" fill="var(--ink)" letterSpacing="0.5">
-                {(student?.fullName || 'Juan Dela Cruz').toUpperCase()}
-            </text>
-            <text x="280" y="180" textAnchor="middle" fontSize="10" fill="var(--slate)">
-                has satisfactorily completed the requirements for the degree of
-            </text>
-            <text x="280" y="204" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--blue)">
-                {(student?.programName || 'Bachelor of Science in Information Technology').toUpperCase()}
-            </text>
-            <text x="280" y="230" textAnchor="middle" fontSize="10" fill="var(--slate)">
-                and is hereby awarded this
-            </text>
-            <text x="280" y="250" textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)">
-                {name}
+            {/* Ribbon banner */}
+            <polygon points="30,14 60,14 60,50 45,58 30,50" fill="var(--blue-dark)" />
+            <polygon points="530,14 500,14 500,50 515,58 530,50" fill="var(--blue-dark)" />
+            <rect x="55" y="10" width="450" height="44" rx="2" fill="var(--blue)" stroke="var(--red)" strokeWidth="1.5" />
+            <text x="280" y="37" textAnchor="middle" fontSize="17" fontWeight="700" fontStyle="italic" fill="var(--white)" fontFamily="Georgia, 'Times New Roman', serif">
+                Holy Cross of Davao College
             </text>
 
-            <SealImage cx={90} cy={255} r={22} grayscale />
+            <SealImage cx={280} cy={95} r={32} />
+
+            <g textAnchor="middle" fill="var(--ink)">
+                <text x="280" y="150" fontSize="8.5">Sa Lahat ng Makatuwirang Kasulatang Ito, Mapagtanggap Bati</text>
+                <text x="280" y="163" fontSize="8" fontStyle="italic" fill="var(--slate)">To All Persons To Whom These Presents May Come, Greetings:</text>
+
+                <text x="280" y="188" fontSize="8">Ipinaaalam sa ang Pangulo ng Kolehiyo ng Holy Cross ng Dabaw, sa paggamit ng Kapangyarihang loob ng</text>
+                <text x="280" y="200" fontSize="8">Republika ng Pilipinas at sa tagubilin ng mga Guro ng Paaralang Graduado, ay nagkawagi kay</text>
+                <text x="280" y="214" fontSize="7.5" fontStyle="italic" fill="var(--slate)">Be it known, that the School President of the Holy Cross of Davao College, by authority of the</text>
+                <text x="280" y="226" fontSize="7.5" fontStyle="italic" fill="var(--slate)">Republic of the Philippines, and on the recommendation of the Faculty, has conferred upon</text>
+
+                <text x="280" y="258" fontSize="21" fontWeight="700" fontStyle="italic" fontFamily="Georgia, 'Times New Roman', serif" letterSpacing="0.5">
+                    {fullName}
+                </text>
+
+                <text x="280" y="284" fontSize="8">na nakatupad sa lahat ng kinakailangang ukol dito, ng titulong</text>
+                <text x="280" y="296" fontSize="7.5" fontStyle="italic" fill="var(--slate)">who has fulfilled all the requirements thereof, the degree of</text>
+
+                <text x="280" y="320" fontSize="14" fontWeight="700" fill="var(--blue)">{programName}</text>
+
+                <text x="280" y="346" fontSize="8">kalakip ang lahat ng karapatan, karangalan, at mga pribilehiyo, gayon din ang mga tungkulin</text>
+                <text x="280" y="358" fontSize="7.5" fontStyle="italic" fill="var(--slate)">with all the rights, honors, and privileges, as well as the obligations thereunto appertaining.</text>
+
+                <text x="280" y="384" fontSize="8">Bilang katunayan ay taglay nito ang lagda ng Kolehiyo ng Holy Cross ng Dabaw at ang mga lagda</text>
+                <text x="280" y="396" fontSize="8">ng Pangalawang Pangulo para sa Kapakanang Pang-akademya, Pangulo ng Lupon ng mga Katiwala,</text>
+                <text x="280" y="408" fontSize="8">at Pangulo ng Dalubhasaan.</text>
+                <text x="280" y="422" fontSize="7.5" fontStyle="italic" fill="var(--slate)">In testimony whereof, the seal of the College and the signatures of the Vice President for</text>
+                <text x="280" y="434" fontSize="7.5" fontStyle="italic" fill="var(--slate)">Academic Affairs, the Chairman of the Board of Trustees, and the President appear below.</text>
+
+                <text x="280" y="458" fontSize="8">Inilagda sa Lungsod ng Dabaw, Republika ng Pilipinas, sa taong {year}.</text>
+                <text x="280" y="470" fontSize="7.5" fontStyle="italic" fill="var(--slate)">Signed in the City of Davao, Republic of the Philippines, in the year {year}.</text>
+            </g>
+
+            {[
+                { cx: 100, name: 'Fr. Michael A. Reyes', tl1: 'Pangalawang Pangulo, Pang-akademya', tl2: 'VP for Academic Affairs' },
+                { cx: 280, name: 'Most Rev. Antonio M. Cruz', tl1: 'Tagapangulo, Lupon ng mga Katiwala', tl2: 'Chairman, Board of Trustees' },
+                { cx: 460, name: 'Bro. Paulo J. Santos, S.C.', tl1: 'Pangulo', tl2: 'President' },
+            ].map((sig) => (
+                <g key={sig.cx} textAnchor="middle">
+                    <line x1={sig.cx - 75} y1="505" x2={sig.cx + 75} y2="505" stroke="var(--slate)" />
+                    <text x={sig.cx} y="519" fontSize="9" fontWeight="600" fill="var(--ink)">{sig.name}</text>
+                    <text x={sig.cx} y="530" fontSize="6.5" fill="var(--slate)">{sig.tl1}</text>
+                    <text x={sig.cx} y="540" fontSize="6.5" fontStyle="italic" fill="var(--slate)">{sig.tl2}</text>
+                </g>
+            ))}
+
+            <line x1="24" y1="565" x2="536" y2="565" stroke="var(--line)" />
+            <text x="24" y="584" fontSize="8" fill="var(--slate)">
+                Special Order No. {String(year).slice(-2)}-{student?.studentNumber || '000000'}-1, Series {year}
+            </text>
+
+            <ChedBadge cx={505} cy={575} r={26} />
         </>
     )
 }
@@ -1332,8 +1397,12 @@ function DocumentSample({ layout, name, documentCode, student }) {
     // Every other layout is a short, fixed illustrative mockup -- only
     // 'grades' (TOR/COG/POG/CGCE) renders the student's real, full-length
     // curriculum, which needs a canvas sized to fit however long that is.
-    const height = layout === 'grades' ? calcGradesContentHeight(student) : 380
+    // 'diploma' draws its own ribbon header and three-signature footer
+    // (a diploma isn't signed by the Registrar Head like every other
+    // document), so it skips the shared header/footer entirely.
+    const height = layout === 'grades' ? calcGradesContentHeight(student) : layout === 'diploma' ? 620 : 380
     const footerY = height - 68
+    const isDiploma = layout === 'diploma'
 
     // This mockup represents a physical printed document -- it must always
     // look like paper (dark ink on a white page), never invert with the
@@ -1359,9 +1428,9 @@ function DocumentSample({ layout, name, documentCode, student }) {
             aria-label={`Sample layout of ${name}`}
         >
             <rect x="0.5" y="0.5" width="559" height={height - 1} rx="8" fill="var(--white)" stroke="var(--line)" />
-            <SampleHeader title={name.toUpperCase()} />
+            {!isDiploma && <SampleHeader title={name.toUpperCase()} />}
             <Body name={name} documentCode={documentCode} student={student} height={height} />
-            <SampleFooter y={footerY} />
+            {!isDiploma && <SampleFooter y={footerY} />}
         </svg>
     )
 }
