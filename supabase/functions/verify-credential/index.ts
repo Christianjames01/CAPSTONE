@@ -53,7 +53,19 @@ Deno.serve(async (req) => {
             return json({ error: 'Lookup failed' }, 500)
         }
 
-        return json({ result: data || null })
+        if (!data) {
+            return json({ result: null })
+        }
+
+        const { data: signatureValid, error: signatureError } = await supabaseAdmin
+            .rpc('verify_credential_signature', { p_credential_number: credentialNumber.trim() })
+
+        if (signatureError) {
+            console.error('VERIFY SIGNATURE ERROR:', signatureError)
+            return json({ error: 'Verification failed' }, 500)
+        }
+
+        return json({ result: { ...data, signatureValid } })
 
     } catch (err) {
         console.error('VERIFY CREDENTIAL ERROR:', err)

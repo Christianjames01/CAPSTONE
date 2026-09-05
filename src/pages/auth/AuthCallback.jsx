@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
-import { getInactiveAccountMessage } from '../../lib/accountStatusMessage'
+import { getInactiveAccountMessage, getEmployeeAccountIssue, employeeIssueMessage } from '../../lib/accountStatusMessage'
 import AuthLayout from './AuthLayout'
 
 const ALLOWED_EMAIL_DOMAIN = '@hcdc.edu.ph'
@@ -53,6 +53,15 @@ function AuthCallback() {
             await supabase.auth.signOut()
             navigate('/login', { state: { message: inactiveMessage } })
             return
+        }
+
+        if (profile.role === 'employee' || profile.role === 'registrar_head') {
+            const issue = await getEmployeeAccountIssue(user.id)
+            if (issue) {
+                await supabase.auth.signOut()
+                navigate('/login', { state: { message: employeeIssueMessage(issue, profile.role) } })
+                return
+            }
         }
 
         if (profile.role === 'student') {
