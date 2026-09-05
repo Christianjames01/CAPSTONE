@@ -7,6 +7,28 @@ import './Evaluation.css'
 const YEAR_ORDER = ['First Year', 'Second Year', 'Third Year', 'Fourth Year']
 const TERM_ORDER = ['1st Semester', '2nd Semester', 'Summer']
 
+// A hover-only tooltip for a long prereq list is unusable on a touchscreen
+// -- there's no hover state on mobile, so students would have no way to
+// actually read it. Prereqs beyond the first couple are hidden behind a
+// tap-to-expand toggle instead, which works the same on touch and desktop.
+function PrereqCell({ prereq }) {
+    const [expanded, setExpanded] = useState(false)
+    const items = (prereq || '').split(',').map((s) => s.trim()).filter(Boolean)
+
+    if (items.length <= 2) {
+        return <td className="eval-prereq-cell">{prereq || ''}</td>
+    }
+
+    return (
+        <td className="eval-prereq-cell">
+            {expanded ? prereq : items.slice(0, 2).join(', ')}
+            <button type="button" className="eval-prereq-toggle" onClick={() => setExpanded((v) => !v)}>
+                {expanded ? 'Show less' : `+${items.length - 2} more`}
+            </button>
+        </td>
+    )
+}
+
 function groupByYearAndTerm(courses) {
     const groups = new Map()
 
@@ -199,9 +221,7 @@ function Evaluation() {
                                                     <span className="eval-course-name">{row.course_name}</span>
                                                 </td>
                                                 <td className="eval-units-cell">{Number(row.units).toFixed(1)}</td>
-                                                <td className="eval-prereq-cell" title={row.prereq_course_code || ''}>
-                                                    <span className="eval-prereq-text">{row.prereq_course_code || ''}</span>
-                                                </td>
+                                                <PrereqCell prereq={row.prereq_course_code} />
                                             </tr>
                                         ))}
 
