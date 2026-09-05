@@ -34,6 +34,15 @@ function CollegesPrograms() {
     const [selectedProgramCodes, setSelectedProgramCodes] = useState([])
     const [addingBulk, setAddingBulk] = useState(false)
 
+    // The catalog is a fixed reference list -- once everything in it is
+    // added, there's nothing left to check. These hold a one-off entry for
+    // something genuinely new (e.g. a program HCDC opens later) that isn't
+    // in the catalog at all, so that case isn't a dead end.
+    const [showCustomCollege, setShowCustomCollege] = useState(false)
+    const [customCollege, setCustomCollege] = useState({ code: '', name: '' })
+    const [showCustomProgram, setShowCustomProgram] = useState(false)
+    const [customProgram, setCustomProgram] = useState({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' })
+
     useEffect(() => {
         loadData()
     }, [])
@@ -204,9 +213,26 @@ function CollegesPrograms() {
     const availableColleges = HCDC_COLLEGES.filter((c) => !colleges.some((existing) => existing.college_code === c.code))
     const availablePrograms = HCDC_PROGRAMS.filter((p) => !programs.some((existing) => existing.program_code === p.code))
 
+    // Choices for the custom program's college field: existing colleges,
+    // plus any catalog colleges checked in this same batch, plus the custom
+    // college being defined right now (if any) -- covers "add a brand new
+    // college and a program under it" in one action.
+    const customProgramCollegeChoices = [
+        ...colleges.map((c) => ({ id: c.college_id, name: c.college_name })),
+        ...selectedCollegeCodes.map((code) => {
+            const c = HCDC_COLLEGES.find((x) => x.code === code)
+            return { id: `catalog:${code}`, name: c.name }
+        }),
+        ...(showCustomCollege && customCollege.name.trim() ? [{ id: 'custom', name: customCollege.name.trim() }] : []),
+    ]
+
     const openAddModal = () => {
         setSelectedCollegeCodes([])
         setSelectedProgramCodes([])
+        setShowCustomCollege(false)
+        setCustomCollege({ code: '', name: '' })
+        setShowCustomProgram(false)
+        setCustomProgram({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' })
         setShowAddModal(true)
     }
 
@@ -218,56 +244,93 @@ function CollegesPrograms() {
         setSelectedProgramCodes((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
     }
 
+    const totalSelectedCount = selectedCollegeCodes.length + selectedProgramCodes.length
+        + (showCustomCollege && customCollege.name.trim() ? 1 : 0)
+        + (showCustomProgram && customProgram.name.trim() ? 1 : 0)
+
     const saveBulkAdd = async () => {
-        if (selectedCollegeCodes.length === 0 && selectedProgramCodes.length === 0) {
-            notifyWarning('Select at least one college or program to add.')
+        const addingCustomCollege = showCustomCollege && customCollege.name.trim()
+        const addingCustomProgram = showCustomProgram && customProgram.name.trim()
+
+        if (totalSelectedCount === 0) {
+            notifyWarning('Select or enter at least one college or program to add.')
             return
         }
 
-        const confirmed = await confirmModal(
-            `Add ${selectedCollegeCodes.length} college(s) and ${selectedProgramCodes.length} program(s)?`
-        )
+        if (addingCustomCollege && !customCollege.code.trim()) {
+            notifyWarning('Enter a code for the new college.')
+            return
+        }
+
+        if (addingCustomProgram && (!customProgram.code.trim() || !customProgram.collegeId)) {
+            notifyWarning('Enter a code and college for the new program.')
+            return
+        }
+
+        const confirmed = await confirmModal(`Add ${totalSelectedCount} item(s)?`)
         if (!confirmed) return
 
         try {
             setAddingBulk(true)
 
+            const collegeRows = selectedCollegeCodes.map((code) => {
+                const c = HCDC_COLLEGES.find((x) => x.code === code)
+                return { college_code: c.code, college_name: c.name, status: 'active' }
+            })
+
+            if (addingCustomCollege) {
+                collegeRows.push({ college_code: customCollege.code.trim(), college_name: customCollege.name.trim(), status: 'active' })
+            }
+
             let insertedColleges = []
-            if (selectedCollegeCodes.length > 0) {
-                const rows = selectedCollegeCodes.map((code) => {
-                    const c = HCDC_COLLEGES.find((x) => x.code === code)
-                    return { college_code: c.code, college_name: c.name, status: 'active' }
-                })
-                const { data, error: insertError } = await supabase.from('colleges').insert(rows).select()
+            if (collegeRows.length > 0) {
+                const { data, error: insertError } = await supabase.from('colleges').insert(collegeRows).select()
                 if (insertError) throw new Error('Failed to add colleges: ' + insertError.message)
                 insertedColleges = data || []
             }
 
-            // A program's college might be one selected in this same batch
-            // (not yet in `colleges` state until after loadData), so resolve
-            // college_id against both the existing list and what was just
-            // inserted above.
+            // A program's college might be one selected/entered in this same
+            // batch (not yet in `colleges` state until after loadData), so
+            // resolve college_id against both the existing list and what was
+            // just inserted above.
             const collegeIdByCode = Object.fromEntries(
                 [...colleges, ...insertedColleges].map((c) => [c.college_code, c.college_id])
             )
 
-            let insertedPrograms = []
-            if (selectedProgramCodes.length > 0) {
-                const rows = selectedProgramCodes
-                    .map((code) => {
-                        const p = HCDC_PROGRAMS.find((x) => x.code === code)
-                        const college_id = collegeIdByCode[p.collegeCode]
-                        return college_id
-                            ? { college_id, program_code: p.code, program_name: p.name, degree_level: p.degreeLevel, status: 'active' }
-                            : null
-                    })
-                    .filter(Boolean)
+            const programRows = selectedProgramCodes
+                .map((code) => {
+                    const p = HCDC_PROGRAMS.find((x) => x.code === code)
+                    const college_id = collegeIdByCode[p.collegeCode]
+                    return college_id
+                        ? { college_id, program_code: p.code, program_name: p.name, degree_level: p.degreeLevel, status: 'active' }
+                        : null
+                })
+                .filter(Boolean)
 
-                if (rows.length > 0) {
-                    const { data, error: insertError } = await supabase.from('programs').insert(rows).select()
-                    if (insertError) throw new Error('Failed to add programs: ' + insertError.message)
-                    insertedPrograms = data || []
-                }
+            if (addingCustomProgram) {
+                const college_id = customProgram.collegeId === 'custom'
+                    ? insertedColleges.find((c) => c.college_code === customCollege.code.trim())?.college_id
+                    : customProgram.collegeId.startsWith('catalog:')
+                        ? collegeIdByCode[customProgram.collegeId.replace('catalog:', '')]
+                        : customProgram.collegeId
+
+                if (!college_id) throw new Error('Could not resolve the college for the new program.')
+
+                programRows.push({
+                    college_id,
+                    program_code: customProgram.code.trim(),
+                    program_name: customProgram.name.trim(),
+                    degree_level: customProgram.degreeLevel.trim() || null,
+                    duration_years: customProgram.durationYears === '' ? null : Number(customProgram.durationYears),
+                    status: 'active',
+                })
+            }
+
+            let insertedPrograms = []
+            if (programRows.length > 0) {
+                const { data, error: insertError } = await supabase.from('programs').insert(programRows).select()
+                if (insertError) throw new Error('Failed to add programs: ' + insertError.message)
+                insertedPrograms = data || []
             }
 
             if (insertedColleges.length > 0) {
@@ -481,17 +544,37 @@ function CollegesPrograms() {
 
                     <h3 style={{ fontSize: 14, marginBottom: 8 }}>Colleges</h3>
                     {availableColleges.length === 0 ? (
-                        <div className="admin-empty" style={{ padding: '16px', marginBottom: 18 }}>
+                        <div className="admin-empty" style={{ padding: '16px', marginBottom: 10 }}>
                             All known colleges have already been added.
                         </div>
                     ) : (
-                        <div style={{ maxHeight: 160, overflowY: 'auto', marginBottom: 18, border: '1px solid var(--line)', borderRadius: 8, padding: '4px 12px' }}>
+                        <div style={{ maxHeight: 160, overflowY: 'auto', marginBottom: 10, border: '1px solid var(--line)', borderRadius: 8, padding: '4px 12px' }}>
                             {availableColleges.map((c) => (
                                 <label key={c.code} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', fontSize: 13.5, cursor: 'pointer' }}>
                                     <input type="checkbox" checked={selectedCollegeCodes.includes(c.code)} onChange={() => toggleCollegeSelection(c.code)} disabled={addingBulk} />
                                     {c.name}
                                 </label>
                             ))}
+                        </div>
+                    )}
+
+                    {!showCustomCollege ? (
+                        <button type="button" className="admin-link-button" style={{ marginBottom: 18 }} onClick={() => setShowCustomCollege(true)}>
+                            + Add a college not in this list
+                        </button>
+                    ) : (
+                        <div className="admin-info-grid" style={{ marginBottom: 18, padding: 12, border: '1px dashed var(--line)', borderRadius: 8 }}>
+                            <div className="form-group">
+                                <label className="form-label">New College Code</label>
+                                <input className="form-input" value={customCollege.code} onChange={(e) => setCustomCollege({ ...customCollege, code: e.target.value })} disabled={addingBulk} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">New College Name</label>
+                                <input className="form-input" value={customCollege.name} onChange={(e) => setCustomCollege({ ...customCollege, name: e.target.value })} disabled={addingBulk} />
+                            </div>
+                            <button type="button" className="admin-link-button" style={{ color: 'var(--slate)', gridColumn: '1 / -1' }} onClick={() => { setShowCustomCollege(false); setCustomCollege({ code: '', name: '' }) }} disabled={addingBulk}>
+                                Cancel this one
+                            </button>
                         </div>
                     )}
 
@@ -523,9 +606,46 @@ function CollegesPrograms() {
                         </div>
                     )}
 
+                    {!showCustomProgram ? (
+                        <button type="button" className="admin-link-button" style={{ marginBottom: 18 }} onClick={() => setShowCustomProgram(true)}>
+                            + Add a program not in this list
+                        </button>
+                    ) : (
+                        <div className="admin-info-grid" style={{ marginBottom: 18, padding: 12, border: '1px dashed var(--line)', borderRadius: 8 }}>
+                            <div className="form-group">
+                                <label className="form-label">College</label>
+                                <select className="form-input" value={customProgram.collegeId} onChange={(e) => setCustomProgram({ ...customProgram, collegeId: e.target.value })} disabled={addingBulk}>
+                                    <option value="">-- Select college --</option>
+                                    {customProgramCollegeChoices.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">New Program Code</label>
+                                <input className="form-input" value={customProgram.code} onChange={(e) => setCustomProgram({ ...customProgram, code: e.target.value })} disabled={addingBulk} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">New Program Name</label>
+                                <input className="form-input" value={customProgram.name} onChange={(e) => setCustomProgram({ ...customProgram, name: e.target.value })} disabled={addingBulk} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Degree Level</label>
+                                <input className="form-input" value={customProgram.degreeLevel} onChange={(e) => setCustomProgram({ ...customProgram, degreeLevel: e.target.value })} disabled={addingBulk} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Duration (Years)</label>
+                                <input className="form-input" type="number" min="0" step="0.5" value={customProgram.durationYears} onChange={(e) => setCustomProgram({ ...customProgram, durationYears: e.target.value })} disabled={addingBulk} />
+                            </div>
+                            <button type="button" className="admin-link-button" style={{ color: 'var(--slate)', gridColumn: '1 / -1' }} onClick={() => { setShowCustomProgram(false); setCustomProgram({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' }) }} disabled={addingBulk}>
+                                Cancel this one
+                            </button>
+                        </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                         <button className="admin-primary-button" onClick={saveBulkAdd} disabled={addingBulk}>
-                            {addingBulk ? 'Adding...' : `Add Selected (${selectedCollegeCodes.length + selectedProgramCodes.length})`}
+                            {addingBulk ? 'Adding...' : `Add Selected (${totalSelectedCount})`}
                         </button>
                         <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setShowAddModal(false)} disabled={addingBulk}>Cancel</button>
                     </div>
