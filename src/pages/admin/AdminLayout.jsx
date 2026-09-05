@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
-import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconGraduationCap, IconLogout, IconMenu, IconX } from '../student/icons'
+import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
@@ -16,7 +16,6 @@ const NAV_ITEMS = [
     { to: '/admin/employees', label: 'Employees', icon: <IconUsers /> },
     { to: '/admin/students', label: 'Students', icon: <IconIdCard /> },
     { to: '/admin/documents', label: 'Documents', icon: <IconDocument /> },
-    { to: '/admin/grades', label: 'Grades', icon: <IconGraduationCap /> },
     { to: '/admin/colleges-programs', label: 'Colleges & Programs', icon: <IconBuilding /> },
     { to: '/admin/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
     { to: '/admin/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
