@@ -187,8 +187,8 @@ function Evaluation() {
                                     <Fragment key={termGroup.term}>
                                         <tr className="eval-term-row">
                                             <th colSpan={2}>{termGroup.term}</th>
-                                            <th>Units</th>
-                                            <th>Prereq</th>
+                                            <th className="eval-units-cell">Units</th>
+                                            <th className="eval-prereq-cell">Prereq</th>
                                         </tr>
 
                                         {termGroup.rows.map((row) => (
@@ -199,14 +199,16 @@ function Evaluation() {
                                                     <span className="eval-course-name">{row.course_name}</span>
                                                 </td>
                                                 <td className="eval-units-cell">{Number(row.units).toFixed(1)}</td>
-                                                <td>{row.prereq_course_code || ''}</td>
+                                                <td className="eval-prereq-cell" title={row.prereq_course_code || ''}>
+                                                    <span className="eval-prereq-text">{row.prereq_course_code || ''}</span>
+                                                </td>
                                             </tr>
                                         ))}
 
                                         <tr className="eval-total-row">
                                             <td colSpan={2}>Total Units</td>
                                             <td className="eval-units-cell">{termGroup.totalUnits.toFixed(1)}</td>
-                                            <td></td>
+                                            <td className="eval-prereq-cell"></td>
                                         </tr>
                                     </Fragment>
                                 ))}

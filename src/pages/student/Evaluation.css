@@ -41,8 +41,8 @@
 
 .eval-table col.eval-col-grade { width: 56px; }
 .eval-table col.eval-col-course { width: auto; }
-.eval-table col.eval-col-units { width: 80px; }
-.eval-table col.eval-col-prereq { width: 100px; }
+.eval-table col.eval-col-units { width: 70px; }
+.eval-table col.eval-col-prereq { width: 160px; }
 
 .eval-term-row th {
     text-align: left;
@@ -67,10 +67,6 @@
     letter-spacing: 0.03em;
 }
 
-.eval-term-row th:nth-child(2) {
-    text-align: right;
-}
-
 .eval-table td {
     padding: 8px 14px;
     border-bottom: 1px solid var(--line);
@@ -86,6 +82,28 @@
 .eval-units-cell {
     text-align: right;
     font-variant-numeric: tabular-nums;
+    padding-right: 20px;
+}
+
+.eval-prereq-cell {
+    padding-left: 20px;
+    border-left: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--slate);
+}
+
+/* Some prereqs list a dozen+ comma-separated course codes (e.g. a
+   practicum requiring nearly the whole program) -- without a cap, that
+   text wraps across many lines and blows the row up to hundreds of
+   pixels tall, crowding the Units column above/beside it. Clamp to 2
+   lines with an ellipsis on an inner wrapper (not the <td> itself, which
+   needs to stay a normal table cell); the full list is still available
+   via the native title tooltip on hover. */
+.eval-prereq-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .eval-course-name {
