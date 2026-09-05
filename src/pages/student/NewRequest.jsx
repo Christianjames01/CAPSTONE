@@ -577,7 +577,7 @@ function NewRequest() {
                             style={{ display: 'block', width: '100%', cursor: 'zoom-in' }}
                             aria-label="Enlarge sample document preview"
                         >
-                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} student={studentInfo} />
+                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} documentCode={selectedDocumentDetails.document_code} student={studentInfo} />
                         </button>
                         <p style={{ fontSize: 11.5, color: 'var(--slate)', marginTop: 8, textAlign: 'center' }}>
                             Tap to enlarge
@@ -615,7 +615,7 @@ function NewRequest() {
                         </button>
 
                         <div style={{ background: 'var(--white)', borderRadius: 10, padding: 20 }}>
-                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} student={studentInfo} />
+                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} documentCode={selectedDocumentDetails.document_code} student={studentInfo} />
                         </div>
                     </div>
                 </div>
@@ -1082,8 +1082,111 @@ function DiplomaBody({ name, student }) {
     )
 }
 
-function LetterBody({ name, student }) {
+// Distinct body text per document_code -- each entry is what follows "This
+// is to certify that / [NAME]" for a standard certification letter. Kept
+// short and code-specific rather than one paragraph reused for every type.
+const CERTIFY_LETTER_LINES = {
+    AAD: (p) => [
+        `is a bona fide student under the ${p} program of Holy Cross of Davao College.`,
+        'The academic documents on file for the above-named student are hereby',
+        'authenticated as true and genuine records issued by this institution.',
+    ],
+    ADC: (p) => [
+        `is a bona fide student under the ${p} program of Holy Cross of Davao College.`,
+        'This certificate is issued for submission to the Embassy/Consulate of the',
+        'United Arab Emirates, or other requiring party in Abu Dhabi.',
+    ],
+    CAAE: (p) => [
+        `enrolled under the ${p} program, is in good academic standing with this`,
+        'institution as of the date of issuance, with no derogatory academic record',
+        'on file.',
+    ],
+    CCEP: (p) => [
+        `a bona fide student under the ${p} program, is permitted to cross-enroll`,
+        'in the subject(s) requested at another institution for the current',
+        'academic term.',
+    ],
+    CCOM: (p) => [
+        `has satisfactorily completed all academic requirements under the`,
+        `${p} program of Holy Cross of Davao College.`,
+    ],
+    CGS: (p) => [
+        `enrolled under the ${p} program, is a student in good standing at`,
+        'Holy Cross of Davao College, with no pending disciplinary case or',
+        'unsettled obligation on record.',
+    ],
+    CHON: (p) => [
+        `enrolled under the ${p} program, has been included in the Dean's List`,
+        'for outstanding academic performance at Holy Cross of Davao College.',
+    ],
+    CIRS: (p) => [
+        `enrolled under the ${p} program, is currently classified as a regular`,
+        'student based on the academic units enrolled for the current term.',
+    ],
+    COE: (p) => [
+        `is officially enrolled under the ${p} program of Holy Cross of Davao`,
+        'College for the current academic year and semester.',
+    ],
+    COESE: (p) => [
+        `is officially enrolled under the ${p} program for the current term,`,
+        'with the following subjects enrolled: Data Structures and Algorithms,',
+        'Information Management 1, and Networking 1.',
+    ],
+    COEUE: (p) => [
+        `enrolled under the ${p} program, has earned a total of 96 units`,
+        'as of the current academic term.',
+    ],
+    COR: (p) => [
+        `enrolled under the ${p} program, has been officially registered`,
+        'for the current academic term at Holy Cross of Davao College.',
+    ],
+    'COR-RES': (p) => [
+        `enrolled under the ${p} program, has been a resident student of`,
+        'Holy Cross of Davao College for the duration of their studies to date.',
+    ],
+    CTC: () => [
+        'The attached document(s) are true and faithful copies of the original',
+        'records on file with the Office of the Registrar for the above-named',
+        'student.',
+    ],
+    LNO: (p) => [
+        `Holy Cross of Davao College has no objection to the request of the`,
+        `above-named student, enrolled under the ${p} program, for the`,
+        'purpose stated in their application.',
+    ],
+    LOC: (p) => [
+        `is a bona fide student of Holy Cross of Davao College under the`,
+        `${p} program, currently enrolled and in good standing.`,
+    ],
+    'MAR-CERT': (p) => [
+        `enrolled under the ${p} program, has met the academic requirements`,
+        'set forth by the Maritime Industry Authority (MARINA) as of the',
+        'date of issuance.',
+    ],
+    QAC: (p) => [
+        `is a bona fide student under the ${p} program of Holy Cross of Davao College.`,
+        'This certificate is issued for submission to the Embassy/Consulate of',
+        'the State of Qatar, or other requiring party in Qatar.',
+    ],
+    REF: (p) => [
+        `has been a student under the ${p} program of Holy Cross of Davao`,
+        'College, and is known to this institution for their conduct and',
+        'academic performance during their studies.',
+    ],
+    VAC: (p) => [
+        `enrolled under the ${p} program, is hereby verified against the`,
+        'academic records on file with the Office of the Registrar as of',
+        'the date of issuance.',
+    ],
+}
+
+function CertifyLetterBody({ documentCode, student }) {
     const programName = student?.programName || 'Bachelor of Science in Information Technology'
+    const lines = CERTIFY_LETTER_LINES[documentCode]?.(programName)
+        || [
+            `is a bona fide student of Holy Cross of Davao College under the`,
+            `${programName} program, and is currently in good academic standing.`,
+        ]
 
     return (
         <>
@@ -1096,15 +1199,122 @@ function LetterBody({ name, student }) {
                     {student?.fullName || 'Juan Dela Cruz'}
                 </text>
 
-                <text x="24" y="172">is a bona fide student of Holy Cross of Davao College, enrolled under the</text>
-                <text x="24" y="192">{programName} program, and is currently in good academic standing.</text>
-                <text x="24" y="212">This {(name || 'document').toLowerCase()} is issued upon the request of the above-named student</text>
-                <text x="24" y="232">for whatever legitimate purpose it may serve.</text>
+                {lines.map((line, i) => (
+                    <text key={i} x="24" y={172 + i * 20}>{line}</text>
+                ))}
             </g>
 
             <StudentInfoRow y={272} student={student} />
         </>
     )
+}
+
+// Course Description / Syllabus isn't a certify-that letter at all -- it's a
+// listing of course content, so it gets its own table-shaped arrangement.
+function CourseDescriptionBody({ student }) {
+    const rows = [
+        ['CC 101', 'Introduction to Computing', 'Overview of computing concepts, hardware, and information systems.'],
+        ['CC 102', 'Computer Programming 1', 'Fundamentals of programming logic, syntax, and problem-solving.'],
+        ['IPT 101', 'Integrative Programming and Technologies 1', 'Web-based application development using current frameworks.'],
+    ]
+
+    return (
+        <>
+            <StudentInfoRow student={student} />
+            <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+            <Watermark centerY={230} />
+
+            <g fontSize="9.5" fontWeight="700" fill="var(--slate)">
+                <text x="24" y="194">COURSE</text>
+                <text x="90" y="194">TITLE</text>
+                <text x="280" y="194">DESCRIPTION</text>
+            </g>
+            <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
+
+            {rows.map((row, i) => (
+                <g key={row[0]} fontSize="8.5" fill="var(--ink)">
+                    <text x="24" y={222 + i * 32}>{row[0]}</text>
+                    <text x="90" y={222 + i * 32} fontWeight="600">{row[1]}</text>
+                    <text x="280" y={222 + i * 32} fill="var(--slate)">{row[2].slice(0, 46)}</text>
+                    <text x="280" y={222 + i * 32 + 14} fill="var(--slate)">{row[2].slice(46)}</text>
+                </g>
+            ))}
+        </>
+    )
+}
+
+// A Special Order is a CHED-recognized official document, not a plain
+// certify-that letter -- it carries its own reference number and cites the
+// governing authority.
+function SpecialOrderBody({ student }) {
+    const programName = student?.programName || 'Bachelor of Science in Information Technology'
+
+    return (
+        <>
+            <Watermark centerY={220} />
+            <text x="280" y="120" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="var(--ink)">
+                SPECIAL ORDER NO. 2026-000123
+            </text>
+            <g fontSize="9" fill="var(--slate)">
+                <text x="24" y="156">Pursuant to the authority vested in the Commission on Higher Education</text>
+                <text x="24" y="176">(CHED), this Special Order is hereby issued in favor of</text>
+            </g>
+            <text x="24" y="200" fontSize="12" fill="var(--ink)" fontWeight="600">
+                {student?.fullName || 'Juan Dela Cruz'}
+            </text>
+            <g fontSize="9" fill="var(--slate)">
+                <text x="24" y="224">enrolled under the {programName} program of Holy Cross of Davao</text>
+                <text x="24" y="244">College, in accordance with the requirements set by CHED.</text>
+            </g>
+            <StudentInfoRow y={280} student={student} />
+        </>
+    )
+}
+
+function RegistrarPrintoutBody({ student }) {
+    return (
+        <>
+            <StudentInfoRow student={student} />
+            <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+            <Watermark centerY={230} />
+
+            <g fontSize="9" fill="var(--slate)">
+                <text x="24" y="200">The following is a printout of the records currently on file with the</text>
+                <text x="24" y="220">Office of the Registrar for the above-named student, produced for</text>
+                <text x="24" y="240">reference purposes.</text>
+            </g>
+        </>
+    )
+}
+
+function ScanningReceiptBody({ student }) {
+    return (
+        <>
+            <StudentInfoRow student={student} />
+            <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
+            <Watermark centerY={230} />
+
+            <g fontSize="9" fill="var(--slate)">
+                <text x="24" y="200">This confirms that document scanning services have been completed</text>
+                <text x="24" y="220">for the file(s) submitted by the above-named student, ready for</text>
+                <text x="24" y="240">release to the requesting party.</text>
+            </g>
+        </>
+    )
+}
+
+const LETTER_LAYOUT_BODY = {
+    CURR: CourseDescriptionBody,
+    SO: SpecialOrderBody,
+    PRINT: RegistrarPrintoutBody,
+    SCAN: ScanningReceiptBody,
+}
+
+function LetterBody({ documentCode, student }) {
+    const Special = LETTER_LAYOUT_BODY[documentCode]
+    if (Special) return <Special student={student} />
+
+    return <CertifyLetterBody documentCode={documentCode} student={student} />
 }
 
 const SAMPLE_BODY = {
@@ -1116,7 +1326,7 @@ const SAMPLE_BODY = {
     letter: LetterBody,
 }
 
-function DocumentSample({ layout, name, student }) {
+function DocumentSample({ layout, name, documentCode, student }) {
     const Body = SAMPLE_BODY[layout] || LetterBody
 
     // Every other layout is a short, fixed illustrative mockup -- only
@@ -1150,7 +1360,7 @@ function DocumentSample({ layout, name, student }) {
         >
             <rect x="0.5" y="0.5" width="559" height={height - 1} rx="8" fill="var(--white)" stroke="var(--line)" />
             <SampleHeader title={name.toUpperCase()} />
-            <Body name={name} student={student} height={height} />
+            <Body name={name} documentCode={documentCode} student={student} height={height} />
             <SampleFooter y={footerY} />
         </svg>
     )
