@@ -136,7 +136,7 @@ function Notifications() {
                             width: '100%',
                             cursor: 'pointer',
                             borderColor: notification.is_read ? 'var(--line)' : 'var(--blue)',
-                            background: notification.is_read ? 'var(--white)' : 'var(--blue-tint)',
+                            background: notification.is_read ? 'var(--surface)' : 'var(--blue-tint)',
                         }}
                     >
                         <div className="employee-list-card-header">

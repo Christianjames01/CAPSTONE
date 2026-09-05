@@ -827,8 +827,32 @@ function calcGradesContentHeight(student) {
     return y + GRADES_FOOTER_SPACE
 }
 
-function GradesBody({ student }) {
+function Watermark({ centerY }) {
+    const size = 300
+    return (
+        <>
+            <defs>
+                <filter id="watermark-gray">
+                    <feColorMatrix type="saturate" values="0" />
+                </filter>
+            </defs>
+            <image
+                href={hcdcLogo}
+                x={280 - size / 2}
+                y={centerY - size / 2}
+                width={size}
+                height={size}
+                filter="url(#watermark-gray)"
+                opacity="0.06"
+                preserveAspectRatio="xMidYMid meet"
+            />
+        </>
+    )
+}
+
+function GradesBody({ student, height = 380 }) {
     const realCourses = student?.curriculumCourses || []
+    const watermarkCenterY = (204 + (height - 90)) / 2
 
     const headerRow = (
         <g fontSize="9.5" fontWeight="700" fill="var(--slate)">
@@ -881,6 +905,7 @@ function GradesBody({ student }) {
                 <line x1="24" y1="176" x2="536" y2="176" stroke="var(--line)" />
                 {headerRow}
                 <line x1="24" y1="202" x2="536" y2="202" stroke="var(--line)" />
+                <Watermark centerY={watermarkCenterY} />
                 {elements}
             </>
         )
@@ -1086,7 +1111,7 @@ function DocumentSample({ layout, name, student }) {
         >
             <rect x="0.5" y="0.5" width="559" height={height - 1} rx="8" fill="var(--white)" stroke="var(--line)" />
             <SampleHeader title={name.toUpperCase()} />
-            <Body name={name} student={student} />
+            <Body name={name} student={student} height={height} />
             <SampleFooter y={footerY} />
         </svg>
     )
