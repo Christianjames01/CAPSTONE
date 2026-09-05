@@ -564,22 +564,23 @@ function NewRequest() {
                     onClick={() => setPreviewZoomed(false)}
                     style={{
                         position: 'fixed', inset: 0, background: 'rgba(10, 15, 30, 0.7)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: 24, zIndex: 100,
+                        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                        overflowY: 'auto', padding: '24px 24px 60px',
+                        zIndex: 100,
                     }}
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        style={{ width: '100%', maxWidth: 720, position: 'relative' }}
+                        style={{ width: '100%', maxWidth: 720, position: 'relative', marginTop: 40 }}
                     >
                         <button
                             type="button"
                             onClick={() => setPreviewZoomed(false)}
                             aria-label="Close preview"
                             style={{
-                                position: 'absolute', top: -40, right: 0,
+                                position: 'fixed', top: 24, right: 24,
                                 width: 32, height: 32, display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', color: 'var(--white)',
+                                justifyContent: 'center', color: 'var(--white)', zIndex: 101,
                             }}
                         >
                             <IconX />
