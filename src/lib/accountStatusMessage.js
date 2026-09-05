@@ -19,18 +19,24 @@ export async function getInactiveAccountMessage(userId, role) {
     return GENERIC_INACTIVE_MESSAGE
 }
 
-// Registrar staff (employee / registrar_head) get a separate row in the
+// Registrar staff (employee / registrar_head) can have a separate row in the
 // `employees` table on top of `profiles`. A head can deactivate or delete
-// that row without touching `profiles.status`, so it has to be checked
-// on its own -- otherwise the account still passes the profile check above.
-export async function getEmployeeAccountIssue(userId) {
+// that row without touching `profiles.status`, so it has to be checked on
+// its own -- otherwise the account still passes the profile check above.
+//
+// Every `employee` account is guaranteed one (both signup paths insert it),
+// so a missing row means it was deleted. A `registrar_head` is not
+// guaranteed one -- most never had one to begin with -- so a missing row
+// only counts as "deleted" if they're an employee; for a head it's simply
+// not applicable, and a missing row must not lock them out.
+export async function getEmployeeAccountIssue(userId, role) {
     const { data: employee } = await supabase
         .from('employees')
         .select('status')
         .eq('user_id', userId)
         .maybeSingle()
 
-    if (!employee) return 'deleted'
+    if (!employee) return role === 'employee' ? 'deleted' : null
     if (employee.status !== 'active') return 'deactivated'
     return null
 }
