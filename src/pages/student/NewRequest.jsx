@@ -8,6 +8,8 @@ import { IconX } from './icons'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
+const YEAR_LEVEL_TO_CURRICULUM_LABEL = { 1: 'First Year', 2: 'Second Year', 3: 'Third Year', 4: 'Fourth Year' }
+
 const SAMPLE_LAYOUT_BY_CODE = {
     TOR: 'grades',
     COG: 'grades',
@@ -106,11 +108,37 @@ function NewRequest() {
                     : Promise.resolve({ data: null }),
             ])
 
+            let curriculumCourses = []
+
+            const yearLabel = YEAR_LEVEL_TO_CURRICULUM_LABEL[parseInt(student.year_level, 10)]
+
+            if (student.program_id && yearLabel) {
+                const { data: curriculum } = await supabase
+                    .from('curricula')
+                    .select('curriculum_id')
+                    .eq('program_id', student.program_id)
+                    .eq('is_active', true)
+                    .maybeSingle()
+
+                if (curriculum) {
+                    const { data: courses } = await supabase
+                        .from('curriculum_courses')
+                        .select('course_code, course_name, units, term, display_order')
+                        .eq('curriculum_id', curriculum.curriculum_id)
+                        .eq('year_level', yearLabel)
+                        .order('term')
+                        .order('display_order')
+
+                    curriculumCourses = courses || []
+                }
+            }
+
             setStudentInfo({
                 fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : '',
                 studentNumber: student.student_number || '',
                 programName: program?.program_name || '',
                 yearLevel: student.year_level || '',
+                curriculumCourses,
             })
 
         } catch (err) {
@@ -735,14 +763,24 @@ function getMajorSubjects(programName, yearLevel) {
     ]
 }
 
+const SAMPLE_GRADES = ['1.75', '1.50', '2.00', '1.25']
+
 function GradesBody({ student }) {
-    const [major1, major2] = getMajorSubjects(student?.programName, student?.yearLevel)
-    const rows = [
-        [major1[0], major1[1], '3.0', '1.75', 'Passed'],
-        [major2[0], major2[1], '3.0', '1.50', 'Passed'],
-        ['NSTP 101', 'National Service Training Program 1', '3.0', '2.00', 'Passed'],
-        ['PE 101', 'Physical Fitness', '2.0', '1.25', 'Passed'],
-    ]
+    const realCourses = student?.curriculumCourses || []
+
+    const rows = realCourses.length > 0
+        ? realCourses
+            .slice(0, 4)
+            .map((c, i) => [c.course_code, c.course_name, Number(c.units).toFixed(1), SAMPLE_GRADES[i % SAMPLE_GRADES.length], 'Passed'])
+        : (() => {
+            const [major1, major2] = getMajorSubjects(student?.programName, student?.yearLevel)
+            return [
+                [major1[0], major1[1], '3.0', '1.75', 'Passed'],
+                [major2[0], major2[1], '3.0', '1.50', 'Passed'],
+                ['NSTP 101', 'National Service Training Program 1', '3.0', '2.00', 'Passed'],
+                ['PE 101', 'Physical Fitness', '2.0', '1.25', 'Passed'],
+            ]
+        })()
 
     return (
         <>
