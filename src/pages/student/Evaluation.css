@@ -93,17 +93,20 @@
 }
 
 /* Some prereqs list a dozen+ comma-separated course codes (e.g. a
-   practicum requiring nearly the whole program) -- without a cap, that
-   text wraps across many lines and blows the row up to hundreds of
-   pixels tall, crowding the Units column above/beside it. Clamp to 2
-   lines with an ellipsis on an inner wrapper (not the <td> itself, which
-   needs to stay a normal table cell); the full list is still available
-   via the native title tooltip on hover. */
-.eval-prereq-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+   practicum requiring nearly the whole program) -- shown in full that
+   wraps across many lines and blows the row up to hundreds of pixels
+   tall. Beyond 2 items, PrereqCell hides the rest behind this toggle
+   instead of a hover tooltip, which is unreachable on a touchscreen. */
+.eval-prereq-toggle {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue);
+}
+
+.eval-prereq-toggle:hover {
+    text-decoration: underline;
 }
 
 .eval-course-name {
