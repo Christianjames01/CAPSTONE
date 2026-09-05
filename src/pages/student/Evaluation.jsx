@@ -176,6 +176,12 @@ function Evaluation() {
 
                     <div className="eval-year-card">
                         <table className="eval-table">
+                            <colgroup>
+                                <col className="eval-col-grade" />
+                                <col className="eval-col-course" />
+                                <col className="eval-col-units" />
+                                <col className="eval-col-prereq" />
+                            </colgroup>
                             <tbody>
                                 {yearGroup.terms.map((termGroup) => (
                                     <Fragment key={termGroup.term}>
@@ -192,14 +198,14 @@ function Evaluation() {
                                                     <strong>{row.course_code}</strong>
                                                     <span className="eval-course-name">{row.course_name}</span>
                                                 </td>
-                                                <td>{Number(row.units).toFixed(1)}</td>
+                                                <td className="eval-units-cell">{Number(row.units).toFixed(1)}</td>
                                                 <td>{row.prereq_course_code || ''}</td>
                                             </tr>
                                         ))}
 
                                         <tr className="eval-total-row">
                                             <td colSpan={2}>Total Units</td>
-                                            <td>{termGroup.totalUnits.toFixed(1)}</td>
+                                            <td className="eval-units-cell">{termGroup.totalUnits.toFixed(1)}</td>
                                             <td></td>
                                         </tr>
                                     </Fragment>
