@@ -360,7 +360,13 @@ function Reports() {
         return (
             <div>
                 <SkeletonPageHeader />
-                <SkeletonStatGrid count={4} />
+                <SkeletonStatGrid
+                    count={6}
+                    icon={false}
+                    gridClassName="admin-stat-grid"
+                    cardClassName="admin-card"
+                    cardStyle={{ margin: 0 }}
+                />
             </div>
         )
     }

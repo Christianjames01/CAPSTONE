@@ -235,7 +235,11 @@ function Dashboard() {
 
             {loading && (
                 <>
-                    <SkeletonStatGrid count={6} />
+                    <SkeletonStatGrid
+                        count={6}
+                        gridClassName="student-stat-grid"
+                        cardClassName="student-stat-card"
+                    />
                     <SkeletonList count={2} />
                 </>
             )}
