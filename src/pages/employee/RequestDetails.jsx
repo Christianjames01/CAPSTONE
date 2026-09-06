@@ -27,6 +27,7 @@ function EmployeeRequestDetails() {
     const navigate = useNavigate()
 
     const [request, setRequest] = useState(null)
+    const [accessScope, setAccessScope] = useState('full')
     const [documentName, setDocumentName] = useState('')
     const [receipt, setReceipt] = useState(null)
     const [receiptUrl, setReceiptUrl] = useState('')
@@ -104,6 +105,7 @@ function EmployeeRequestDetails() {
             }
 
             const isReleasingOnly = employee.access_scope === 'releasing'
+            setAccessScope(employee.access_scope || 'full')
 
             let requestQuery = supabase
                 .from('document_requests')
@@ -1856,44 +1858,46 @@ function EmployeeRequestDetails() {
                     </div>
                 )}
 
-                <div className="employee-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 8 }}>Change Status</h2>
+                {accessScope !== 'releasing' && (
+                    <div className="employee-card">
+                        <h2 style={{ fontSize: 16, marginBottom: 8 }}>Change Status</h2>
 
-                    <p style={{ marginBottom: 14 }}>
-                        Manually set this request's status. Use this for corrections or
-                        situations the guided actions above don't cover — the student is
-                        notified of the change.
-                    </p>
+                        <p style={{ marginBottom: 14 }}>
+                            Manually set this request's status. Use this for corrections or
+                            situations the guided actions above don't cover — the student is
+                            notified of the change.
+                        </p>
 
-                    <select
-                        value={manualStatus}
-                        onChange={(event) => setManualStatus(event.target.value)}
-                        disabled={changingStatus}
-                        className="employee-textarea"
-                        style={{ marginBottom: 12 }}
-                    >
-                        {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                        ))}
-                    </select>
-
-                    <textarea
-                        value={statusReason}
-                        onChange={(event) => setStatusReason(event.target.value)}
-                        placeholder="Reason for this change (required if rejecting, optional otherwise)"
-                        className="employee-textarea"
-                    />
-
-                    <div className="employee-actions-row">
-                        <button
-                            onClick={changeStatus}
-                            disabled={changingStatus || manualStatus === request.status}
-                            className="employee-primary-button"
+                        <select
+                            value={manualStatus}
+                            onChange={(event) => setManualStatus(event.target.value)}
+                            disabled={changingStatus}
+                            className="employee-textarea"
+                            style={{ marginBottom: 12 }}
                         >
-                            {changingStatus ? 'Saving...' : 'Update Status'}
-                        </button>
+                            {STATUS_OPTIONS.map((s) => (
+                                <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                            ))}
+                        </select>
+
+                        <textarea
+                            value={statusReason}
+                            onChange={(event) => setStatusReason(event.target.value)}
+                            placeholder="Reason for this change (required if rejecting, optional otherwise)"
+                            className="employee-textarea"
+                        />
+
+                        <div className="employee-actions-row">
+                            <button
+                                onClick={changeStatus}
+                                disabled={changingStatus || manualStatus === request.status}
+                                className="employee-primary-button"
+                            >
+                                {changingStatus ? 'Saving...' : 'Update Status'}
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {previewFile && (
                     <DocumentPreviewModal
