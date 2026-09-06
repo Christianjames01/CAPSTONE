@@ -396,7 +396,7 @@ function Reports() {
 
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Document Request Statistics</h2>
 
-            <div className="admin-info-grid" style={{ marginBottom: 28 }}>
+            <div className="admin-stat-grid" style={{ marginBottom: 28 }}>
                 <div className="admin-card" style={{ margin: 0 }}>
                     <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{requests.length}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Total Requests</span>
@@ -490,7 +490,7 @@ function Reports() {
 
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Claiming Statistics</h2>
 
-            <div className="admin-info-grid">
+            <div className="admin-stat-grid">
                 <div className="admin-card" style={{ margin: 0 }}>
                     <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{scheduleCounts.scheduled}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Scheduled</span>
