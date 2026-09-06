@@ -89,13 +89,17 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                     status,
                     requested_at
                 `)
-                .eq('assigned_employee_id', employee.employee_id)
                 .order('requested_at', { ascending: false })
 
             if (isReleasingOnly) {
+                // Releasing is a front-desk job: they need to look up any
+                // request's claiming status, not just ones assigned to them.
                 query = query.in('status', RELEASING_STATUSES)
-            } else if (statusFilter && statusFilter.length > 0) {
-                query = query.in('status', statusFilter)
+            } else {
+                query = query.eq('assigned_employee_id', employee.employee_id)
+                if (statusFilter && statusFilter.length > 0) {
+                    query = query.in('status', statusFilter)
+                }
             }
 
             const { data: requestRows, error: requestError } = await query
@@ -157,8 +161,8 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
     return (
         <div>
             <div className="employee-page-header">
-                <h1>{title}</h1>
-                <p>{subtitle}</p>
+                <h1>{releasingOnly ? 'Documents for Claiming' : title}</h1>
+                <p>{releasingOnly ? 'All requests ready for claiming, scheduled, claimed, or completed — across all staff.' : subtitle}</p>
             </div>
 
             <input
@@ -190,7 +194,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                 <SkeletonList count={3} />
             ) : visibleRequests.length === 0 ? (
                 <div className="employee-empty">
-                    {emptyText || 'No requests match this view.'}
+                    {releasingOnly ? 'No documents are currently ready for claiming.' : (emptyText || 'No requests match this view.')}
                 </div>
             ) : (
                 visibleRequests.map((request) => (

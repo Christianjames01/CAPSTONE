@@ -82,6 +82,8 @@ function EmployeeDashboard() {
 
             setEmployee(employeeData)
 
+            const isReleasingScope = employeeData.access_scope === 'releasing'
+
             let requestQuery = supabase
                 .from('document_requests')
                 .select(`
@@ -91,11 +93,14 @@ function EmployeeDashboard() {
                     status,
                     requested_at
                 `)
-                .eq('assigned_employee_id', employeeData.employee_id)
                 .order('requested_at', { ascending: false })
 
-            if (employeeData.access_scope === 'releasing') {
+            if (isReleasingScope) {
+                // Releasing is a front-desk job: show claiming-relevant
+                // requests office-wide, not just ones assigned to this account.
                 requestQuery = requestQuery.in('status', ['ready_for_claiming', 'scheduled', 'claimed', 'completed'])
+            } else {
+                requestQuery = requestQuery.eq('assigned_employee_id', employeeData.employee_id)
             }
 
             const {
@@ -125,13 +130,18 @@ function EmployeeDashboard() {
 
             const today = new Date().toISOString().slice(0, 10)
 
-            const { data: scheduleRows, error: scheduleError } = await supabase
+            let todayScheduleQuery = supabase
                 .from('claim_schedules')
                 .select('claim_schedule_id, request_id, student_id, claim_time, scheduled_time, status')
-                .eq('scheduled_by', employeeData.employee_id)
                 .eq('claim_date', today)
                 .neq('status', 'cancelled')
                 .order('claim_time', { ascending: true })
+
+            if (!isReleasingScope) {
+                todayScheduleQuery = todayScheduleQuery.eq('scheduled_by', employeeData.employee_id)
+            }
+
+            const { data: scheduleRows, error: scheduleError } = await todayScheduleQuery
 
             if (scheduleError) {
                 console.error('TODAY SCHEDULE ERROR:', scheduleError)
