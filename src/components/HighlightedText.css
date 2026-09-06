@@ -1,40 +1,27 @@
+/* Uses the same --blue/--red/--success-text tokens every other dashboard
+   element uses, so this automatically matches whatever each layout (and
+   light/dark mode) defines them as -- no separate dark-mode rule needed. */
+
 .log-highlight-quote {
-    background: rgba(18, 59, 120, 0.08);
-    color: #123B78;
+    background: var(--blue-tint, rgba(18, 59, 120, 0.08));
+    color: var(--blue, #123B78);
     font-weight: 600;
     padding: 1px 5px;
     border-radius: 4px;
 }
 
 .log-highlight-amount {
-    color: #123B78;
+    color: var(--blue, #123B78);
     font-weight: 700;
 }
 
 .log-highlight-old {
-    color: #C8102E;
+    color: var(--red, #C8102E);
     text-decoration: line-through;
     font-weight: 600;
 }
 
 .log-highlight-new {
-    color: #1e8a5f;
+    color: var(--success-text, #1e8a5f);
     font-weight: 700;
-}
-
-html[data-theme="dark"] .log-highlight-quote {
-    background: rgba(107, 158, 237, 0.14);
-    color: #8FB8F5;
-}
-
-html[data-theme="dark"] .log-highlight-amount {
-    color: #8FB8F5;
-}
-
-html[data-theme="dark"] .log-highlight-old {
-    color: #E88A96;
-}
-
-html[data-theme="dark"] .log-highlight-new {
-    color: #5FCB9A;
 }
