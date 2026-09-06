@@ -18,6 +18,16 @@ const STATUS_CHIPS = [
     { key: 'cancelled', label: 'Cancelled' },
 ]
 
+const RELEASING_STATUSES = ['ready_for_claiming', 'scheduled', 'claimed', 'completed']
+
+const RELEASING_STATUS_CHIPS = [
+    { key: 'all', label: 'All' },
+    { key: 'ready_for_claiming', label: 'Ready for Claiming' },
+    { key: 'scheduled', label: 'Scheduled' },
+    { key: 'claimed', label: 'Claimed' },
+    { key: 'completed', label: 'Completed' },
+]
+
 function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, emptyText }) {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
@@ -27,6 +37,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
     const [error, setError] = useState('')
     const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'all')
     const [search, setSearch] = useState('')
+    const [releasingOnly, setReleasingOnly] = useState(false)
 
     const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
 
@@ -55,13 +66,16 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
 
             const { data: employee, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_id')
+                .select('employee_id, access_scope')
                 .eq('user_id', user.id)
                 .single()
 
             if (employeeError || !employee) {
                 throw new Error('Employee record could not be found.')
             }
+
+            const isReleasingOnly = employee.access_scope === 'releasing'
+            setReleasingOnly(isReleasingOnly)
 
             let query = supabase
                 .from('document_requests')
@@ -78,7 +92,9 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                 .eq('assigned_employee_id', employee.employee_id)
                 .order('requested_at', { ascending: false })
 
-            if (statusFilter && statusFilter.length > 0) {
+            if (isReleasingOnly) {
+                query = query.in('status', RELEASING_STATUSES)
+            } else if (statusFilter && statusFilter.length > 0) {
                 query = query.in('status', statusFilter)
             }
 
@@ -156,7 +172,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
 
             {showFilterChips && (
                 <div className="employee-filter-row">
-                    {STATUS_CHIPS.map((chip) => (
+                    {(releasingOnly ? RELEASING_STATUS_CHIPS : STATUS_CHIPS).map((chip) => (
                         <button
                             key={chip.key}
                             className={`employee-filter-chip${activeChip === chip.key ? ' active' : ''}`}
