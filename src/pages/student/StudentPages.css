@@ -299,6 +299,28 @@
     color: var(--blue);
 }
 
+.student-secondary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 13.5px;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+.student-secondary-button:hover {
+    background: var(--paper);
+}
+
+.student-secondary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .student-notice {
     padding: 16px 18px;
     border-radius: 8px;

@@ -593,7 +593,7 @@ function Documents() {
                         <button className="admin-primary-button" onClick={saveDocument} disabled={saving}>
                             {saving ? 'Saving...' : 'Save'}
                         </button>
-                        <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setShowForm(false)} disabled={saving}>
+                        <button className="admin-secondary-button" onClick={() => setShowForm(false)} disabled={saving}>
                             Cancel
                         </button>
                     </div>

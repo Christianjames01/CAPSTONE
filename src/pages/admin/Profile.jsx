@@ -265,8 +265,7 @@ function Profile() {
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>
                             <button
-                                className="admin-link-button"
-                                style={{ color: 'var(--slate)' }}
+                                className="admin-secondary-button"
                                 onClick={() => { setPhoneNumber(profile?.phone_number || ''); setEditing(false) }}
                                 disabled={saving}
                             >
@@ -351,8 +350,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="admin-link-button"
-                                style={{ color: 'var(--slate)' }}
+                                className="admin-secondary-button"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')
@@ -371,7 +369,7 @@ function Profile() {
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup linkButtonClassName="admin-link-button" />
+                <MfaSetup linkButtonClassName="admin-link-button" secondaryButtonClassName="admin-secondary-button" />
             </div>
         </div>
     )

@@ -600,10 +600,9 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-link-button"
+                                className="student-secondary-button"
                                 onClick={cancelEditing}
                                 disabled={saving}
-                                style={{ color: 'var(--slate)' }}
                             >
                                 Cancel
                             </button>
@@ -629,7 +628,7 @@ function Profile() {
 
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup linkButtonClassName="student-link-button" />
+                <MfaSetup linkButtonClassName="student-link-button" secondaryButtonClassName="student-secondary-button" />
             </div>
 
             {changingPassword && (
@@ -691,8 +690,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-link-button"
-                                style={{ color: 'var(--slate)' }}
+                                className="student-secondary-button"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')

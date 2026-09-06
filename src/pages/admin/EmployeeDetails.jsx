@@ -388,7 +388,7 @@ function EmployeeDetails() {
                             <button className="admin-primary-button" onClick={saveEmployee} disabled={saving}>
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>
-                            <button className="admin-link-button" style={{ color: 'var(--slate)' }} onClick={() => setEditing(false)} disabled={saving}>
+                            <button className="admin-secondary-button" onClick={() => setEditing(false)} disabled={saving}>
                                 Cancel
                             </button>
                         </div>
