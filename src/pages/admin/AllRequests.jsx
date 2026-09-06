@@ -389,8 +389,7 @@ function AllRequests() {
                     </button>
 
                     <button
-                        className="admin-link-button"
-                        style={{ color: 'var(--white)', textDecoration: 'underline' }}
+                        className="admin-secondary-button admin-bulkbar-button"
                         onClick={clearSelection}
                         disabled={applyingBulk}
                     >
