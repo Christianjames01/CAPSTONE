@@ -91,7 +91,8 @@ function EmployeeRequestDetails() {
                     user_id,
                     employee_number,
                     position_title,
-                    status
+                    status,
+                    access_scope
                 `)
                 .eq('user_id', user.id)
                 .single()
@@ -102,10 +103,9 @@ function EmployeeRequestDetails() {
                 )
             }
 
-            const {
-                data: requestData,
-                error: requestError
-            } = await supabase
+            const isReleasingOnly = employee.access_scope === 'releasing'
+
+            let requestQuery = supabase
                 .from('document_requests')
                 .select(`
                     request_id,
@@ -129,15 +129,26 @@ function EmployeeRequestDetails() {
                     completed_at
                 `)
                 .eq('request_id', requestId)
-                .eq(
-                    'assigned_employee_id',
-                    employee.employee_id
-                )
-                .single()
+
+            if (isReleasingOnly) {
+                // Releasing is a front-desk job: they can look up any
+                // request that has reached the claiming stage, regardless
+                // of which employee it's assigned to.
+                requestQuery = requestQuery.in('status', ['ready_for_claiming', 'scheduled', 'claimed', 'completed'])
+            } else {
+                requestQuery = requestQuery.eq('assigned_employee_id', employee.employee_id)
+            }
+
+            const {
+                data: requestData,
+                error: requestError
+            } = await requestQuery.single()
 
             if (requestError || !requestData) {
                 throw new Error(
-                    'Request not found or this request is not assigned to you.'
+                    isReleasingOnly
+                        ? 'Request not found, or it has not reached the claiming stage yet.'
+                        : 'Request not found or this request is not assigned to you.'
                 )
             }
 

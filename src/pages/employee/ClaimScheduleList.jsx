@@ -36,7 +36,7 @@ function ClaimScheduleList() {
 
             const { data: employeeData, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_id')
+                .select('employee_id, access_scope')
                 .eq('user_id', user.id)
                 .single()
 
@@ -46,7 +46,9 @@ function ClaimScheduleList() {
 
             setEmployee(employeeData)
 
-            const { data: requests, error: requestError } = await supabase
+            const isReleasingOnly = employeeData.access_scope === 'releasing'
+
+            let needsSchedulingQuery = supabase
                 .from('document_requests')
                 .select(`
                     request_id,
@@ -56,9 +58,16 @@ function ClaimScheduleList() {
                     status,
                     completed_at
                 `)
-                .eq('assigned_employee_id', employeeData.employee_id)
                 .eq('status', 'ready_for_claiming')
                 .order('processed_at', { ascending: false })
+
+            if (!isReleasingOnly) {
+                // Releasing is a front-desk job: it sees every request ready
+                // for claiming office-wide, not just ones assigned to it.
+                needsSchedulingQuery = needsSchedulingQuery.eq('assigned_employee_id', employeeData.employee_id)
+            }
+
+            const { data: requests, error: requestError } = await needsSchedulingQuery
 
             if (requestError) {
                 throw new Error('Failed to load requests: ' + requestError.message)
@@ -108,7 +117,7 @@ function ClaimScheduleList() {
 
             const today = new Date().toISOString().slice(0, 10)
 
-            const { data: todaySchedules, error: todayError } = await supabase
+            let todayScheduleQuery = supabase
                 .from('claim_schedules')
                 .select(`
                     claim_schedule_id,
@@ -121,10 +130,15 @@ function ClaimScheduleList() {
                     status,
                     remarks
                 `)
-                .eq('scheduled_by', employeeData.employee_id)
                 .eq('claim_date', today)
                 .neq('status', 'cancelled')
                 .order('claim_time', { ascending: true })
+
+            if (!isReleasingOnly) {
+                todayScheduleQuery = todayScheduleQuery.eq('scheduled_by', employeeData.employee_id)
+            }
+
+            const { data: todaySchedules, error: todayError } = await todayScheduleQuery
 
             if (todayError) {
                 throw new Error('Failed to load today\'s appointments: ' + todayError.message)
@@ -209,7 +223,7 @@ function ClaimScheduleList() {
                 throw new Error('Failed to update claim schedule: ' + scheduleError.message)
             }
 
-            const { error: requestError } = await supabase
+            let requestUpdateQuery = supabase
                 .from('document_requests')
                 .update({
                     status: 'completed',
@@ -218,7 +232,12 @@ function ClaimScheduleList() {
                     updated_at: now,
                 })
                 .eq('request_id', appointment.request_id)
-                .eq('assigned_employee_id', employee.employee_id)
+
+            if (employee.access_scope !== 'releasing') {
+                requestUpdateQuery = requestUpdateQuery.eq('assigned_employee_id', employee.employee_id)
+            }
+
+            const { error: requestError } = await requestUpdateQuery
 
             if (requestError) {
                 throw new Error('Schedule was updated but request status could not be updated: ' + requestError.message)
