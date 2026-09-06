@@ -285,6 +285,18 @@
     background: var(--paper);
 }
 
+/* Variant for buttons sitting on the dark blue bulk-select bar, where the
+   default surface/ink secondary-button colors would be unreadable. */
+.admin-bulkbar-button {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--white);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.admin-bulkbar-button:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
 .admin-secondary-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
