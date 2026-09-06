@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import ProtectedRoute from './components/ProtectedRoute'
+import RequireFullEmployeeAccess from './components/RequireFullEmployeeAccess'
 import StudentVerificationGate from './components/StudentVerificationGate'
 import HomeRoute from './components/HomeRoute'
 
@@ -233,12 +234,12 @@ function App() {
 
           <Route
             path="/employee/verification"
-            element={<RequestVerification />}
+            element={<RequireFullEmployeeAccess><RequestVerification /></RequireFullEmployeeAccess>}
           />
 
           <Route
             path="/employee/processing"
-            element={<DocumentProcessing />}
+            element={<RequireFullEmployeeAccess><DocumentProcessing /></RequireFullEmployeeAccess>}
           />
 
           <Route
@@ -248,17 +249,17 @@ function App() {
 
           <Route
             path="/employee/students"
-            element={<EmployeeStudents />}
+            element={<RequireFullEmployeeAccess><EmployeeStudents /></RequireFullEmployeeAccess>}
           />
 
           <Route
             path="/employee/students/:studentId"
-            element={<StudentHistory />}
+            element={<RequireFullEmployeeAccess><StudentHistory /></RequireFullEmployeeAccess>}
           />
 
           <Route
             path="/employee/messages"
-            element={<EmployeeMessages />}
+            element={<RequireFullEmployeeAccess><EmployeeMessages /></RequireFullEmployeeAccess>}
           />
 
           <Route
@@ -268,7 +269,7 @@ function App() {
 
           <Route
             path="/employee/activity-logs"
-            element={<ActivityLogs />}
+            element={<RequireFullEmployeeAccess><ActivityLogs /></RequireFullEmployeeAccess>}
           />
 
           <Route

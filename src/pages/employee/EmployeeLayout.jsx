@@ -11,13 +11,13 @@ import './EmployeeLayout.css'
 const NAV_ITEMS = [
     { to: '/employee/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
     { to: '/employee/requests', label: 'Assigned Requests', icon: <IconClipboardList /> },
-    { to: '/employee/verification', label: 'Request Verification', icon: <IconShieldCheck /> },
-    { to: '/employee/processing', label: 'Document Processing', icon: <IconGear /> },
+    { to: '/employee/verification', label: 'Request Verification', icon: <IconShieldCheck />, fullAccessOnly: true },
+    { to: '/employee/processing', label: 'Document Processing', icon: <IconGear />, fullAccessOnly: true },
     { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
-    { to: '/employee/students', label: 'Students', icon: <IconUsers /> },
-    { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
+    { to: '/employee/students', label: 'Students', icon: <IconUsers />, fullAccessOnly: true },
+    { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
-    { to: '/employee/activity-logs', label: 'Activity Logs', icon: <IconHistory /> },
+    { to: '/employee/activity-logs', label: 'Activity Logs', icon: <IconHistory />, fullAccessOnly: true },
     { to: '/employee/profile', label: 'Profile', icon: <IconUserCircle /> },
 ]
 
@@ -27,6 +27,7 @@ function EmployeeLayout() {
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
     const [positionTitle, setPositionTitle] = useState('')
+    const [accessScope, setAccessScope] = useState('full')
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -67,12 +68,13 @@ function EmployeeLayout() {
 
         const { data: employee } = await supabase
             .from('employees')
-            .select('position_title')
+            .select('position_title, access_scope')
             .eq('user_id', user.id)
             .single()
 
         if (employee) {
             setPositionTitle(employee.position_title || '')
+            setAccessScope(employee.access_scope || 'full')
         }
     }
 
@@ -162,7 +164,7 @@ function EmployeeLayout() {
                     </div>
 
                     <nav className="employee-nav">
-                        {NAV_ITEMS.map((item) => {
+                        {NAV_ITEMS.filter((item) => !item.fullAccessOnly || accessScope === 'full').map((item) => {
                             const count = item.badgeKey ? badgeValue(item.badgeKey) : 0
 
                             return (
