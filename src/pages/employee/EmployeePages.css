@@ -139,6 +139,14 @@
     gap: 18px;
 }
 
+/* Dashboard stat cards -- same look as employee-info-grid on desktop, but
+   scrolls as a single row on mobile instead of wrapping into a tall stack. */
+.employee-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 18px;
+}
+
 .employee-info-field span {
     display: block;
     font-size: 12px;
@@ -435,4 +443,32 @@ select.employee-textarea {
     height: 22px;
     background: var(--line);
     margin-left: 14px;
+}
+
+/* Scroll stat cards and filter chips as a single row on mobile instead of
+   wrapping into a tall stack -- appended last so it wins the cascade over
+   the unconditional .employee-filter-row/.employee-stat-grid rules above. */
+@media (max-width: 640px) {
+    .employee-stat-grid,
+    .employee-filter-row {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 6px;
+        margin-left: -4px;
+        margin-right: -4px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .employee-stat-grid > * {
+        flex: 0 0 auto;
+        min-width: 140px;
+    }
+
+    .employee-filter-row > * {
+        flex: 0 0 auto;
+    }
 }

@@ -265,7 +265,7 @@ function AdminDashboard() {
                 </div>
             )}
 
-            <div className="admin-info-grid" style={{ marginBottom: 28 }}>
+            <div className="admin-stat-grid" style={{ marginBottom: 28 }}>
                 {stats.map((stat) => (
                     <button
                         key={stat.label}

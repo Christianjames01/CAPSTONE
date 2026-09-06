@@ -256,7 +256,7 @@ function EmployeeDashboard() {
                 </div>
             )}
 
-            <div className="employee-info-grid" style={{ marginBottom: 24 }}>
+            <div className="employee-stat-grid" style={{ marginBottom: 24 }}>
                 {(isReleasingOnly ? [
                     { label: 'Ready for Claiming', value: readyForClaimingCount, to: '/employee/requests?status=ready_for_claiming' },
                     { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },

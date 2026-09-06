@@ -373,3 +373,25 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Scroll filter chips as a single row on mobile instead of wrapping into a
+   tall stack -- appended last so it wins the cascade over the unconditional
+   .student-filter-row rule above. */
+@media (max-width: 640px) {
+    .student-filter-row {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 6px;
+        margin-left: -4px;
+        margin-right: -4px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .student-filter-row > * {
+        flex: 0 0 auto;
+    }
+}

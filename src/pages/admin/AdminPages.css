@@ -145,6 +145,15 @@
     gap: 18px;
 }
 
+/* Dashboard/report stat cards -- same look as admin-info-grid on desktop,
+   but scrolls as a single row on mobile instead of wrapping into a tall
+   stack, closer to the compact web layout. */
+.admin-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 18px;
+}
+
 .admin-info-field span {
     display: block;
     font-size: 12px;
@@ -326,4 +335,32 @@
 
 .admin-table tbody tr:hover {
     background: var(--paper);
+}
+
+/* Scroll stat cards and filter chips as a single row on mobile instead of
+   wrapping into a tall stack -- appended last so it wins the cascade over
+   the unconditional .admin-filter-row/.admin-stat-grid rules above. */
+@media (max-width: 640px) {
+    .admin-stat-grid,
+    .admin-filter-row {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 6px;
+        margin-left: -4px;
+        margin-right: -4px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .admin-stat-grid > * {
+        flex: 0 0 auto;
+        min-width: 140px;
+    }
+
+    .admin-filter-row > * {
+        flex: 0 0 auto;
+    }
 }
