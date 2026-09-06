@@ -379,8 +379,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="employee-link-button"
-                                style={{ color: 'var(--slate)' }}
+                                className="employee-secondary-button"
                                 onClick={() => {
                                     setPhoneNumber(profile?.phone_number || '')
                                     setEditing(false)
@@ -469,8 +468,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="employee-link-button"
-                                style={{ color: 'var(--slate)' }}
+                                className="employee-secondary-button"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')
