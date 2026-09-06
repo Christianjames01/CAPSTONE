@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { sendEmail } from '../_shared/email.ts'
+import { sendEmail, EMAIL_FOOTER_HTML } from '../_shared/email.ts'
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
 
@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
                     This is an automated notification from CertiChain — HCDC Registrar Services.
                     You can also view this in your account's Notifications page.
                 </p>
+                ${EMAIL_FOOTER_HTML}
             `,
         })
 
