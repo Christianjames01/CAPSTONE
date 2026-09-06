@@ -63,7 +63,8 @@ function ClaimSchedule() {
                     user_id,
                     employee_number,
                     position_title,
-                    status
+                    status,
+                    access_scope
                 `)
                 .eq('user_id', user.id)
                 .single()
@@ -74,10 +75,9 @@ function ClaimSchedule() {
                 )
             }
 
-            const {
-                data: requestData,
-                error: requestError
-            } = await supabase
+            const isReleasingOnly = employee.access_scope === 'releasing'
+
+            let requestQuery = supabase
                 .from('document_requests')
                 .select(`
                     request_id,
@@ -99,22 +99,31 @@ function ClaimSchedule() {
                     completed_at
                 `)
                 .eq('request_id', requestId)
-                .eq(
-                    'assigned_employee_id',
-                    employee.employee_id
-                )
-                .single()
+
+            if (isReleasingOnly) {
+                requestQuery = requestQuery.in('status', ['ready_for_claiming', 'scheduled', 'claimed', 'completed'])
+            } else {
+                requestQuery = requestQuery.eq('assigned_employee_id', employee.employee_id)
+            }
+
+            const {
+                data: requestData,
+                error: requestError
+            } = await requestQuery.single()
 
             if (requestError || !requestData) {
                 throw new Error(
-                    'Request not found or this request is not assigned to you.'
+                    isReleasingOnly
+                        ? 'Request not found, or it has not reached the claiming stage yet.'
+                        : 'Request not found or this request is not assigned to you.'
                 )
             }
 
             setRequest(requestData)
 
             if (
-                requestData.status !== 'ready_for_claiming'
+                requestData.status !== 'ready_for_claiming' &&
+                requestData.status !== 'scheduled'
             ) {
                 throw new Error(
                     `This request cannot be scheduled while its status is "${requestData.status}".`
@@ -250,7 +259,7 @@ function ClaimSchedule() {
             error
         } = await supabase
             .from('employees')
-            .select('employee_id')
+            .select('employee_id, access_scope')
             .eq(
                 'user_id',
                 user.id
@@ -408,9 +417,7 @@ function ClaimSchedule() {
                     )
                 }
 
-                const {
-                    error: requestUpdateError
-                } = await supabase
+                let requestUpdateQuery = supabase
                     .from('document_requests')
                     .update({
                         status:
@@ -426,10 +433,17 @@ function ClaimSchedule() {
                         'request_id',
                         requestId
                     )
-                    .eq(
+
+                if (employee.access_scope !== 'releasing') {
+                    requestUpdateQuery = requestUpdateQuery.eq(
                         'assigned_employee_id',
                         employee.employee_id
                     )
+                }
+
+                const {
+                    error: requestUpdateError
+                } = await requestUpdateQuery
 
                 if (requestUpdateError) {
                     throw new Error(
@@ -521,9 +535,7 @@ function ClaimSchedule() {
                     )
                 }
 
-                const {
-                    error: requestUpdateError
-                } = await supabase
+                let requestUpdateQuery = supabase
                     .from('document_requests')
                     .update({
                         status:
@@ -540,13 +552,20 @@ function ClaimSchedule() {
                         requestId
                     )
                     .eq(
-                        'assigned_employee_id',
-                        employee.employee_id
-                    )
-                    .eq(
                         'status',
                         'ready_for_claiming'
                     )
+
+                if (employee.access_scope !== 'releasing') {
+                    requestUpdateQuery = requestUpdateQuery.eq(
+                        'assigned_employee_id',
+                        employee.employee_id
+                    )
+                }
+
+                const {
+                    error: requestUpdateError
+                } = await requestUpdateQuery
 
                 if (requestUpdateError) {
                     throw new Error(
@@ -619,9 +638,7 @@ function ClaimSchedule() {
             const now =
                 new Date().toISOString()
 
-            const {
-                error: scheduleError
-            } = await supabase
+            let scheduleUpdateQuery = supabase
                 .from('claim_schedules')
                 .update({
                     status:
@@ -639,10 +656,17 @@ function ClaimSchedule() {
                     'claim_schedule_id',
                     existingSchedule.claim_schedule_id
                 )
-                .eq(
+
+            if (employee.access_scope !== 'releasing') {
+                scheduleUpdateQuery = scheduleUpdateQuery.eq(
                     'scheduled_by',
                     employee.employee_id
                 )
+            }
+
+            const {
+                error: scheduleError
+            } = await scheduleUpdateQuery
 
             if (scheduleError) {
                 throw new Error(
@@ -651,9 +675,7 @@ function ClaimSchedule() {
                 )
             }
 
-            const {
-                error: requestError
-            } = await supabase
+            let requestUpdateQuery = supabase
                 .from('document_requests')
                 .update({
                     status:
@@ -669,10 +691,17 @@ function ClaimSchedule() {
                     'request_id',
                     requestId
                 )
-                .eq(
+
+            if (employee.access_scope !== 'releasing') {
+                requestUpdateQuery = requestUpdateQuery.eq(
                     'assigned_employee_id',
                     employee.employee_id
                 )
+            }
+
+            const {
+                error: requestError
+            } = await requestUpdateQuery
 
             if (requestError) {
                 throw new Error(
