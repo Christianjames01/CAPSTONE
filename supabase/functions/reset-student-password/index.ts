@@ -45,6 +45,18 @@ Deno.serve(async (req) => {
             return json({ error: 'Only active registrar staff can reset student passwords.' }, 403)
         }
 
+        if (callerProfile.role === 'employee') {
+            const { data: callerEmployeeScope } = await supabaseAdmin
+                .from('employees')
+                .select('access_scope')
+                .eq('user_id', caller.id)
+                .maybeSingle()
+
+            if (callerEmployeeScope?.access_scope === 'releasing') {
+                return json({ error: 'Releasing-only accounts cannot reset student passwords.' }, 403)
+            }
+        }
+
         const { studentUserId, newPassword } = await req.json()
 
         if (!studentUserId || !newPassword || newPassword.length < 6) {
