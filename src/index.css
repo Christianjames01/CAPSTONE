@@ -93,6 +93,42 @@ html[data-theme="dark"] .student-layout {
     --danger-bg-soft: rgba(255, 107, 129, 0.14);
 }
 
+/* ===================================================
+   MOBILE BUTTON ROWS -- admin, employee, and student dashboards
+   Many action rows (Save/Cancel, Confirm/Cancel, etc.) are laid out with an
+   inline `display:flex; gap:Npx` and no wrap, so on narrow screens the
+   buttons shrink to fit and their labels get clipped/overlapped instead of
+   wrapping onto a new line. This targets any such row by its button
+   children (every button in the app carries a role-prefixed class) rather
+   than requiring each page to be edited individually.
+=================================================== */
+@media (max-width: 640px) {
+  div:has(> .admin-primary-button),
+  div:has(> .admin-secondary-button),
+  div:has(> .admin-danger-button),
+  div:has(> .employee-primary-button),
+  div:has(> .employee-secondary-button),
+  div:has(> .employee-danger-button),
+  div:has(> .student-primary-button),
+  div:has(> .student-secondary-button),
+  div:has(> .auth-submit),
+  div:has(> .auth-google-button) {
+    flex-wrap: wrap !important;
+  }
+
+  .admin-primary-button,
+  .admin-secondary-button,
+  .admin-danger-button,
+  .employee-primary-button,
+  .employee-secondary-button,
+  .employee-danger-button,
+  .student-primary-button,
+  .student-secondary-button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 /* App root: no fixed width, no centering box, no forced flex-column.
    Individual layouts (AdminLayout, StudentLayout, EmployeeLayout, AuthLayout,
    LandingPage) own their own full-width layout rules. */
