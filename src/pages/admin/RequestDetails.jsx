@@ -96,7 +96,20 @@ function AdminRequestDetails() {
                 .eq('student_id', requestData.student_id)
                 .single()
 
-            setStudent(studentData || null)
+            if (studentData?.user_id) {
+                const { data: studentProfile } = await supabase
+                    .from('profiles')
+                    .select('first_name, last_name')
+                    .eq('user_id', studentData.user_id)
+                    .single()
+
+                setStudent({
+                    ...studentData,
+                    name: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
+                })
+            } else {
+                setStudent(studentData || null)
+            }
 
             if (requestData.document_type_id) {
                 const { data: doc } = await supabase
@@ -945,7 +958,7 @@ function AdminRequestDetails() {
             <div className="admin-page-header-row">
                 <div>
                     <h1 style={{ fontSize: 26, marginBottom: 6 }}>{documentName}</h1>
-                    <p>{request.request_number} · Student {student?.student_number || 'N/A'}</p>
+                    <p>{request.request_number} · {student?.name || 'Unknown Student'} ({student?.student_number || 'N/A'})</p>
                 </div>
 
                 <span className={`admin-status-pill status-${request.status}`}>
