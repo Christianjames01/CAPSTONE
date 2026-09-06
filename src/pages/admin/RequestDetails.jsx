@@ -8,6 +8,7 @@ import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, co
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
+import Modal from '../../components/Modal'
 import './AdminPages.css'
 
 const STATUS_OPTIONS = [
@@ -1268,11 +1269,14 @@ function AdminRequestDetails() {
             )}
 
             {showReject && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 8 }}>
-                        {selectedRequirement ? 'Reject Requirement' : 'Reject Payment'}
-                    </h2>
-
+                <Modal
+                    title={selectedRequirement ? 'Reject Requirement' : 'Reject Payment'}
+                    onClose={() => {
+                        setShowReject(false)
+                        setSelectedRequirement(null)
+                        setRejectionReason('')
+                    }}
+                >
                     <p style={{ fontSize: 13, marginBottom: 12 }}>
                         {selectedRequirement
                             ? `Enter the reason why "${selectedRequirement.document_requirements?.requirement_name || 'this requirement'}" is being rejected.`
@@ -1311,7 +1315,7 @@ function AdminRequestDetails() {
                             {processing || requirementProcessing ? 'Rejecting...' : 'Confirm Rejection'}
                         </button>
                     </div>
-                </div>
+                </Modal>
             )}
 
             {requestActivity.length > 0 && (
