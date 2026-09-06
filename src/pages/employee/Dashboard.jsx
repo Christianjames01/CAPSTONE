@@ -13,6 +13,10 @@ const QUICK_LINKS = [
     { to: '/employee/students', label: 'Students', icon: <IconUsers /> },
 ]
 
+const RELEASING_QUICK_LINKS = [
+    { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
+]
+
 function EmployeeDashboard() {
     const navigate = useNavigate()
 
@@ -62,7 +66,8 @@ function EmployeeDashboard() {
                     employee_number,
                     position_title,
                     assigned_college_id,
-                    status
+                    status,
+                    access_scope
                 `)
                 .eq('user_id', user.id)
                 .single()
@@ -77,10 +82,7 @@ function EmployeeDashboard() {
 
             setEmployee(employeeData)
 
-            const {
-                data: requestData,
-                error: requestError
-            } = await supabase
+            let requestQuery = supabase
                 .from('document_requests')
                 .select(`
                     request_id,
@@ -91,6 +93,15 @@ function EmployeeDashboard() {
                 `)
                 .eq('assigned_employee_id', employeeData.employee_id)
                 .order('requested_at', { ascending: false })
+
+            if (employeeData.access_scope === 'releasing') {
+                requestQuery = requestQuery.in('status', ['ready_for_claiming', 'scheduled', 'claimed', 'completed'])
+            }
+
+            const {
+                data: requestData,
+                error: requestError
+            } = await requestQuery
 
             if (requestError) {
                 throw new Error('Failed to load requests: ' + requestError.message)
@@ -165,6 +176,8 @@ function EmployeeDashboard() {
     const receiptCount = requests.filter((r) => r.status === 'receipt_uploaded').length
     const processingCount = requests.filter((r) => r.status === 'processing').length
     const completedCount = requests.filter((r) => r.status === 'completed').length
+    const readyForClaimingCount = requests.filter((r) => r.status === 'ready_for_claiming').length
+    const isReleasingOnly = employee?.access_scope === 'releasing'
 
     const recentRequests = requests.slice(0, 6)
 
@@ -234,13 +247,17 @@ function EmployeeDashboard() {
             )}
 
             <div className="employee-info-grid" style={{ marginBottom: 24 }}>
-                {[
+                {(isReleasingOnly ? [
+                    { label: 'Ready for Claiming', value: readyForClaimingCount, to: '/employee/requests?status=ready_for_claiming' },
+                    { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },
+                    { label: 'Completed', value: completedCount, to: '/employee/requests?status=completed' },
+                ] : [
                     { label: 'Pending', value: pendingCount, to: '/employee/verification' },
                     { label: 'Receipts to Verify', value: receiptCount, to: '/employee/verification' },
                     { label: 'Processing', value: processingCount, to: '/employee/processing' },
                     { label: 'Completed', value: completedCount, to: '/employee/requests?status=completed' },
                     { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule' },
-                ].map((stat) => (
+                ]).map((stat) => (
                     <button
                         key={stat.label}
                         className="employee-card"
@@ -264,7 +281,7 @@ function EmployeeDashboard() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 28 }}>
-                {QUICK_LINKS.map((link) => (
+                {(isReleasingOnly ? RELEASING_QUICK_LINKS : QUICK_LINKS).map((link) => (
                     <button
                         key={link.to}
                         className="employee-card"
