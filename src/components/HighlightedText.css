@@ -21,3 +21,20 @@
     color: #1e8a5f;
     font-weight: 700;
 }
+
+html[data-theme="dark"] .log-highlight-quote {
+    background: rgba(107, 158, 237, 0.14);
+    color: #8FB8F5;
+}
+
+html[data-theme="dark"] .log-highlight-amount {
+    color: #8FB8F5;
+}
+
+html[data-theme="dark"] .log-highlight-old {
+    color: #E88A96;
+}
+
+html[data-theme="dark"] .log-highlight-new {
+    color: #5FCB9A;
+}
