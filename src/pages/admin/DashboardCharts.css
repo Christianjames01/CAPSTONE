@@ -114,6 +114,24 @@
     min-width: 160px;
 }
 
+@media (max-width: 420px) {
+    .dash-chart-card {
+        padding: 16px;
+    }
+
+    .dash-donut-row {
+        gap: 16px;
+    }
+
+    .dash-donut-wrap {
+        width: 140px;
+    }
+
+    .dash-legend {
+        min-width: 0;
+    }
+}
+
 .dash-legend li {
     display: flex;
     align-items: center;
