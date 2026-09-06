@@ -203,7 +203,13 @@ function EmployeeDashboard() {
         return (
             <div>
                 <SkeletonPageHeader />
-                <SkeletonStatGrid count={4} />
+                <SkeletonStatGrid
+                    count={5}
+                    icon={false}
+                    gridClassName="employee-stat-grid"
+                    cardClassName="employee-card"
+                    cardStyle={{ margin: 0 }}
+                />
                 <SkeletonList count={2} />
             </div>
         )

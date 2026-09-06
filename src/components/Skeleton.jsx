@@ -18,14 +18,20 @@ export function SkeletonPageHeader() {
     )
 }
 
-export function SkeletonStatGrid({ count = 5 }) {
+export function SkeletonStatGrid({
+    count = 5,
+    gridClassName = 'skeleton-stat-grid',
+    cardClassName = 'skeleton-stat-card',
+    cardStyle,
+    icon = true,
+}) {
     return (
-        <div className="skeleton-stat-grid">
+        <div className={gridClassName}>
             {Array.from({ length: count }).map((_, i) => (
-                <div className="skeleton-stat-card" key={i}>
-                    <Skeleton width={40} height={40} radius={10} />
-                    <div style={{ flex: 1 }}>
-                        <Skeleton width={36} height={20} style={{ marginBottom: 6 }} />
+                <div className={cardClassName} style={cardStyle} key={i}>
+                    {icon && <Skeleton width={40} height={40} radius={10} />}
+                    <div style={{ flex: 1, width: '100%' }}>
+                        <Skeleton width={icon ? 36 : 50} height={icon ? 20 : 26} style={{ marginBottom: 6 }} />
                         <Skeleton width="70%" height={11} />
                     </div>
                 </div>

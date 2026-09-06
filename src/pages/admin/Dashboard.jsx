@@ -224,7 +224,13 @@ function AdminDashboard() {
         return (
             <div>
                 <SkeletonPageHeader />
-                <SkeletonStatGrid count={7} />
+                <SkeletonStatGrid
+                    count={8}
+                    icon={false}
+                    gridClassName="admin-stat-grid"
+                    cardClassName="admin-card"
+                    cardStyle={{ margin: 0 }}
+                />
                 <SkeletonList count={2} />
             </div>
         )
