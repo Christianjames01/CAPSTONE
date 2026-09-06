@@ -888,8 +888,8 @@ function EmployeeRequestDetails() {
 
         if (requiredRequirements.length === 0) {
             return {
-                hasRequirements: false,
-                allApproved: false,
+                hasRequirements: true,
+                allApproved: true,
                 pending: false,
                 rejected: false,
                 uploaded: false
