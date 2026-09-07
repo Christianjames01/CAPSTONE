@@ -40,6 +40,7 @@ function Dashboard() {
     const [requests, setRequests] = useState([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [upcomingClaim, setUpcomingClaim] = useState(null)
+    const [missedClaimCount, setMissedClaimCount] = useState(0)
     const [latestMessage, setLatestMessage] = useState(null)
     const [unreadMessageCount, setUnreadMessageCount] = useState(0)
     const [loading, setLoading] = useState(true)
@@ -135,6 +136,14 @@ function Dashboard() {
                     documentName: documentNameById[request?.document_type_id] || 'Document',
                 })
             }
+
+            const { count: missedCount } = await supabase
+                .from('claim_schedules')
+                .select('claim_schedule_id', { count: 'exact', head: true })
+                .eq('student_id', student.student_id)
+                .eq('status', 'missed')
+
+            setMissedClaimCount(missedCount || 0)
 
             const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
 
@@ -319,6 +328,18 @@ function Dashboard() {
                             </div>
                         </button>
                     </div>
+
+                    {missedClaimCount > 0 && (
+                        <div className="student-notice tone-danger" style={{ marginTop: 0, marginBottom: 24 }}>
+                            <strong>{missedClaimCount === 1 ? 'You missed a claiming appointment' : `You've missed ${missedClaimCount} claiming appointments`}</strong>
+                            <p>
+                                Please visit the Registrar's Office as soon as possible to claim your document(s).
+                                {missedClaimCount >= 2
+                                    ? ' Repeated missed appointments may result in your account being suspended or deactivated by the Registrar\'s Office.'
+                                    : ''}
+                            </p>
+                        </div>
+                    )}
 
                     {upcomingClaim && (
                         <div className="student-notice tone-success" style={{ marginTop: 0, marginBottom: 24 }}>
