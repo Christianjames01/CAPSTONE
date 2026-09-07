@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
+
+const WEEKDAY_HEADS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function formatLocal(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
 
 function formatDate(dateStr) {
     return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
@@ -24,14 +30,31 @@ function formatDateShort(dateStr) {
 }
 
 function getToday() {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return formatLocal(new Date())
+}
+
+function buildMonthGrid(viewDate) {
+    const year = viewDate.getFullYear()
+    const month = viewDate.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const startWeekday = firstDay.getDay()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+    const cells = []
+    for (let i = 0; i < startWeekday; i++) cells.push(null)
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d))
+    return cells
 }
 
 function OfficeCalendar() {
     const [openDays, setOpenDays] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+
+    const [viewDate, setViewDate] = useState(() => {
+        const d = new Date()
+        return new Date(d.getFullYear(), d.getMonth(), 1)
+    })
 
     const [showForm, setShowForm] = useState(false)
     const [newDate, setNewDate] = useState('')
@@ -65,10 +88,41 @@ function OfficeCalendar() {
         }
     }
 
-    const openNewForm = () => {
-        setNewDate('')
+    const openDaysByDate = useMemo(() => {
+        const map = {}
+        for (const day of openDays) map[day.open_date] = day
+        return map
+    }, [openDays])
+
+    const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate])
+
+    const goToMonth = (delta) => {
+        setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
+    }
+
+    const goToToday = () => {
+        const d = new Date()
+        setViewDate(new Date(d.getFullYear(), d.getMonth(), 1))
+    }
+
+    const openNewForm = (prefillDate) => {
+        setNewDate(prefillDate || '')
         setNewNote('')
         setShowForm(true)
+    }
+
+    const handleCellClick = (date) => {
+        const dateStr = formatLocal(date)
+        const dow = date.getDay()
+        const isWeekend = dow === 0 || dow === 6
+        if (!isWeekend || dateStr < getToday()) return
+
+        const existing = openDaysByDate[dateStr]
+        if (existing) {
+            removeOpenDay(existing)
+        } else {
+            openNewForm(dateStr)
+        }
     }
 
     const addOpenDay = async () => {
@@ -173,6 +227,9 @@ function OfficeCalendar() {
         }
     }
 
+    const monthLabel = viewDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })
+    const today = getToday()
+
     return (
         <div>
             <div className="admin-page-header-row">
@@ -180,12 +237,79 @@ function OfficeCalendar() {
                     <h1 style={{ fontSize: 26, marginBottom: 6 }}>Office Calendar</h1>
                     <p>
                         Missed claiming appointments are automatically rescheduled to the next weekday.
-                        Mark a Saturday or Sunday here if the Registrar's Office will actually be open that
-                        day (e.g. during enrollment), so it can be offered instead of being skipped.
+                        Tap a Saturday or Sunday below to mark the Registrar's Office open that day (e.g.
+                        during enrollment), so it can be offered instead of being skipped.
                     </p>
                 </div>
 
-                <button className="admin-primary-button" onClick={openNewForm}>+ Add Open Day</button>
+                <button className="admin-primary-button" onClick={() => openNewForm('')}>+ Add Open Day</button>
+            </div>
+
+            <div className="office-calendar-card">
+                <div className="office-calendar-nav">
+                    <div className="office-calendar-nav-controls">
+                        <button className="office-calendar-nav-button" onClick={() => goToMonth(-1)} aria-label="Previous month">‹</button>
+                        <span className="office-calendar-month-label">{monthLabel}</span>
+                        <button className="office-calendar-nav-button" onClick={() => goToMonth(1)} aria-label="Next month">›</button>
+                    </div>
+                    <button className="office-calendar-today-button" onClick={goToToday}>Today</button>
+                </div>
+
+                <div className="office-calendar-legend">
+                    <div className="office-calendar-legend-item">
+                        <span className="office-calendar-legend-swatch" style={{ background: 'var(--success-text, #34C784)' }} />
+                        Marked open — tap to remove
+                    </div>
+                    <div className="office-calendar-legend-item">
+                        <span className="office-calendar-legend-swatch" style={{ background: 'transparent', border: '1px dashed var(--slate)' }} />
+                        Weekend, closed — tap to mark open
+                    </div>
+                    <div className="office-calendar-legend-item">
+                        <span className="office-calendar-legend-swatch" style={{ background: 'var(--paper)', border: '1px solid var(--line)' }} />
+                        Weekday
+                    </div>
+                </div>
+
+                <div className="office-calendar-grid">
+                    {WEEKDAY_HEADS.map((h) => (
+                        <div className="office-calendar-weekday-head" key={h}>{h}</div>
+                    ))}
+
+                    {monthGrid.map((date, i) => {
+                        if (!date) {
+                            return <div className="office-calendar-cell is-empty" key={`empty-${i}`} />
+                        }
+
+                        const dateStr = formatLocal(date)
+                        const dow = date.getDay()
+                        const isWeekend = dow === 0 || dow === 6
+                        const isPast = dateStr < today
+                        const isToday = dateStr === today
+                        const openEntry = openDaysByDate[dateStr]
+
+                        const classes = ['office-calendar-cell']
+                        if (isPast) classes.push('is-past')
+                        if (isToday) classes.push('is-today')
+
+                        if (isWeekend && openEntry) {
+                            classes.push('is-weekend-open')
+                        } else if (isWeekend) {
+                            classes.push('is-weekend-closed', 'is-clickable')
+                        }
+
+                        return (
+                            <div
+                                className={classes.join(' ')}
+                                key={dateStr}
+                                onClick={() => handleCellClick(date)}
+                                title={openEntry ? (openEntry.note || 'Marked open') : undefined}
+                            >
+                                <span>{date.getDate()}</span>
+                                {openEntry && <span className="office-calendar-cell-dot" />}
+                            </div>
+                        )
+                    })}
+                </div>
             </div>
 
             {showForm && (
