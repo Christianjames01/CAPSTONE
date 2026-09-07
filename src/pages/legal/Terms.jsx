@@ -80,8 +80,13 @@ function Terms() {
             <h2>10. Contact</h2>
             <p>
                 Questions about these terms can be directed to the Holy Cross of Davao College Registrar's
-                Office.
+                Office:
             </p>
+            <ul>
+                <li>Address: Sta. Ana Avenue corner C. De Guzman Street, Barangay 14-B, Davao City</li>
+                <li>Phone: (082) 221-9071 to 79</li>
+                <li>Email: info@hcdc.edu.ph</li>
+            </ul>
 
             <div className="legal-cross-link">
                 Also see our <Link to="/privacy-policy">Privacy Policy</Link> for how your information is collected and used.

@@ -83,8 +83,13 @@ function PrivacyPolicy() {
             <h2>9. Contact</h2>
             <p>
                 Questions or concerns about your privacy can be directed to the Holy Cross of Davao College
-                Registrar's Office.
+                Registrar's Office:
             </p>
+            <ul>
+                <li>Address: Sta. Ana Avenue corner C. De Guzman Street, Barangay 14-B, Davao City</li>
+                <li>Phone: (082) 221-9071 to 79</li>
+                <li>Email: info@hcdc.edu.ph</li>
+            </ul>
 
             <div className="legal-cross-link">
                 Also see our <Link to="/terms">Terms of Service</Link> for the rules of using CertiChain.
