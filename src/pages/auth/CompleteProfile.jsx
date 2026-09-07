@@ -234,7 +234,13 @@ function CompleteProfile() {
                             type="date"
                             className="form-input"
                             value={birthDate}
-                            onChange={(e) => setBirthDate(e.target.value)}
+                            min="1900-01-01"
+                            max={new Date().toISOString().slice(0, 10)}
+                            onChange={(e) => {
+                                const yearPart = e.target.value.split('-')[0]
+                                if (yearPart && yearPart.length > 4) return
+                                setBirthDate(e.target.value)
+                            }}
                         />
                     </div>
                 </div>
