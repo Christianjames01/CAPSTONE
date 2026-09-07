@@ -132,6 +132,8 @@ h2 span {
     align-items: center;
     gap: 12px;
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
 }
 
 .brand-seal {

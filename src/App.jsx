@@ -16,6 +16,8 @@ import ForceChangePassword from './pages/auth/ForceChangePassword'
 
 import Terms from './pages/legal/Terms'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
+import CookiePolicy from './pages/legal/CookiePolicy'
+import RefundPolicy from './pages/legal/RefundPolicy'
 
 import VerifyCredential from './pages/verify/VerifyCredential'
 
@@ -130,6 +132,16 @@ function App() {
         <Route
           path="/privacy-policy"
           element={<PrivacyPolicy />}
+        />
+
+        <Route
+          path="/cookie-policy"
+          element={<CookiePolicy />}
+        />
+
+        <Route
+          path="/refund-policy"
+          element={<RefundPolicy />}
         />
 
         <Route

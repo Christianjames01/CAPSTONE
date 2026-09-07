@@ -273,6 +273,7 @@ function AllRequests() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by request number, student number, or document"
+                aria-label="Search requests"
             />
 
             <div className="admin-filter-row">

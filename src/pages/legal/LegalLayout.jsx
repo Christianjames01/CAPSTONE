@@ -192,6 +192,10 @@ function LegalLayout({ title, updated, children }) {
                             <Link to="/terms">Terms of Service</Link>
                             {' · '}
                             <Link to="/privacy-policy">Privacy Policy</Link>
+                            {' · '}
+                            <Link to="/cookie-policy">Cookie Policy</Link>
+                            {' · '}
+                            <Link to="/refund-policy">Refund Policy</Link>
                         </span>
                         <span>Holy Cross of Davao College</span>
                     </div>

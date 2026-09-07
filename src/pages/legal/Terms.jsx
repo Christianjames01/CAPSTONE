@@ -38,7 +38,9 @@ function Terms() {
             <p>
                 Receipts and other files you upload must be genuine and unaltered. Submitting a falsified
                 receipt or document is grounds for rejecting the request and may lead to account
-                deactivation and referral to the appropriate HCDC office.
+                deactivation and referral to the appropriate HCDC office. See our{' '}
+                <Link to="/refund-policy">Payment &amp; Refund Policy</Link> for how document fees and
+                receipts are handled.
             </p>
 
             <h2>5. Acceptable use</h2>

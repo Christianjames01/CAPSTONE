@@ -202,7 +202,7 @@ const LandingPage = () => {
             <header className="landing-navbar">
                 <div className="navbar-container">
 
-                    <div className="brand" onClick={() => scrollToSection("home")}>
+                    <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
                         <div className="brand-seal">
                             <img src={hcdcLogo} alt="Holy Cross of Davao College" />
                         </div>
@@ -210,7 +210,7 @@ const LandingPage = () => {
                             <div className="brand-name">CertiChain</div>
                             <div className="brand-subtitle">HCDC Registrar Services</div>
                         </div>
-                    </div>
+                    </a>
 
                     <nav className="desktop-nav">
                         <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection("services"); }}>Services</a>
@@ -630,6 +630,10 @@ const LandingPage = () => {
                             <a href="/terms">Terms of Service</a>
                             {' · '}
                             <a href="/privacy-policy">Privacy Policy</a>
+                            {' · '}
+                            <a href="/cookie-policy">Cookie Policy</a>
+                            {' · '}
+                            <a href="/refund-policy">Refund Policy</a>
                         </span>
                         <span>Holy Cross of Davao College</span>
                     </div>

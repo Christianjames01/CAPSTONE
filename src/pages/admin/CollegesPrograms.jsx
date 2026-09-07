@@ -387,6 +387,7 @@ function CollegesPrograms() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={tab === 'colleges' ? 'Search by college name or code' : 'Search by program name, code, or college'}
+                aria-label={tab === 'colleges' ? 'Search colleges' : 'Search programs'}
                 style={{ margin: '16px 0' }}
             />
 
@@ -404,19 +405,19 @@ function CollegesPrograms() {
                         >
                             <div className="admin-info-grid" style={{ marginBottom: 14 }}>
                                 <div className="form-group">
-                                    <label className="form-label">Code</label>
-                                    <input className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="college-code">Code</label>
+                                    <input id="college-code" className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Name</label>
-                                    <input className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="college-name">Name</label>
+                                    <input id="college-name" className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
                                 </div>
                             </div>
 
                             <div className="form-group" style={{ marginBottom: 14 }}>
-                                <label className="form-label">Description</label>
-                                <textarea className="form-input" rows={2} value={collegeForm.description || ''} onChange={(e) => setCollegeForm({ ...collegeForm, description: e.target.value })} disabled={saving} />
+                                <label className="form-label" htmlFor="college-description">Description</label>
+                                <textarea id="college-description" className="form-input" rows={2} value={collegeForm.description || ''} onChange={(e) => setCollegeForm({ ...collegeForm, description: e.target.value })} disabled={saving} />
                             </div>
 
                             <div style={{ display: 'flex', gap: 10 }}>
@@ -465,8 +466,8 @@ function CollegesPrograms() {
                         >
                             <div className="admin-info-grid" style={{ marginBottom: 14 }}>
                                 <div className="form-group">
-                                    <label className="form-label">College</label>
-                                    <select className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
+                                    <label className="form-label" htmlFor="program-college">College</label>
+                                    <select id="program-college" className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
                                         <option value="">-- Select college --</option>
                                         {colleges.map((c) => (
                                             <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
@@ -475,23 +476,23 @@ function CollegesPrograms() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Code</label>
-                                    <input className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="program-code">Code</label>
+                                    <input id="program-code" className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Name</label>
-                                    <input className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="program-name">Name</label>
+                                    <input id="program-name" className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Degree Level</label>
-                                    <input className="form-input" value={programForm.degree_level || ''} onChange={(e) => setProgramForm({ ...programForm, degree_level: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="program-degree-level">Degree Level</label>
+                                    <input id="program-degree-level" className="form-input" value={programForm.degree_level || ''} onChange={(e) => setProgramForm({ ...programForm, degree_level: e.target.value })} disabled={saving} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Duration (Years)</label>
-                                    <input className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="program-duration">Duration (Years)</label>
+                                    <input id="program-duration" className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
                                 </div>
                             </div>
 
@@ -565,12 +566,12 @@ function CollegesPrograms() {
                     ) : (
                         <div className="admin-info-grid" style={{ marginBottom: 18, padding: 12, border: '1px dashed var(--line)', borderRadius: 8 }}>
                             <div className="form-group">
-                                <label className="form-label">New College Code</label>
-                                <input className="form-input" value={customCollege.code} onChange={(e) => setCustomCollege({ ...customCollege, code: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-college-code">New College Code</label>
+                                <input id="new-college-code" className="form-input" value={customCollege.code} onChange={(e) => setCustomCollege({ ...customCollege, code: e.target.value })} disabled={addingBulk} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">New College Name</label>
-                                <input className="form-input" value={customCollege.name} onChange={(e) => setCustomCollege({ ...customCollege, name: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-college-name">New College Name</label>
+                                <input id="new-college-name" className="form-input" value={customCollege.name} onChange={(e) => setCustomCollege({ ...customCollege, name: e.target.value })} disabled={addingBulk} />
                             </div>
                             <button type="button" className="admin-link-button" style={{ color: 'var(--slate)', gridColumn: '1 / -1' }} onClick={() => { setShowCustomCollege(false); setCustomCollege({ code: '', name: '' }) }} disabled={addingBulk}>
                                 Cancel this one
@@ -613,8 +614,8 @@ function CollegesPrograms() {
                     ) : (
                         <div className="admin-info-grid" style={{ marginBottom: 18, padding: 12, border: '1px dashed var(--line)', borderRadius: 8 }}>
                             <div className="form-group">
-                                <label className="form-label">College</label>
-                                <select className="form-input" value={customProgram.collegeId} onChange={(e) => setCustomProgram({ ...customProgram, collegeId: e.target.value })} disabled={addingBulk}>
+                                <label className="form-label" htmlFor="new-program-college">College</label>
+                                <select id="new-program-college" className="form-input" value={customProgram.collegeId} onChange={(e) => setCustomProgram({ ...customProgram, collegeId: e.target.value })} disabled={addingBulk}>
                                     <option value="">-- Select college --</option>
                                     {customProgramCollegeChoices.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
@@ -622,20 +623,20 @@ function CollegesPrograms() {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">New Program Code</label>
-                                <input className="form-input" value={customProgram.code} onChange={(e) => setCustomProgram({ ...customProgram, code: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-program-code">New Program Code</label>
+                                <input id="new-program-code" className="form-input" value={customProgram.code} onChange={(e) => setCustomProgram({ ...customProgram, code: e.target.value })} disabled={addingBulk} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">New Program Name</label>
-                                <input className="form-input" value={customProgram.name} onChange={(e) => setCustomProgram({ ...customProgram, name: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-program-name">New Program Name</label>
+                                <input id="new-program-name" className="form-input" value={customProgram.name} onChange={(e) => setCustomProgram({ ...customProgram, name: e.target.value })} disabled={addingBulk} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Degree Level</label>
-                                <input className="form-input" value={customProgram.degreeLevel} onChange={(e) => setCustomProgram({ ...customProgram, degreeLevel: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-program-degree-level">Degree Level</label>
+                                <input id="new-program-degree-level" className="form-input" value={customProgram.degreeLevel} onChange={(e) => setCustomProgram({ ...customProgram, degreeLevel: e.target.value })} disabled={addingBulk} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Duration (Years)</label>
-                                <input className="form-input" type="number" min="0" step="0.5" value={customProgram.durationYears} onChange={(e) => setCustomProgram({ ...customProgram, durationYears: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-program-duration">Duration (Years)</label>
+                                <input id="new-program-duration" className="form-input" type="number" min="0" step="0.5" value={customProgram.durationYears} onChange={(e) => setCustomProgram({ ...customProgram, durationYears: e.target.value })} disabled={addingBulk} />
                             </div>
                             <button type="button" className="admin-link-button" style={{ color: 'var(--slate)', gridColumn: '1 / -1' }} onClick={() => { setShowCustomProgram(false); setCustomProgram({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' }) }} disabled={addingBulk}>
                                 Cancel this one
