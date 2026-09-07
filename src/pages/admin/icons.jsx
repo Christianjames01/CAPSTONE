@@ -1,11 +1,3 @@
-export const IconMegaphone = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 10v4a1 1 0 0 0 1 1h2l4.5 4V5L6 9H4a1 1 0 0 0-1 1Z" />
-        <path d="M15.5 8.5a4 4 0 0 1 0 7" />
-        <path d="M18.5 5.5a8 8 0 0 1 0 13" />
-    </svg>
-)
-
 export const IconLayers = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="m12 3.5 8 4.3-8 4.3-8-4.3Z" />
