@@ -404,15 +404,34 @@
     padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 0;
     position: sticky;
     top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 }
 
 @media (max-width: 900px) {
     .office-calendar-sidebar {
         position: static;
+        max-height: none;
     }
+}
+
+.office-calendar-sidebar-section {
+    padding: 18px 0;
+}
+
+.office-calendar-sidebar-section:first-child {
+    padding-top: 0;
+}
+
+.office-calendar-sidebar-section:last-child {
+    padding-bottom: 0;
+}
+
+.office-calendar-sidebar-section + .office-calendar-sidebar-section {
+    border-top: 1px solid var(--line);
 }
 
 .office-calendar-sidebar-title {
@@ -449,8 +468,6 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 340px;
-    overflow-y: auto;
 }
 
 .office-calendar-sidebar-empty {
