@@ -583,7 +583,7 @@
 .office-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
+    gap: 6px;
 }
 
 .office-calendar-weekday-head {
@@ -593,19 +593,19 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--slate);
-    padding-bottom: 10px;
+    padding-bottom: 6px;
 }
 
 .office-calendar-cell {
     position: relative;
-    min-height: 84px;
-    border-radius: 10px;
+    min-height: 44px;
+    border-radius: 8px;
     border: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    padding: 8px;
-    gap: 4px;
-    font-size: 13px;
+    padding: 6px;
+    gap: 3px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--ink);
     background: var(--paper);
@@ -675,7 +675,6 @@
 }
 
 .office-calendar-cell-chip {
-    margin-top: auto;
     display: inline-flex;
     align-items: center;
     gap: 5px;
