@@ -43,6 +43,7 @@ import AssignedRequests from './pages/employee/AssignedRequests'
 import RequestVerification from './pages/employee/RequestVerification'
 import DocumentProcessing from './pages/employee/DocumentProcessing'
 import ClaimScheduleList from './pages/employee/ClaimScheduleList'
+import EmployeeOfficeCalendar from './pages/employee/OfficeCalendar'
 import EmployeeStudents from './pages/employee/Students'
 import StudentHistory from './pages/employee/StudentHistory'
 import EmployeeMessages from './pages/employee/Messages'
@@ -268,6 +269,11 @@ function App() {
           <Route
             path="/employee/claim-schedule"
             element={<ClaimScheduleList />}
+          />
+
+          <Route
+            path="/employee/office-calendar"
+            element={<EmployeeOfficeCalendar />}
           />
 
           <Route
