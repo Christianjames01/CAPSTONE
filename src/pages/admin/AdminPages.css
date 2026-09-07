@@ -606,12 +606,20 @@
     color: var(--slate);
 }
 
+.office-calendar-cell.is-clickable {
+    cursor: pointer;
+}
+
+.office-calendar-cell.is-clickable:hover {
+    border-color: var(--blue);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -8px rgba(18, 59, 120, 0.4);
+}
+
 .office-calendar-cell.is-weekend-closed.is-clickable:hover {
     border-color: var(--blue);
     border-style: solid;
     color: var(--blue);
-    cursor: pointer;
-    transform: translateY(-1px);
 }
 
 .office-calendar-cell.is-weekend-open {
@@ -661,6 +669,23 @@
     border-radius: 50%;
     background: var(--blue);
     flex-shrink: 0;
+}
+
+.office-calendar-cell-chip-event {
+    color: var(--warning-text, #B45309);
+}
+
+.office-calendar-cell-chip-dot-event {
+    background: var(--warning-text, #B45309);
+}
+
+.office-calendar-cell-chip-more {
+    color: var(--slate);
+    font-weight: 600;
+}
+
+.office-calendar-sidebar-item-event {
+    border-left-color: var(--warning-text, #B45309);
 }
 
 @media (max-width: 640px) {
