@@ -547,18 +547,18 @@ function Documents() {
                 >
                     <div className="admin-info-grid" style={{ marginBottom: 16 }}>
                         <div className="form-group">
-                            <label className="form-label">Code</label>
-                            <input className="form-input" value={form.document_code} onChange={(e) => setForm({ ...form, document_code: e.target.value })} disabled={saving} />
+                            <label className="form-label" htmlFor="doc-code">Code</label>
+                            <input id="doc-code" className="form-input" value={form.document_code} onChange={(e) => setForm({ ...form, document_code: e.target.value })} disabled={saving} />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Name</label>
-                            <input className="form-input" value={form.document_name} onChange={(e) => setForm({ ...form, document_name: e.target.value })} disabled={saving} />
+                            <label className="form-label" htmlFor="doc-name">Name</label>
+                            <input id="doc-name" className="form-input" value={form.document_name} onChange={(e) => setForm({ ...form, document_name: e.target.value })} disabled={saving} />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Category</label>
-                            <select className="form-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={saving}>
+                            <label className="form-label" htmlFor="doc-category">Category</label>
+                            <select id="doc-category" className="form-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={saving}>
                                 <option value="">-- Select category --</option>
                                 {DOCUMENT_CATEGORIES.map((c) => (
                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -567,24 +567,24 @@ function Documents() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Fee (₱)</label>
-                            <input className="form-input" type="number" min="0" step="0.01" value={form.fee} onChange={(e) => setForm({ ...form, fee: e.target.value })} disabled={saving} />
+                            <label className="form-label" htmlFor="doc-fee">Fee (₱)</label>
+                            <input id="doc-fee" className="form-input" type="number" min="0" step="0.01" value={form.fee} onChange={(e) => setForm({ ...form, fee: e.target.value })} disabled={saving} />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Processing Days (Min)</label>
-                            <input className="form-input" type="number" min="0" value={form.processing_days_min} onChange={(e) => setForm({ ...form, processing_days_min: e.target.value })} disabled={saving} />
+                            <label className="form-label" htmlFor="doc-days-min">Processing Days (Min)</label>
+                            <input id="doc-days-min" className="form-input" type="number" min="0" value={form.processing_days_min} onChange={(e) => setForm({ ...form, processing_days_min: e.target.value })} disabled={saving} />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Processing Days (Max)</label>
-                            <input className="form-input" type="number" min="0" value={form.processing_days_max} onChange={(e) => setForm({ ...form, processing_days_max: e.target.value })} disabled={saving} />
+                            <label className="form-label" htmlFor="doc-days-max">Processing Days (Max)</label>
+                            <input id="doc-days-max" className="form-input" type="number" min="0" value={form.processing_days_max} onChange={(e) => setForm({ ...form, processing_days_max: e.target.value })} disabled={saving} />
                         </div>
                     </div>
 
                     <div className="form-group" style={{ marginBottom: 16 }}>
-                        <label className="form-label">Description</label>
-                        <textarea className="form-input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} disabled={saving} />
+                        <label className="form-label" htmlFor="doc-description">Description</label>
+                        <textarea id="doc-description" className="form-input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} disabled={saving} />
                     </div>
 
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 12 }}>
@@ -616,6 +616,7 @@ function Documents() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by document name, code, or category"
+                aria-label="Search document types"
                 style={{ margin: '20px 0 16px' }}
             />
 
@@ -717,6 +718,7 @@ function Documents() {
                             className="admin-search-input"
                             style={{ maxWidth: 220 }}
                             placeholder="Requirement name"
+                            aria-label="Requirement name"
                             value={newRequirement.requirement_name}
                             onChange={(e) => setNewRequirement({ ...newRequirement, requirement_name: e.target.value })}
                         />

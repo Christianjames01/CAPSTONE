@@ -107,6 +107,7 @@ function ActivityLogs() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by actor, action, or description"
+                aria-label="Search activity logs"
             />
 
             {error && <div className="admin-error-box">{error}</div>}

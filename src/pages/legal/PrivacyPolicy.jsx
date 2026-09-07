@@ -71,7 +71,7 @@ function PrivacyPolicy() {
             <p>
                 CertiChain uses your browser's local storage to keep you signed in and to remember small
                 preferences (like a collapsed menu state). It does not use third-party advertising or
-                tracking cookies.
+                tracking cookies. See our <Link to="/cookie-policy">Cookie Policy</Link> for details.
             </p>
 
             <h2>8. Changes to this policy</h2>

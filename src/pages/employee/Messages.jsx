@@ -205,6 +205,7 @@ function Messages() {
                         value={reply}
                         onChange={(e) => setReply(e.target.value)}
                         placeholder="Type a reply..."
+                        aria-label="Type a reply"
                         onKeyDown={(e) => e.key === 'Enter' && sendReply()}
                         disabled={sending}
                     />
