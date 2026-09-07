@@ -348,7 +348,7 @@ function OfficeCalendar() {
 
             <div className="office-calendar-layout">
                 <aside className="office-calendar-sidebar">
-                    <div>
+                    <div className="office-calendar-sidebar-section">
                         <div className="office-calendar-sidebar-title">Legend</div>
                         <div className="office-calendar-legend">
                             <div className="office-calendar-legend-item">
@@ -370,7 +370,7 @@ function OfficeCalendar() {
                         </div>
                     </div>
 
-                    <div>
+                    <div className="office-calendar-sidebar-section">
                         <div className="office-calendar-sidebar-title">Upcoming Events</div>
 
                         {loading ? (
@@ -399,7 +399,7 @@ function OfficeCalendar() {
                         )}
                     </div>
 
-                    <div>
+                    <div className="office-calendar-sidebar-section">
                         <div className="office-calendar-sidebar-title">Upcoming Open Days</div>
 
                         {loading ? (
