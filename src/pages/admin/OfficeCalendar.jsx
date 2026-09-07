@@ -481,15 +481,12 @@ function OfficeCalendar() {
                                 >
                                     <span className="office-calendar-cell-daynum">{date.getDate()}</span>
 
-                                    {dayEvents.slice(0, 1).map((ev) => (
+                                    {dayEvents.map((ev) => (
                                         <span className="office-calendar-cell-chip office-calendar-cell-chip-event" key={ev.event_id} title={ev.note || ev.title}>
                                             <span className="office-calendar-cell-chip-dot office-calendar-cell-chip-dot-event" />
                                             {ev.title}
                                         </span>
                                     ))}
-                                    {dayEvents.length > 1 && (
-                                        <span className="office-calendar-cell-chip office-calendar-cell-chip-more">+{dayEvents.length - 1} more</span>
-                                    )}
 
                                     {openEntry && dayEvents.length === 0 && (
                                         <span className="office-calendar-cell-chip" title={openEntry.note || 'Marked open'}>

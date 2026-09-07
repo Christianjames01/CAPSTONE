@@ -690,11 +690,6 @@
     background: var(--warning-text, #B45309);
 }
 
-.office-calendar-cell-chip-more {
-    color: var(--slate);
-    font-weight: 600;
-}
-
 .office-calendar-sidebar-item-event {
     border-left-color: var(--warning-text, #B45309);
 }
