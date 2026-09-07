@@ -437,7 +437,6 @@ function AdminRequestDetails() {
                 .update({
                     status: 'rejected',
                     rejection_reason: rejectionReason.trim(),
-                    employee_remarks: rejectionReason.trim(),
                     updated_at: new Date().toISOString(),
                 })
                 .eq('request_id', requestId)
@@ -1081,12 +1080,6 @@ function AdminRequestDetails() {
                                 <strong style={{ textTransform: 'capitalize' }}>{receipt.status}</strong>
                             </div>
                         </div>
-
-                        {receipt.rejection_reason && (
-                            <div className="admin-error-box" style={{ marginTop: 16, marginBottom: 0 }}>
-                                Rejection reason: {receipt.rejection_reason}
-                            </div>
-                        )}
 
                         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                             {receiptUrl ? (

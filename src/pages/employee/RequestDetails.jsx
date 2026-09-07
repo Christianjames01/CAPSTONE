@@ -626,8 +626,6 @@ function EmployeeRequestDetails() {
                     status: 'rejected',
                     rejection_reason:
                         rejectionReason.trim(),
-                    employee_remarks:
-                        rejectionReason.trim(),
                     updated_at:
                         new Date().toISOString()
                 })
