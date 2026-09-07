@@ -1,10 +1,11 @@
-import { Navigate, Link } from 'react-router-dom'
+import { Navigate, Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { dashboardPathForRole } from '../lib/roleRedirect'
 import { getEmployeeAccountIssue, employeeIssueMessage } from '../lib/accountStatusMessage'
 
 function ProtectedRoute({ children, allowedRoles }) {
+    const location = useLocation()
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState(null)
 
@@ -22,7 +23,7 @@ function ProtectedRoute({ children, allowedRoles }) {
 
         const { data, error } = await supabase
             .from('profiles')
-            .select('role, status')
+            .select('role, status, must_change_password')
             .eq('user_id', user.id)
             .single()
 
@@ -89,6 +90,10 @@ function ProtectedRoute({ children, allowedRoles }) {
         !allowedRoles.includes(profile.role)
     ) {
         return <Navigate to={dashboardPathForRole(profile.role) || '/'} replace />
+    }
+
+    if (profile.must_change_password && location.pathname !== '/force-change-password') {
+        return <Navigate to="/force-change-password" replace />
     }
 
     return children

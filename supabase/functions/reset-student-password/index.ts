@@ -81,6 +81,11 @@ Deno.serve(async (req) => {
             return json({ error: updateError.message }, 500)
         }
 
+        await supabaseAdmin
+            .from('profiles')
+            .update({ must_change_password: true })
+            .eq('user_id', studentUserId)
+
         const { data: callerEmployee } = await supabaseAdmin
             .from('employees')
             .select('employee_id')

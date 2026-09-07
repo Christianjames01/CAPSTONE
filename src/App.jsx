@@ -12,6 +12,7 @@ import AuthCallback from './pages/auth/AuthCallback'
 import CompleteProfile from './pages/auth/CompleteProfile'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
+import ForceChangePassword from './pages/auth/ForceChangePassword'
 
 import Terms from './pages/legal/Terms'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
@@ -49,6 +50,7 @@ import EmployeeProfile from './pages/employee/Profile'
 
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/Dashboard'
+import Announcements from './pages/admin/Announcements'
 import AllRequests from './pages/admin/AllRequests'
 import AdminRequestDetails from './pages/admin/RequestDetails'
 import Assignments from './pages/admin/Assignments'
@@ -110,6 +112,15 @@ function App() {
         <Route
           path="/reset-password"
           element={<ResetPassword />}
+        />
+
+        <Route
+          path="/force-change-password"
+          element={
+            <ProtectedRoute>
+              <ForceChangePassword />
+            </ProtectedRoute>
+          }
         />
 
         <Route
@@ -290,6 +301,11 @@ function App() {
           <Route
             path="/admin/dashboard"
             element={<AdminDashboard />}
+          />
+
+          <Route
+            path="/admin/announcements"
+            element={<Announcements />}
           />
 
           <Route

@@ -55,5 +55,10 @@ export async function createEmployeeAccount({
         )
     }
 
+    await supabase
+        .from('profiles')
+        .update({ must_change_password: true })
+        .eq('user_id', data.user.id)
+
     return data.user
 }
