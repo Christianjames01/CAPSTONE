@@ -23,9 +23,9 @@ function formatDate(dateStr) {
 
 function formatDateShort(dateStr) {
     return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'short',
         month: 'short',
         day: 'numeric',
-        year: 'numeric',
     })
 }
 
@@ -237,79 +237,125 @@ function OfficeCalendar() {
                     <h1 style={{ fontSize: 26, marginBottom: 6 }}>Office Calendar</h1>
                     <p>
                         Missed claiming appointments are automatically rescheduled to the next weekday.
-                        Tap a Saturday or Sunday below to mark the Registrar's Office open that day (e.g.
-                        during enrollment), so it can be offered instead of being skipped.
+                        Tap a Saturday or Sunday to mark the Registrar's Office open that day (e.g. during
+                        enrollment), so it can be offered instead of being skipped.
                     </p>
                 </div>
 
                 <button className="admin-primary-button" onClick={() => openNewForm('')}>+ Add Open Day</button>
             </div>
 
-            <div className="office-calendar-card">
-                <div className="office-calendar-nav">
-                    <div className="office-calendar-nav-controls">
-                        <button className="office-calendar-nav-button" onClick={() => goToMonth(-1)} aria-label="Previous month">‹</button>
-                        <span className="office-calendar-month-label">{monthLabel}</span>
-                        <button className="office-calendar-nav-button" onClick={() => goToMonth(1)} aria-label="Next month">›</button>
-                    </div>
-                    <button className="office-calendar-today-button" onClick={goToToday}>Today</button>
-                </div>
-
-                <div className="office-calendar-legend">
-                    <div className="office-calendar-legend-item">
-                        <span className="office-calendar-legend-swatch" style={{ background: 'var(--success-text, #34C784)' }} />
-                        Marked open — tap to remove
-                    </div>
-                    <div className="office-calendar-legend-item">
-                        <span className="office-calendar-legend-swatch" style={{ background: 'transparent', border: '1px dashed var(--slate)' }} />
-                        Weekend, closed — tap to mark open
-                    </div>
-                    <div className="office-calendar-legend-item">
-                        <span className="office-calendar-legend-swatch" style={{ background: 'var(--paper)', border: '1px solid var(--line)' }} />
-                        Weekday
-                    </div>
-                </div>
-
-                <div className="office-calendar-grid">
-                    {WEEKDAY_HEADS.map((h) => (
-                        <div className="office-calendar-weekday-head" key={h}>{h}</div>
-                    ))}
-
-                    {monthGrid.map((date, i) => {
-                        if (!date) {
-                            return <div className="office-calendar-cell is-empty" key={`empty-${i}`} />
-                        }
-
-                        const dateStr = formatLocal(date)
-                        const dow = date.getDay()
-                        const isWeekend = dow === 0 || dow === 6
-                        const isPast = dateStr < today
-                        const isToday = dateStr === today
-                        const openEntry = openDaysByDate[dateStr]
-
-                        const classes = ['office-calendar-cell']
-                        if (isPast) classes.push('is-past')
-                        if (isToday) classes.push('is-today')
-
-                        if (isWeekend && openEntry) {
-                            classes.push('is-weekend-open')
-                        } else if (isWeekend) {
-                            classes.push('is-weekend-closed', 'is-clickable')
-                        }
-
-                        return (
-                            <div
-                                className={classes.join(' ')}
-                                key={dateStr}
-                                onClick={() => handleCellClick(date)}
-                                title={openEntry ? (openEntry.note || 'Marked open') : undefined}
-                            >
-                                <span>{date.getDate()}</span>
-                                {openEntry && <span className="office-calendar-cell-dot" />}
+            <div className="office-calendar-layout">
+                <aside className="office-calendar-sidebar">
+                    <div>
+                        <div className="office-calendar-sidebar-title">Legend</div>
+                        <div className="office-calendar-legend">
+                            <div className="office-calendar-legend-item">
+                                <span className="office-calendar-legend-swatch" style={{ background: 'var(--blue-tint)', border: '1px solid var(--blue)' }} />
+                                Marked open — tap to remove
                             </div>
-                        )
-                    })}
-                </div>
+                            <div className="office-calendar-legend-item">
+                                <span className="office-calendar-legend-swatch" style={{ background: 'transparent', border: '1px dashed var(--slate)' }} />
+                                Weekend, closed — tap to mark open
+                            </div>
+                            <div className="office-calendar-legend-item">
+                                <span className="office-calendar-legend-swatch" style={{ background: 'var(--paper)', border: '1px solid var(--line)' }} />
+                                Weekday
+                            </div>
+                            <div className="office-calendar-legend-item">
+                                <span className="office-calendar-legend-swatch" style={{ background: 'transparent', border: '2px solid var(--red)' }} />
+                                Today
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="office-calendar-sidebar-title">Upcoming Open Days</div>
+
+                        {loading ? (
+                            <SkeletonList count={2} />
+                        ) : openDays.length === 0 ? (
+                            <div className="office-calendar-sidebar-empty">None added yet — tap a weekend on the calendar or "+ Add Open Day."</div>
+                        ) : (
+                            <div className="office-calendar-sidebar-list">
+                                {openDays.map((day) => (
+                                    <div className="office-calendar-sidebar-item" key={day.open_day_id}>
+                                        <div>
+                                            <div className="office-calendar-sidebar-item-date">{formatDateShort(day.open_date)}</div>
+                                            {day.note && <div className="office-calendar-sidebar-item-note">{day.note}</div>}
+                                        </div>
+                                        <button
+                                            className="office-calendar-sidebar-remove"
+                                            onClick={() => removeOpenDay(day)}
+                                            disabled={removing === day.open_day_id}
+                                            aria-label={`Remove ${formatDate(day.open_date)}`}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </aside>
+
+                <main className="office-calendar-main">
+                    <div className="office-calendar-toolbar">
+                        <div className="office-calendar-nav-controls">
+                            <button className="office-calendar-nav-button" onClick={() => goToMonth(-1)} aria-label="Previous month">‹</button>
+                            <span className="office-calendar-month-label">{monthLabel}</span>
+                            <button className="office-calendar-nav-button" onClick={() => goToMonth(1)} aria-label="Next month">›</button>
+                        </div>
+                        <button className="office-calendar-today-button" onClick={goToToday}>Today</button>
+                    </div>
+
+                    {error && <div className="admin-error-box" style={{ marginBottom: 16 }}>{error}</div>}
+
+                    <div className="office-calendar-grid">
+                        {WEEKDAY_HEADS.map((h) => (
+                            <div className="office-calendar-weekday-head" key={h}>{h}</div>
+                        ))}
+
+                        {monthGrid.map((date, i) => {
+                            if (!date) {
+                                return <div className="office-calendar-cell is-empty" key={`empty-${i}`} />
+                            }
+
+                            const dateStr = formatLocal(date)
+                            const dow = date.getDay()
+                            const isWeekend = dow === 0 || dow === 6
+                            const isPast = dateStr < today
+                            const isToday = dateStr === today
+                            const openEntry = openDaysByDate[dateStr]
+
+                            const classes = ['office-calendar-cell']
+                            if (isPast) classes.push('is-past')
+                            if (isToday) classes.push('is-today')
+
+                            if (isWeekend && openEntry) {
+                                classes.push('is-weekend-open')
+                            } else if (isWeekend) {
+                                classes.push('is-weekend-closed', 'is-clickable')
+                            }
+
+                            return (
+                                <div
+                                    className={classes.join(' ')}
+                                    key={dateStr}
+                                    onClick={() => handleCellClick(date)}
+                                >
+                                    <span className="office-calendar-cell-daynum">{date.getDate()}</span>
+                                    {openEntry && (
+                                        <span className="office-calendar-cell-chip" title={openEntry.note || 'Marked open'}>
+                                            <span className="office-calendar-cell-chip-dot" />
+                                            {openEntry.note || 'Open'}
+                                        </span>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                </main>
             </div>
 
             {showForm && (
@@ -356,36 +402,6 @@ function OfficeCalendar() {
                         </button>
                     </div>
                 </Modal>
-            )}
-
-            <h2 style={{ fontSize: 15, margin: '24px 0 14px' }}>Upcoming Open Weekend Days</h2>
-
-            {error && <div className="admin-error-box">{error}</div>}
-
-            {loading ? (
-                <SkeletonList count={2} />
-            ) : openDays.length === 0 ? (
-                <div className="admin-empty">No upcoming weekend open days have been added.</div>
-            ) : (
-                openDays.map((day) => (
-                    <div className="admin-list-card" key={day.open_day_id}>
-                        <div className="admin-list-card-header">
-                            <div>
-                                <h3>{formatDate(day.open_date)}</h3>
-                                <p>{day.note || 'No note added'}</p>
-                            </div>
-                            <span className="admin-status-pill status-active">{formatDateShort(day.open_date)}</span>
-                        </div>
-
-                        <button
-                            className="admin-danger-button"
-                            onClick={() => removeOpenDay(day)}
-                            disabled={removing === day.open_day_id}
-                        >
-                            {removing === day.open_day_id ? 'Removing...' : 'Remove'}
-                        </button>
-                    </div>
-                ))
             )}
         </div>
     )
