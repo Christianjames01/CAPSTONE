@@ -50,59 +50,39 @@
   }
 }
 
-/* ===================================================
-   DARK MODE -- admin, employee, and student dashboards
-   Toggled via <html data-theme="dark|light">, set by src/lib/theme.js.
-   Each layout (.admin-layout / .employee-layout / .student-layout) defines
-   its own light-mode tokens on its root class; this block redefines the
-   same tokens for all three at once when dark mode is active.
 
-   --white and --blue-dark are deliberately NOT redefined here: both are
-   used as the sidebar's own background/text pair (always a dark navy
-   sidebar with white text, regardless of theme), so overriding them would
-   turn sidebar text invisible against its own background. Every other
-   place that needed --blue-dark as *text* (not sidebar background) was
-   changed to use --blue instead, which does get brightened below.
-=================================================== */
 html[data-theme="dark"] {
-    color-scheme: dark;
+  color-scheme: dark;
 }
 
 html[data-theme="light"] {
-    color-scheme: light;
+  color-scheme: light;
 }
 
 html[data-theme="dark"] .admin-layout,
 html[data-theme="dark"] .employee-layout,
 html[data-theme="dark"] .student-layout {
-    --blue: #6FA8F5;
-    --blue-tint: rgba(111, 168, 245, 0.18);
-    --red: #FF6B81;
-    --red-dark: #FF95A4;
-    --red-light: #FFB3BE;
-    --bg: #12141B;
-    --paper: #1C202B;
-    --surface: #1A1E28;
-    --ink: #E7E9EE;
-    --slate: #97A0B3;
-    --line: rgba(255, 255, 255, 0.14);
-    --warning-bg: rgba(255, 193, 7, 0.18);
-    --warning-text: #FFCF66;
-    --success-bg: rgba(52, 199, 132, 0.2);
-    --success-text: #4ADE9A;
-    --danger-bg-soft: rgba(255, 107, 129, 0.14);
+  --blue: #6FA8F5;
+  --blue-tint: rgba(111, 168, 245, 0.18);
+  --red: #FF6B81;
+  --red-dark: #FF95A4;
+  --red-light: #FFB3BE;
+  --bg: #12141B;
+  --paper: #1C202B;
+  --surface: #1A1E28;
+  --ink: #E7E9EE;
+  --slate: #97A0B3;
+  --line: rgba(255, 255, 255, 0.14);
+  --warning-bg: rgba(255, 193, 7, 0.18);
+  --warning-text: #FFCF66;
+  --success-bg: rgba(52, 199, 132, 0.2);
+  --success-text: #4ADE9A;
+  --danger-bg-soft: rgba(255, 107, 129, 0.14);
 }
 
-/* ===================================================
-   MOBILE BUTTON ROWS -- admin, employee, and student dashboards
-   Many action rows (Save/Cancel, Confirm/Cancel, etc.) are laid out with an
-   inline `display:flex; gap:Npx` and no wrap, so on narrow screens the
-   buttons shrink to fit and their labels get clipped/overlapped instead of
-   wrapping onto a new line. This targets any such row by its button
-   children (every button in the app carries a role-prefixed class) rather
-   than requiring each page to be edited individually.
-=================================================== */
+
 @media (max-width: 640px) {
+
   div:has(> .admin-primary-button),
   div:has(> .admin-secondary-button),
   div:has(> .admin-danger-button),
@@ -129,9 +109,7 @@ html[data-theme="dark"] .student-layout {
   }
 }
 
-/* App root: no fixed width, no centering box, no forced flex-column.
-   Individual layouts (AdminLayout, StudentLayout, EmployeeLayout, AuthLayout,
-   LandingPage) own their own full-width layout rules. */
+
 html,
 body,
 #root {
@@ -194,13 +172,11 @@ code {
   background: var(--code-bg);
 }
 
-/* ===================================================
-   ICON SPINNER -- generic small loading spinner that inherits
-   whatever text color it's placed in (via currentColor), for use
-   anywhere a button needs a loading indicator outside the auth forms.
-=================================================== */
+
 @keyframes icon-spinner-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .icon-spinner {
@@ -215,13 +191,7 @@ code {
   flex-shrink: 0;
 }
 
-/* ===================================================
-   SWEETALERT2 -- CertiChain theme
-   Colors (confirmButtonColor/cancelButtonColor) are set per-call and
-   deliberately vary by action (blue for primary, red for destructive,
-   amber for warnings) -- only shape, type, and spacing are themed here
-   so those semantic colors keep working.
-=================================================== */
+
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
 .swal2-popup {
@@ -302,24 +272,14 @@ code {
   background: #123B78 !important;
 }
 
-/* .form-input is defined in Auth.css for the login/register pages (which
-   stay light-only) but is also reused throughout the admin/employee/student
-   dashboards for plain text inputs and textareas. Its background was never
-   given a dark-mode override, so it stayed pinned white while its text
-   color (var(--ink), which does flip) turned light -- nearly invisible.
-   Scoped to the dashboard layouts (where --surface exists) so it has no
-   effect on the auth pages themselves. */
+
 html[data-theme="dark"] .admin-layout .form-input,
 html[data-theme="dark"] .employee-layout .form-input,
 html[data-theme="dark"] .student-layout .form-input {
   background: var(--surface);
 }
 
-/* SweetAlert2 renders its popup appended to <body>, outside every React
-   layout -- so it never picks up any .admin-layout/.employee-layout/
-   .student-layout scoped variable, dark or light. This is the only place
-   that can theme it, hence the flat html[data-theme="dark"] selector
-   instead of a CSS variable. */
+
 html[data-theme="dark"] .swal2-popup {
   background: #1A1E28 !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
@@ -356,35 +316,30 @@ html[data-theme="dark"] .swal2-textarea:focus {
   box-shadow: 0 0 0 3px rgba(111, 168, 245, 0.2) !important;
 }
 
-/* ===================================================
-   DARK MODE TOGGLE -- fixed top-right on every dashboard.
-   Rendered as a child of .admin-layout / .employee-layout /
-   .student-layout, so it resolves whichever one's scoped
-   --surface/--ink/--line tokens are in effect at its DOM position.
-=================================================== */
+
 .theme-toggle-fab {
-    position: fixed;
-    top: 14px;
-    right: 18px;
-    z-index: 60;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    color: var(--ink);
-    box-shadow: 0 2px 10px rgba(16, 24, 39, 0.12);
-    transition: background 0.15s ease;
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: 60;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: 0 2px 10px rgba(16, 24, 39, 0.12);
+  transition: background 0.15s ease;
 }
 
 .theme-toggle-fab:hover {
-    background: var(--paper);
+  background: var(--paper);
 }
 
 .theme-toggle-fab svg {
-    width: 17px;
-    height: 17px;
+  width: 17px;
+  height: 17px;
 }
