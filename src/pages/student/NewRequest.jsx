@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { notify } from '../../lib/notify'
+import { notify, notifyWarning } from '../../lib/notify'
 import { IconX } from './icons'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -255,7 +255,7 @@ function NewRequest() {
         }
 
         if (selectedDocumentDetails?.requires_purpose && !purpose.trim()) {
-            setError('Please state the purpose of this request — it is required for this document.')
+            notifyWarning('Please state the purpose of this request — it is required for this document.')
             return
         }
 
