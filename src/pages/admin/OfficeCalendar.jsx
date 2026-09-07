@@ -469,6 +469,10 @@ function OfficeCalendar() {
                                 classes.push('is-weekend-closed')
                             }
 
+                            if (dayEvents.length > 0) {
+                                classes.push('is-has-event')
+                            }
+
                             return (
                                 <div
                                     className={classes.join(' ')}

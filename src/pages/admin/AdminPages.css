@@ -633,6 +633,17 @@
     box-shadow: 0 8px 18px -8px rgba(18, 59, 120, 0.45);
 }
 
+.office-calendar-cell.is-has-event {
+    background: var(--warning-bg, rgba(255, 193, 7, 0.18));
+    border: 1px solid var(--warning-text, #FFCF66);
+    color: var(--warning-text, #856404);
+}
+
+.office-calendar-cell.is-has-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -8px rgba(180, 83, 9, 0.45);
+}
+
 .office-calendar-cell.is-today {
     box-shadow: 0 0 0 2px var(--red) inset;
 }
