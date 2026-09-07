@@ -376,3 +376,186 @@
         flex: 0 0 auto;
     }
 }
+
+/* ===================================================
+   OFFICE CALENDAR -- month grid view
+=================================================== */
+
+.office-calendar-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+}
+
+.office-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.office-calendar-nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.office-calendar-month-label {
+    font-family: var(--font-display, 'Fraunces', serif);
+    font-size: 19px;
+    font-weight: 700;
+    min-width: 168px;
+    text-align: center;
+}
+
+.office-calendar-nav-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.office-calendar-nav-button:hover {
+    background: var(--blue-tint);
+    border-color: var(--blue);
+    color: var(--blue);
+}
+
+.office-calendar-today-button {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--blue);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--blue);
+    background: var(--blue-tint);
+}
+
+.office-calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.office-calendar-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.office-calendar-legend-swatch {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.office-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.office-calendar-weekday-head {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--slate);
+    padding-bottom: 8px;
+}
+
+.office-calendar-cell {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 52px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--paper);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.office-calendar-cell.is-empty {
+    background: transparent;
+    border: none;
+}
+
+.office-calendar-cell.is-weekend-closed {
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--slate);
+}
+
+.office-calendar-cell.is-weekend-closed.is-clickable:hover {
+    border-color: var(--red);
+    color: var(--red);
+    cursor: pointer;
+    transform: translateY(-1px);
+}
+
+.office-calendar-cell.is-weekend-open {
+    background: var(--success-bg, rgba(52, 199, 132, 0.16));
+    border: 1px solid var(--success-text, #34C784);
+    color: var(--success-text, #1e8a5f);
+    cursor: pointer;
+}
+
+.office-calendar-cell.is-weekend-open:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -6px rgba(52, 199, 132, 0.5);
+}
+
+.office-calendar-cell.is-today {
+    box-shadow: 0 0 0 2px var(--blue) inset;
+}
+
+.office-calendar-cell.is-past {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.office-calendar-cell-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+@media (max-width: 640px) {
+    .office-calendar-cell {
+        min-height: 38px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+
+    .office-calendar-grid {
+        gap: 4px;
+    }
+
+    .office-calendar-month-label {
+        min-width: 0;
+        font-size: 16px;
+    }
+}
