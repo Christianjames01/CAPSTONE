@@ -50,7 +50,6 @@ import EmployeeProfile from './pages/employee/Profile'
 
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/Dashboard'
-import Announcements from './pages/admin/Announcements'
 import AllRequests from './pages/admin/AllRequests'
 import AdminRequestDetails from './pages/admin/RequestDetails'
 import Assignments from './pages/admin/Assignments'
@@ -301,11 +300,6 @@ function App() {
           <Route
             path="/admin/dashboard"
             element={<AdminDashboard />}
-          />
-
-          <Route
-            path="/admin/announcements"
-            element={<Announcements />}
           />
 
           <Route
