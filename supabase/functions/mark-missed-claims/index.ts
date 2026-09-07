@@ -155,6 +155,47 @@ Deno.serve(async (req) => {
                     related_request_id: schedule.request_id,
                 })
             }
+
+            // Cumulative missed-claim count across ALL of this student's requests,
+            // not just this one -- a single request rarely gets missed 2-3 times on
+            // its own since it's only auto-rescheduled once before requiring staff
+            // to manually reschedule it.
+            if (student?.user_id) {
+                const { count: missedCount } = await supabaseAdmin
+                    .from('claim_schedules')
+                    .select('claim_schedule_id', { count: 'exact', head: true })
+                    .eq('student_id', schedule.student_id)
+                    .eq('status', 'missed')
+
+                if ((missedCount || 0) >= 2) {
+                    await supabaseAdmin.from('notifications').insert({
+                        user_id: student.user_id,
+                        title: 'Your document is unclaimed',
+                        message: `You now have ${missedCount} missed claiming appointments on your CertiChain account, and your document for request ${request?.request_number || schedule.request_id} remains unclaimed. Please visit the Registrar's Office as soon as possible. Repeated missed appointments may result in your account being suspended or deactivated by the Registrar's Office.`,
+                        notification_type: 'claim_schedule',
+                        related_request_id: schedule.request_id,
+                    })
+
+                    if (employeeUserId) {
+                        await supabaseAdmin.from('notifications').insert({
+                            user_id: employeeUserId,
+                            title: 'Student has repeated missed claims',
+                            message: `This student now has ${missedCount} missed claiming appointments across their requests, including request ${request?.request_number || schedule.request_id}. Consider following up before their account standing is reviewed.`,
+                            notification_type: 'claim_schedule',
+                            related_request_id: schedule.request_id,
+                        })
+                    }
+
+                    await supabaseAdmin.from('activity_logs').insert({
+                        user_id: null,
+                        employee_id: null,
+                        action: 'repeated_missed_claims_warning',
+                        table_name: 'claim_schedules',
+                        record_id: schedule.claim_schedule_id,
+                        description: `Sent a repeated-missed-claims warning to a student with ${missedCount} total missed appointments (latest: request "${request?.request_number || schedule.request_id}").`,
+                    })
+                }
+            }
         }
 
         return new Response(JSON.stringify({ autoRescheduledCount, markedCount }), { status: 200 })
