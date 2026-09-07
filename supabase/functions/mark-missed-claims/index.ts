@@ -11,14 +11,24 @@ function phToday(nowMs: number): string {
     return new Date(nowMs + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
-// Next weekday (Mon-Fri) strictly after the given YYYY-MM-DD date.
-function nextBusinessDay(fromDateStr: string): string {
+// Next weekday (Mon-Fri) strictly after the given YYYY-MM-DD date, unless a
+// weekend date is explicitly marked open in office_open_days (e.g. the
+// Registrar Head marks a Saturday open during enrollment), in which case
+// that date is used instead of skipping it.
+function nextBusinessDay(fromDateStr: string, openWeekendDates: Set<string>): string {
     let d = new Date(`${fromDateStr}T00:00:00Z`)
     d = new Date(d.getTime() + 24 * 60 * 60 * 1000)
-    while (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+
+    while (true) {
+        const isWeekend = d.getUTCDay() === 0 || d.getUTCDay() === 6
+        const dateStr = d.toISOString().slice(0, 10)
+
+        if (!isWeekend || openWeekendDates.has(dateStr)) {
+            return dateStr
+        }
+
         d = new Date(d.getTime() + 24 * 60 * 60 * 1000)
     }
-    return d.toISOString().slice(0, 10)
 }
 
 Deno.serve(async (req) => {
@@ -37,6 +47,15 @@ Deno.serve(async (req) => {
             .lt('scheduled_date', todayPH)
 
         if (fetchError) throw fetchError
+
+        const { data: openDayRows, error: openDaysError } = await supabaseAdmin
+            .from('office_open_days')
+            .select('open_date')
+            .gte('open_date', todayPH)
+
+        if (openDaysError) throw openDaysError
+
+        const openWeekendDates = new Set((openDayRows || []).map((r) => r.open_date))
 
         let autoRescheduledCount = 0
         let markedCount = 0
@@ -68,7 +87,7 @@ Deno.serve(async (req) => {
 
             if (!schedule.auto_rescheduled_at) {
                 const missedDate = schedule.scheduled_date
-                const newDate = nextBusinessDay(todayPH)
+                const newDate = nextBusinessDay(todayPH, openWeekendDates)
 
                 const { error: rescheduleError } = await supabaseAdmin
                     .from('claim_schedules')

@@ -18,6 +18,7 @@ const NAV_ITEMS = [
     { to: '/admin/documents', label: 'Documents', icon: <IconDocument /> },
     { to: '/admin/colleges-programs', label: 'Colleges & Programs', icon: <IconBuilding /> },
     { to: '/admin/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
+    { to: '/admin/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/admin/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
     { to: '/admin/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/admin/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
