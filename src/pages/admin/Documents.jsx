@@ -47,6 +47,7 @@ const EMPTY_FORM = {
     processing_days_min: '',
     processing_days_max: '',
     is_available: true,
+    requires_purpose: false,
 }
 
 function Documents() {
@@ -78,7 +79,7 @@ function Documents() {
 
             const { data, error: loadError } = await supabase
                 .from('document_types')
-                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available')
+                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose')
                 .order('document_name')
 
             if (loadError) {
@@ -252,6 +253,7 @@ function Documents() {
             processing_days_min: doc.processing_days_min ?? '',
             processing_days_max: doc.processing_days_max ?? '',
             is_available: doc.is_available,
+            requires_purpose: doc.requires_purpose,
         })
         setShowForm(true)
     }
@@ -279,6 +281,7 @@ function Documents() {
                 processing_days_min: form.processing_days_min === '' ? null : Number(form.processing_days_min),
                 processing_days_max: form.processing_days_max === '' ? null : Number(form.processing_days_max),
                 is_available: form.is_available,
+                requires_purpose: form.requires_purpose,
             }
 
             if (form.document_type_id) {
@@ -584,9 +587,14 @@ function Documents() {
                         <textarea className="form-input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} disabled={saving} />
                     </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 16 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 12 }}>
                         <input type="checkbox" checked={form.is_available} onChange={(e) => setForm({ ...form, is_available: e.target.checked })} />
                         Available for students to request
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 16 }}>
+                        <input type="checkbox" checked={form.requires_purpose} onChange={(e) => setForm({ ...form, requires_purpose: e.target.checked })} />
+                        Require students to state a purpose for this document
                     </label>
 
                     <div style={{ display: 'flex', gap: 10 }}>

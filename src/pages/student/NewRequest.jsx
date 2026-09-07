@@ -200,7 +200,8 @@ function NewRequest() {
         description,
         fee,
         processing_days_min,
-        processing_days_max
+        processing_days_max,
+        requires_purpose
       `)
             .eq('is_available', true)
             .order('document_name')
@@ -250,6 +251,11 @@ function NewRequest() {
 
         if (quantity < 1 || quantity > 2) {
             setError('Quantity must be between 1 and 2.')
+            return
+        }
+
+        if (selectedDocumentDetails?.requires_purpose && !purpose.trim()) {
+            setError('Please state the purpose of this request — it is required for this document.')
             return
         }
 
@@ -535,15 +541,29 @@ function NewRequest() {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Purpose</label>
+                        <label className="form-label">
+                            Purpose
+                            {selectedDocumentDetails?.requires_purpose && (
+                                <span style={{ color: 'var(--red)', marginLeft: 4 }}>*</span>
+                            )}
+                        </label>
                         <textarea
                             className="form-input"
                             value={purpose}
                             onChange={(e) => setPurpose(e.target.value)}
-                            placeholder="Enter the purpose of your request"
+                            placeholder={
+                                selectedDocumentDetails?.requires_purpose
+                                    ? 'Required for this document — state what it will be used for'
+                                    : 'Enter the purpose of your request'
+                            }
                             rows="4"
                             disabled={loading}
                         />
+                        {selectedDocumentDetails?.requires_purpose && (
+                            <small style={{ color: 'var(--slate)', fontSize: 12 }}>
+                                This document requires a stated purpose before it can be requested.
+                            </small>
+                        )}
                     </div>
 
                     <button
