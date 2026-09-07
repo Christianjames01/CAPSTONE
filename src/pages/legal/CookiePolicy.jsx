@@ -54,7 +54,7 @@ function CookiePolicy() {
             <h2>6. Contact</h2>
             <p>
                 Questions about this policy can be directed to the Holy Cross of Davao College Registrar's
-                Office.
+                Office at info@hcdc.edu.ph or (082) 221-9071 to 79.
             </p>
 
             <div className="legal-cross-link">

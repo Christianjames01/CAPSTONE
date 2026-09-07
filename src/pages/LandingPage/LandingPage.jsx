@@ -188,7 +188,11 @@ const LandingPage = () => {
                 </p>
                 <p style="text-align:left;color:#57616F;">
                     For anything else, please reach out to the Office of Registration
-                    &amp; Records Management at Holy Cross of Davao College directly.
+                    &amp; Records Management at Holy Cross of Davao College directly:
+                </p>
+                <p style="text-align:left;color:#57616F;margin-top:8px;">
+                    Sta. Ana Avenue corner C. De Guzman Street, Barangay 14-B, Davao City<br/>
+                    (082) 221-9071 to 79 &middot; info@hcdc.edu.ph
                 </p>
             `,
             confirmButtonText: "Got it",
@@ -567,6 +571,10 @@ const LandingPage = () => {
                             <p>
                                 A web-based registrar services system for academic
                                 certificate requesting.
+                            </p>
+                            <p className="footer-contact">
+                                Sta. Ana Avenue corner C. De Guzman Street, Barangay 14-B, Davao City<br />
+                                (082) 221-9071 to 79 &middot; info@hcdc.edu.ph
                             </p>
                         </div>
 

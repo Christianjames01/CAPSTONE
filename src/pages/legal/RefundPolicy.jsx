@@ -49,7 +49,8 @@ function RefundPolicy() {
             <p>
                 Questions about a specific payment or receipt should go to the HCDC Cashier/Finance Office.
                 Questions about a request's status can be sent to your assigned registrar staff through the
-                Messages page, or to the Registrar's Office directly.
+                Messages page, or to the Registrar's Office directly at info@hcdc.edu.ph or (082) 221-9071
+                to 79.
             </p>
 
             <div className="legal-cross-link">
