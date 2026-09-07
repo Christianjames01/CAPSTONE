@@ -62,6 +62,7 @@ import AdminStudentDetails from './pages/admin/StudentDetails'
 import AdminDocuments from './pages/admin/Documents'
 import CollegesPrograms from './pages/admin/CollegesPrograms'
 import AdminClaimSchedules from './pages/admin/ClaimSchedules'
+import OfficeCalendar from './pages/admin/OfficeCalendar'
 import AdminClaimSchedule from './pages/admin/ClaimSchedule'
 import OfficialReceipts from './pages/admin/OfficialReceipts'
 import AdminMessages from './pages/admin/Messages'
@@ -367,6 +368,11 @@ function App() {
           <Route
             path="/admin/claim-schedules"
             element={<AdminClaimSchedules />}
+          />
+
+          <Route
+            path="/admin/office-calendar"
+            element={<OfficeCalendar />}
           />
 
           <Route
