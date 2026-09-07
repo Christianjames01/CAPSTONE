@@ -16,6 +16,8 @@
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 22px;
+    display: flex;
+    flex-direction: column;
 }
 
 .dash-chart-head {
@@ -56,6 +58,8 @@
     padding: 40px 12px;
     color: var(--slate);
     font-size: 13.5px;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 /* ===================================================
@@ -67,6 +71,8 @@
     align-items: center;
     gap: 24px;
     flex-wrap: wrap;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .dash-donut-wrap {
@@ -170,6 +176,8 @@
 
 .dash-line-wrap {
     position: relative;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .dash-line-svg {
@@ -266,6 +274,8 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .dash-data-table th {
