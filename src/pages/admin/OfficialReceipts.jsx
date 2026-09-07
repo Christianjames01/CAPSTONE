@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
+import { notifyStudentByStudentId, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import './AdminPages.css'
 
 const CHIPS = [
@@ -21,6 +22,9 @@ function OfficialReceipts() {
     const [error, setError] = useState('')
     const [activeChip, setActiveChip] = useState('uploaded')
     const [processing, setProcessing] = useState(null)
+
+    const [rejectTarget, setRejectTarget] = useState(null)
+    const [rejectionReason, setRejectionReason] = useState('')
 
     useEffect(() => {
         loadReceipts()
@@ -123,26 +127,42 @@ function OfficialReceipts() {
         }
     }
 
-    const rejectReceipt = async (receipt) => {
-        const reason = window.prompt('Reason for rejecting this receipt:')
-        if (!reason || !reason.trim()) return
+    const openRejectModal = (receipt) => {
+        setRejectTarget(receipt)
+        setRejectionReason('')
+    }
+
+    const closeRejectModal = () => {
+        if (processing) return
+        setRejectTarget(null)
+        setRejectionReason('')
+    }
+
+    const confirmRejectReceipt = async () => {
+        if (!rejectionReason.trim()) {
+            notifyWarning('Please enter a rejection reason.')
+            return
+        }
+
+        const receipt = rejectTarget
 
         try {
             setProcessing(receipt.receipt_id)
 
             const { data: { user } } = await supabase.auth.getUser()
             const now = new Date().toISOString()
+            const reason = rejectionReason.trim()
 
             const { error: receiptError } = await supabase
                 .from('official_receipts')
-                .update({ status: 'rejected', verified_at: now, rejection_reason: reason.trim() })
+                .update({ status: 'rejected', verified_at: now, rejection_reason: reason })
                 .eq('receipt_id', receipt.receipt_id)
 
             if (receiptError) throw new Error(receiptError.message)
 
             const { error: requestError } = await supabase
                 .from('document_requests')
-                .update({ status: 'rejected', rejection_reason: reason.trim(), updated_at: now })
+                .update({ status: 'rejected', rejection_reason: reason, updated_at: now })
                 .eq('request_id', receipt.request_id)
 
             if (requestError) throw new Error(requestError.message)
@@ -152,17 +172,19 @@ function OfficialReceipts() {
                 action: 'reject_receipt',
                 tableName: 'official_receipts',
                 recordId: receipt.receipt_id,
-                description: `Rejected official receipt "${receipt.receipt_number}" for request "${receipt.requestNumber}": "${reason.trim()}" (Registrar Head).`,
+                description: `Rejected official receipt "${receipt.receipt_number}" for request "${receipt.requestNumber}": "${reason}" (Registrar Head).`,
             })
 
             await notifyStudentByStudentId({
                 studentId: receipt.student_id,
                 title: 'Payment rejected',
-                message: `Your payment for request ${receipt.requestNumber} was rejected: ${reason.trim()}`,
+                message: `Your payment for request ${receipt.requestNumber} was rejected: ${reason}`,
                 notificationType: 'payment',
                 relatedRequestId: receipt.request_id,
             })
 
+            setRejectTarget(null)
+            setRejectionReason('')
             await loadReceipts()
 
         } catch (err) {
@@ -236,7 +258,7 @@ function OfficialReceipts() {
                                     <button className="admin-link-button" onClick={() => verifyReceipt(r)} disabled={processing === r.receipt_id}>
                                         {processing === r.receipt_id ? 'Working...' : 'Verify'}
                                     </button>
-                                    <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => rejectReceipt(r)} disabled={processing === r.receipt_id}>
+                                    <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => openRejectModal(r)} disabled={processing === r.receipt_id}>
                                         Reject
                                     </button>
                                 </>
@@ -244,6 +266,41 @@ function OfficialReceipts() {
                         </div>
                     </div>
                 ))
+            )}
+
+            {rejectTarget && (
+                <Modal title="Reject Receipt" maxWidth={480} onClose={closeRejectModal}>
+                    <p style={{ fontSize: 13.5, marginBottom: 12 }}>
+                        Enter the reason why receipt <strong>{rejectTarget.receipt_number}</strong> ({rejectTarget.requestNumber}) is being rejected.
+                    </p>
+
+                    <textarea
+                        className="admin-search-input"
+                        style={{ width: '100%', minHeight: 90, marginBottom: 16 }}
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Example: Receipt image is blurry and cannot be verified."
+                        disabled={processing === rejectTarget.receipt_id}
+                    />
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button
+                            className="admin-secondary-button"
+                            onClick={closeRejectModal}
+                            disabled={processing === rejectTarget.receipt_id}
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            className="admin-danger-button"
+                            onClick={confirmRejectReceipt}
+                            disabled={processing === rejectTarget.receipt_id}
+                        >
+                            {processing === rejectTarget.receipt_id ? 'Rejecting...' : 'Confirm Rejection'}
+                        </button>
+                    </div>
+                </Modal>
             )}
         </div>
     )
