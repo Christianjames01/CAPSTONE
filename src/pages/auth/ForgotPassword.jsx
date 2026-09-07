@@ -29,7 +29,10 @@ function ForgotPassword() {
         }
 
         setStatus('success')
-        setMessage('If an account exists for that email, a password reset link has been sent. Check your inbox.')
+        setMessage(
+            'If an account exists for that email, a password reset link has been sent. Check your inbox. ' +
+            "If you don't receive an email within a few minutes, double-check the email address you registered with, or contact the Registrar's Office for help."
+        )
     }
 
     return (
