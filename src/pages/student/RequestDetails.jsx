@@ -60,8 +60,8 @@ const STATUS_META = {
     rejected: {
         label: 'Rejected',
         tone: 'danger',
-        title: 'Request Rejected',
-        message: 'Your request has been rejected. See the reason below.',
+        title: 'Receipt Invalid',
+        message: 'Your official receipt could not be verified. Please upload a new receipt to continue your request.',
     },
     cancelled: {
         label: 'Cancelled',
@@ -872,6 +872,25 @@ function RequestDetails() {
                             onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
                         >
                             Upload Official Receipt
+                        </button>
+                    </div>
+                )}
+
+                {request.status === 'rejected' && (
+                    <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
+                        <h3 style={{ fontSize: 15, marginBottom: 10 }}>Receipt Invalid — Please Upload a New Receipt</h3>
+
+                        <p style={{ color: 'var(--slate)', fontSize: 13.5, marginBottom: 12 }}>
+                            Your uploaded receipt could not be verified — see the reason above. Upload a
+                            clearer or corrected copy to continue your request; you do not need to pay again.
+                        </p>
+
+                        <button
+                            className="auth-submit"
+                            style={{ width: 'auto', padding: '11px 20px' }}
+                            onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
+                        >
+                            Upload New Receipt
                         </button>
                     </div>
                 )}
