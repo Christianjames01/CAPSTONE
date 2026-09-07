@@ -679,7 +679,7 @@ select.employee-textarea {
 .office-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 8px;
 }
 
 .office-calendar-weekday-head {
@@ -689,19 +689,19 @@ select.employee-textarea {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--slate);
-    padding-bottom: 6px;
+    padding-bottom: 10px;
 }
 
 .office-calendar-cell {
     position: relative;
-    min-height: 44px;
-    border-radius: 8px;
+    min-height: 84px;
+    border-radius: 10px;
     border: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    padding: 6px;
-    gap: 3px;
-    font-size: 12.5px;
+    padding: 8px;
+    gap: 4px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--ink);
     background: var(--paper);
@@ -771,6 +771,7 @@ select.employee-textarea {
 }
 
 .office-calendar-cell-chip {
+    margin-top: auto;
     display: inline-flex;
     align-items: center;
     gap: 5px;
