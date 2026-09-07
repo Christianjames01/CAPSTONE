@@ -473,10 +473,14 @@ function OfficeCalendar() {
                                 classes.push('is-has-event')
                             }
 
+                            const itemCount = dayEvents.length > 0 ? dayEvents.length : (openEntry && isWeekend ? 1 : 0)
+                            const cellStyle = itemCount > 1 ? { minHeight: `${84 + (itemCount - 1) * 26}px` } : undefined
+
                             return (
                                 <div
                                     className={classes.join(' ')}
                                     key={dateStr}
+                                    style={cellStyle}
                                     onClick={() => openDayModal(dateStr)}
                                 >
                                     <span className="office-calendar-cell-daynum">{date.getDate()}</span>
