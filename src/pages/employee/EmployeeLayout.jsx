@@ -14,6 +14,7 @@ const NAV_ITEMS = [
     { to: '/employee/verification', label: 'Request Verification', icon: <IconShieldCheck />, fullAccessOnly: true },
     { to: '/employee/processing', label: 'Document Processing', icon: <IconGear />, fullAccessOnly: true },
     { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
+    { to: '/employee/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/employee/students', label: 'Students', icon: <IconUsers />, fullAccessOnly: true },
     { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
