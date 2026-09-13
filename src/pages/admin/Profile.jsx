@@ -28,6 +28,13 @@ function Profile() {
     const [passwordError, setPasswordError] = useState('')
     const [passwordMessage, setPasswordMessage] = useState('')
 
+    const [changingEmail, setChangingEmail] = useState(false)
+    const [emailCurrentPassword, setEmailCurrentPassword] = useState('')
+    const [newEmail, setNewEmail] = useState('')
+    const [emailSaving, setEmailSaving] = useState(false)
+    const [emailError, setEmailError] = useState('')
+    const [emailMessage, setEmailMessage] = useState('')
+
     useEffect(() => {
         loadProfile()
     }, [])
@@ -162,6 +169,58 @@ function Profile() {
         }
     }
 
+    const changeEmail = async () => {
+        setEmailError('')
+        setEmailMessage('')
+
+        const trimmedEmail = newEmail.trim()
+
+        if (!emailCurrentPassword || !trimmedEmail) {
+            setEmailError('Please fill in all fields.')
+            return
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            setEmailError('Please enter a valid email address.')
+            return
+        }
+
+        if (trimmedEmail.toLowerCase() === (profile?.email || '').toLowerCase()) {
+            setEmailError('That is already your current email.')
+            return
+        }
+
+        try {
+            setEmailSaving(true)
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: profile.email,
+                password: emailCurrentPassword,
+            })
+
+            if (signInError) {
+                throw new Error('Current password is incorrect.')
+            }
+
+            const { error: updateError } = await supabase.auth.updateUser({ email: trimmedEmail })
+
+            if (updateError) {
+                throw new Error(updateError.message)
+            }
+
+            setEmailMessage(`A confirmation link has been sent to ${trimmedEmail}. Your login email won't change until you click that link — keep signing in with your current email until then.`)
+            setEmailCurrentPassword('')
+            setNewEmail('')
+            setChangingEmail(false)
+
+        } catch (err) {
+            console.error('CHANGE EMAIL ERROR:', err)
+            setEmailError(err.message || 'Failed to change email.')
+        } finally {
+            setEmailSaving(false)
+        }
+    }
+
     const fullName = profile
         ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ')
         : ''
@@ -268,6 +327,84 @@ function Profile() {
                                 className="admin-secondary-button"
                                 onClick={() => { setPhoneNumber(profile?.phone_number || ''); setEditing(false) }}
                                 disabled={saving}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            <div className="admin-card">
+                <div className="admin-page-header-row">
+                    <h2 style={{ fontSize: 16 }}>Login Email</h2>
+                    <button className="admin-link-button" onClick={() => setChangingEmail(true)}>
+                        Change email
+                    </button>
+                </div>
+
+                {emailMessage && <div className="admin-success-box" style={{ marginTop: 16 }}>{emailMessage}</div>}
+                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: emailMessage ? 0 : 16 }}>
+                    Change the email address you use to log in. You'll need to confirm the new address before it takes effect.
+                </p>
+            </div>
+
+            {changingEmail && (
+                <Modal
+                    title="Change Login Email"
+                    onClose={() => {
+                        if (emailSaving) return
+                        setEmailCurrentPassword('')
+                        setNewEmail('')
+                        setEmailError('')
+                        setChangingEmail(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div className="form-group">
+                            <label className="form-label">Current Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={emailCurrentPassword}
+                                onChange={(e) => setEmailCurrentPassword(e.target.value)}
+                                disabled={emailSaving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">New Email Address</label>
+                            <input
+                                className="form-input"
+                                type="email"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                placeholder="you@hcdc.edu.ph"
+                                disabled={emailSaving}
+                            />
+                        </div>
+
+                        {emailError && <div className="admin-error-box">{emailError}</div>}
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                className="auth-submit"
+                                style={{ width: 'auto', padding: '11px 20px' }}
+                                onClick={changeEmail}
+                                disabled={emailSaving}
+                            >
+                                {emailSaving ? 'Saving...' : 'Send confirmation link'}
+                            </button>
+
+                            <button
+                                className="admin-secondary-button"
+                                onClick={() => {
+                                    setEmailCurrentPassword('')
+                                    setNewEmail('')
+                                    setEmailError('')
+                                    setChangingEmail(false)
+                                }}
+                                disabled={emailSaving}
                             >
                                 Cancel
                             </button>
