@@ -11,6 +11,7 @@ import './AdminPages.css'
 function Profile() {
     const [profile, setProfile] = useState(null)
     const [employee, setEmployee] = useState(null)
+    const [authEmail, setAuthEmail] = useState('')
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -52,6 +53,8 @@ function Profile() {
             if (userError || !user) {
                 throw new Error('You are not logged in.')
             }
+
+            setAuthEmail(user.email || '')
 
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
@@ -141,7 +144,7 @@ function Profile() {
             setPasswordSaving(true)
 
             const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: profile.email,
+                email: authEmail,
                 password: currentPassword,
             })
 
@@ -185,8 +188,8 @@ function Profile() {
             return
         }
 
-        if (trimmedEmail.toLowerCase() === (profile?.email || '').toLowerCase()) {
-            setEmailError('That is already your current email.')
+        if (trimmedEmail.toLowerCase() === authEmail.toLowerCase()) {
+            setEmailError('That is already your current login email.')
             return
         }
 
@@ -194,7 +197,7 @@ function Profile() {
             setEmailSaving(true)
 
             const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: profile.email,
+                email: authEmail,
                 password: emailCurrentPassword,
             })
 
@@ -290,7 +293,7 @@ function Profile() {
                 </div>
 
                 <div className="admin-info-grid" style={{ marginTop: 16 }}>
-                    <div className="admin-info-field"><span>Email</span><strong>{profile?.email || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Email</span><strong>{authEmail || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Phone Number</span><strong>{profile?.phone_number || 'Not set'}</strong></div>
                 </div>
             </div>
