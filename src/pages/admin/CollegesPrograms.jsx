@@ -370,10 +370,10 @@ function CollegesPrograms() {
         <div>
             <div className="admin-page-header-row">
                 <div className="admin-page-header">
-                    <h1>Colleges & Programs</h1>
+                    <h1>Academic Divisions & Programs</h1>
                     <p>Manage the colleges and academic programs students can belong to.</p>
                 </div>
-                <button className="admin-primary-button" onClick={openAddModal}>+ Add Colleges & Programs</button>
+                <button className="admin-primary-button" onClick={openAddModal}>+ Add Academic Divisions & Programs</button>
             </div>
 
             <div className="admin-filter-row">
@@ -534,7 +534,7 @@ function CollegesPrograms() {
 
             {showAddModal && (
                 <Modal
-                    title="Add Colleges & Programs"
+                    title="Add Academic Divisions & Programs"
                     maxWidth={640}
                     onClose={() => { if (addingBulk) return; setShowAddModal(false) }}
                 >
