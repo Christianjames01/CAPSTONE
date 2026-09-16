@@ -16,7 +16,7 @@ const NAV_ITEMS = [
     { to: '/admin/employees', label: 'Employees', icon: <IconUsers /> },
     { to: '/admin/students', label: 'Students', icon: <IconIdCard /> },
     { to: '/admin/documents', label: 'Documents', icon: <IconDocument /> },
-    { to: '/admin/colleges-programs', label: 'Colleges & Programs', icon: <IconBuilding /> },
+    { to: '/admin/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
     { to: '/admin/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
     { to: '/admin/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/admin/receipts', label: 'Official Receipts', icon: <IconReceipt /> },

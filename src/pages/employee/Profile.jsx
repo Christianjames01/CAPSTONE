@@ -304,7 +304,7 @@ function Profile() {
             </div>
 
             <div className="employee-card">
-                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Assigned Colleges & Programs</h2>
+                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Assigned Academic Divisions & Programs</h2>
 
                 {assignments.length === 0 ? (
                     <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>
