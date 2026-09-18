@@ -48,6 +48,20 @@ function isWeekendDate(dateStr) {
     return dow === 0 || dow === 6
 }
 
+// Every date from start to end, inclusive, as 'YYYY-MM-DD' strings -- used
+// to apply one event/note to a whole span of days (e.g. the 20th to the
+// 26th) in a single action instead of one day at a time.
+function eachDateInRange(startStr, endStr) {
+    const dates = []
+    let cursor = new Date(`${startStr}T00:00:00`)
+    const end = new Date(`${endStr}T00:00:00`)
+    while (cursor <= end) {
+        dates.push(formatLocal(cursor))
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1)
+    }
+    return dates
+}
+
 function buildMonthGrid(viewDate) {
     const year = viewDate.getFullYear()
     const month = viewDate.getMonth()
@@ -80,6 +94,13 @@ function OfficeCalendar() {
     const [togglingOpen, setTogglingOpen] = useState(false)
     const [removingEventId, setRemovingEventId] = useState(null)
     const [removingOpenDayId, setRemovingOpenDayId] = useState(null)
+
+    const [showRangeModal, setShowRangeModal] = useState(false)
+    const [rangeStart, setRangeStart] = useState('')
+    const [rangeEnd, setRangeEnd] = useState('')
+    const [rangeTitle, setRangeTitle] = useState('')
+    const [rangeNote, setRangeNote] = useState('')
+    const [addingRange, setAddingRange] = useState(false)
 
     useEffect(() => {
         loadAll()
@@ -342,6 +363,79 @@ function OfficeCalendar() {
         }
     }
 
+    const openRangeModal = () => {
+        setRangeStart(getToday())
+        setRangeEnd(getToday())
+        setRangeTitle('')
+        setRangeNote('')
+        setShowRangeModal(true)
+    }
+
+    const rangeDates = rangeStart && rangeEnd && rangeStart <= rangeEnd ? eachDateInRange(rangeStart, rangeEnd) : []
+
+    const addRangeEvent = async () => {
+        if (!rangeTitle.trim()) {
+            notifyWarning('Please enter a title for this event.')
+            return
+        }
+
+        if (!rangeStart || !rangeEnd) {
+            notifyWarning('Please pick a start and end date.')
+            return
+        }
+
+        if (rangeStart > rangeEnd) {
+            notifyWarning('The start date must be on or before the end date.')
+            return
+        }
+
+        const dates = eachDateInRange(rangeStart, rangeEnd)
+
+        const confirmed = await confirmModal(
+            `Add "${rangeTitle.trim()}" to every day from ${formatDate(rangeStart)} to ${formatDate(rangeEnd)}? (${dates.length} day${dates.length === 1 ? '' : 's'})`
+        )
+        if (!confirmed) return
+
+        try {
+            setAddingRange(true)
+
+            const {
+                data: { user },
+                error: userError,
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) throw new Error('You are not logged in.')
+
+            const rows = dates.map((event_date) => ({
+                event_date,
+                title: rangeTitle.trim(),
+                note: rangeNote.trim() || null,
+                created_by: user.id,
+            }))
+
+            const { error: insertError } = await supabase.from('office_events').insert(rows)
+            if (insertError) throw new Error(insertError.message)
+
+            await logActivity({
+                userId: user.id,
+                action: 'add_office_event',
+                tableName: 'office_events',
+                recordId: null,
+                description: `Added office event "${rangeTitle.trim()}" to ${dates.length} day(s), ${formatDate(rangeStart)} to ${formatDate(rangeEnd)}.`,
+            })
+
+            notifySuccess(`Added to ${dates.length} day${dates.length === 1 ? '' : 's'}.`)
+            setShowRangeModal(false)
+            await loadAll()
+
+        } catch (err) {
+            console.error('ADD RANGE EVENT ERROR:', err)
+            notifyError(err.message || 'Failed to add event to the selected range.')
+        } finally {
+            setAddingRange(false)
+        }
+    }
+
     const monthLabel = viewDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })
     const today = getToday()
 
@@ -362,7 +456,10 @@ function OfficeCalendar() {
                     </p>
                 </div>
 
-                <button className="admin-primary-button" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button className="admin-secondary-button" onClick={openRangeModal}>+ Add for a Range</button>
+                    <button className="admin-primary-button" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
+                </div>
             </div>
 
             <div className="office-calendar-layout">
@@ -641,6 +738,104 @@ function OfficeCalendar() {
                     <button className="admin-secondary-button" onClick={addEvent} disabled={saving}>
                         {saving ? 'Adding...' : '+ Add Event'}
                     </button>
+                </Modal>
+            )}
+
+            {showRangeModal && (
+                <Modal
+                    title="Add Event to a Range of Days"
+                    maxWidth={480}
+                    onClose={() => { if (addingRange) return; setShowRangeModal(false) }}
+                >
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>
+                        Applies the same event/note to every day in the range (e.g. the 20th to the
+                        26th), including weekends, so you don't have to add it one day at a time.
+                    </p>
+
+                    <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="range-start">Start Date</label>
+                            <input
+                                id="range-start"
+                                type="date"
+                                className="form-input"
+                                value={rangeStart}
+                                onChange={(e) => setRangeStart(e.target.value)}
+                                disabled={addingRange}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="range-end">End Date</label>
+                            <input
+                                id="range-end"
+                                type="date"
+                                className="form-input"
+                                value={rangeEnd}
+                                onChange={(e) => setRangeEnd(e.target.value)}
+                                disabled={addingRange}
+                            />
+                        </div>
+                    </div>
+
+                    {rangeStart && rangeEnd && rangeStart > rangeEnd && (
+                        <p style={{ fontSize: 12.5, color: 'var(--red)', marginBottom: 12 }}>
+                            Start date must be on or before the end date.
+                        </p>
+                    )}
+
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                        <label className="form-label" htmlFor="range-title">Event Title</label>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            {EVENT_PRESETS.map((preset) => (
+                                <button
+                                    type="button"
+                                    key={preset}
+                                    className="admin-filter-chip"
+                                    style={{ fontSize: 12 }}
+                                    onClick={() => setRangeTitle(preset)}
+                                    disabled={addingRange}
+                                >
+                                    {preset}
+                                </button>
+                            ))}
+                        </div>
+
+                        <input
+                            id="range-title"
+                            type="text"
+                            className="form-input"
+                            value={rangeTitle}
+                            onChange={(e) => setRangeTitle(e.target.value)}
+                            placeholder="e.g. Mental Health Break"
+                            disabled={addingRange}
+                        />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 16 }}>
+                        <label className="form-label" htmlFor="range-note">Note (optional)</label>
+                        <textarea
+                            id="range-note"
+                            className="form-input"
+                            rows={2}
+                            value={rangeNote}
+                            onChange={(e) => setRangeNote(e.target.value)}
+                            placeholder="Any additional details"
+                            disabled={addingRange}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <button className="admin-primary-button" onClick={addRangeEvent} disabled={addingRange}>
+                            {addingRange
+                                ? 'Adding...'
+                                : `Add to ${rangeDates.length} Day${rangeDates.length === 1 ? '' : 's'}`}
+                        </button>
+                        <button className="admin-secondary-button" onClick={() => setShowRangeModal(false)} disabled={addingRange}>
+                            Cancel
+                        </button>
+                    </div>
                 </Modal>
             )}
         </div>
