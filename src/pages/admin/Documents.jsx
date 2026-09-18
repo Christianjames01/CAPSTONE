@@ -59,6 +59,7 @@ function Documents() {
     const [form, setForm] = useState(EMPTY_FORM)
     const [showForm, setShowForm] = useState(false)
     const [availabilityFilter, setAvailabilityFilter] = useState('all')
+    const [categoryFilter, setCategoryFilter] = useState('all')
     const [search, setSearch] = useState('')
 
     const [expandedId, setExpandedId] = useState(null)
@@ -475,6 +476,8 @@ function Documents() {
         if (availabilityFilter === 'available' && !doc.is_available) return false
         if (availabilityFilter === 'unavailable' && doc.is_available) return false
 
+        if (categoryFilter !== 'all' && (doc.category || '') !== categoryFilter) return false
+
         if (!query) return true
 
         return (
@@ -636,13 +639,33 @@ function Documents() {
                 ))}
             </div>
 
+            <div className="admin-filter-row" style={{ marginTop: 8 }}>
+                <button
+                    className={`admin-filter-chip${categoryFilter === 'all' ? ' active' : ''}`}
+                    onClick={() => setCategoryFilter('all')}
+                >
+                    All categories
+                </button>
+                {DOCUMENT_CATEGORIES.map((c) => (
+                    <button
+                        key={c.value}
+                        className={`admin-filter-chip${categoryFilter === c.value ? ' active' : ''}`}
+                        onClick={() => setCategoryFilter(c.value)}
+                    >
+                        {c.label} ({documents.filter((d) => d.category === c.value).length})
+                    </button>
+                ))}
+            </div>
+
             {loading ? (
                 <SkeletonList count={3} />
             ) : visibleDocuments.length === 0 ? (
                 <div className="admin-empty" style={{ marginTop: 16 }}>
                     {query
                         ? `No document types matched "${search.trim()}".`
-                        : availabilityFilter === 'unavailable' ? 'No unavailable document types.' : 'No document types found.'}
+                        : categoryFilter !== 'all'
+                            ? `No document types in the "${categoryLabel(categoryFilter)}" category.`
+                            : availabilityFilter === 'unavailable' ? 'No unavailable document types.' : 'No document types found.'}
                 </div>
             ) : (
                 visibleDocuments.map((doc) => (
