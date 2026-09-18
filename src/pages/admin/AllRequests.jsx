@@ -86,7 +86,7 @@ function AllRequests() {
 
             const [{ data: students }, { data: documentTypes }, { data: employees }] = await Promise.all([
                 studentIds.length
-                    ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
+                    ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
                 documentTypeIds.length
                     ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
@@ -96,27 +96,32 @@ function AllRequests() {
                     : Promise.resolve({ data: [] }),
             ])
 
-            const employeeUserIds = [...new Set((employees || []).map((e) => e.user_id))]
+            const employeeUserIds = (employees || []).map((e) => e.user_id)
+            const studentUserIds = (students || []).map((s) => s.user_id)
+            const profileUserIds = [...new Set([...employeeUserIds, ...studentUserIds].filter(Boolean))]
 
-            const { data: profiles } = employeeUserIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', employeeUserIds)
+            const { data: profiles } = profileUserIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', profileUserIds)
                 : { data: [] }
 
             const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
             const employeeById = Object.fromEntries((employees || []).map((e) => [e.employee_id, e]))
-            const studentNumberById = Object.fromEntries((students || []).map((s) => [s.student_id, s.student_number]))
+            const studentById = Object.fromEntries((students || []).map((s) => [s.student_id, s]))
             const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
 
             setRequests(
                 data.map((r) => {
                     const employee = employeeById[r.assigned_employee_id]
-                    const profile = employee ? profileByUserId[employee.user_id] : null
+                    const employeeProfile = employee ? profileByUserId[employee.user_id] : null
+                    const student = studentById[r.student_id]
+                    const studentProfile = student ? profileByUserId[student.user_id] : null
 
                     return {
                         ...r,
-                        studentNumber: studentNumberById[r.student_id] || 'N/A',
+                        studentNumber: student?.student_number || 'N/A',
+                        studentName: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
                         documentName: documentNameById[r.document_type_id] || 'Document',
-                        employeeName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unassigned',
+                        employeeName: employeeProfile ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim() : 'Unassigned',
                     }
                 })
             )
@@ -137,6 +142,7 @@ function AllRequests() {
             return (
                 r.request_number.toLowerCase().includes(term) ||
                 r.studentNumber.toLowerCase().includes(term) ||
+                r.studentName.toLowerCase().includes(term) ||
                 r.documentName.toLowerCase().includes(term)
             )
         })
@@ -313,6 +319,9 @@ function AllRequests() {
                                     style={{ marginTop: 4 }}
                                 />
                                 <div>
+                                    <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
+                                        {request.studentName || `Student ${request.studentNumber}`}
+                                    </p>
                                     <h3>{request.documentName}</h3>
                                     <p>
                                         {request.request_number} · Student {request.studentNumber} · Assigned to {request.employeeName}
