@@ -61,6 +61,7 @@ import EmployeeDetails from './pages/admin/EmployeeDetails'
 import AdminStudents from './pages/admin/Students'
 import AdminStudentDetails from './pages/admin/StudentDetails'
 import AdminDocuments from './pages/admin/Documents'
+import Announcements from './pages/admin/Announcements'
 import CollegesPrograms from './pages/admin/CollegesPrograms'
 import AdminClaimSchedules from './pages/admin/ClaimSchedules'
 import OfficeCalendar from './pages/admin/OfficeCalendar'
@@ -364,6 +365,11 @@ function App() {
           <Route
             path="/admin/documents"
             element={<AdminDocuments />}
+          />
+
+          <Route
+            path="/admin/announcements"
+            element={<Announcements />}
           />
 
           <Route

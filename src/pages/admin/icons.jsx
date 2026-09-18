@@ -6,6 +6,13 @@ export const IconLayers = () => (
     </svg>
 )
 
+export const IconMegaphone = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 10v4a1 1 0 0 0 1 1h2l3.5 4.5V4.5L6 9H4a1 1 0 0 0-1 1Z" />
+        <path d="M14 8.5c1.5 1 1.5 6 0 7M17.5 6c2.5 2 2.5 10 0 12" />
+    </svg>
+)
+
 export const IconBuilding = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="3.5" width="14" height="17" rx="1.2" />

@@ -5,7 +5,7 @@ import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
-import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart } from './icons'
+import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import './AdminLayout.css'
 
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
     { to: '/admin/employees', label: 'Employees', icon: <IconUsers /> },
     { to: '/admin/students', label: 'Students', icon: <IconIdCard /> },
     { to: '/admin/documents', label: 'Documents', icon: <IconDocument /> },
+    { to: '/admin/announcements', label: 'Announcements', icon: <IconMegaphone /> },
     { to: '/admin/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
     { to: '/admin/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
     { to: '/admin/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },

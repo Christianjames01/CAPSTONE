@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
+import { fetchActiveAnnouncements } from '../../lib/announcements'
 import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
 import { SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
@@ -43,6 +44,7 @@ function Dashboard() {
     const [missedClaimCount, setMissedClaimCount] = useState(0)
     const [latestMessage, setLatestMessage] = useState(null)
     const [unreadMessageCount, setUnreadMessageCount] = useState(0)
+    const [announcements, setAnnouncements] = useState([])
     const [loading, setLoading] = useState(true)
 
     const navigate = useNavigate()
@@ -64,6 +66,8 @@ function Dashboard() {
                 setLoading(false)
                 return
             }
+
+            setAnnouncements(await fetchActiveAnnouncements('show_to_students'))
 
             const { data: profile } = await supabase
                 .from('profiles')
@@ -255,6 +259,13 @@ function Dashboard() {
 
             {!loading && (
                 <>
+                    {announcements.map((a) => (
+                        <div className="student-notice tone-info" style={{ marginTop: 0, marginBottom: 16 }} key={a.announcement_id}>
+                            <strong>{a.title}</strong>
+                            <p>{a.message}</p>
+                        </div>
+                    ))}
+
                     <div className="student-stat-grid" style={{ marginBottom: 24 }}>
                         <button
                             className="student-stat-card"
