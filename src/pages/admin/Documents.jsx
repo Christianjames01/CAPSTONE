@@ -11,6 +11,7 @@ import '../auth/Auth.css'
 import './AdminPages.css'
 
 const DOCUMENT_CATEGORIES = [
+    { value: 'certificate', label: 'Certificate' },
     { value: 'enrollment', label: 'Enrollment' },
     { value: 'academic_records', label: 'Academic Records' },
     { value: 'graduation', label: 'Graduation' },
