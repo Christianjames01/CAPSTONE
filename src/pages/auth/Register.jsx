@@ -347,7 +347,7 @@ function Register() {
 
                 <div className="auth-form-row">
                     <div className="form-group">
-                        <label className="form-label" htmlFor="student-number">Student Number</label>
+                        <label className="form-label" htmlFor="student-number">Student ID Number</label>
                         <input
                             id="student-number"
                             type="text"
