@@ -80,16 +80,19 @@ function OfficeCalendar() {
             setLoading(true)
             setError('')
 
+            // Fetch all open days/events, not just today-and-future, so the
+            // registrar head can also mark past weekends open or add past
+            // events/notes (e.g. backfilling something that was missed),
+            // and so those past entries render correctly on the calendar
+            // grid and are recognized as "already set" when toggling.
             const [openDaysRes, eventsRes] = await Promise.all([
                 supabase
                     .from('office_open_days')
                     .select('open_day_id, open_date, note')
-                    .gte('open_date', getToday())
                     .order('open_date', { ascending: true }),
                 supabase
                     .from('office_events')
                     .select('event_id, event_date, title, note')
-                    .gte('event_date', getToday())
                     .order('event_date', { ascending: true }),
             ])
 
@@ -122,6 +125,12 @@ function OfficeCalendar() {
     }, [events])
 
     const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate])
+
+    // The sidebar is meant as an at-a-glance look-ahead, so it stays
+    // upcoming-only even though `events`/`openDays` now also hold past
+    // entries (needed for the calendar grid and for past-day editing).
+    const upcomingEvents = useMemo(() => events.filter((ev) => ev.event_date >= getToday()), [events])
+    const upcomingOpenDays = useMemo(() => openDays.filter((d) => d.open_date >= getToday()), [openDays])
 
     const goToMonth = (delta) => {
         setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
@@ -375,11 +384,11 @@ function OfficeCalendar() {
 
                         {loading ? (
                             <SkeletonList count={2} />
-                        ) : events.length === 0 ? (
+                        ) : upcomingEvents.length === 0 ? (
                             <div className="office-calendar-sidebar-empty">No upcoming events added yet.</div>
                         ) : (
                             <div className="office-calendar-sidebar-list">
-                                {events.map((ev) => (
+                                {upcomingEvents.map((ev) => (
                                     <div className="office-calendar-sidebar-item office-calendar-sidebar-item-event" key={ev.event_id}>
                                         <div>
                                             <div className="office-calendar-sidebar-item-date">{formatDateShort(ev.event_date)}</div>
@@ -404,11 +413,11 @@ function OfficeCalendar() {
 
                         {loading ? (
                             <SkeletonList count={2} />
-                        ) : openDays.length === 0 ? (
+                        ) : upcomingOpenDays.length === 0 ? (
                             <div className="office-calendar-sidebar-empty">None added yet — tap a weekend on the calendar.</div>
                         ) : (
                             <div className="office-calendar-sidebar-list">
-                                {openDays.map((day) => (
+                                {upcomingOpenDays.map((day) => (
                                     <div className="office-calendar-sidebar-item" key={day.open_day_id}>
                                         <div>
                                             <div className="office-calendar-sidebar-item-date">{formatDateShort(day.open_date)}</div>
@@ -522,14 +531,18 @@ function OfficeCalendar() {
                         >
                             <strong>{dayModalOpenEntry ? 'Office is open for claiming this day' : 'Weekend — office closed by default'}</strong>
                             <p style={{ marginBottom: 12 }}>
-                                {dayModalOpenEntry
-                                    ? 'Missed claims can be auto-rescheduled to this date.'
-                                    : 'Missed claims will skip this date unless marked open.'}
+                                {dayModalIsPast
+                                    ? dayModalOpenEntry
+                                        ? 'This past date is recorded as an open day.'
+                                        : 'Backfill this past date as an open day if claiming actually happened.'
+                                    : dayModalOpenEntry
+                                        ? 'Missed claims can be auto-rescheduled to this date.'
+                                        : 'Missed claims will skip this date unless marked open.'}
                             </p>
                             <button
                                 className={dayModalOpenEntry ? 'admin-danger-button' : 'admin-primary-button'}
                                 onClick={toggleOpenDay}
-                                disabled={togglingOpen || dayModalIsPast}
+                                disabled={togglingOpen}
                             >
                                 {togglingOpen
                                     ? 'Saving...'
@@ -567,39 +580,41 @@ function OfficeCalendar() {
                         </div>
                     )}
 
-                    {!dayModalIsPast && (
-                        <>
-                            <div className="form-group" style={{ marginBottom: 12 }}>
-                                <label className="form-label" htmlFor="event-title">Add an Event</label>
-                                <input
-                                    id="event-title"
-                                    type="text"
-                                    className="form-input"
-                                    value={newEventTitle}
-                                    onChange={(e) => setNewEventTitle(e.target.value)}
-                                    placeholder="e.g. Enrollment Week, Office Closed — Holiday"
-                                    disabled={saving}
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: 16 }}>
-                                <label className="form-label" htmlFor="event-note">Note (optional)</label>
-                                <textarea
-                                    id="event-note"
-                                    className="form-input"
-                                    rows={2}
-                                    value={newEventNote}
-                                    onChange={(e) => setNewEventNote(e.target.value)}
-                                    placeholder="Any additional details"
-                                    disabled={saving}
-                                />
-                            </div>
-
-                            <button className="admin-secondary-button" onClick={addEvent} disabled={saving}>
-                                {saving ? 'Adding...' : '+ Add Event'}
-                            </button>
-                        </>
+                    {dayModalIsPast && (
+                        <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 12 }}>
+                            This is a past date — you can still add a note for the record.
+                        </p>
                     )}
+
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                        <label className="form-label" htmlFor="event-title">Add an Event</label>
+                        <input
+                            id="event-title"
+                            type="text"
+                            className="form-input"
+                            value={newEventTitle}
+                            onChange={(e) => setNewEventTitle(e.target.value)}
+                            placeholder="e.g. Enrollment Week, Office Closed — Holiday"
+                            disabled={saving}
+                        />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 16 }}>
+                        <label className="form-label" htmlFor="event-note">Note (optional)</label>
+                        <textarea
+                            id="event-note"
+                            className="form-input"
+                            rows={2}
+                            value={newEventNote}
+                            onChange={(e) => setNewEventNote(e.target.value)}
+                            placeholder="Any additional details"
+                            disabled={saving}
+                        />
+                    </div>
+
+                    <button className="admin-secondary-button" onClick={addEvent} disabled={saving}>
+                        {saving ? 'Adding...' : '+ Add Event'}
+                    </button>
                 </Modal>
             )}
         </div>
