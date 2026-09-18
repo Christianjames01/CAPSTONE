@@ -74,9 +74,15 @@ function Documents() {
         loadDocuments()
     }, [])
 
-    const loadDocuments = async () => {
+    // `silent` skips the loading/skeleton state for refreshes after a save,
+    // availability toggle, or import. Swapping the list for the skeleton
+    // mid-edit shrinks the page and makes the browser clamp scroll back
+    // near the top, so once the full list re-renders it looks like the
+    // page jumped up even though nothing intentionally scrolled the admin
+    // away from their spot.
+    const loadDocuments = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data, error: loadError } = await supabase
@@ -94,7 +100,7 @@ function Documents() {
             console.error('DOCUMENTS ERROR:', err)
             setError(err.message || 'Failed to load document types.')
         } finally {
-            setLoading(false)
+            if (!silent) setLoading(false)
         }
     }
 
@@ -229,7 +235,7 @@ function Documents() {
             }
 
             setImportSummary({ added, updated, failed })
-            await loadDocuments()
+            await loadDocuments({ silent: true })
 
         } catch (err) {
             console.error('IMPORT ERROR:', err)
@@ -336,7 +342,7 @@ function Documents() {
 
             setShowForm(false)
             setForm(EMPTY_FORM)
-            await loadDocuments()
+            await loadDocuments({ silent: true })
 
         } catch (err) {
             console.error('SAVE DOCUMENT ERROR:', err)
@@ -369,7 +375,7 @@ function Documents() {
                 `${doc.is_available ? 'Disabled' : 'Enabled'} document type "${doc.document_name}".`
             )
 
-            await loadDocuments()
+            await loadDocuments({ silent: true })
 
         } catch (err) {
             console.error('TOGGLE AVAILABILITY ERROR:', err)
