@@ -47,9 +47,14 @@ function CollegesPrograms() {
         loadData()
     }, [])
 
-    const loadData = async () => {
+    // `silent` skips the loading/skeleton state for refreshes after a save,
+    // toggle, or bulk-add. Swapping the list for a short skeleton mid-edit
+    // shrinks the page and makes the browser clamp scroll back near the top,
+    // so once the full list re-renders it looks like the page jumped up even
+    // though nothing intentionally scrolled the admin away from their spot.
+    const loadData = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const [{ data: collegeRows, error: collegeError }, { data: programRows, error: programError }] = await Promise.all([
@@ -67,7 +72,7 @@ function CollegesPrograms() {
             console.error('COLLEGES/PROGRAMS ERROR:', err)
             setError(err.message || 'Failed to load data.')
         } finally {
-            setLoading(false)
+            if (!silent) setLoading(false)
         }
     }
 
@@ -112,7 +117,7 @@ function CollegesPrograms() {
             await logAdmin('edit_college', 'colleges', collegeForm.college_id, `Updated college "${payload.college_name}".${collegeChanges ? ' ' + collegeChanges + '.' : ''}`)
 
             setShowCollegeForm(false)
-            await loadData()
+            await loadData({ silent: true })
 
         } catch (err) {
             console.error('SAVE COLLEGE ERROR:', err)
@@ -136,7 +141,7 @@ function CollegesPrograms() {
             const { error: updateError } = await supabase.from('colleges').update({ status: nextStatus }).eq('college_id', college.college_id)
             if (updateError) throw new Error(updateError.message)
             await logAdmin('toggle_college_status', 'colleges', college.college_id, `Set college "${college.college_name}" status from "${college.status}" to "${nextStatus}".`)
-            await loadData()
+            await loadData({ silent: true })
         } catch (err) {
             notifyError(err.message || 'Failed to update college status.')
         }
@@ -180,7 +185,7 @@ function CollegesPrograms() {
             await logAdmin('edit_program', 'programs', programForm.program_id, `Updated program "${payload.program_name}".${programChanges ? ' ' + programChanges + '.' : ''}`)
 
             setShowProgramForm(false)
-            await loadData()
+            await loadData({ silent: true })
 
         } catch (err) {
             console.error('SAVE PROGRAM ERROR:', err)
@@ -204,7 +209,7 @@ function CollegesPrograms() {
             const { error: updateError } = await supabase.from('programs').update({ status: nextStatus }).eq('program_id', program.program_id)
             if (updateError) throw new Error(updateError.message)
             await logAdmin('toggle_program_status', 'programs', program.program_id, `Set program "${program.program_name}" status from "${program.status}" to "${nextStatus}".`)
-            await loadData()
+            await loadData({ silent: true })
         } catch (err) {
             notifyError(err.message || 'Failed to update program status.')
         }
@@ -341,7 +346,7 @@ function CollegesPrograms() {
             }
 
             setShowAddModal(false)
-            await loadData()
+            await loadData({ silent: true })
 
         } catch (err) {
             console.error('BULK ADD ERROR:', err)
