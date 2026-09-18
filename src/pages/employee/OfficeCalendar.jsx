@@ -8,6 +8,16 @@ import './EmployeePages.css'
 
 const WEEKDAY_HEADS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+// Quick-fill presets for the most common day notes, so staff don't have
+// to retype the same wording each time (e.g. every fiesta/holiday closure).
+const EVENT_PRESETS = [
+    'Mental Health Break',
+    'Office Closed — Fiesta',
+    'Office Closed — Holiday',
+    'Enrollment Week',
+    'System Maintenance',
+]
+
 function formatLocal(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
@@ -36,6 +46,20 @@ function getToday() {
 function isWeekendDate(dateStr) {
     const dow = new Date(`${dateStr}T00:00:00`).getDay()
     return dow === 0 || dow === 6
+}
+
+// Every date from start to end, inclusive, as 'YYYY-MM-DD' strings -- used
+// to apply one event/note to a whole span of days (e.g. the 20th to the
+// 26th) in a single action instead of one day at a time.
+function eachDateInRange(startStr, endStr) {
+    const dates = []
+    let cursor = new Date(`${startStr}T00:00:00`)
+    const end = new Date(`${endStr}T00:00:00`)
+    while (cursor <= end) {
+        dates.push(formatLocal(cursor))
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1)
+    }
+    return dates
 }
 
 function buildMonthGrid(viewDate) {
@@ -71,6 +95,13 @@ function OfficeCalendar() {
     const [removingEventId, setRemovingEventId] = useState(null)
     const [removingOpenDayId, setRemovingOpenDayId] = useState(null)
 
+    const [showRangeModal, setShowRangeModal] = useState(false)
+    const [rangeStart, setRangeStart] = useState('')
+    const [rangeEnd, setRangeEnd] = useState('')
+    const [rangeTitle, setRangeTitle] = useState('')
+    const [rangeNote, setRangeNote] = useState('')
+    const [addingRange, setAddingRange] = useState(false)
+
     useEffect(() => {
         loadAll()
     }, [])
@@ -80,16 +111,19 @@ function OfficeCalendar() {
             setLoading(true)
             setError('')
 
+            // Fetch all open days/events, not just today-and-future, so
+            // staff can also mark past weekends open or add past
+            // events/notes (e.g. backfilling something that was missed),
+            // and so those past entries render correctly on the calendar
+            // grid and are recognized as "already set" when toggling.
             const [openDaysRes, eventsRes] = await Promise.all([
                 supabase
                     .from('office_open_days')
                     .select('open_day_id, open_date, note')
-                    .gte('open_date', getToday())
                     .order('open_date', { ascending: true }),
                 supabase
                     .from('office_events')
                     .select('event_id, event_date, title, note')
-                    .gte('event_date', getToday())
                     .order('event_date', { ascending: true }),
             ])
 
@@ -122,6 +156,12 @@ function OfficeCalendar() {
     }, [events])
 
     const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate])
+
+    // The sidebar is meant as an at-a-glance look-ahead, so it stays
+    // upcoming-only even though `events`/`openDays` now also hold past
+    // entries (needed for the calendar grid and for past-day editing).
+    const upcomingEvents = useMemo(() => events.filter((ev) => ev.event_date >= getToday()), [events])
+    const upcomingOpenDays = useMemo(() => openDays.filter((d) => d.open_date >= getToday()), [openDays])
 
     const goToMonth = (delta) => {
         setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
@@ -323,6 +363,79 @@ function OfficeCalendar() {
         }
     }
 
+    const openRangeModal = () => {
+        setRangeStart(getToday())
+        setRangeEnd(getToday())
+        setRangeTitle('')
+        setRangeNote('')
+        setShowRangeModal(true)
+    }
+
+    const rangeDates = rangeStart && rangeEnd && rangeStart <= rangeEnd ? eachDateInRange(rangeStart, rangeEnd) : []
+
+    const addRangeEvent = async () => {
+        if (!rangeTitle.trim()) {
+            notifyWarning('Please enter a title for this event.')
+            return
+        }
+
+        if (!rangeStart || !rangeEnd) {
+            notifyWarning('Please pick a start and end date.')
+            return
+        }
+
+        if (rangeStart > rangeEnd) {
+            notifyWarning('The start date must be on or before the end date.')
+            return
+        }
+
+        const dates = eachDateInRange(rangeStart, rangeEnd)
+
+        const confirmed = await confirmModal(
+            `Add "${rangeTitle.trim()}" to every day from ${formatDate(rangeStart)} to ${formatDate(rangeEnd)}? (${dates.length} day${dates.length === 1 ? '' : 's'})`
+        )
+        if (!confirmed) return
+
+        try {
+            setAddingRange(true)
+
+            const {
+                data: { user },
+                error: userError,
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) throw new Error('You are not logged in.')
+
+            const rows = dates.map((event_date) => ({
+                event_date,
+                title: rangeTitle.trim(),
+                note: rangeNote.trim() || null,
+                created_by: user.id,
+            }))
+
+            const { error: insertError } = await supabase.from('office_events').insert(rows)
+            if (insertError) throw new Error(insertError.message)
+
+            await logActivity({
+                userId: user.id,
+                action: 'add_office_event',
+                tableName: 'office_events',
+                recordId: null,
+                description: `Added office event "${rangeTitle.trim()}" to ${dates.length} day(s), ${formatDate(rangeStart)} to ${formatDate(rangeEnd)}.`,
+            })
+
+            notifySuccess(`Added to ${dates.length} day${dates.length === 1 ? '' : 's'}.`)
+            setShowRangeModal(false)
+            await loadAll()
+
+        } catch (err) {
+            console.error('ADD RANGE EVENT ERROR:', err)
+            notifyError(err.message || 'Failed to add event to the selected range.')
+        } finally {
+            setAddingRange(false)
+        }
+    }
+
     const monthLabel = viewDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })
     const today = getToday()
 
@@ -343,7 +456,10 @@ function OfficeCalendar() {
                     </p>
                 </div>
 
-                <button className="employee-primary-button" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button className="employee-secondary-button" onClick={openRangeModal}>+ Add for a Range</button>
+                    <button className="employee-primary-button" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
+                </div>
             </div>
 
             <div className="office-calendar-layout">
@@ -375,11 +491,11 @@ function OfficeCalendar() {
 
                         {loading ? (
                             <SkeletonList count={2} />
-                        ) : events.length === 0 ? (
+                        ) : upcomingEvents.length === 0 ? (
                             <div className="office-calendar-sidebar-empty">No upcoming events added yet.</div>
                         ) : (
                             <div className="office-calendar-sidebar-list">
-                                {events.map((ev) => (
+                                {upcomingEvents.map((ev) => (
                                     <div className="office-calendar-sidebar-item office-calendar-sidebar-item-event" key={ev.event_id}>
                                         <div>
                                             <div className="office-calendar-sidebar-item-date">{formatDateShort(ev.event_date)}</div>
@@ -404,11 +520,11 @@ function OfficeCalendar() {
 
                         {loading ? (
                             <SkeletonList count={2} />
-                        ) : openDays.length === 0 ? (
+                        ) : upcomingOpenDays.length === 0 ? (
                             <div className="office-calendar-sidebar-empty">None added yet — tap a weekend on the calendar.</div>
                         ) : (
                             <div className="office-calendar-sidebar-list">
-                                {openDays.map((day) => (
+                                {upcomingOpenDays.map((day) => (
                                     <div className="office-calendar-sidebar-item" key={day.open_day_id}>
                                         <div>
                                             <div className="office-calendar-sidebar-item-date">{formatDateShort(day.open_date)}</div>
@@ -522,14 +638,18 @@ function OfficeCalendar() {
                         >
                             <strong>{dayModalOpenEntry ? 'Office is open for claiming this day' : 'Weekend — office closed by default'}</strong>
                             <p style={{ marginBottom: 12 }}>
-                                {dayModalOpenEntry
-                                    ? 'Missed claims can be auto-rescheduled to this date.'
-                                    : 'Missed claims will skip this date unless marked open.'}
+                                {dayModalIsPast
+                                    ? dayModalOpenEntry
+                                        ? 'This past date is recorded as an open day.'
+                                        : 'Backfill this past date as an open day if claiming actually happened.'
+                                    : dayModalOpenEntry
+                                        ? 'Missed claims can be auto-rescheduled to this date.'
+                                        : 'Missed claims will skip this date unless marked open.'}
                             </p>
                             <button
                                 className={dayModalOpenEntry ? 'employee-danger-button' : 'employee-primary-button'}
                                 onClick={toggleOpenDay}
-                                disabled={togglingOpen || dayModalIsPast}
+                                disabled={togglingOpen}
                             >
                                 {togglingOpen
                                     ? 'Saving...'
@@ -567,39 +687,155 @@ function OfficeCalendar() {
                         </div>
                     )}
 
-                    {!dayModalIsPast && (
-                        <>
-                            <div className="form-group" style={{ marginBottom: 12 }}>
-                                <label className="form-label" htmlFor="event-title">Add an Event</label>
-                                <input
-                                    id="event-title"
-                                    type="text"
-                                    className="form-input"
-                                    value={newEventTitle}
-                                    onChange={(e) => setNewEventTitle(e.target.value)}
-                                    placeholder="e.g. Enrollment Week, Office Closed — Holiday"
-                                    disabled={saving}
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: 16 }}>
-                                <label className="form-label" htmlFor="event-note">Note (optional)</label>
-                                <textarea
-                                    id="event-note"
-                                    className="form-input"
-                                    rows={2}
-                                    value={newEventNote}
-                                    onChange={(e) => setNewEventNote(e.target.value)}
-                                    placeholder="Any additional details"
-                                    disabled={saving}
-                                />
-                            </div>
-
-                            <button className="employee-secondary-button" onClick={addEvent} disabled={saving}>
-                                {saving ? 'Adding...' : '+ Add Event'}
-                            </button>
-                        </>
+                    {dayModalIsPast && (
+                        <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 12 }}>
+                            This is a past date — you can still add a note for the record.
+                        </p>
                     )}
+
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                        <label className="form-label" htmlFor="event-title">Add an Event</label>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            {EVENT_PRESETS.map((preset) => (
+                                <button
+                                    type="button"
+                                    key={preset}
+                                    className="employee-filter-chip"
+                                    style={{ fontSize: 12 }}
+                                    onClick={() => setNewEventTitle(preset)}
+                                    disabled={saving}
+                                >
+                                    {preset}
+                                </button>
+                            ))}
+                        </div>
+
+                        <input
+                            id="event-title"
+                            type="text"
+                            className="form-input"
+                            value={newEventTitle}
+                            onChange={(e) => setNewEventTitle(e.target.value)}
+                            placeholder="e.g. Enrollment Week, Office Closed — Holiday"
+                            disabled={saving}
+                        />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 16 }}>
+                        <label className="form-label" htmlFor="event-note">Note (optional)</label>
+                        <textarea
+                            id="event-note"
+                            className="form-input"
+                            rows={2}
+                            value={newEventNote}
+                            onChange={(e) => setNewEventNote(e.target.value)}
+                            placeholder="Any additional details"
+                            disabled={saving}
+                        />
+                    </div>
+
+                    <button className="employee-secondary-button" onClick={addEvent} disabled={saving}>
+                        {saving ? 'Adding...' : '+ Add Event'}
+                    </button>
+                </Modal>
+            )}
+
+            {showRangeModal && (
+                <Modal
+                    title="Add Event to a Range of Days"
+                    maxWidth={480}
+                    onClose={() => { if (addingRange) return; setShowRangeModal(false) }}
+                >
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>
+                        Applies the same event/note to every day in the range (e.g. the 20th to the
+                        26th), including weekends, so you don't have to add it one day at a time.
+                    </p>
+
+                    <div className="employee-info-grid" style={{ marginBottom: 14 }}>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="range-start">Start Date</label>
+                            <input
+                                id="range-start"
+                                type="date"
+                                className="form-input"
+                                value={rangeStart}
+                                onChange={(e) => setRangeStart(e.target.value)}
+                                disabled={addingRange}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="range-end">End Date</label>
+                            <input
+                                id="range-end"
+                                type="date"
+                                className="form-input"
+                                value={rangeEnd}
+                                onChange={(e) => setRangeEnd(e.target.value)}
+                                disabled={addingRange}
+                            />
+                        </div>
+                    </div>
+
+                    {rangeStart && rangeEnd && rangeStart > rangeEnd && (
+                        <p style={{ fontSize: 12.5, color: 'var(--red)', marginBottom: 12 }}>
+                            Start date must be on or before the end date.
+                        </p>
+                    )}
+
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                        <label className="form-label" htmlFor="range-title">Event Title</label>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            {EVENT_PRESETS.map((preset) => (
+                                <button
+                                    type="button"
+                                    key={preset}
+                                    className="employee-filter-chip"
+                                    style={{ fontSize: 12 }}
+                                    onClick={() => setRangeTitle(preset)}
+                                    disabled={addingRange}
+                                >
+                                    {preset}
+                                </button>
+                            ))}
+                        </div>
+
+                        <input
+                            id="range-title"
+                            type="text"
+                            className="form-input"
+                            value={rangeTitle}
+                            onChange={(e) => setRangeTitle(e.target.value)}
+                            placeholder="e.g. Mental Health Break"
+                            disabled={addingRange}
+                        />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 16 }}>
+                        <label className="form-label" htmlFor="range-note">Note (optional)</label>
+                        <textarea
+                            id="range-note"
+                            className="form-input"
+                            rows={2}
+                            value={rangeNote}
+                            onChange={(e) => setRangeNote(e.target.value)}
+                            placeholder="Any additional details"
+                            disabled={addingRange}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <button className="employee-primary-button" onClick={addRangeEvent} disabled={addingRange}>
+                            {addingRange
+                                ? 'Adding...'
+                                : `Add to ${rangeDates.length} Day${rangeDates.length === 1 ? '' : 's'}`}
+                        </button>
+                        <button className="employee-secondary-button" onClick={() => setShowRangeModal(false)} disabled={addingRange}>
+                            Cancel
+                        </button>
+                    </div>
                 </Modal>
             )}
         </div>
