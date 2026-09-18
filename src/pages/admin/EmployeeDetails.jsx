@@ -100,22 +100,35 @@ function EmployeeDetails() {
 
                 const [{ data: studentRows }, { data: documentTypeRows }] = await Promise.all([
                     studentIds.length
-                        ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
+                        ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
                         : Promise.resolve({ data: [] }),
                     documentTypeIds.length
                         ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
                         : Promise.resolve({ data: [] }),
                 ])
 
-                const studentNumberById = Object.fromEntries((studentRows || []).map((s) => [s.student_id, s.student_number]))
+                const studentUserIds = (studentRows || []).map((s) => s.user_id).filter(Boolean)
+
+                const { data: studentProfiles } = studentUserIds.length
+                    ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', studentUserIds)
+                    : { data: [] }
+
+                const studentProfileByUserId = Object.fromEntries((studentProfiles || []).map((p) => [p.user_id, p]))
+                const studentById = Object.fromEntries((studentRows || []).map((s) => [s.student_id, s]))
                 const documentNameById = Object.fromEntries((documentTypeRows || []).map((d) => [d.document_type_id, d.document_name]))
 
                 setRequests(
-                    rows.map((r) => ({
-                        ...r,
-                        studentNumber: studentNumberById[r.student_id] || 'N/A',
-                        documentName: documentNameById[r.document_type_id] || 'Document',
-                    }))
+                    rows.map((r) => {
+                        const student = studentById[r.student_id]
+                        const studentProfile = student ? studentProfileByUserId[student.user_id] : null
+
+                        return {
+                            ...r,
+                            studentNumber: student?.student_number || 'N/A',
+                            studentName: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
+                            documentName: documentNameById[r.document_type_id] || 'Document',
+                        }
+                    })
                 )
             }
 
@@ -501,6 +514,9 @@ function EmployeeDetails() {
                         <div className="admin-list-card" key={r.request_id}>
                             <div className="admin-list-card-header">
                                 <div>
+                                    <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
+                                        {r.studentName || `Student ${r.studentNumber}`}
+                                    </p>
                                     <h3>{r.documentName}</h3>
                                     <p>{r.request_number} · Student {r.studentNumber}</p>
                                 </div>
