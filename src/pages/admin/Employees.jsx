@@ -13,6 +13,7 @@ const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receip
 const BLANK_FORM = {
     firstName: '',
     lastName: '',
+    displayName: '',
     employeeNumber: '',
     positionTitle: '',
     assignedCollegeId: '',
@@ -50,7 +51,7 @@ function Employees() {
 
             const { data: employeeRows, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_id, user_id, employee_number, position_title, assigned_college_id, status, created_at')
+                .select('employee_id, user_id, employee_number, position_title, display_name, assigned_college_id, status, created_at')
                 .order('created_at', { ascending: false })
 
             if (employeeError) {
@@ -95,6 +96,7 @@ function Employees() {
                     return {
                         ...e,
                         name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
+                        displayName: e.display_name || '',
                         email: profile?.email || '',
                         collegeName: collegeNameById[e.assigned_college_id] || 'Unassigned',
                         openCount: openCountByEmployee[e.employee_id] || 0,
@@ -165,6 +167,7 @@ function Employees() {
                 employeeNumber: form.employeeNumber.trim(),
                 positionTitle: form.positionTitle.trim(),
                 assignedCollegeId: form.assignedCollegeId || null,
+                displayName: form.displayName.trim() || null,
             })
 
             await logActivity({
@@ -322,6 +325,7 @@ function Employees() {
         const term = search.trim().toLowerCase()
         return (
             e.name.toLowerCase().includes(term) ||
+            e.displayName.toLowerCase().includes(term) ||
             e.employee_number.toLowerCase().includes(term) ||
             e.email.toLowerCase().includes(term)
         )
@@ -362,6 +366,14 @@ function Employees() {
                         <div className="form-group">
                             <label className="form-label">Last Name</label>
                             <input className="form-input" type="text" value={form.lastName} onChange={(e) => updateForm('lastName', e.target.value)} disabled={creating} />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Nickname (optional)</label>
+                            <input className="form-input" type="text" value={form.displayName} onChange={(e) => updateForm('displayName', e.target.value)} placeholder="Shown to students instead of the real name" disabled={creating} />
+                            <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                                If set, students see this name (not the real name) when messaging this employee. Staff and other admins still see the real name everywhere else.
+                            </small>
                         </div>
 
                         <div className="form-group">
@@ -449,7 +461,7 @@ function Employees() {
                     <div className="admin-list-card" key={employee.employee_id}>
                         <div className="admin-list-card-header">
                             <div>
-                                <h3>{employee.name}</h3>
+                                <h3>{employee.name}{employee.displayName && ` (nickname: ${employee.displayName})`}</h3>
                                 <p>{employee.employee_number} · {employee.position_title} · {employee.email}</p>
                             </div>
 

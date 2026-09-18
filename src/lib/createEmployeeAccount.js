@@ -12,6 +12,7 @@ export async function createEmployeeAccount({
     employeeNumber,
     positionTitle,
     assignedCollegeId,
+    displayName,
 }) {
     const tempClient = createClient(supabaseUrl, supabaseKey, {
         auth: { persistSession: false, autoRefreshToken: false },
@@ -46,6 +47,7 @@ export async function createEmployeeAccount({
             employee_number: employeeNumber,
             position_title: positionTitle,
             assigned_college_id: assignedCollegeId || null,
+            display_name: displayName || null,
             status: 'active',
         })
 

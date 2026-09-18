@@ -60,7 +60,7 @@ function Messages() {
 
             const { data: employeeRow, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_id, user_id, employee_number, position_title')
+                .select('employee_id, user_id, employee_number, position_title, display_name')
                 .eq('employee_id', assignedEmployeeId)
                 .single()
 
@@ -74,9 +74,13 @@ function Messages() {
                 .eq('user_id', employeeRow.user_id)
                 .single()
 
+            // Prefer the employee's nickname (set by an admin) over their
+            // real name when showing who the student is messaging.
+            const realName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : employeeRow.employee_number
+
             setEmployee({
                 ...employeeRow,
-                name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : employeeRow.employee_number,
+                name: employeeRow.display_name?.trim() || realName,
             })
 
             const { data: messageRows, error: messagesError } = await supabase

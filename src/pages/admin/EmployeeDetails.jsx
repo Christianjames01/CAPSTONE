@@ -21,6 +21,7 @@ function EmployeeDetails() {
 
     const [employeeNumber, setEmployeeNumber] = useState('')
     const [positionTitle, setPositionTitle] = useState('')
+    const [displayName, setDisplayName] = useState('')
     const [assignedCollegeId, setAssignedCollegeId] = useState('')
 
     const [editing, setEditing] = useState(false)
@@ -46,7 +47,7 @@ function EmployeeDetails() {
 
             const { data: employeeData, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_id, user_id, employee_number, position_title, assigned_college_id, status')
+                .select('employee_id, user_id, employee_number, position_title, display_name, assigned_college_id, status')
                 .eq('employee_id', employeeId)
                 .single()
 
@@ -63,6 +64,7 @@ function EmployeeDetails() {
             setEmployee({ ...employeeData, ...profile })
             setEmployeeNumber(employeeData.employee_number)
             setPositionTitle(employeeData.position_title)
+            setDisplayName(employeeData.display_name || '')
             setAssignedCollegeId(employeeData.assigned_college_id || '')
 
             const { data: collegeRows } = await supabase.from('colleges').select('college_id, college_name').order('college_name')
@@ -129,6 +131,7 @@ function EmployeeDetails() {
         setForm({
             employeeNumber,
             positionTitle,
+            displayName,
             assignedCollegeId,
         })
         setEditing(true)
@@ -154,6 +157,7 @@ function EmployeeDetails() {
                 .update({
                     employee_number: form.employeeNumber.trim(),
                     position_title: form.positionTitle.trim(),
+                    display_name: form.displayName.trim() || null,
                     assigned_college_id: form.assignedCollegeId || null,
                     updated_at: new Date().toISOString(),
                 })
@@ -166,6 +170,7 @@ function EmployeeDetails() {
             const changes = describeChanges([
                 ['employee number', employee.employee_number, form.employeeNumber.trim()],
                 ['position', employee.position_title, form.positionTitle.trim()],
+                ['nickname', employee.display_name, form.displayName.trim() || null],
                 ['assigned college', collegeName(employee.assigned_college_id), collegeName(form.assignedCollegeId || null)],
             ])
 
@@ -340,6 +345,7 @@ function EmployeeDetails() {
                 <div className="admin-info-grid">
                     <div className="admin-info-field"><span>Employee Number</span><strong>{employeeNumber}</strong></div>
                     <div className="admin-info-field"><span>Position Title</span><strong>{positionTitle}</strong></div>
+                    <div className="admin-info-field"><span>Nickname (shown to students)</span><strong>{displayName || 'None — real name shown'}</strong></div>
                     <div className="admin-info-field"><span>Assigned College</span><strong>{collegeName(assignedCollegeId || null)}</strong></div>
                 </div>
             </div>
@@ -367,6 +373,21 @@ function EmployeeDetails() {
                                 onChange={(e) => setForm({ ...form, positionTitle: e.target.value })}
                                 disabled={saving}
                             />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Nickname (optional)</label>
+                            <input
+                                className="form-input"
+                                type="text"
+                                value={form.displayName}
+                                onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+                                placeholder="Shown to students instead of the real name"
+                                disabled={saving}
+                            />
+                            <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                                If set, students see this name (not the real name) when messaging this employee.
+                            </small>
                         </div>
 
                         <div className="form-group">
