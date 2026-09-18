@@ -11,7 +11,12 @@ function getExtension(nameOrUrl) {
 function DocumentPreviewModal({ url, fileName, onClose }) {
     if (!url) return null
 
-    const extension = getExtension(fileName || url)
+    // Detect file type from the actual resource URL first -- `fileName` is
+    // sometimes just a friendly display label (e.g. "Certificate — sample")
+    // with no real extension on it, which would otherwise wrongly fall
+    // through to "can't be previewed" even though the file itself is a
+    // perfectly viewable image.
+    const extension = getExtension(url) || getExtension(fileName)
     const isImage = IMAGE_EXTENSIONS.includes(extension)
     const isPdf = extension === 'pdf'
 
