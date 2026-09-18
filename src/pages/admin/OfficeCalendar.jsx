@@ -8,6 +8,16 @@ import './AdminPages.css'
 
 const WEEKDAY_HEADS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+// Quick-fill presets for the most common day notes, so the head doesn't have
+// to retype the same wording each time (e.g. every fiesta/holiday closure).
+const EVENT_PRESETS = [
+    'Mental Health Break',
+    'Office Closed — Fiesta',
+    'Office Closed — Holiday',
+    'Enrollment Week',
+    'System Maintenance',
+]
+
 function formatLocal(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
@@ -588,6 +598,22 @@ function OfficeCalendar() {
 
                     <div className="form-group" style={{ marginBottom: 12 }}>
                         <label className="form-label" htmlFor="event-title">Add an Event</label>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            {EVENT_PRESETS.map((preset) => (
+                                <button
+                                    type="button"
+                                    key={preset}
+                                    className="admin-filter-chip"
+                                    style={{ fontSize: 12 }}
+                                    onClick={() => setNewEventTitle(preset)}
+                                    disabled={saving}
+                                >
+                                    {preset}
+                                </button>
+                            ))}
+                        </div>
+
                         <input
                             id="event-title"
                             type="text"
