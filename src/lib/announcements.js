@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 export async function fetchActiveAnnouncements(audienceFlag) {
     const { data, error } = await supabase
         .from('announcements')
-        .select('announcement_id, title, message, created_at')
+        .select('announcement_id, title, message, announcement_date, is_closed, created_at')
         .eq('is_active', true)
         .eq(audienceFlag, true)
         .order('created_at', { ascending: false })

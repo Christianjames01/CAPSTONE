@@ -10,7 +10,18 @@ const EMPTY_FORM = {
     announcement_id: null,
     title: '',
     message: '',
+    announcement_date: '',
+    is_closed: false,
     is_active: true,
+}
+
+function formatAnnouncementDate(dateStr) {
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    })
 }
 
 function Announcements() {
@@ -34,7 +45,7 @@ function Announcements() {
 
             const { data, error: loadError } = await supabase
                 .from('announcements')
-                .select('announcement_id, title, message, is_active, created_at')
+                .select('announcement_id, title, message, announcement_date, is_closed, is_active, created_at')
                 .order('created_at', { ascending: false })
 
             if (loadError) {
@@ -67,6 +78,8 @@ function Announcements() {
             announcement_id: a.announcement_id,
             title: a.title,
             message: a.message,
+            announcement_date: a.announcement_date || '',
+            is_closed: a.is_closed,
             is_active: a.is_active,
         })
         setShowForm(true)
@@ -84,6 +97,8 @@ function Announcements() {
             const payload = {
                 title: form.title.trim(),
                 message: form.message.trim(),
+                announcement_date: form.announcement_date || null,
+                is_closed: form.announcement_date ? form.is_closed : false,
                 is_active: form.is_active,
                 show_to_students: true,
                 updated_at: new Date().toISOString(),
@@ -215,6 +230,28 @@ function Announcements() {
                         />
                     </div>
 
+                    <div className="form-group" style={{ marginBottom: 14 }}>
+                        <label className="form-label" htmlFor="ann-date">Date (optional)</label>
+                        <input
+                            id="ann-date"
+                            type="date"
+                            className="form-input"
+                            value={form.announcement_date}
+                            onChange={(e) => setForm({ ...form, announcement_date: e.target.value })}
+                            disabled={saving}
+                        />
+                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                            Attach this announcement to a specific day (e.g. a holiday) so students see whether the office is closed or open that day.
+                        </small>
+                    </div>
+
+                    {form.announcement_date && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 16 }}>
+                            <input type="checkbox" checked={form.is_closed} onChange={(e) => setForm({ ...form, is_closed: e.target.checked })} disabled={saving} />
+                            Registrar office is closed on this date
+                        </label>
+                    )}
+
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 16 }}>
                         <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} disabled={saving} />
                         Active (visible to students right away)
@@ -243,12 +280,23 @@ function Announcements() {
                         <div className="admin-list-card-header">
                             <div>
                                 <h3>{a.title}</h3>
-                                <p>{new Date(a.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                <p>
+                                    {a.announcement_date
+                                        ? formatAnnouncementDate(a.announcement_date)
+                                        : `Posted ${new Date(a.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                                </p>
                             </div>
 
-                            <span className={`admin-status-pill status-${a.is_active ? 'active' : 'inactive'}`}>
-                                {a.is_active ? 'Active' : 'Inactive'}
-                            </span>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                {a.announcement_date && (
+                                    <span className={`admin-status-pill status-${a.is_closed ? 'rejected' : 'active'}`}>
+                                        {a.is_closed ? 'Closed' : 'Open'}
+                                    </span>
+                                )}
+                                <span className={`admin-status-pill status-${a.is_active ? 'active' : 'inactive'}`}>
+                                    {a.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
                         </div>
 
                         <p style={{ fontSize: 13.5, color: 'var(--ink)', margin: '4px 0 12px' }}>{a.message}</p>

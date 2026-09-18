@@ -19,6 +19,14 @@ const ACTION_NEEDED = {
     lacking_requirements: { label: 'Requirement needs fixing', cta: 'Submit requirements →', to: (id) => `/student/request/${id}/requirements` },
 }
 
+function formatAnnouncementDate(dateStr) {
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    })
+}
+
 const STEPPER_STEPS = ['Submitted', 'Processing', 'Ready', 'Completed']
 
 const stepperStage = (status) => {
@@ -260,8 +268,17 @@ function Dashboard() {
             {!loading && (
                 <>
                     {announcements.map((a) => (
-                        <div className="student-notice tone-info" style={{ marginTop: 0, marginBottom: 16 }} key={a.announcement_id}>
-                            <strong>{a.title}</strong>
+                        <div
+                            className={`student-notice ${a.announcement_date ? (a.is_closed ? 'tone-danger' : 'tone-success') : 'tone-info'}`}
+                            style={{ marginTop: 0, marginBottom: 16 }}
+                            key={a.announcement_id}
+                        >
+                            <strong>
+                                {a.title}
+                                {a.announcement_date && (
+                                    <> — {a.is_closed ? 'Closed' : 'Open'} on {formatAnnouncementDate(a.announcement_date)}</>
+                                )}
+                            </strong>
                             <p>{a.message}</p>
                         </div>
                     ))}
