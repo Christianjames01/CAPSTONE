@@ -27,6 +27,7 @@ function Register() {
     const [yearLevel, setYearLevel] = useState('')
 
     const [address, setAddress] = useState('')
+    const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
     const [emergencyContactName, setEmergencyContactName] = useState('')
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
 
@@ -184,6 +185,7 @@ function Register() {
                 enrollment_status: 'active',
                 birth_date: birthDate || null,
                 address: address.trim() || null,
+                alternate_phone_number: alternatePhoneNumber.trim() || null,
                 emergency_contact_name: emergencyContactName.trim() || null,
                 emergency_contact_number: emergencyContactNumber.trim() || null,
             })
@@ -433,6 +435,24 @@ function Register() {
                         onChange={(e) => setAddress(e.target.value)}
                         autoComplete="off"
                     />
+                </div>
+
+                <div className="form-group">
+                    <label className="form-label" htmlFor="alternate-phone">Alternate Phone Number (optional)</label>
+                    <input
+                        id="alternate-phone"
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={11}
+                        className="form-input"
+                        value={alternatePhoneNumber}
+                        onChange={handlePhoneInput(setAlternatePhoneNumber)}
+                        placeholder="09XXXXXXXXX"
+                        autoComplete="off"
+                    />
+                    <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                        A second number the registrar can try if your main phone number is unreachable.
+                    </small>
                 </div>
 
                 <div className="auth-form-row">

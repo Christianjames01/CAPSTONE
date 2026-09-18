@@ -37,7 +37,7 @@ function StudentHistory() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, address, emergency_contact_name, emergency_contact_number')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, address, alternate_phone_number, emergency_contact_name, emergency_contact_number')
                 .eq('student_id', studentId)
                 .single()
 
@@ -126,6 +126,7 @@ function StudentHistory() {
             programId: student.program_id || '',
             yearLevel: student.year_level || '',
             address: student.address || '',
+            alternatePhoneNumber: student.alternate_phone_number || '',
             emergencyContactName: student.emergency_contact_name || '',
             emergencyContactNumber: student.emergency_contact_number || '',
         })
@@ -188,6 +189,7 @@ function StudentHistory() {
                     program_id: form.programId || null,
                     year_level: form.yearLevel || null,
                     address: form.address.trim() || null,
+                    alternate_phone_number: form.alternatePhoneNumber.trim() || null,
                     emergency_contact_name: form.emergencyContactName.trim() || null,
                     emergency_contact_number: form.emergencyContactNumber.trim() || null,
                 })
@@ -391,6 +393,10 @@ function StudentHistory() {
                                 <input className="employee-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />
                             </div>
                             <div className="form-group">
+                                <label className="form-label">Alternate Phone Number</label>
+                                <input className="employee-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
+                            </div>
+                            <div className="form-group">
                                 <label className="form-label">Emergency Contact Name</label>
                                 <input className="employee-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
                             </div>
@@ -444,6 +450,11 @@ function StudentHistory() {
                         <div className="employee-info-field">
                             <span>Address</span>
                             <strong>{student.address || 'N/A'}</strong>
+                        </div>
+
+                        <div className="employee-info-field">
+                            <span>Alternate Phone Number</span>
+                            <strong>{student.alternate_phone_number || 'N/A'}</strong>
                         </div>
 
                         <div className="employee-info-field">

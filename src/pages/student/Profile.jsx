@@ -24,6 +24,7 @@ function Profile() {
 
     const [phoneNumber, setPhoneNumber] = useState('')
     const [address, setAddress] = useState('')
+    const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
     const [emergencyContactName, setEmergencyContactName] = useState('')
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
 
@@ -84,6 +85,7 @@ function Profile() {
                     enrollment_status,
                     birth_date,
                     address,
+                    alternate_phone_number,
                     emergency_contact_name,
                     emergency_contact_number,
                     graduation_year
@@ -97,6 +99,7 @@ function Profile() {
 
             setStudent(studentData)
             setAddress(studentData.address || '')
+            setAlternatePhoneNumber(studentData.alternate_phone_number || '')
             setEmergencyContactName(studentData.emergency_contact_name || '')
             setEmergencyContactNumber(studentData.emergency_contact_number || '')
 
@@ -206,6 +209,7 @@ function Profile() {
     const cancelEditing = () => {
         setPhoneNumber(profile?.phone_number || '')
         setAddress(student?.address || '')
+        setAlternatePhoneNumber(student?.alternate_phone_number || '')
         setEmergencyContactName(student?.emergency_contact_name || '')
         setEmergencyContactNumber(student?.emergency_contact_number || '')
         setEditing(false)
@@ -239,6 +243,7 @@ function Profile() {
                 .from('students')
                 .update({
                     address: address.trim() || null,
+                    alternate_phone_number: alternatePhoneNumber.trim() || null,
                     emergency_contact_name: emergencyContactName.trim() || null,
                     emergency_contact_number: emergencyContactNumber.trim() || null,
                 })
@@ -252,6 +257,7 @@ function Profile() {
             setStudent((prev) => ({
                 ...prev,
                 address: address.trim() || null,
+                alternate_phone_number: alternatePhoneNumber.trim() || null,
                 emergency_contact_name: emergencyContactName.trim() || null,
                 emergency_contact_number: emergencyContactNumber.trim() || null,
             }))
@@ -529,6 +535,11 @@ function Profile() {
                     </div>
 
                     <div className="student-info-field">
+                        <span>Alternate Phone Number</span>
+                        <strong>{student?.alternate_phone_number || 'Not set'}</strong>
+                    </div>
+
+                    <div className="student-info-field">
                         <span>Emergency Contact Name</span>
                         <strong>{student?.emergency_contact_name || 'Not set'}</strong>
                     </div>
@@ -564,6 +575,18 @@ function Profile() {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Your current address"
+                                disabled={saving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Alternate Phone Number</label>
+                            <input
+                                className="form-input"
+                                type="tel"
+                                value={alternatePhoneNumber}
+                                onChange={(e) => setAlternatePhoneNumber(e.target.value)}
+                                placeholder="09XX XXX XXXX"
                                 disabled={saving}
                             />
                         </div>
