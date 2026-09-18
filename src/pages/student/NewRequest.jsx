@@ -201,7 +201,8 @@ function NewRequest() {
         fee,
         processing_days_min,
         processing_days_max,
-        requires_purpose
+        requires_purpose,
+        preview_image_url
       `)
             .eq('is_available', true)
             .order('document_name')
@@ -582,7 +583,9 @@ function NewRequest() {
             <div className="student-card" style={{ position: 'sticky', top: 20 }}>
                 <h2 style={{ fontSize: 15, marginBottom: 4 }}>Sample Document Preview</h2>
                 <p style={{ fontSize: 12.5, color: 'var(--slate)', marginBottom: 14 }}>
-                    Reference layout only — not an official document.
+                    {selectedDocumentDetails?.preview_image_url
+                        ? 'A real sample of this document, posted by the Registrar.'
+                        : 'Reference layout only — not an official document.'}
                 </p>
 
                 {!selectedDocumentDetails ? (
@@ -597,7 +600,15 @@ function NewRequest() {
                             style={{ display: 'block', width: '100%', cursor: 'zoom-in' }}
                             aria-label="Enlarge sample document preview"
                         >
-                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} documentCode={selectedDocumentDetails.document_code} student={studentInfo} />
+                            {selectedDocumentDetails.preview_image_url ? (
+                                <img
+                                    src={selectedDocumentDetails.preview_image_url}
+                                    alt={`Sample ${selectedDocumentDetails.document_name}`}
+                                    style={{ width: '100%', borderRadius: 8, border: '1px solid var(--line)', display: 'block' }}
+                                />
+                            ) : (
+                                <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} documentCode={selectedDocumentDetails.document_code} student={studentInfo} />
+                            )}
                         </button>
                         <p style={{ fontSize: 11.5, color: 'var(--slate)', marginTop: 8, textAlign: 'center' }}>
                             Tap to enlarge
@@ -635,7 +646,15 @@ function NewRequest() {
                         </button>
 
                         <div style={{ background: 'var(--white)', borderRadius: 10, padding: 20 }}>
-                            <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} documentCode={selectedDocumentDetails.document_code} student={studentInfo} />
+                            {selectedDocumentDetails.preview_image_url ? (
+                                <img
+                                    src={selectedDocumentDetails.preview_image_url}
+                                    alt={`Sample ${selectedDocumentDetails.document_name}`}
+                                    style={{ width: '100%', display: 'block', borderRadius: 6 }}
+                                />
+                            ) : (
+                                <DocumentSample layout={sampleLayout} name={selectedDocumentDetails.document_name} documentCode={selectedDocumentDetails.document_code} student={studentInfo} />
+                            )}
                         </div>
                     </div>
                 </div>

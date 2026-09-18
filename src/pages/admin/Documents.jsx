@@ -7,8 +7,11 @@ import { parseExcelFile } from '../../lib/excelImport'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
+import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import '../auth/Auth.css'
 import './AdminPages.css'
+
+const PREVIEW_IMAGE_BUCKET = 'document-previews'
 
 const DOCUMENT_CATEGORIES = [
     { value: 'certificate', label: 'Certificate' },
@@ -49,6 +52,7 @@ const EMPTY_FORM = {
     processing_days_max: '',
     is_available: true,
     requires_purpose: false,
+    preview_image_url: null,
 }
 
 function Documents() {
@@ -58,6 +62,10 @@ function Documents() {
     const [saving, setSaving] = useState(false)
 
     const [form, setForm] = useState(EMPTY_FORM)
+    const [imageFile, setImageFile] = useState(null)
+    const [imageFilePreview, setImageFilePreview] = useState('')
+    const [uploadingImage, setUploadingImage] = useState(false)
+    const [previewingDoc, setPreviewingDoc] = useState(null)
     const [showForm, setShowForm] = useState(false)
     const [availabilityFilter, setAvailabilityFilter] = useState('all')
     const [categoryFilter, setCategoryFilter] = useState('all')
@@ -87,7 +95,7 @@ function Documents() {
 
             const { data, error: loadError } = await supabase
                 .from('document_types')
-                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose')
+                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose, preview_image_url')
                 .order('document_name')
 
             if (loadError) {
@@ -247,6 +255,8 @@ function Documents() {
 
     const openNewForm = () => {
         setForm(EMPTY_FORM)
+        setImageFile(null)
+        setImageFilePreview('')
         setShowForm(true)
     }
 
@@ -262,8 +272,29 @@ function Documents() {
             processing_days_max: doc.processing_days_max ?? '',
             is_available: doc.is_available,
             requires_purpose: doc.requires_purpose,
+            preview_image_url: doc.preview_image_url || null,
         })
+        setImageFile(null)
+        setImageFilePreview('')
         setShowForm(true)
+    }
+
+    const handleImageSelect = (file) => {
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            notifyWarning('Please choose an image file.')
+            return
+        }
+
+        setImageFile(file)
+        setImageFilePreview(URL.createObjectURL(file))
+    }
+
+    const removeImage = () => {
+        setImageFile(null)
+        setImageFilePreview('')
+        setForm((prev) => ({ ...prev, preview_image_url: null }))
     }
 
     const saveDocument = async () => {
@@ -280,6 +311,31 @@ function Documents() {
         try {
             setSaving(true)
 
+            let previewImageUrl = form.preview_image_url
+
+            if (imageFile) {
+                setUploadingImage(true)
+
+                const extension = imageFile.name.split('.').pop().toLowerCase()
+                const filePath = `${form.document_code.trim() || 'document'}-${Date.now()}.${extension}`
+
+                const { error: uploadError } = await supabase.storage
+                    .from(PREVIEW_IMAGE_BUCKET)
+                    .upload(filePath, imageFile, { cacheControl: '3600', upsert: false })
+
+                setUploadingImage(false)
+
+                if (uploadError) {
+                    throw new Error('Failed to upload preview image: ' + uploadError.message)
+                }
+
+                const { data: publicUrlData } = supabase.storage
+                    .from(PREVIEW_IMAGE_BUCKET)
+                    .getPublicUrl(filePath)
+
+                previewImageUrl = publicUrlData?.publicUrl || null
+            }
+
             const payload = {
                 document_code: form.document_code.trim(),
                 document_name: form.document_name.trim(),
@@ -290,6 +346,7 @@ function Documents() {
                 processing_days_max: form.processing_days_max === '' ? null : Number(form.processing_days_max),
                 is_available: form.is_available,
                 requires_purpose: form.requires_purpose,
+                preview_image_url: previewImageUrl,
             }
 
             if (form.document_type_id) {
@@ -342,6 +399,8 @@ function Documents() {
 
             setShowForm(false)
             setForm(EMPTY_FORM)
+            setImageFile(null)
+            setImageFilePreview('')
             await loadDocuments({ silent: true })
 
         } catch (err) {
@@ -349,6 +408,7 @@ function Documents() {
             notifyError(err.message || 'Failed to save document type.')
         } finally {
             setSaving(false)
+            setUploadingImage(false)
         }
     }
 
@@ -553,7 +613,7 @@ function Documents() {
                 <Modal
                     title={form.document_type_id ? 'Edit Document Type' : 'New Document Type'}
                     maxWidth={640}
-                    onClose={() => { if (saving) return; setShowForm(false); setForm(EMPTY_FORM) }}
+                    onClose={() => { if (saving) return; setShowForm(false); setForm(EMPTY_FORM); setImageFile(null); setImageFilePreview('') }}
                 >
                     <div className="admin-info-grid" style={{ marginBottom: 16 }}>
                         <div className="form-group">
@@ -597,6 +657,34 @@ function Documents() {
                         <textarea id="doc-description" className="form-input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} disabled={saving} />
                     </div>
 
+                    <div className="form-group" style={{ marginBottom: 16 }}>
+                        <label className="form-label" htmlFor="doc-image">Sample Document Image (optional)</label>
+
+                        {(imageFilePreview || form.preview_image_url) && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                                <img
+                                    src={imageFilePreview || form.preview_image_url}
+                                    alt="Sample document preview"
+                                    style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--line)' }}
+                                />
+                                <button type="button" className="admin-link-button" style={{ color: 'var(--red)' }} onClick={removeImage} disabled={saving || uploadingImage}>
+                                    Remove image
+                                </button>
+                            </div>
+                        )}
+
+                        <input
+                            id="doc-image"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageSelect(e.target.files?.[0])}
+                            disabled={saving || uploadingImage}
+                        />
+                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                            A photo or scan of what this real document actually looks like, shown to students when they pick a document type to request.
+                        </small>
+                    </div>
+
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, marginBottom: 12 }}>
                         <input type="checkbox" checked={form.is_available} onChange={(e) => setForm({ ...form, is_available: e.target.checked })} />
                         Available for students to request
@@ -609,7 +697,7 @@ function Documents() {
 
                     <div style={{ display: 'flex', gap: 10 }}>
                         <button className="admin-primary-button" onClick={saveDocument} disabled={saving}>
-                            {saving ? 'Saving...' : 'Save'}
+                            {uploadingImage ? 'Uploading image...' : saving ? 'Saving...' : 'Save'}
                         </button>
                         <button className="admin-secondary-button" onClick={() => setShowForm(false)} disabled={saving}>
                             Cancel
@@ -678,9 +766,19 @@ function Documents() {
                 visibleDocuments.map((doc) => (
                     <div className="admin-list-card" key={doc.document_type_id} style={{ marginTop: 16 }}>
                         <div className="admin-list-card-header">
-                            <div>
-                                <h3>{doc.document_name}</h3>
-                                <p>{doc.document_code} · {categoryLabel(doc.category)}</p>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                                {doc.preview_image_url && (
+                                    <img
+                                        src={doc.preview_image_url}
+                                        alt=""
+                                        onClick={() => setPreviewingDoc(doc)}
+                                        style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)', cursor: 'pointer', flexShrink: 0 }}
+                                    />
+                                )}
+                                <div>
+                                    <h3>{doc.document_name}</h3>
+                                    <p>{doc.document_code} · {categoryLabel(doc.category)}</p>
+                                </div>
                             </div>
 
                             <span className={`admin-status-pill status-${doc.is_available ? 'active' : 'inactive'}`}>
@@ -712,9 +810,22 @@ function Documents() {
                             <button className="admin-link-button" onClick={() => loadRequirements(doc.document_type_id)}>
                                 Manage requirements
                             </button>
+                            {doc.preview_image_url && (
+                                <button className="admin-link-button" onClick={() => setPreviewingDoc(doc)}>
+                                    Preview image
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))
+            )}
+
+            {previewingDoc && (
+                <DocumentPreviewModal
+                    url={previewingDoc.preview_image_url}
+                    fileName={`${previewingDoc.document_name} — sample`}
+                    onClose={() => setPreviewingDoc(null)}
+                />
             )}
 
             {expandedId && (
