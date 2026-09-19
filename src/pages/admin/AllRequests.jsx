@@ -7,6 +7,15 @@ import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } fr
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
+function formatDate(value) {
+    if (!value) return ''
+    return new Date(value).toLocaleDateString('en-PH', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    })
+}
+
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
@@ -348,7 +357,7 @@ function AllRequests() {
                             <div className="admin-info-field">
                                 <span>Requested</span>
                                 <strong>
-                                    {request.requested_at ? new Date(request.requested_at).toLocaleDateString() : '-'}
+                                    {formatDate(request.requested_at) || '-'}
                                 </strong>
                             </div>
                         </div>
