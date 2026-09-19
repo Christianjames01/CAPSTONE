@@ -21,6 +21,27 @@ const OVERDUE_ELIGIBLE_STATUSES = [
 ]
 const OVERDUE_DAYS = 2
 
+function formatDate(dateStr) {
+    if (!dateStr) return ''
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    })
+}
+
+function formatDateTime(value) {
+    if (!value) return ''
+    return new Date(value).toLocaleString('en-PH', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    })
+}
+
 function formatTime(time) {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -1013,7 +1034,7 @@ function AdminRequestDetails() {
 
                     <div className="admin-info-field">
                         <span>Requested</span>
-                        <strong>{request.requested_at ? new Date(request.requested_at).toLocaleString() : 'N/A'}</strong>
+                        <strong>{request.requested_at ? formatDateTime(request.requested_at) : 'N/A'}</strong>
                     </div>
 
                     <div className="admin-info-field">
@@ -1035,7 +1056,7 @@ function AdminRequestDetails() {
                         <p style={{ margin: 0 }}>{request.cancellation_reason}</p>
                         {request.cancelled_at && (
                             <p style={{ margin: '6px 0 0', fontSize: 12.5, opacity: 0.8 }}>
-                                Cancelled on {new Date(request.cancelled_at).toLocaleString()}
+                                Cancelled on {formatDateTime(request.cancelled_at)}
                             </p>
                         )}
                     </div>
@@ -1150,7 +1171,7 @@ function AdminRequestDetails() {
 
                                         <div className="admin-info-field">
                                             <span>Uploaded At</span>
-                                            <strong>{requirement.uploaded_at ? new Date(requirement.uploaded_at).toLocaleString() : 'Not uploaded'}</strong>
+                                            <strong>{requirement.uploaded_at ? formatDateTime(requirement.uploaded_at) : 'Not uploaded'}</strong>
                                         </div>
                                     </div>
 
@@ -1264,7 +1285,7 @@ function AdminRequestDetails() {
                         <p>Prepare the student's requested academic document, then generate the digital credential.</p>
 
                         {request.processed_at && (
-                            <p><strong>Processing Started:</strong> {new Date(request.processed_at).toLocaleString()}</p>
+                            <p><strong>Processing Started:</strong> {formatDateTime(request.processed_at)}</p>
                         )}
 
                         <button onClick={generateDigitalCredential} disabled={processing} className="admin-primary-button" style={{ marginTop: 12 }}>
@@ -1356,7 +1377,7 @@ function AdminRequestDetails() {
                             <strong>✕ Claiming Appointment Missed</strong>
                             <p>
                                 The student did not claim this document on{' '}
-                                {claimSchedule.claim_date || claimSchedule.scheduled_date}.
+                                {formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date)}.
                             </p>
                             {claimSchedule.reschedule_requested_at && (
                                 <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
@@ -1368,15 +1389,15 @@ function AdminRequestDetails() {
                             <p>
                                 Claimed on{' '}
                                 {claimSchedule.claimed_at
-                                    ? new Date(claimSchedule.claimed_at).toLocaleString()
-                                    : (claimSchedule.claim_date || claimSchedule.scheduled_date)}.
+                                    ? formatDateTime(claimSchedule.claimed_at)
+                                    : formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date)}.
                             </p>
                         </div>
                     ) : (
                         <div className="admin-info-grid">
                             <div className="admin-info-field">
                                 <span>Scheduled Date</span>
-                                <strong>{claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}</strong>
+                                <strong>{formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}</strong>
                             </div>
                             <div className="admin-info-field">
                                 <span>Scheduled Time</span>
