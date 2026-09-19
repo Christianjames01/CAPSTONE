@@ -405,19 +405,17 @@ function CollegesPrograms() {
                     {showCollegeForm && collegeForm && (
                         <Modal
                             title="Edit College"
-                            maxWidth={560}
+                            maxWidth={640}
                             onClose={() => { if (saving) return; setShowCollegeForm(false) }}
                         >
-                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="college-code">Code</label>
-                                    <input id="college-code" className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
-                                </div>
+                            <div className="form-group" style={{ marginBottom: 14 }}>
+                                <label className="form-label" htmlFor="college-name">Name</label>
+                                <input id="college-name" className="form-input" title={collegeForm.college_name} value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
+                            </div>
 
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="college-name">Name</label>
-                                    <input id="college-name" className="form-input" value={collegeForm.college_name} onChange={(e) => setCollegeForm({ ...collegeForm, college_name: e.target.value })} disabled={saving} />
-                                </div>
+                            <div className="form-group" style={{ marginBottom: 14, maxWidth: 200 }}>
+                                <label className="form-label" htmlFor="college-code">Code</label>
+                                <input id="college-code" className="form-input" value={collegeForm.college_code} onChange={(e) => setCollegeForm({ ...collegeForm, college_code: e.target.value })} disabled={saving} />
                             </div>
 
                             <div className="form-group" style={{ marginBottom: 14 }}>
@@ -466,28 +464,28 @@ function CollegesPrograms() {
                     {showProgramForm && programForm && (
                         <Modal
                             title="Edit Program"
-                            maxWidth={560}
+                            maxWidth={640}
                             onClose={() => { if (saving) return; setShowProgramForm(false) }}
                         >
-                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="program-college">College</label>
-                                    <select id="program-college" className="form-input" value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
-                                        <option value="">-- Select college --</option>
-                                        {colleges.map((c) => (
-                                            <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div className="form-group" style={{ marginBottom: 14 }}>
+                                <label className="form-label" htmlFor="program-college">College</label>
+                                <select id="program-college" className="form-input" title={colleges.find((c) => c.college_id === programForm.college_id)?.college_name || ''} value={programForm.college_id} onChange={(e) => setProgramForm({ ...programForm, college_id: e.target.value })} disabled={saving}>
+                                    <option value="">-- Select college --</option>
+                                    {colleges.map((c) => (
+                                        <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                    ))}
+                                </select>
+                            </div>
 
+                            <div className="form-group" style={{ marginBottom: 14 }}>
+                                <label className="form-label" htmlFor="program-name">Name</label>
+                                <input id="program-name" className="form-input" title={programForm.program_name} value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
+                            </div>
+
+                            <div className="admin-info-grid" style={{ marginBottom: 14 }}>
                                 <div className="form-group">
                                     <label className="form-label" htmlFor="program-code">Code</label>
                                     <input id="program-code" className="form-input" value={programForm.program_code} onChange={(e) => setProgramForm({ ...programForm, program_code: e.target.value })} disabled={saving} />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="program-name">Name</label>
-                                    <input id="program-name" className="form-input" value={programForm.program_name} onChange={(e) => setProgramForm({ ...programForm, program_name: e.target.value })} disabled={saving} />
                                 </div>
 
                                 <div className="form-group">
