@@ -202,7 +202,10 @@
 .student-info-field strong {
     font-size: 14.5px;
     font-weight: 600;
-    overflow-wrap: break-word;
+    /* `anywhere` (rather than `break-word`) also affects the grid track's
+       min-content sizing, which is what actually stops a long unbroken
+       value like a file name from overflowing its column on mobile. */
+    overflow-wrap: anywhere;
 }
 
 .student-search-input {

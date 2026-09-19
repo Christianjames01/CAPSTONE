@@ -164,6 +164,11 @@
 .admin-info-field strong {
     font-size: 14.5px;
     font-weight: 600;
+    /* A long unbroken value (e.g. an uploaded file name with no spaces)
+       has no natural place to wrap, so on a narrow screen it overflows
+       its grid column and visually spills into the field next to it
+       instead of wrapping onto a new line. */
+    overflow-wrap: anywhere;
 }
 
 .admin-list-card {
