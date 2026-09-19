@@ -16,6 +16,16 @@ const CHIPS = [
     { key: 'all', label: 'All' },
 ]
 
+function formatDate(dateStr) {
+    if (!dateStr) return ''
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    })
+}
+
 function formatTime(time) {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -344,7 +354,7 @@ function ClaimSchedules() {
                         <div className="admin-info-grid">
                             <div className="admin-info-field">
                                 <span>Date</span>
-                                <strong>{s.claim_date || s.scheduled_date || 'N/A'}</strong>
+                                <strong>{formatDate(s.claim_date || s.scheduled_date) || 'N/A'}</strong>
                             </div>
                             <div className="admin-info-field">
                                 <span>Time</span>
