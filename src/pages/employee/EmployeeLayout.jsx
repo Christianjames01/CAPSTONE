@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory, IconTicket } from './icons'
@@ -25,7 +24,6 @@ const NAV_ITEMS = [
 
 function EmployeeLayout() {
     const navigate = useNavigate()
-    useIdleLogout()
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
     const [positionTitle, setPositionTitle] = useState('')
