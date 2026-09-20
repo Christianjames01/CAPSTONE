@@ -4,6 +4,7 @@ import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
+import { sanitizeAnnouncementHtml } from '../../lib/sanitizeHtml'
 import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
 import { SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
@@ -279,7 +280,7 @@ function Dashboard() {
                                     <> — {a.is_closed ? 'Closed' : 'Open'} on {formatAnnouncementDate(a.announcement_date)}</>
                                 )}
                             </strong>
-                            <p>{a.message}</p>
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeAnnouncementHtml(a.message) }} />
                         </div>
                     ))}
 
