@@ -29,6 +29,7 @@ function ActivityLogs() {
             let query = supabase
                 .from('activity_logs')
                 .select('activity_log_id, user_id, employee_id, action, table_name, record_id, description, created_at')
+                .neq('table_name', 'walk_in_queue')
                 .order('created_at', { ascending: false })
 
             if (filterDate) {
