@@ -40,10 +40,12 @@ export async function isOfficeOpenToday() {
     return !!openDay
 }
 
-// Creates today's next ticket for a student in one call: reserves the next
-// sequential number (atomic, race-safe -- see next_queue_number in the
-// migration) and inserts the ticket row.
-export async function createQueueTicket({ studentId, requestId, purpose }) {
+// Issues the next ticket number in one call: reserves the next sequential
+// number (atomic, race-safe -- see next_queue_number in the migration) and
+// inserts the ticket row. `studentId` is optional -- a plain walk-in
+// number needs nothing but the number itself; `visitorName` is just a
+// free-text label for the head's own reference, not tied to any account.
+export async function createQueueTicket({ studentId, requestId, visitorName, purpose } = {}) {
     const today = todayStr()
 
     const { data: queueNumber, error: numberError } = await supabase.rpc('next_queue_number', { p_date: today })
@@ -54,14 +56,15 @@ export async function createQueueTicket({ studentId, requestId, purpose }) {
         .insert({
             queue_date: today,
             queue_number: queueNumber,
-            student_id: studentId,
+            student_id: studentId || null,
             request_id: requestId || null,
+            visitor_name: visitorName?.trim() || null,
             purpose: purpose?.trim() || null,
         })
         .select()
         .single()
 
-    if (insertError) throw new Error('Failed to create your queue ticket: ' + insertError.message)
+    if (insertError) throw new Error('Failed to create the queue ticket: ' + insertError.message)
 
     return data
 }
