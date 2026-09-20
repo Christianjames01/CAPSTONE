@@ -9,21 +9,40 @@ function ActivityLogs() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [search, setSearch] = useState('')
+    const [filterDate, setFilterDate] = useState('')
 
     useEffect(() => {
         loadLogs()
-    }, [])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterDate])
 
     const loadLogs = async () => {
         try {
             setLoading(true)
             setError('')
 
-            const { data, error: logsError } = await supabase
+            // With no date picked, show the 200 most recent entries -- a
+            // quick glance at recent activity. Once activity passes that
+            // count, older days become unreachable by that query alone, so
+            // picking a specific date instead fetches every entry from
+            // that day (up to a generous cap), bypassing the 200 cutoff.
+            let query = supabase
                 .from('activity_logs')
                 .select('activity_log_id, user_id, employee_id, action, table_name, record_id, description, created_at')
                 .order('created_at', { ascending: false })
-                .limit(200)
+
+            if (filterDate) {
+                const dayStart = new Date(`${filterDate}T00:00:00`)
+                const dayEnd = new Date(`${filterDate}T23:59:59.999`)
+                query = query
+                    .gte('created_at', dayStart.toISOString())
+                    .lte('created_at', dayEnd.toISOString())
+                    .limit(2000)
+            } else {
+                query = query.limit(200)
+            }
+
+            const { data, error: logsError } = await query
 
             if (logsError) {
                 throw new Error('Failed to load activity logs: ' + logsError.message)
@@ -97,25 +116,49 @@ function ActivityLogs() {
         <div>
             <div className="admin-page-header">
                 <h1>Activity Logs</h1>
-                <p>Every recorded action across all employees and registrar heads — who did what, and when.</p>
+                <p>
+                    {filterDate
+                        ? `Every recorded action on ${new Date(`${filterDate}T00:00:00`).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}.`
+                        : 'The 200 most recent actions across all employees and registrar heads. Pick a date below to retrieve every log from a specific day instead.'}
+                </p>
             </div>
 
-            <input
-                className="admin-search-input"
-                style={{ marginBottom: 20 }}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by actor, action, or description"
-                aria-label="Search activity logs"
-            />
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+                <input
+                    className="admin-search-input"
+                    style={{ flex: 1, minWidth: 220 }}
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by actor, action, or description"
+                    aria-label="Search activity logs"
+                />
+
+                <input
+                    className="admin-search-input"
+                    style={{ maxWidth: 200 }}
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    aria-label="Filter by date"
+                    max={new Date().toISOString().slice(0, 10)}
+                />
+
+                {filterDate && (
+                    <button className="admin-secondary-button" onClick={() => setFilterDate('')}>
+                        Show recent instead
+                    </button>
+                )}
+            </div>
 
             {error && <div className="admin-error-box">{error}</div>}
 
             {loading ? (
                 <SkeletonList count={3} />
             ) : visibleLogs.length === 0 ? (
-                <div className="admin-empty">No activity matches this search.</div>
+                <div className="admin-empty">
+                    {filterDate ? 'No activity recorded on this date.' : 'No activity matches this search.'}
+                </div>
             ) : (
                 <div className="admin-table-wrapper">
                     <table className="admin-table">
