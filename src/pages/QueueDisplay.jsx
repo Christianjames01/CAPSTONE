@@ -174,9 +174,21 @@ function QueueDisplay() {
                 </div>
 
                 <div className={`qd-now-card${justCalled ? ' is-flash' : ''}${nowServing ? '' : ' is-floating'}`}>
-                    <div key={nowServing} className={`qd-now-number${nowServing ? ' is-active' : ' is-idle'}`}>
-                        {nowServing ? formatQueueNumber(nowServing) : '—'}
-                    </div>
+                    {nowServing ? (
+                        <div key={nowServing} className="qd-now-number is-active">
+                            {formatQueueNumber(nowServing)}
+                        </div>
+                    ) : upNext.length > 0 ? (
+                        <svg className="qd-idle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 7v5l3.2 2" />
+                        </svg>
+                    ) : (
+                        <svg className="qd-idle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 12.5 11 14.5 15.5 9.5" />
+                            <path d="M4.5 8.5V6.8A2.3 2.3 0 0 1 6.8 4.5h10.4A2.3 2.3 0 0 1 19.5 6.8v10.4a2.3 2.3 0 0 1-2.3 2.3H6.8a2.3 2.3 0 0 1-2.3-2.3V15.5" />
+                        </svg>
+                    )}
                     <div className="qd-now-sub">
                         {nowServing
                             ? 'Please proceed to the counter'
@@ -413,8 +425,10 @@ function QueueDisplay() {
                     animation: qd-pulse-in 1.2s ease-out;
                 }
 
-                .qd-now-number.is-idle {
-                    color: rgba(11,18,32,0.18);
+                .qd-idle-icon {
+                    width: clamp(90px, 14vw, 160px);
+                    height: clamp(90px, 14vw, 160px);
+                    color: rgba(11,18,32,0.22);
                 }
 
                 .qd-now-sub {
