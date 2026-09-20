@@ -131,11 +131,14 @@ function QueueDisplay() {
 
             <main className="qd-main">
                 <div className="qd-eyebrow">
-                    <span className="qd-eyebrow-dot" />
+                    <span className="qd-eyebrow-dot-wrap">
+                        <span className="qd-eyebrow-ping" />
+                        <span className="qd-eyebrow-dot" />
+                    </span>
                     NOW SERVING
                 </div>
 
-                <div className={`qd-now-card${justCalled ? ' is-flash' : ''}`}>
+                <div className={`qd-now-card${justCalled ? ' is-flash' : ''}${nowServing ? '' : ' is-floating'}`}>
                     <div key={nowServing} className={`qd-now-number${nowServing ? ' is-active' : ' is-idle'}`}>
                         {nowServing ? formatQueueNumber(nowServing) : '—'}
                     </div>
@@ -152,7 +155,11 @@ function QueueDisplay() {
                     ) : (
                         <div className="qd-chip-row">
                             {upNext.map((n, i) => (
-                                <div className={`qd-chip${i === 0 ? ' is-next' : ''}`} key={n}>
+                                <div
+                                    className={`qd-chip qd-chip-in${i === 0 ? ' is-next' : ''}`}
+                                    key={n}
+                                    style={{ animationDelay: `${i * 90}ms` }}
+                                >
                                     {formatQueueNumber(n)}
                                 </div>
                             ))}
@@ -162,7 +169,10 @@ function QueueDisplay() {
             </main>
 
             <footer className="qd-footer">
-                Please keep your ticket ready and listen for your number to be announced.
+                <div className="qd-marquee">
+                    <span>Please keep your ticket ready and listen for your number to be announced.</span>
+                    <span>Please keep your ticket ready and listen for your number to be announced.</span>
+                </div>
             </footer>
 
             <style>{`
@@ -183,9 +193,10 @@ function QueueDisplay() {
                     left: 50%;
                     width: 900px;
                     height: 900px;
-                    transform: translate(-50%, -50%);
-                    background: radial-gradient(circle, rgba(111,168,245,0.12) 0%, rgba(111,168,245,0) 70%);
+                    margin: -450px 0 0 -450px;
+                    background: radial-gradient(circle, rgba(111,168,245,0.14) 0%, rgba(111,168,245,0) 70%);
                     pointer-events: none;
+                    animation: qd-drift 9s ease-in-out infinite alternate;
                 }
 
                 .qd-header {
@@ -264,12 +275,27 @@ function QueueDisplay() {
                     color: rgba(11,18,32,0.6);
                 }
 
+                .qd-eyebrow-dot-wrap {
+                    position: relative;
+                    width: 9px;
+                    height: 9px;
+                    display: inline-flex;
+                }
+
                 .qd-eyebrow-dot {
+                    position: relative;
                     width: 9px;
                     height: 9px;
                     border-radius: 50%;
                     background: #6FA8F5;
-                    box-shadow: 0 0 0 4px rgba(111,168,245,0.22);
+                }
+
+                .qd-eyebrow-ping {
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 50%;
+                    background: #6FA8F5;
+                    animation: qd-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
                 }
 
                 .qd-now-card {
@@ -286,6 +312,10 @@ function QueueDisplay() {
 
                 .qd-now-card.is-flash {
                     animation: qd-flash 1s ease-in-out 3;
+                }
+
+                .qd-now-card.is-floating {
+                    animation: qd-float 4.5s ease-in-out infinite;
                 }
 
                 .qd-now-number {
@@ -355,15 +385,32 @@ function QueueDisplay() {
                     background: rgba(111,168,245,0.14);
                     border-color: rgba(111,168,245,0.45);
                     color: #123B78;
+                    animation: qd-chip-glow 2.4s ease-in-out infinite;
+                }
+
+                .qd-chip-in {
+                    animation: qd-chip-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
                 }
 
                 .qd-footer {
-                    text-align: center;
+                    overflow: hidden;
                     font-size: 13px;
                     color: rgba(11,18,32,0.4);
                     letter-spacing: 0.3px;
-                    padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+                    padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
                     border-top: 1px solid rgba(11,18,32,0.06);
+                }
+
+                .qd-marquee {
+                    display: flex;
+                    width: max-content;
+                    gap: 64px;
+                    animation: qd-marquee 22s linear infinite;
+                }
+
+                .qd-marquee span {
+                    white-space: nowrap;
+                    padding-right: 64px;
                 }
 
                 @keyframes qd-pulse-in {
@@ -375,6 +422,36 @@ function QueueDisplay() {
                 @keyframes qd-flash {
                     0%, 100% { box-shadow: 0 30px 70px -35px rgba(15,30,60,0.25); }
                     50% { box-shadow: 0 0 0 6px rgba(111,168,245,0.35), 0 30px 70px -35px rgba(15,30,60,0.25); }
+                }
+
+                @keyframes qd-float {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                }
+
+                @keyframes qd-drift {
+                    0% { transform: translate(0, 0) scale(1); }
+                    100% { transform: translate(40px, -30px) scale(1.08); }
+                }
+
+                @keyframes qd-ping {
+                    0% { transform: scale(1); opacity: 0.7; }
+                    75%, 100% { transform: scale(2.6); opacity: 0; }
+                }
+
+                @keyframes qd-chip-glow {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(111,168,245,0); }
+                    50% { box-shadow: 0 0 0 6px rgba(111,168,245,0.16); }
+                }
+
+                @keyframes qd-chip-in {
+                    0% { transform: translateY(14px); opacity: 0; }
+                    100% { transform: translateY(0); opacity: 1; }
+                }
+
+                @keyframes qd-marquee {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
                 }
 
                 @media (max-width: 640px) {
