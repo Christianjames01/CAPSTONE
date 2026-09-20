@@ -421,14 +421,16 @@ function Employees() {
                             </small>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Email</label>
-                            <input className="form-input" type="email" value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="employee@hcdc.edu.ph" disabled={creating} />
-                        </div>
+                        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px 20px' }}>
+                            <div className="form-group">
+                                <label className="form-label">Email</label>
+                                <input className="form-input" type="email" value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="employee@hcdc.edu.ph" disabled={creating} />
+                            </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Temporary Password</label>
-                            <input className="form-input" type="password" value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" disabled={creating} />
+                            <div className="form-group">
+                                <label className="form-label">Temporary Password</label>
+                                <input className="form-input" type="password" value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" disabled={creating} />
+                            </div>
                         </div>
 
                         {addError && <div className="admin-error-box" style={{ gridColumn: '1 / -1' }}>{addError}</div>}
