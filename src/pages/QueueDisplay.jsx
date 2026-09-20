@@ -144,6 +144,7 @@ function QueueDisplay() {
             )}
 
             <div className="qd-glow" />
+            <div className="qd-grain" />
 
             <header className="qd-header">
                 <div className="qd-brand">
@@ -179,15 +180,19 @@ function QueueDisplay() {
                             {formatQueueNumber(nowServing)}
                         </div>
                     ) : upNext.length > 0 ? (
-                        <svg className="qd-idle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M12 7v5l3.2 2" />
-                        </svg>
+                        <div className="qd-idle-icon-wrap">
+                            <svg className="qd-idle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 7v5l3.2 2" />
+                            </svg>
+                        </div>
                     ) : (
-                        <svg className="qd-idle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 12.5 11 14.5 15.5 9.5" />
-                            <path d="M4.5 8.5V6.8A2.3 2.3 0 0 1 6.8 4.5h10.4A2.3 2.3 0 0 1 19.5 6.8v10.4a2.3 2.3 0 0 1-2.3 2.3H6.8a2.3 2.3 0 0 1-2.3-2.3V15.5" />
-                        </svg>
+                        <div className="qd-idle-icon-wrap">
+                            <svg className="qd-idle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 12.5 11 14.5 15.5 9.5" />
+                                <path d="M4.5 8.5V6.8A2.3 2.3 0 0 1 6.8 4.5h10.4A2.3 2.3 0 0 1 19.5 6.8v10.4a2.3 2.3 0 0 1-2.3 2.3H6.8a2.3 2.3 0 0 1-2.3-2.3V15.5" />
+                            </svg>
+                        </div>
                     )}
                     <div className="qd-now-sub">
                         {nowServing
@@ -237,9 +242,9 @@ function QueueDisplay() {
                     min-height: 100vh;
                     display: flex;
                     flex-direction: column;
-                    color: #0B1220;
-                    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-                    background: #FFFFFF;
+                    color: #0A1830;
+                    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+                    background: #FDFDFE;
                     overflow: hidden;
                 }
 
@@ -251,12 +256,12 @@ function QueueDisplay() {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    gap: 10px;
+                    gap: 12px;
                     width: 100%;
                     border: none;
-                    background: rgba(255,255,255,0.97);
-                    color: #0B1220;
-                    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+                    background: rgba(253,253,254,0.98);
+                    color: #0A1830;
+                    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
                     cursor: pointer;
                 }
 
@@ -266,13 +271,14 @@ function QueueDisplay() {
                 }
 
                 .qd-unlock-title {
+                    font-family: 'Fraunces', serif;
                     font-size: clamp(22px, 3vw, 32px);
-                    font-weight: 800;
+                    font-weight: 700;
                 }
 
                 .qd-unlock-sub {
                     font-size: 15px;
-                    color: rgba(11,18,32,0.55);
+                    color: rgba(10,24,48,0.5);
                 }
 
                 @keyframes qd-unlock-pulse {
@@ -282,25 +288,38 @@ function QueueDisplay() {
 
                 .qd-glow {
                     position: absolute;
-                    top: 30%;
+                    top: 26%;
                     left: 50%;
-                    width: 900px;
-                    height: 900px;
-                    margin: -450px 0 0 -450px;
-                    background: radial-gradient(circle, rgba(111,168,245,0.14) 0%, rgba(111,168,245,0) 70%);
+                    width: 1000px;
+                    height: 1000px;
+                    margin: -500px 0 0 -500px;
+                    background: radial-gradient(circle, rgba(111,168,245,0.16) 0%, rgba(157,138,245,0.05) 45%, rgba(111,168,245,0) 72%);
                     pointer-events: none;
-                    animation: qd-drift 9s ease-in-out infinite alternate;
+                    animation: qd-drift 10s ease-in-out infinite alternate;
+                }
+
+                .qd-grain {
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    opacity: 0.5;
+                    background-image:
+                        radial-gradient(rgba(10,24,48,0.05) 1px, transparent 1px);
+                    background-size: 3px 3px;
+                    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 0%, transparent 75%);
                 }
 
                 .qd-header {
                     position: relative;
+                    z-index: 1;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     gap: 16px;
                     padding: 22px clamp(20px, 4vw, 56px);
-                    border-bottom: 1px solid rgba(11,18,32,0.08);
-                    background: #FAFBFD;
+                    background: rgba(250,251,253,0.8);
+                    backdrop-filter: blur(6px);
+                    box-shadow: 0 1px 0 rgba(11,18,32,0.07), 0 18px 40px -32px rgba(15,30,60,0.35);
                     flex-wrap: wrap;
                 }
 
@@ -314,20 +333,25 @@ function QueueDisplay() {
                     width: 48px;
                     height: 48px;
                     border-radius: 50%;
-                    box-shadow: 0 0 0 2px rgba(11,18,32,0.08);
+                    padding: 2px;
+                    background: linear-gradient(140deg, rgba(111,168,245,0.55), rgba(157,138,245,0.35));
+                    box-shadow: 0 4px 14px -6px rgba(15,30,60,0.35);
                 }
 
                 .qd-brand-name {
-                    font-size: 19px;
+                    font-family: 'Fraunces', serif;
+                    font-size: 20px;
                     font-weight: 700;
                     letter-spacing: 0.2px;
-                    color: #0B1220;
+                    color: #0A1830;
                 }
 
                 .qd-brand-tag {
-                    font-size: 12.5px;
-                    color: rgba(11,18,32,0.55);
-                    margin-top: 1px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    letter-spacing: 0.3px;
+                    color: rgba(10,24,48,0.5);
+                    margin-top: 2px;
                 }
 
                 .qd-clock {
@@ -335,37 +359,44 @@ function QueueDisplay() {
                 }
 
                 .qd-clock-time {
-                    font-size: 22px;
+                    font-size: 23px;
                     font-weight: 700;
                     font-variant-numeric: tabular-nums;
-                    color: #0B1220;
+                    letter-spacing: 0.2px;
+                    color: #0A1830;
                 }
 
                 .qd-clock-date {
-                    font-size: 12.5px;
-                    color: rgba(11,18,32,0.55);
-                    margin-top: 1px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: rgba(10,24,48,0.5);
+                    margin-top: 2px;
                 }
 
                 .qd-main {
                     position: relative;
+                    z-index: 1;
                     flex: 1;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
                     padding: clamp(24px, 4vw, 48px) 24px;
-                    gap: clamp(28px, 5vh, 56px);
+                    gap: clamp(30px, 5.5vh, 60px);
                 }
 
                 .qd-eyebrow {
                     display: flex;
                     align-items: center;
                     gap: 10px;
-                    font-size: clamp(15px, 1.6vw, 20px);
+                    padding: 9px 20px;
+                    border-radius: 999px;
+                    background: rgba(111,168,245,0.1);
+                    border: 1px solid rgba(111,168,245,0.22);
+                    font-size: clamp(13px, 1.3vw, 15px);
                     font-weight: 700;
-                    letter-spacing: 4px;
-                    color: rgba(11,18,32,0.6);
+                    letter-spacing: 3.5px;
+                    color: #2B5FA8;
                 }
 
                 .qd-eyebrow-dot-wrap {
@@ -380,7 +411,7 @@ function QueueDisplay() {
                     width: 9px;
                     height: 9px;
                     border-radius: 50%;
-                    background: #6FA8F5;
+                    background: #4E86D9;
                 }
 
                 .qd-eyebrow-ping {
@@ -392,15 +423,19 @@ function QueueDisplay() {
                 }
 
                 .qd-now-card {
+                    position: relative;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 14px;
-                    padding: clamp(28px, 5vw, 56px) clamp(40px, 10vw, 120px);
-                    border-radius: 32px;
-                    background: linear-gradient(180deg, #F5F8FE, #EEF3FB);
-                    border: 1px solid rgba(11,18,32,0.08);
-                    box-shadow: 0 30px 70px -35px rgba(15,30,60,0.25);
+                    gap: 16px;
+                    padding: clamp(30px, 5.5vw, 60px) clamp(44px, 10vw, 130px);
+                    border-radius: 40px;
+                    background: linear-gradient(165deg, #FAFCFF 0%, #F1F5FC 55%, #ECF1FA 100%);
+                    border: 1px solid rgba(11,18,32,0.07);
+                    box-shadow:
+                        inset 0 1px 0 rgba(255,255,255,0.9),
+                        0 2px 6px -2px rgba(15,30,60,0.12),
+                        0 40px 80px -40px rgba(15,30,60,0.35);
                 }
 
                 .qd-now-card.is-flash {
@@ -415,25 +450,36 @@ function QueueDisplay() {
                     font-size: min(30vw, 260px);
                     font-weight: 800;
                     line-height: 1;
-                    letter-spacing: -2px;
+                    letter-spacing: -3px;
                     font-variant-numeric: tabular-nums;
                 }
 
                 .qd-now-number.is-active {
-                    color: #123B78;
-                    text-shadow: 0 0 50px rgba(111,168,245,0.35);
+                    color: #0F2E5C;
+                    text-shadow: 0 2px 0 rgba(255,255,255,0.6), 0 0 60px rgba(111,168,245,0.4);
                     animation: qd-pulse-in 1.2s ease-out;
                 }
 
+                .qd-idle-icon-wrap {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: clamp(140px, 18vw, 210px);
+                    height: clamp(140px, 18vw, 210px);
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(111,168,245,0.12) 0%, rgba(111,168,245,0) 72%);
+                }
+
                 .qd-idle-icon {
-                    width: clamp(90px, 14vw, 160px);
-                    height: clamp(90px, 14vw, 160px);
-                    color: rgba(11,18,32,0.22);
+                    width: clamp(80px, 12vw, 140px);
+                    height: clamp(80px, 12vw, 140px);
+                    color: rgba(10,24,48,0.24);
                 }
 
                 .qd-now-sub {
                     font-size: clamp(14px, 1.8vw, 20px);
-                    color: rgba(11,18,32,0.55);
+                    font-weight: 500;
+                    color: rgba(10,24,48,0.5);
                     letter-spacing: 0.3px;
                 }
 
@@ -443,19 +489,22 @@ function QueueDisplay() {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 18px;
+                    gap: 20px;
                 }
 
                 .qd-upnext-label {
-                    font-size: 15px;
-                    font-weight: 700;
-                    letter-spacing: 3px;
-                    color: rgba(11,18,32,0.4);
+                    font-family: 'Fraunces', serif;
+                    font-style: italic;
+                    font-size: 18px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    color: rgba(10,24,48,0.45);
                 }
 
                 .qd-upnext-empty {
                     font-size: 16px;
-                    color: rgba(11,18,32,0.35);
+                    font-weight: 500;
+                    color: rgba(10,24,48,0.32);
                 }
 
                 .qd-chip-row {
@@ -469,16 +518,17 @@ function QueueDisplay() {
                     font-size: clamp(22px, 2.4vw, 30px);
                     font-weight: 700;
                     font-variant-numeric: tabular-nums;
-                    padding: 14px 26px;
-                    border-radius: 14px;
-                    background: #F7F9FC;
-                    border: 1px solid rgba(11,18,32,0.08);
-                    color: rgba(11,18,32,0.8);
+                    padding: 15px 28px;
+                    border-radius: 16px;
+                    background: linear-gradient(180deg, #FFFFFF, #F7F9FC);
+                    border: 1px solid rgba(11,18,32,0.07);
+                    box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 10px 20px -16px rgba(15,30,60,0.3);
+                    color: rgba(10,24,48,0.78);
                 }
 
                 .qd-chip.is-next {
-                    background: rgba(111,168,245,0.14);
-                    border-color: rgba(111,168,245,0.45);
+                    background: linear-gradient(180deg, rgba(111,168,245,0.16), rgba(111,168,245,0.1));
+                    border-color: rgba(111,168,245,0.5);
                     color: #123B78;
                     animation: qd-chip-glow 2.4s ease-in-out infinite;
                 }
@@ -488,12 +538,17 @@ function QueueDisplay() {
                 }
 
                 .qd-footer {
+                    position: relative;
+                    z-index: 1;
                     overflow: hidden;
                     font-size: 13px;
-                    color: rgba(11,18,32,0.4);
+                    font-weight: 500;
+                    color: rgba(10,24,48,0.38);
                     letter-spacing: 0.3px;
-                    padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
+                    padding: 15px 0 calc(15px + env(safe-area-inset-bottom, 0px));
                     border-top: 1px solid rgba(11,18,32,0.06);
+                    background: linear-gradient(180deg, transparent, rgba(111,168,245,0.03));
+                    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
                 }
 
                 .qd-marquee {
@@ -519,8 +574,8 @@ function QueueDisplay() {
                 }
 
                 @keyframes qd-flash {
-                    0%, 100% { box-shadow: 0 30px 70px -35px rgba(15,30,60,0.25); }
-                    50% { box-shadow: 0 0 0 6px rgba(111,168,245,0.35), 0 30px 70px -35px rgba(15,30,60,0.25); }
+                    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 6px -2px rgba(15,30,60,0.12), 0 40px 80px -40px rgba(15,30,60,0.35); }
+                    50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 0 0 6px rgba(111,168,245,0.35), 0 40px 80px -40px rgba(15,30,60,0.35); }
                 }
 
                 @keyframes qd-float {
