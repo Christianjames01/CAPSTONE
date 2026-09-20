@@ -150,6 +150,14 @@ function Announcements() {
     }
 
     const toggleActive = async (a) => {
+        const confirmed = await confirmModal(
+            a.is_active
+                ? `Deactivate "${stripHtml(a.title)}"? Students will no longer see it on their dashboard.`
+                : `Activate "${stripHtml(a.title)}"? Students will see it on their dashboard right away.`,
+            { title: a.is_active ? 'Deactivate announcement?' : 'Activate announcement?', confirmButtonText: a.is_active ? 'Deactivate' : 'Activate' }
+        )
+        if (!confirmed) return
+
         try {
             const { error: updateError } = await supabase
                 .from('announcements')
