@@ -20,7 +20,11 @@
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
-  font-synthesis: none;
+  /* `none` would also block the browser from faking italics on faces with
+     no real italic weight loaded (Inter/Fraunces here only import upright
+     weights) -- `style` keeps weight/small-caps synthesis off but lets
+     italic actually render instead of silently doing nothing. */
+  font-synthesis: style;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -110,6 +110,31 @@
     cursor: not-allowed;
 }
 
+.rich-text-color-picker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.12s ease;
+}
+
+.rich-text-color-picker:hover {
+    transform: scale(1.12);
+}
+
+.rich-text-color-picker input {
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
 .rich-text-body {
     min-height: 110px;
     padding: 10px 12px;

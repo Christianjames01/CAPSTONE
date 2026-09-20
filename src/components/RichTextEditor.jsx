@@ -2,18 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import './RichTextEditor.css'
 
 const COLORS = [
-    { label: 'Red', value: '#C8102E' },
-    { label: 'Blue', value: '#123B78' },
-    { label: 'Green', value: '#1E8A5F' },
-    { label: 'Black', value: '#1A1A1A' },
+    '#1A1A1A', '#57616F', '#C8102E', '#B45309',
+    '#1E8A5F', '#123B78', '#6FA8F5', '#8A1F2B',
 ]
 
-const SIZES = [
-    { label: 'Small', value: '2' },
-    { label: 'Normal', value: '3' },
-    { label: 'Large', value: '5' },
-    { label: 'X-Large', value: '6' },
-]
+// Real pixel sizes rather than vague labels -- 14px matches the editor's own
+// default body text, so it's included as the implicit "normal" size.
+const SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 40]
 
 // A minimal formatting toolbar over a contentEditable div, so the registrar
 // head can bold/italicize/underline/color/size announcement text without a
@@ -60,6 +55,23 @@ function RichTextEditor({ value, onChange, disabled, placeholder, editorKey }) {
         onChange(ref.current?.innerHTML || '')
     }
 
+    // execCommand('fontSize', ...) only understands the legacy 1-7 <font>
+    // scale, not real pixel numbers -- apply size 7 as a marker, then swap
+    // every resulting <font size="7"> for a <span style="font-size:Npx">
+    // so the dropdown's numbers are the actual rendered size, not a guess.
+    const applyFontSize = (px) => {
+        if (disabled) return
+        ref.current?.focus()
+        document.execCommand('fontSize', false, '7')
+
+        ref.current?.querySelectorAll('font[size="7"]').forEach((el) => {
+            el.removeAttribute('size')
+            el.style.fontSize = `${px}px`
+        })
+
+        onChange(ref.current?.innerHTML || '')
+    }
+
     return (
         <div className={`rich-text-editor${disabled ? ' is-disabled' : ''}`}>
             <div className="rich-text-toolbar" role="toolbar" aria-label="Text formatting">
@@ -101,17 +113,17 @@ function RichTextEditor({ value, onChange, disabled, placeholder, editorKey }) {
                 <div className="rich-text-group">
                     <select
                         className="rich-text-size-select"
-                        aria-label="Font size"
+                        aria-label="Font size in pixels"
                         disabled={disabled}
                         defaultValue=""
                         onChange={(e) => {
-                            if (e.target.value) exec('fontSize', e.target.value)
+                            if (e.target.value) applyFontSize(e.target.value)
                             e.target.value = ''
                         }}
                     >
                         <option value="" disabled>Size</option>
-                        {SIZES.map((s) => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
+                        {SIZES.map((px) => (
+                            <option key={px} value={px}>{px}px</option>
                         ))}
                     </select>
                 </div>
@@ -119,18 +131,28 @@ function RichTextEditor({ value, onChange, disabled, placeholder, editorKey }) {
                 <div className="rich-text-divider" />
 
                 <div className="rich-text-group">
-                    {COLORS.map((c) => (
+                    {COLORS.map((hex) => (
                         <button
-                            key={c.value}
+                            key={hex}
                             type="button"
-                            onClick={() => exec('foreColor', c.value)}
+                            onClick={() => exec('foreColor', hex)}
                             disabled={disabled}
-                            title={c.label}
-                            aria-label={`${c.label} text color`}
+                            title={hex}
+                            aria-label={`Set text color to ${hex}`}
                             className="rich-text-color-swatch"
-                            style={{ '--swatch-color': c.value }}
+                            style={{ '--swatch-color': hex }}
                         />
                     ))}
+
+                    <label className="rich-text-color-picker" title="Custom color">
+                        <input
+                            type="color"
+                            aria-label="Custom text color"
+                            disabled={disabled}
+                            defaultValue="#1A1A1A"
+                            onInput={(e) => exec('foreColor', e.target.value)}
+                        />
+                    </label>
                 </div>
 
                 <div className="rich-text-divider" />
