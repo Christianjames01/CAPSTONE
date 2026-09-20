@@ -50,6 +50,7 @@ import StudentHistory from './pages/employee/StudentHistory'
 import EmployeeMessages from './pages/employee/Messages'
 import EmployeeNotifications from './pages/employee/Notifications'
 import ActivityLogs from './pages/employee/ActivityLogs'
+import EmployeeQueue from './pages/employee/Queue'
 import EmployeeProfile from './pages/employee/Profile'
 
 import AdminLayout from './pages/admin/AdminLayout'
@@ -164,7 +165,7 @@ function App() {
         <Route
           path="/queue-display"
           element={
-            <ProtectedRoute allowedRoles={['registrar_head', 'admin']}>
+            <ProtectedRoute allowedRoles={['registrar_head', 'admin', 'employee']}>
               <QueueDisplay />
             </ProtectedRoute>
           }
@@ -288,6 +289,11 @@ function App() {
           <Route
             path="/employee/office-calendar"
             element={<EmployeeOfficeCalendar />}
+          />
+
+          <Route
+            path="/employee/queue"
+            element={<RequireFullEmployeeAccess><EmployeeQueue /></RequireFullEmployeeAccess>}
           />
 
           <Route

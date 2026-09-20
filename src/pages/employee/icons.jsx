@@ -36,6 +36,13 @@ export const IconMessage = () => (
     </svg>
 )
 
+export const IconTicket = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.75 1.75 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.75 1.75 0 0 0 0-3Z" />
+        <path d="M14 7.5v9" strokeDasharray="2.2 2.2" />
+    </svg>
+)
+
 export const IconHistory = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 12a8 8 0 1 0 2.6-5.9" />
