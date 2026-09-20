@@ -404,13 +404,14 @@ function QueueDisplay() {
                 .qd-marquee {
                     display: flex;
                     width: max-content;
-                    gap: 64px;
-                    animation: qd-marquee 22s linear infinite;
+                    animation: qd-marquee 18s linear infinite;
+                    will-change: transform;
                 }
 
                 .qd-marquee span {
                     white-space: nowrap;
                     padding-right: 64px;
+                    flex-shrink: 0;
                 }
 
                 @keyframes qd-pulse-in {
