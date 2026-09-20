@@ -6,12 +6,14 @@ import hcdcLogo from '../assets/hcdc-logo.png'
 const POLL_MS = 4000
 
 // A short two-tone chime via the Web Audio API -- no audio file asset
-// needed, and it works the instant the page loads (assuming the kiosk
-// browser/TV has already had a user interaction to unlock audio, which a
-// one-time tap to open the page satisfies in every major browser).
-function playChime() {
+// needed. `ctx` must be a context created/resumed from a real user gesture
+// (see handleStart below): browsers create a fresh AudioContext in a
+// "suspended" state and silently drop anything played through it until a
+// tap/click resumes it, so a kiosk page that's opened once and never
+// touched again would otherwise play nothing at all, with no error to
+// explain why.
+function playChime(ctx) {
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)()
         const now = ctx.currentTime
 
         ;[880, 660].forEach((freq, i) => {
@@ -31,10 +33,10 @@ function playChime() {
     }
 }
 
-function announce(queueNumber) {
-    if (!window.speechSynthesis) return
+function announce(queueNumber, ctx) {
+    if (ctx) playChime(ctx)
 
-    playChime()
+    if (!window.speechSynthesis) return
 
     const utterance = new SpeechSynthesisUtterance(
         `Now serving number ${queueNumber}. Please proceed to the counter.`
@@ -50,7 +52,9 @@ function QueueDisplay() {
     const [upNext, setUpNext] = useState([])
     const [clock, setClock] = useState(new Date())
     const [justCalled, setJustCalled] = useState(false)
+    const [soundReady, setSoundReady] = useState(false)
     const lastAnnouncedKey = useRef(null)
+    const audioCtxRef = useRef(null)
 
     useEffect(() => {
         loadQueue()
@@ -61,6 +65,29 @@ function QueueDisplay() {
             clearInterval(clockTick)
         }
     }, [])
+
+    // One tap is all it takes, and it only needs to happen once per time the
+    // display is opened -- this is what actually lets audio/speech play at
+    // all afterward, since the browser requires a real user gesture before
+    // either will produce sound, silently otherwise.
+    const enableSound = () => {
+        try {
+            const Ctx = window.AudioContext || window.webkitAudioContext
+            const ctx = audioCtxRef.current || new Ctx()
+            audioCtxRef.current = ctx
+            if (ctx.state === 'suspended') ctx.resume()
+
+            if (window.speechSynthesis) {
+                const warmUp = new SpeechSynthesisUtterance(' ')
+                warmUp.volume = 0
+                window.speechSynthesis.speak(warmUp)
+            }
+        } catch (err) {
+            console.error('ENABLE SOUND ERROR:', err)
+        } finally {
+            setSoundReady(true)
+        }
+    }
 
     const loadQueue = async () => {
         const today = todayStr()
@@ -85,7 +112,7 @@ function QueueDisplay() {
             if (key !== lastAnnouncedKey.current) {
                 lastAnnouncedKey.current = key
                 if (!isFirstCheck) {
-                    announce(current.queue_number)
+                    announce(current.queue_number, audioCtxRef.current)
                     setJustCalled(true)
                     setTimeout(() => setJustCalled(false), 6000)
                 }
@@ -108,6 +135,14 @@ function QueueDisplay() {
 
     return (
         <div className="qd-root">
+            {!soundReady && (
+                <button className="qd-unlock" onClick={enableSound}>
+                    <span className="qd-unlock-icon">🔊</span>
+                    <span className="qd-unlock-title">Tap to Start Display</span>
+                    <span className="qd-unlock-sub">Needed once so number announcements can play sound</span>
+                </button>
+            )}
+
             <div className="qd-glow" />
 
             <header className="qd-header">
@@ -194,6 +229,43 @@ function QueueDisplay() {
                     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
                     background: #FFFFFF;
                     overflow: hidden;
+                }
+
+                .qd-unlock {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 50;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    width: 100%;
+                    border: none;
+                    background: rgba(255,255,255,0.97);
+                    color: #0B1220;
+                    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+                    cursor: pointer;
+                }
+
+                .qd-unlock-icon {
+                    font-size: 56px;
+                    animation: qd-unlock-pulse 1.6s ease-in-out infinite;
+                }
+
+                .qd-unlock-title {
+                    font-size: clamp(22px, 3vw, 32px);
+                    font-weight: 800;
+                }
+
+                .qd-unlock-sub {
+                    font-size: 15px;
+                    color: rgba(11,18,32,0.55);
+                }
+
+                @keyframes qd-unlock-pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.12); }
                 }
 
                 .qd-glow {
