@@ -275,7 +275,7 @@ function Dashboard() {
                             key={a.announcement_id}
                         >
                             <strong>
-                                {a.title}
+                                <span dangerouslySetInnerHTML={{ __html: sanitizeAnnouncementHtml(a.title) }} />
                                 {a.announcement_date && (
                                     <> — {a.is_closed ? 'Closed' : 'Open'} on {formatAnnouncementDate(a.announcement_date)}</>
                                 )}

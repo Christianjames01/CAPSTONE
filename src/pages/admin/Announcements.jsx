@@ -18,6 +18,13 @@ const EMPTY_FORM = {
     is_active: true,
 }
 
+// For places a title is shown as plain text (confirm dialogs, activity log
+// entries) -- strips any formatting tags so those read as normal sentences
+// instead of showing raw markup.
+function stripHtml(html) {
+    return (html || '').replace(/<[^>]*>/g, '').trim()
+}
+
 function formatAnnouncementDate(dateStr) {
     return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
         weekday: 'long',
@@ -89,7 +96,7 @@ function Announcements() {
     }
 
     const saveAnnouncement = async () => {
-        if (!form.title.trim() || !form.message.trim()) {
+        if (!stripHtml(form.title) || !stripHtml(form.message)) {
             notifyWarning('Title and message are required.')
             return
         }
@@ -98,7 +105,7 @@ function Announcements() {
             setSaving(true)
 
             const payload = {
-                title: form.title.trim(),
+                title: sanitizeAnnouncementHtml(form.title),
                 message: sanitizeAnnouncementHtml(form.message),
                 announcement_date: form.announcement_date || null,
                 is_closed: form.announcement_date ? form.is_closed : false,
@@ -115,7 +122,7 @@ function Announcements() {
 
                 if (updateError) throw new Error(updateError.message)
 
-                await logAdmin('edit_announcement', form.announcement_id, `Updated announcement "${payload.title}".`)
+                await logAdmin('edit_announcement', form.announcement_id, `Updated announcement "${stripHtml(payload.title)}".`)
             } else {
                 const { data: { user } } = await supabase.auth.getUser()
 
@@ -127,7 +134,7 @@ function Announcements() {
 
                 if (insertError) throw new Error(insertError.message)
 
-                await logAdmin('add_announcement', data.announcement_id, `Posted announcement "${payload.title}".`)
+                await logAdmin('add_announcement', data.announcement_id, `Posted announcement "${stripHtml(payload.title)}".`)
             }
 
             setShowForm(false)
@@ -154,7 +161,7 @@ function Announcements() {
             await logAdmin(
                 a.is_active ? 'deactivate_announcement' : 'activate_announcement',
                 a.announcement_id,
-                `${a.is_active ? 'Deactivated' : 'Activated'} announcement "${a.title}".`
+                `${a.is_active ? 'Deactivated' : 'Activated'} announcement "${stripHtml(a.title)}".`
             )
 
             await loadAnnouncements({ silent: true })
@@ -166,7 +173,7 @@ function Announcements() {
     }
 
     const removeAnnouncement = async (a) => {
-        const confirmed = await confirmModal(`Delete the announcement "${a.title}"? This cannot be undone.`)
+        const confirmed = await confirmModal(`Delete the announcement "${stripHtml(a.title)}"? This cannot be undone.`)
         if (!confirmed) return
 
         try {
@@ -179,7 +186,7 @@ function Announcements() {
 
             if (deleteError) throw new Error(deleteError.message)
 
-            await logAdmin('remove_announcement', a.announcement_id, `Deleted announcement "${a.title}".`)
+            await logAdmin('remove_announcement', a.announcement_id, `Deleted announcement "${stripHtml(a.title)}".`)
 
             await loadAnnouncements({ silent: true })
 
@@ -211,11 +218,10 @@ function Announcements() {
                 >
                     <div className="form-group" style={{ marginBottom: 14 }}>
                         <label className="form-label" htmlFor="ann-title">Title</label>
-                        <input
-                            id="ann-title"
-                            className="form-input"
+                        <RichTextEditor
+                            editorKey={form.announcement_id || 'new'}
                             value={form.title}
-                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                            onChange={(html) => setForm({ ...form, title: html })}
                             placeholder="e.g. Office closed Friday for a holiday"
                             disabled={saving}
                         />
@@ -242,7 +248,7 @@ function Announcements() {
                             style={{ marginTop: 0 }}
                         >
                             <strong>
-                                {form.title || 'Announcement title'}
+                                <span dangerouslySetInnerHTML={{ __html: sanitizeAnnouncementHtml(form.title) || 'Announcement title' }} />
                                 {form.announcement_date && (
                                     <> — {form.is_closed ? 'Closed' : 'Open'} on {formatAnnouncementDate(form.announcement_date)}</>
                                 )}
@@ -300,7 +306,7 @@ function Announcements() {
                     <div className="admin-list-card" key={a.announcement_id} style={{ marginTop: 16 }}>
                         <div className="admin-list-card-header">
                             <div>
-                                <h3>{a.title}</h3>
+                                <h3 dangerouslySetInnerHTML={{ __html: sanitizeAnnouncementHtml(a.title) }} />
                                 <p>
                                     {a.announcement_date
                                         ? formatAnnouncementDate(a.announcement_date)
