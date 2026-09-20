@@ -206,6 +206,7 @@ function Announcements() {
                 <Modal
                     title={form.announcement_id ? 'Edit Announcement' : 'New Announcement'}
                     maxWidth={640}
+                    closeOnBackdropClick={false}
                     onClose={() => { if (saving) return; setShowForm(false); setForm(EMPTY_FORM) }}
                 >
                     <div className="form-group" style={{ marginBottom: 14 }}>
