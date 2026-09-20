@@ -7,6 +7,13 @@ import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
 
+function formatDate(value) {
+    if (!value) return ''
+    const date = new Date(value)
+    const month = date.toLocaleDateString('en-PH', { month: 'short' })
+    return `${month},${date.getDate()} ${date.getFullYear()}`
+}
+
 const CHIPS = [
     { key: 'uploaded', label: 'Awaiting Verification' },
     { key: 'verified', label: 'Verified' },
@@ -240,7 +247,7 @@ function OfficialReceipts() {
                             </div>
                             <div className="admin-info-field">
                                 <span>Uploaded</span>
-                                <strong>{r.uploaded_at ? new Date(r.uploaded_at).toLocaleDateString() : 'N/A'}</strong>
+                                <strong>{formatDate(r.uploaded_at) || 'N/A'}</strong>
                             </div>
                         </div>
 
