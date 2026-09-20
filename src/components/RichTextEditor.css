@@ -1,46 +1,113 @@
 .rich-text-editor {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.rich-text-editor.is-disabled {
+    opacity: 0.65;
 }
 
 .rich-text-toolbar {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
 }
 
-.rich-text-toolbar button,
-.rich-text-toolbar select {
-    height: 30px;
-    min-width: 30px;
+.rich-text-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.rich-text-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--line);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+.rich-text-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
     padding: 0 8px;
-    border: 1px solid var(--line);
+    border: none;
     border-radius: 6px;
-    background: var(--surface);
+    background: transparent;
     color: var(--ink);
     font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.rich-text-btn:hover:not(:disabled) {
+    background: var(--surface);
+}
+
+.rich-text-btn.active {
+    background: var(--blue-tint);
+    color: var(--blue);
+}
+
+.rich-text-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.rich-text-clear {
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.rich-text-size-select {
+    height: 28px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 12.5px;
     cursor: pointer;
 }
 
-.rich-text-toolbar button:hover:not(:disabled) {
-    background: var(--paper);
+.rich-text-size-select:hover:not(:disabled) {
+    background: var(--surface);
 }
 
-.rich-text-toolbar button:disabled,
-.rich-text-toolbar select:disabled {
+.rich-text-size-select:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 .rich-text-color-swatch {
-    width: 22px !important;
-    min-width: 22px !important;
-    height: 22px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    border: 1px solid var(--line);
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: var(--swatch-color);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.rich-text-color-swatch:hover:not(:disabled) {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--swatch-color);
+}
+
+.rich-text-color-swatch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .rich-text-body {
@@ -48,6 +115,9 @@
     padding: 10px 12px;
     line-height: 1.5;
     overflow-wrap: anywhere;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 14px;
 }
 
 .rich-text-body:focus {
