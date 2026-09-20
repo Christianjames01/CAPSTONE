@@ -143,7 +143,11 @@ function QueueDisplay() {
                         {nowServing ? formatQueueNumber(nowServing) : '—'}
                     </div>
                     <div className="qd-now-sub">
-                        {nowServing ? 'Please proceed to the counter' : 'Waiting for the next number'}
+                        {nowServing
+                            ? 'Please proceed to the counter'
+                            : upNext.length > 0
+                                ? 'Waiting for the next number to be called'
+                                : 'No one in line right now'}
                     </div>
                 </div>
 

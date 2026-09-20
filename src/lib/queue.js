@@ -68,3 +68,31 @@ export async function createQueueTicket({ studentId, requestId, visitorName, pur
 
     return data
 }
+
+// Issues a whole block of tickets in one action (e.g. numbers 1-50 at the
+// start of the day) instead of clicking "Issue Number" one at a time.
+// Reserves a contiguous range atomically, then inserts every ticket row in
+// a single request. Returns the created rows in ticket-number order.
+export async function createQueueTicketBatch(count) {
+    const today = todayStr()
+
+    const { data: numbers, error: numberError } = await supabase.rpc('reserve_queue_numbers', {
+        p_date: today,
+        p_count: count,
+    })
+    if (numberError) throw new Error('Failed to reserve queue numbers: ' + numberError.message)
+
+    const rows = (numbers || []).map((queue_number) => ({
+        queue_date: today,
+        queue_number,
+    }))
+
+    const { data, error: insertError } = await supabase
+        .from('walk_in_queue')
+        .insert(rows)
+        .select()
+
+    if (insertError) throw new Error('Failed to create the queue tickets: ' + insertError.message)
+
+    return (data || []).sort((a, b) => a.queue_number - b.queue_number)
+}

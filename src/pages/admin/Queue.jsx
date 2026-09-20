@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { createQueueTicket, formatQueueNumber, todayStr } from '../../lib/queue'
+import { createQueueTicket, createQueueTicketBatch, formatQueueNumber, todayStr } from '../../lib/queue'
 import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
@@ -19,6 +19,7 @@ function AdminQueue() {
     const [error, setError] = useState('')
     const [acting, setActing] = useState(null)
     const [issuing, setIssuing] = useState(false)
+    const [batchCount, setBatchCount] = useState(1)
 
     useEffect(() => {
         loadQueue()
@@ -153,20 +154,45 @@ function AdminQueue() {
     // A plain numbered ticket, nothing more: click, get the next number, done.
     // No student lookup step -- the number itself is what's called and what
     // the student waits for, matching a real walk-up ticket dispenser.
+    // batchCount > 1 issues a whole contiguous block in one action (e.g.
+    // pre-printing 1-50 at the start of the day) instead of clicking once
+    // per ticket.
     const issueTicket = async () => {
+        const count = Math.max(1, Math.min(100, Number(batchCount) || 1))
+
         try {
             setIssuing(true)
-            const ticket = await createQueueTicket()
 
-            await logActivity({
-                userId: (await supabase.auth.getUser()).data.user?.id,
-                action: 'queue_issue_ticket',
-                tableName: 'walk_in_queue',
-                recordId: ticket.queue_id,
-                description: `Issued walk-in ticket ${formatQueueNumber(ticket.queue_number)}.`,
-            })
+            const { data: { user } } = await supabase.auth.getUser()
 
-            notifySuccess(`Ticket ${formatQueueNumber(ticket.queue_number)} issued.`)
+            if (count === 1) {
+                const ticket = await createQueueTicket()
+
+                await logActivity({
+                    userId: user?.id,
+                    action: 'queue_issue_ticket',
+                    tableName: 'walk_in_queue',
+                    recordId: ticket.queue_id,
+                    description: `Issued walk-in ticket ${formatQueueNumber(ticket.queue_number)}.`,
+                })
+
+                notifySuccess(`Ticket ${formatQueueNumber(ticket.queue_number)} issued.`)
+            } else {
+                const created = await createQueueTicketBatch(count)
+                const first = created[0]
+                const last = created[created.length - 1]
+
+                await logActivity({
+                    userId: user?.id,
+                    action: 'queue_issue_batch',
+                    tableName: 'walk_in_queue',
+                    recordId: null,
+                    description: `Issued ${created.length} walk-in tickets ${formatQueueNumber(first.queue_number)} to ${formatQueueNumber(last.queue_number)}.`,
+                })
+
+                notifySuccess(`Issued ${created.length} tickets: ${formatQueueNumber(first.queue_number)} to ${formatQueueNumber(last.queue_number)}.`)
+            }
+
             await loadQueue({ silent: true })
 
         } catch (err) {
@@ -189,12 +215,31 @@ function AdminQueue() {
                     <p>Today's walk-in numbers. Open the Queue Display on the lobby TV to show what's next.</p>
                 </div>
 
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                     <a className="admin-secondary-button" href="/queue-display" target="_blank" rel="noopener noreferrer">
                         Open Queue Display →
                     </a>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                        <span style={{ color: 'var(--slate)' }}>Count</span>
+                        <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            className="admin-search-input"
+                            style={{ width: 70, padding: '8px 10px' }}
+                            value={batchCount}
+                            onChange={(e) => setBatchCount(e.target.value)}
+                            disabled={issuing}
+                        />
+                    </label>
+
                     <button className="admin-primary-button" onClick={issueTicket} disabled={issuing}>
-                        {issuing ? 'Issuing...' : '+ Issue Number'}
+                        {issuing
+                            ? 'Issuing...'
+                            : Number(batchCount) > 1
+                                ? `+ Issue ${Math.max(1, Math.min(100, Number(batchCount) || 1))} Numbers`
+                                : '+ Issue Number'}
                     </button>
                 </div>
             </div>
