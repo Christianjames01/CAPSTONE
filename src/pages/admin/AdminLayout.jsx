@@ -5,7 +5,7 @@ import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
-import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone } from './icons'
+import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone, IconTicket } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import './AdminLayout.css'
 
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
     { to: '/admin/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
     { to: '/admin/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
     { to: '/admin/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
+    { to: '/admin/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
     { to: '/admin/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
     { to: '/admin/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/admin/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },

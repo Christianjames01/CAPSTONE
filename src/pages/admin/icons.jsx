@@ -13,6 +13,13 @@ export const IconMegaphone = () => (
     </svg>
 )
 
+export const IconTicket = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3v1.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3Z" />
+        <path d="M9.5 6.5v11" strokeDasharray="1.6 2" />
+    </svg>
+)
+
 export const IconBuilding = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="3.5" width="14" height="17" rx="1.2" />

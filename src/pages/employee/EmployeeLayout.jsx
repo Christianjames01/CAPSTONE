@@ -5,6 +5,7 @@ import { useIdleLogout } from '../../lib/useIdleLogout'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory } from './icons'
+import { IconTicket } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import './EmployeeLayout.css'
 
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
     { to: '/employee/processing', label: 'Document Processing', icon: <IconGear />, fullAccessOnly: true },
     { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
     { to: '/employee/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
+    { to: '/employee/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
     { to: '/employee/students', label: 'Students', icon: <IconUsers />, fullAccessOnly: true },
     { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
