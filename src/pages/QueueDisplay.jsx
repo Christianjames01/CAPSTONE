@@ -238,8 +238,8 @@ function QueueDisplay() {
 
             <style>{`
                 .qd-root {
-                    position: relative;
-                    min-height: 100vh;
+                    position: fixed;
+                    inset: 0;
                     display: flex;
                     flex-direction: column;
                     color: #0A1830;
@@ -377,12 +377,14 @@ function QueueDisplay() {
                     position: relative;
                     z-index: 1;
                     flex: 1;
+                    min-height: 0;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: clamp(24px, 4vw, 48px) 24px;
-                    gap: clamp(30px, 5.5vh, 60px);
+                    padding: clamp(12px, 2.5vh, 40px) 24px;
+                    gap: clamp(14px, 3.2vh, 44px);
+                    overflow: hidden;
                 }
 
                 .qd-eyebrow {
@@ -427,8 +429,8 @@ function QueueDisplay() {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 16px;
-                    padding: clamp(30px, 5.5vw, 60px) clamp(44px, 10vw, 130px);
+                    gap: clamp(10px, 1.8vh, 16px);
+                    padding: clamp(16px, 3.5vh, 52px) clamp(36px, 8vw, 120px);
                     border-radius: 40px;
                     background: linear-gradient(165deg, #FAFCFF 0%, #F1F5FC 55%, #ECF1FA 100%);
                     border: 1px solid rgba(11,18,32,0.07);
@@ -447,7 +449,7 @@ function QueueDisplay() {
                 }
 
                 .qd-now-number {
-                    font-size: min(30vw, 260px);
+                    font-size: min(26vw, 26vh, 240px);
                     font-weight: 800;
                     line-height: 1;
                     letter-spacing: -3px;
@@ -464,15 +466,15 @@ function QueueDisplay() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    width: clamp(140px, 18vw, 210px);
-                    height: clamp(140px, 18vw, 210px);
+                    width: clamp(110px, 16vh, 200px);
+                    height: clamp(110px, 16vh, 200px);
                     border-radius: 50%;
                     background: radial-gradient(circle, rgba(111,168,245,0.12) 0%, rgba(111,168,245,0) 72%);
                 }
 
                 .qd-idle-icon {
-                    width: clamp(80px, 12vw, 140px);
-                    height: clamp(80px, 12vw, 140px);
+                    width: clamp(64px, 10vh, 134px);
+                    height: clamp(64px, 10vh, 134px);
                     color: rgba(10,24,48,0.24);
                 }
 
