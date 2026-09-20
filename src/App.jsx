@@ -31,7 +31,6 @@ import UploadReceipt from './pages/student/UploadReceipt'
 import UploadReceiptList from './pages/student/UploadReceiptList'
 import UploadRequirements from './pages/student/UploadRequirements'
 import StudentClaimSchedule from './pages/student/ClaimSchedule'
-import StudentQueue from './pages/student/Queue'
 import StudentMessages from './pages/student/Messages'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
@@ -46,7 +45,6 @@ import RequestVerification from './pages/employee/RequestVerification'
 import DocumentProcessing from './pages/employee/DocumentProcessing'
 import ClaimScheduleList from './pages/employee/ClaimScheduleList'
 import EmployeeOfficeCalendar from './pages/employee/OfficeCalendar'
-import EmployeeQueue from './pages/employee/Queue'
 import EmployeeStudents from './pages/employee/Students'
 import StudentHistory from './pages/employee/StudentHistory'
 import EmployeeMessages from './pages/employee/Messages'
@@ -166,7 +164,7 @@ function App() {
         <Route
           path="/queue-display"
           element={
-            <ProtectedRoute allowedRoles={['employee', 'registrar_head', 'admin']}>
+            <ProtectedRoute allowedRoles={['registrar_head', 'admin']}>
               <QueueDisplay />
             </ProtectedRoute>
           }
@@ -220,11 +218,6 @@ function App() {
           <Route
             path="/student/claim-schedule"
             element={<StudentClaimSchedule />}
-          />
-
-          <Route
-            path="/student/queue"
-            element={<StudentQueue />}
           />
 
           <Route
@@ -295,11 +288,6 @@ function App() {
           <Route
             path="/employee/office-calendar"
             element={<EmployeeOfficeCalendar />}
-          />
-
-          <Route
-            path="/employee/queue"
-            element={<EmployeeQueue />}
           />
 
           <Route

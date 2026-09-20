@@ -19,7 +19,6 @@ import {
     IconMenu,
     IconX,
 } from './icons'
-import { IconTicket } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import './StudentLayout.css'
 
@@ -28,7 +27,6 @@ const NAV_ITEMS = [
     { to: '/student/new-request', label: 'Request a Document', icon: <IconDocumentPlus /> },
     { to: '/student/my-requests', label: 'My Requests', icon: <IconList /> },
     { to: '/student/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
-    { to: '/student/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
     { to: '/student/upload-receipt', label: 'Upload Receipt', icon: <IconReceipt /> },
     { to: '/student/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/student/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
