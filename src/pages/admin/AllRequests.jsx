@@ -318,7 +318,11 @@ function AllRequests() {
                 <div className="admin-empty">No requests match this view.</div>
             ) : (
                 visibleRequests.map((request) => (
-                    <div className="admin-list-card" key={request.request_id}>
+                    <div
+                        className="admin-list-card"
+                        key={request.request_id}
+                        style={{ borderLeft: `4px solid ${request.priority === 'urgent' ? 'var(--red)' : 'var(--blue)'}` }}
+                    >
                         <div className="admin-list-card-header">
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                                 <input
