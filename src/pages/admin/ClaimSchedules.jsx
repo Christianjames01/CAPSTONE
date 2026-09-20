@@ -209,6 +209,14 @@ function ClaimSchedules() {
                 description: `Dismissed missed claiming appointment for "${schedule.requestNumber}" (Registrar Head).`,
             })
 
+            await notifyStudentByStudentId({
+                studentId: schedule.student_id,
+                title: 'Missed claiming appointment',
+                message: `You missed your claiming appointment for request ${schedule.requestNumber}. Please schedule a new claiming date.`,
+                notificationType: 'request_update',
+                relatedRequestId: schedule.request_id,
+            })
+
             await loadData()
 
         } catch (err) {
