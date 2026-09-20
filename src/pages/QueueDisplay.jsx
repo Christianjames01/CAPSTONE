@@ -5,6 +5,15 @@ import hcdcLogo from '../assets/hcdc-logo.png'
 
 const POLL_MS = 4000
 
+// Rotated through instead of repeating one line back-to-back, so the
+// footer ticker reads as a handful of distinct announcements rather than
+// the same sentence spammed edge to edge.
+const MARQUEE_MESSAGES = [
+    'Please keep your ticket ready and listen for your number to be announced.',
+    'Log in to CertiChain to track your document request online.',
+    'Numbers reset daily — walk-in tickets are only valid for today.',
+]
+
 // A short two-tone chime via the Web Audio API -- no audio file asset
 // needed. `ctx` must be a context created/resumed from a real user gesture
 // (see handleStart below): browsers create a fresh AudioContext in a
@@ -226,12 +235,17 @@ function QueueDisplay() {
 
             <footer className="qd-footer">
                 <div className="qd-marquee">
-                    {/* Repeated enough times that even half this row (the
-                        distance the -50% loop travels) is wider than any
-                        realistic screen, so the ticker fills the full width
-                        edge to edge instead of leaving blank space. */}
+                    {/* Cycled through the message list and repeated enough
+                        times that even half this row (the distance the
+                        -50% loop travels) is wider than any realistic
+                        screen, so the ticker fills the full width edge to
+                        edge without ever showing the same line twice in a
+                        row. */}
                     {Array.from({ length: 16 }).map((_, i) => (
-                        <span key={i}>Please keep your ticket ready and listen for your number to be announced.</span>
+                        <span key={i}>
+                            {MARQUEE_MESSAGES[i % MARQUEE_MESSAGES.length]}
+                            <span className="qd-marquee-dot">•</span>
+                        </span>
                     ))}
                 </div>
             </footer>
@@ -565,8 +579,14 @@ function QueueDisplay() {
 
                 .qd-marquee span {
                     white-space: nowrap;
-                    padding-right: 64px;
+                    padding-right: 40px;
                     flex-shrink: 0;
+                }
+
+                .qd-marquee-dot {
+                    padding-right: 0;
+                    margin-left: 40px;
+                    color: rgba(111,168,245,0.6);
                 }
 
                 @keyframes qd-pulse-in {
