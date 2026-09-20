@@ -64,6 +64,7 @@ function QueueDisplay() {
     const [soundReady, setSoundReady] = useState(false)
     const lastAnnouncedKey = useRef(null)
     const audioCtxRef = useRef(null)
+    const wakeLockRef = useRef(null)
 
     useEffect(() => {
         loadQueue()
@@ -72,6 +73,41 @@ function QueueDisplay() {
         return () => {
             clearInterval(poll)
             clearInterval(clockTick)
+        }
+    }, [])
+
+    // Left running unattended on a lobby TV, this is exactly the kind of
+    // page the OS/browser will try to dim or sleep after a period of no
+    // touch input, and a hidden/suspended tab has its timers throttled --
+    // both would silently stop the "now serving" number from updating.
+    // Wake Lock keeps the screen on; re-requesting it (it auto-releases
+    // whenever the tab goes hidden) and refreshing immediately on
+    // visibilitychange covers a background tab that gets refocused too.
+    useEffect(() => {
+        const requestWakeLock = async () => {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLockRef.current = await navigator.wakeLock.request('screen')
+                }
+            } catch (err) {
+                console.error('WAKE LOCK ERROR:', err)
+            }
+        }
+
+        requestWakeLock()
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                requestWakeLock()
+                loadQueue()
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibility)
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibility)
+            wakeLockRef.current?.release().catch(() => {})
         }
     }, [])
 
