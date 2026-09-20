@@ -170,8 +170,13 @@ function QueueDisplay() {
 
             <footer className="qd-footer">
                 <div className="qd-marquee">
-                    <span>Please keep your ticket ready and listen for your number to be announced.</span>
-                    <span>Please keep your ticket ready and listen for your number to be announced.</span>
+                    {/* Repeated enough times that even half this row (the
+                        distance the -50% loop travels) is wider than any
+                        realistic screen, so the ticker fills the full width
+                        edge to edge instead of leaving blank space. */}
+                    {Array.from({ length: 16 }).map((_, i) => (
+                        <span key={i}>Please keep your ticket ready and listen for your number to be announced.</span>
+                    ))}
                 </div>
             </footer>
 
@@ -404,7 +409,10 @@ function QueueDisplay() {
                 .qd-marquee {
                     display: flex;
                     width: max-content;
-                    animation: qd-marquee 18s linear infinite;
+                    /* Longer than before since the row now repeats the
+                       phrase enough times to span the full screen width --
+                       keeps the scroll speed steady rather than racing by. */
+                    animation: qd-marquee 42s linear infinite;
                     will-change: transform;
                 }
 
