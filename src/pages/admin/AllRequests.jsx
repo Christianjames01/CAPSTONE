@@ -351,7 +351,15 @@ function AllRequests() {
 
                             <div className="admin-info-field">
                                 <span>Priority</span>
-                                <strong style={{ textTransform: 'capitalize' }}>{request.priority}</strong>
+                                <strong
+                                    style={{
+                                        textTransform: 'capitalize',
+                                        color: request.priority === 'urgent' ? 'var(--red)' : 'var(--blue)',
+                                    }}
+                                >
+                                    {request.priority === 'urgent' ? '🔴 ' : '🔵 '}
+                                    {request.priority}
+                                </strong>
                             </div>
 
                             <div className="admin-info-field">
