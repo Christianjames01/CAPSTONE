@@ -451,12 +451,14 @@ function QueueDisplay() {
                     gap: 10px;
                     padding: 9px 20px;
                     border-radius: 999px;
-                    background: rgba(111,168,245,0.1);
-                    border: 1px solid rgba(111,168,245,0.22);
+                    background: rgba(250,251,253,0.92);
+                    backdrop-filter: blur(6px);
+                    border: 1px solid rgba(111,168,245,0.3);
+                    box-shadow: 0 6px 18px -8px rgba(8,20,42,0.4);
                     font-size: clamp(13px, 1.3vw, 15px);
                     font-weight: 700;
                     letter-spacing: 3.5px;
-                    color: #2B5FA8;
+                    color: #1F4B8C;
                 }
 
                 .qd-eyebrow-dot-wrap {
@@ -587,7 +589,7 @@ function QueueDisplay() {
                 }
 
                 .qd-chip.is-next {
-                    background: linear-gradient(180deg, rgba(111,168,245,0.16), rgba(111,168,245,0.1));
+                    background: linear-gradient(180deg, #EAF1FB, #DCE9FA);
                     border-color: rgba(111,168,245,0.5);
                     color: #123B78;
                     animation: qd-chip-glow 2.4s ease-in-out infinite;
