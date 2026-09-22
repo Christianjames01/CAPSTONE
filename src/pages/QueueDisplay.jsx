@@ -174,7 +174,7 @@ function QueueDisplay() {
             .eq('queue_date', today)
             .eq('status', 'waiting')
             .order('queue_number', { ascending: true })
-            .limit(6)
+            .limit(5)
 
         setUpNext((waitingRows || []).map((r) => r.queue_number))
     }
