@@ -221,6 +221,7 @@ function QueueDisplay() {
                 </div>
 
                 <div className={`qd-now-card${justCalled ? ' is-flash' : ''}${nowServing ? '' : ' is-floating'}`}>
+                    <img src={hcdcLogo} alt="" className="qd-now-watermark" />
                     {nowServing ? (
                         <div key={nowServing} className="qd-now-number is-active">
                             {formatQueueNumber(nowServing)}
@@ -508,6 +509,26 @@ function QueueDisplay() {
 
                 .qd-now-card.is-floating {
                     animation: qd-float 4.5s ease-in-out infinite;
+                }
+
+                .qd-now-watermark {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: clamp(180px, 26vw, 340px);
+                    height: clamp(180px, 26vw, 340px);
+                    transform: translate(-50%, -50%);
+                    object-fit: contain;
+                    opacity: 0.08;
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+                .qd-now-number,
+                .qd-idle-icon-wrap,
+                .qd-now-sub {
+                    position: relative;
+                    z-index: 1;
                 }
 
                 .qd-now-number {
