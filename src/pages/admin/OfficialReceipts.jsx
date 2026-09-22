@@ -60,20 +60,33 @@ function OfficialReceipts() {
                     ? supabase.from('document_requests').select('request_id, request_number, status').in('request_id', requestIds)
                     : Promise.resolve({ data: [] }),
                 studentIds.length
-                    ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
+                    ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
             ])
 
+            const userIds = [...new Set((students || []).map((s) => s.user_id).filter(Boolean))]
+
+            const { data: profiles } = userIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
+                : { data: [] }
+
+            const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
+            const studentById = Object.fromEntries((students || []).map((s) => [s.student_id, s]))
+
             const requestById = Object.fromEntries((requests || []).map((r) => [r.request_id, r]))
-            const studentNumberById = Object.fromEntries((students || []).map((s) => [s.student_id, s.student_number]))
 
             setReceipts(
-                data.map((r) => ({
-                    ...r,
-                    requestNumber: requestById[r.request_id]?.request_number || 'N/A',
-                    requestStatus: requestById[r.request_id]?.status || '',
-                    studentNumber: studentNumberById[r.student_id] || 'N/A',
-                }))
+                data.map((r) => {
+                    const student = studentById[r.student_id]
+                    const profile = student ? profileByUserId[student.user_id] : null
+                    return {
+                        ...r,
+                        requestNumber: requestById[r.request_id]?.request_number || 'N/A',
+                        requestStatus: requestById[r.request_id]?.status || '',
+                        studentNumber: student?.student_number || 'N/A',
+                        studentName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
+                    }
+                })
             )
 
         } catch (err) {
@@ -235,7 +248,7 @@ function OfficialReceipts() {
                         <div className="admin-list-card-header">
                             <div>
                                 <h3>{r.receipt_number}</h3>
-                                <p>{r.requestNumber} · Student {r.studentNumber}</p>
+                                <p>{r.requestNumber} · {r.studentName} ({r.studentNumber})</p>
                             </div>
                             <span className={`admin-status-pill status-${r.status}`}>{r.status}</span>
                         </div>
