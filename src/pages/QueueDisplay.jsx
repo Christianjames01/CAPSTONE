@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatQueueNumber, todayStr } from '../lib/queue'
 import hcdcLogo from '../assets/hcdc-logo.png'
+import hcdcBackground from '../assets/footer-building.jpg'
 
 const POLL_MS = 4000
 
@@ -294,7 +295,14 @@ function QueueDisplay() {
                     flex-direction: column;
                     color: #0A1830;
                     font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
-                    background: #FDFDFE;
+                    background-color: #0A1830;
+                    background-image:
+                        linear-gradient(180deg, rgba(8, 20, 42, 0.6) 0%, rgba(8, 20, 42, 0.72) 55%, rgba(8, 20, 42, 0.8) 100%),
+                        url(${hcdcBackground});
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-attachment: fixed;
                     overflow: hidden;
                 }
 
@@ -595,11 +603,12 @@ function QueueDisplay() {
                     overflow: hidden;
                     font-size: 13px;
                     font-weight: 500;
-                    color: rgba(10,24,48,0.38);
+                    color: rgba(10,24,48,0.5);
                     letter-spacing: 0.3px;
                     padding: 15px 0 calc(15px + env(safe-area-inset-bottom, 0px));
                     border-top: 1px solid rgba(11,18,32,0.06);
-                    background: linear-gradient(180deg, transparent, rgba(111,168,245,0.03));
+                    background: rgba(250,251,253,0.82);
+                    backdrop-filter: blur(6px);
                     mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
                 }
 
