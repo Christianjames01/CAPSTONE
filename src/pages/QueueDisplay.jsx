@@ -297,7 +297,7 @@ function QueueDisplay() {
                     font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
                     background-color: #0A1830;
                     background-image:
-                        linear-gradient(180deg, rgba(8, 20, 42, 0.6) 0%, rgba(8, 20, 42, 0.72) 55%, rgba(8, 20, 42, 0.8) 100%),
+                        linear-gradient(180deg, rgba(8, 20, 42, 0.82) 0%, rgba(8, 20, 42, 0.88) 55%, rgba(8, 20, 42, 0.92) 100%),
                         url(${hcdcBackground});
                     background-size: cover;
                     background-position: center;
