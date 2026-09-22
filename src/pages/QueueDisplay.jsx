@@ -492,7 +492,9 @@ function QueueDisplay() {
                     gap: clamp(10px, 1.8vh, 16px);
                     padding: clamp(16px, 3.5vh, 52px) clamp(36px, 8vw, 120px);
                     border-radius: 40px;
-                    background: linear-gradient(165deg, #FAFCFF 0%, #F1F5FC 55%, #ECF1FA 100%);
+                    background: linear-gradient(165deg, rgba(250,252,255,0.82) 0%, rgba(241,245,252,0.76) 55%, rgba(236,241,250,0.72) 100%);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
                     border: 1px solid rgba(11,18,32,0.07);
                     box-shadow:
                         inset 0 1px 0 rgba(255,255,255,0.9),
@@ -560,13 +562,14 @@ function QueueDisplay() {
                     font-size: 18px;
                     font-weight: 600;
                     letter-spacing: 0.5px;
-                    color: rgba(10,24,48,0.45);
+                    color: rgba(255,255,255,0.85);
+                    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
                 }
 
                 .qd-upnext-empty {
                     font-size: 16px;
                     font-weight: 500;
-                    color: rgba(10,24,48,0.32);
+                    color: rgba(255,255,255,0.6);
                 }
 
                 .qd-chip-row {
