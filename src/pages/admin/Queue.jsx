@@ -133,11 +133,11 @@ function AdminQueue() {
             `Re-called ${formatQueueNumber(ticket.queue_number)}.`
         )
 
-    const markServing = (ticket) =>
-        updateTicket(ticket, { status: 'serving' }, `Started serving ${formatQueueNumber(ticket.queue_number)}.`)
-
-    const markCompleted = (ticket) =>
-        updateTicket(ticket, { status: 'completed' }, `Completed ${formatQueueNumber(ticket.queue_number)}.`)
+    const markCompleted = async (ticket) => {
+        const confirmed = await confirmModal(`Mark ${formatQueueNumber(ticket.queue_number)} as completed?`)
+        if (!confirmed) return
+        await updateTicket(ticket, { status: 'completed' }, `Completed ${formatQueueNumber(ticket.queue_number)}.`)
+    }
 
     const markNoShow = async (ticket) => {
         const confirmed = await confirmModal(`Mark ${formatQueueNumber(ticket.queue_number)} as a no-show?`)
@@ -270,14 +270,9 @@ function AdminQueue() {
 
                                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                                         {t.status === 'called' && (
-                                            <>
-                                                <button className="admin-link-button" onClick={() => markServing(t)} disabled={acting === t.queue_id}>
-                                                    Mark as serving
-                                                </button>
-                                                <button className="admin-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id}>
-                                                    Recall (announce again)
-                                                </button>
-                                            </>
+                                            <button className="admin-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id}>
+                                                Recall (announce again)
+                                            </button>
                                         )}
                                         <button className="admin-link-button" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
                                             Mark completed
