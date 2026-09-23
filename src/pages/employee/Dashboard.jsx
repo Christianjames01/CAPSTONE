@@ -225,7 +225,7 @@ function EmployeeDashboard() {
         : [
             { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/employee/verification', Icon: IconHourglass },
             { key: 'verification', label: 'Receipts to Verify', statuses: ['receipt_uploaded'], to: '/employee/verification', Icon: IconFileStack },
-            { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], to: '/employee/processing', Icon: IconPackage },
+            { key: 'processing', label: 'Processing', statuses: ['receipt_verified', 'processing', 'lacking_requirements'], to: '/employee/processing', Icon: IconPackage },
             { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/requests?status=ready_for_claiming', Icon: IconCalendarCheck },
             { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', Icon: IconCheckCircle },
         ]
