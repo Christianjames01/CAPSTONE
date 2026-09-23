@@ -27,10 +27,25 @@ function StudentDetails() {
     const [form, setForm] = useState(null)
     const [saving, setSaving] = useState(false)
     const [resettingPassword, setResettingPassword] = useState(false)
+    const [currentRole, setCurrentRole] = useState('')
 
     useEffect(() => {
         loadDetails()
+        loadCurrentRole()
     }, [studentId])
+
+    const loadCurrentRole = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single()
+
+        setCurrentRole(profile?.role || '')
+    }
 
     const loadDetails = async () => {
         try {
@@ -39,7 +54,7 @@ function StudentDetails() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, emergency_contact_name, emergency_contact_number')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number')
                 .eq('student_id', studentId)
                 .single()
 
@@ -147,6 +162,7 @@ function StudentDetails() {
             yearLevel: student.year_level || '',
             address: student.address || '',
             alternatePhoneNumber: student.alternate_phone_number || '',
+            alternateEmail: student.alternate_email || '',
             emergencyContactName: student.emergency_contact_name || '',
             emergencyContactNumber: student.emergency_contact_number || '',
         })
@@ -210,6 +226,7 @@ function StudentDetails() {
                     year_level: form.yearLevel || null,
                     address: form.address.trim() || null,
                     alternate_phone_number: form.alternatePhoneNumber.trim() || null,
+                    alternate_email: form.alternateEmail.trim() || null,
                     emergency_contact_name: form.emergencyContactName.trim() || null,
                     emergency_contact_number: form.emergencyContactNumber.trim() || null,
                 })
@@ -360,6 +377,7 @@ function StudentDetails() {
                     <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
                     <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Alternate Phone Number</span><strong>{student.alternate_phone_number || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
                 </div>
             </div>
@@ -420,6 +438,12 @@ function StudentDetails() {
                             <label className="form-label">Alternate Phone Number</label>
                             <input className="admin-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
                         </div>
+                        {currentRole === 'registrar_head' && (
+                            <div className="form-group">
+                                <label className="form-label">Personal Email</label>
+                                <input className="admin-search-input" type="email" value={form.alternateEmail} onChange={(e) => setForm({ ...form, alternateEmail: e.target.value })} disabled={saving} />
+                            </div>
+                        )}
                         <div className="form-group">
                             <label className="form-label">Emergency Contact Name</label>
                             <input className="admin-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
