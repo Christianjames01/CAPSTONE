@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 )
 
 const OVERDUE_ELIGIBLE_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing']
-const DEFAULT_OVERDUE_DAYS = 2
+const OVERDUE_DAYS = 2
 const OPEN_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
     'processing', 'lacking_requirements', 'ready_for_claiming',
@@ -42,23 +42,12 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({ notified: 0, skipped: 'already sent within the last 20 hours' }), { status: 200 })
         }
 
-        // Registrar-head-configurable via the Notifications page settings
-        // card; falls back to the default if the settings row is somehow
-        // missing rather than failing the whole run.
-        const { data: settingRow } = await supabaseAdmin
-            .from('system_settings')
-            .select('setting_value')
-            .eq('setting_key', 'overdue_alert_days')
-            .maybeSingle()
-
-        const overdueDays = Number(settingRow?.setting_value) || DEFAULT_OVERDUE_DAYS
-
         const overdueCutoff = new Date()
-        overdueCutoff.setDate(overdueCutoff.getDate() - overdueDays)
+        overdueCutoff.setDate(overdueCutoff.getDate() - OVERDUE_DAYS)
 
         const { data: overdueRows, error: overdueError } = await supabaseAdmin
             .from('document_requests')
-            .select('request_number')
+            .select('request_number, requested_at')
             .in('status', OVERDUE_ELIGIBLE_STATUSES)
             .lte('requested_at', overdueCutoff.toISOString())
 
@@ -81,8 +70,14 @@ Deno.serve(async (req) => {
 
         const lines: string[] = []
         if (overdueCount > 0) {
-            const sample = (overdueRows || []).slice(0, 5).map((r) => r.request_number).join(', ')
-            lines.push(`${overdueCount} request(s) have sat unprocessed for ${overdueDays}+ days: ${sample}${overdueCount > 5 ? ', ...' : ''}.`)
+            // Each request's own elapsed time, not the fixed OVERDUE_DAYS
+            // threshold -- a request sitting for a week should read as
+            // "7 days", not just repeat "2+ days" forever.
+            const sample = (overdueRows || []).slice(0, 5).map((r) => {
+                const daysSat = Math.floor((Date.now() - new Date(r.requested_at).getTime()) / (1000 * 60 * 60 * 24))
+                return `${r.request_number} (${daysSat} day${daysSat === 1 ? '' : 's'})`
+            }).join(', ')
+            lines.push(`${overdueCount} request(s) have sat unprocessed: ${sample}${overdueCount > 5 ? ', ...' : ''}.`)
         }
         if (unassignedCount > 0) {
             const sample = (unassignedRows || []).slice(0, 5).map((r) => r.request_number).join(', ')
