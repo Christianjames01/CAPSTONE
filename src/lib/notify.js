@@ -2,7 +2,7 @@ import Swal from 'sweetalert2'
 import { supabase } from './supabase'
 
 const CONFIRM_COLOR = '#0d6efd'
-const CANCEL_COLOR = '#6c757d'
+const CANCEL_COLOR = '#C8102E'
 
 export async function notify({ userId, title, message, notificationType, relatedRequestId }) {
     try {
