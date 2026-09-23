@@ -69,7 +69,7 @@ function StudentDetails() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number, birth_date')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number, graduation_year, birth_date')
                 .eq('student_id', studentId)
                 .single()
 
@@ -204,6 +204,7 @@ function StudentDetails() {
             collegeId: student.college_id || '',
             programId: student.program_id || '',
             yearLevel: student.year_level || '',
+            graduationYear: student.graduation_year ? String(student.graduation_year) : '',
             address: student.address || '',
             alternatePhoneNumber: student.alternate_phone_number || '',
             alternateEmail: student.alternate_email || '',
@@ -233,6 +234,13 @@ function StudentDetails() {
     const saveEdits = async () => {
         if (!form.firstName.trim() || !form.lastName.trim() || !form.studentNumber.trim()) {
             notifyWarning('First name, last name, and student number are required.')
+            return
+        }
+
+        const graduationYear = form.graduationYear.trim()
+        const maxYear = new Date().getFullYear() + 10
+        if (graduationYear && (!/^\d{4}$/.test(graduationYear) || Number(graduationYear) < 1950 || Number(graduationYear) > maxYear)) {
+            notifyWarning(`Graduation year must be a 4-digit year between 1950 and ${maxYear}.`)
             return
         }
 
@@ -270,6 +278,7 @@ function StudentDetails() {
                     college_id: form.collegeId || null,
                     program_id: form.programId || null,
                     year_level: form.yearLevel || null,
+                    graduation_year: graduationYear ? Number(graduationYear) : null,
                     birth_date: form.birthDate || null,
                     address: form.address.trim() || null,
                     alternate_phone_number: form.alternatePhoneNumber.trim() || null,
@@ -294,6 +303,7 @@ function StudentDetails() {
                 ['college', student.collegeName, newCollegeName],
                 ['program', student.programName, newProgramName],
                 ['year level', student.year_level, form.yearLevel],
+                ['graduation year', student.graduation_year ? String(student.graduation_year) : '', graduationYear],
                 ['phone number', student.phoneNumber, form.phoneNumber.trim()],
             ])
 
@@ -489,6 +499,7 @@ function StudentDetails() {
                     <div className="admin-info-field"><span>College</span><strong>{student.collegeName || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Program</span><strong>{student.programName || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Year Level</span><strong>{student.year_level || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Graduation Year</span><strong>{student.graduation_year || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Phone Number</span><strong>{student.phoneNumber || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
                     <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
@@ -556,6 +567,10 @@ function StudentDetails() {
                                 <option value="4">4th Year</option>
                                 <option value="5">5th Year</option>
                             </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Graduation Year</label>
+                            <input className="admin-search-input" inputMode="numeric" placeholder="e.g. 2026" value={form.graduationYear} onChange={(e) => setForm({ ...form, graduationYear: e.target.value.replace(/\D/g, '').slice(0, 4) })} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Address</label>
