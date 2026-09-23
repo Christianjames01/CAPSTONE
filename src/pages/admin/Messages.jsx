@@ -187,8 +187,12 @@ function Messages() {
         }
     }
 
-    const startThreadWithStudent = (student) => {
-        const pairKey = [currentUserId, student.userId].sort().join('|')
+    // Shared by both the "+ New Message" student picker and the "Message
+    // <person>" buttons shown while viewing someone else's conversation --
+    // either way it's the head opening/continuing their own thread with
+    // that specific person.
+    const startThreadWithUser = ({ userId, name, role }) => {
+        const pairKey = [currentUserId, userId].sort().join('|')
         const existing = threads.find((t) => t.pairKey === pairKey)
 
         if (existing) {
@@ -197,11 +201,11 @@ function Messages() {
             setActiveThread({
                 pairKey,
                 participantA: currentUserId,
-                participantB: student.userId,
+                participantB: userId,
                 nameA: 'You',
                 roleA: 'admin',
-                nameB: student.name,
-                roleB: 'student',
+                nameB: name,
+                roleB: role,
                 messages: [],
             })
         }
@@ -312,7 +316,7 @@ function Messages() {
                     )}
                 </div>
 
-                {mine && (
+                {mine ? (
                     <>
                         <button
                             className="admin-link-button"
@@ -339,6 +343,21 @@ function Messages() {
                             </button>
                         </div>
                     </>
+                ) : (
+                    <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+                        <button
+                            className="admin-secondary-button"
+                            onClick={() => startThreadWithUser({ userId: activeThread.participantA, name: activeThread.nameA, role: activeThread.roleA })}
+                        >
+                            Message {activeThread.nameA}
+                        </button>
+                        <button
+                            className="admin-secondary-button"
+                            onClick={() => startThreadWithUser({ userId: activeThread.participantB, name: activeThread.nameB, role: activeThread.roleB })}
+                        >
+                            Message {activeThread.nameB}
+                        </button>
+                    </div>
                 )}
             </div>
         )
@@ -413,7 +432,7 @@ function Messages() {
                                     key={s.userId}
                                     className="admin-list-card"
                                     style={{ width: '100%', textAlign: 'left', cursor: 'pointer', marginBottom: 0, padding: 12 }}
-                                    onClick={() => startThreadWithStudent(s)}
+                                    onClick={() => startThreadWithUser({ userId: s.userId, name: s.name, role: 'student' })}
                                 >
                                     <h3 style={{ fontSize: 13.5 }}>{s.name}</h3>
                                     <p style={{ fontSize: 12.5 }}>{s.studentNumber}</p>
