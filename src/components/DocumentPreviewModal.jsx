@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import './DocumentPreviewModal.css'
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
@@ -14,6 +14,10 @@ function getExtension(nameOrUrl) {
 
 function DocumentPreviewModal({ url, fileName, onClose }) {
     const [zoom, setZoom] = useState(1)
+    const [isDragging, setIsDragging] = useState(false)
+    const bodyRef = useRef(null)
+    const draggingRef = useRef(false)
+    const lastPointRef = useRef({ x: 0, y: 0 })
 
     if (!url) return null
 
@@ -27,11 +31,43 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
     const isPdf = extension === 'pdf'
 
     // PDFs render through the browser's own <iframe> viewer, which already
-    // has its own zoom controls -- this bar is only meaningful for the
+    // has its own zoom controls -- all of this is only meaningful for the
     // plain <img> case.
     const zoomIn = () => setZoom((z) => Math.min(MAX_ZOOM, Math.round((z + ZOOM_STEP) * 100) / 100))
     const zoomOut = () => setZoom((z) => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 100) / 100))
     const resetZoom = () => setZoom(1)
+
+    // Scrolling over the image zooms instead of scrolling the page -- this
+    // is a dedicated preview surface, not a document to read top-to-bottom.
+    const handleWheel = (e) => {
+        if (!isImage) return
+        e.preventDefault()
+        if (e.deltaY < 0) zoomIn()
+        else zoomOut()
+    }
+
+    // Click-and-drag pans by scrolling the body container -- there's
+    // nothing to drag once back at 100%, so this is a no-op below that.
+    const handleMouseDown = (e) => {
+        if (zoom <= 1) return
+        draggingRef.current = true
+        setIsDragging(true)
+        lastPointRef.current = { x: e.clientX, y: e.clientY }
+    }
+
+    const handleMouseMove = (e) => {
+        if (!draggingRef.current || !bodyRef.current) return
+        const dx = e.clientX - lastPointRef.current.x
+        const dy = e.clientY - lastPointRef.current.y
+        bodyRef.current.scrollLeft -= dx
+        bodyRef.current.scrollTop -= dy
+        lastPointRef.current = { x: e.clientX, y: e.clientY }
+    }
+
+    const stopDragging = () => {
+        draggingRef.current = false
+        setIsDragging(false)
+    }
 
     return (
         <div className="doc-preview-backdrop" onClick={onClose}>
@@ -75,12 +111,21 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
                     </button>
                 </div>
 
-                <div className="doc-preview-body">
+                <div
+                    className="doc-preview-body"
+                    ref={bodyRef}
+                    onWheel={handleWheel}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={stopDragging}
+                    onMouseLeave={stopDragging}
+                >
                     {isImage ? (
                         <img
                             src={url}
                             alt={fileName || 'Document preview'}
-                            style={{ transform: `scale(${zoom})`, cursor: zoom > 1 ? 'move' : 'default' }}
+                            draggable={false}
+                            onMouseDown={handleMouseDown}
+                            style={{ transform: `scale(${zoom})`, cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
                         />
                     ) : isPdf ? (
                         <iframe src={url} title={fileName || 'Document preview'} />
