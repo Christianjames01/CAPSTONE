@@ -268,7 +268,7 @@ function RequestDetails() {
             if (requestData.assigned_employee_id) {
                 const { data: employeeRow } = await supabase
                     .from('employees')
-                    .select('user_id, position_title')
+                    .select('user_id, position_title, display_name')
                     .eq('employee_id', requestData.assigned_employee_id)
                     .single()
 
@@ -279,10 +279,14 @@ function RequestDetails() {
                         .eq('user_id', employeeRow.user_id)
                         .single()
 
+                    // Prefer the employee's nickname (set by an admin), same as
+                    // the student Messages page.
+                    const realName = employeeProfile
+                        ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim()
+                        : ''
+
                     setAssignedEmployee({
-                        name: employeeProfile
-                            ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim()
-                            : 'Registrar Staff',
+                        name: employeeRow.display_name?.trim() || realName || 'Registrar Staff',
                         positionTitle: employeeRow.position_title,
                     })
                 }
