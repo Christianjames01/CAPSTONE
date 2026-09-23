@@ -659,10 +659,10 @@ function Documents() {
             {showForm && (
                 <Modal
                     title={form.document_type_id ? 'Edit Document Type' : 'New Document Type'}
-                    maxWidth={640}
+                    maxWidth={760}
                     onClose={() => { if (saving) return; setShowForm(false); setForm(EMPTY_FORM); setImageFile(null); setImageFilePreview('') }}
                 >
-                    <div className="admin-info-grid" style={{ marginBottom: 16 }}>
+                    <div className="admin-info-grid" style={{ marginBottom: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
                         <div className="form-group">
                             <label className="form-label" htmlFor="doc-code">Code</label>
                             <input id="doc-code" className="form-input" value={form.document_code} onChange={(e) => setForm({ ...form, document_code: e.target.value })} disabled={saving} />
@@ -697,8 +697,10 @@ function Documents() {
                             <label className="form-label" htmlFor="doc-days-max">Processing Days (Max)</label>
                             <input id="doc-days-max" className="form-input" type="number" min="0" value={form.processing_days_max} onChange={(e) => setForm({ ...form, processing_days_max: e.target.value })} disabled={saving} />
                         </div>
+                    </div>
 
-                        {currentRole === 'registrar_head' && (
+                    {currentRole === 'registrar_head' && (
+                        <div className="admin-info-grid" style={{ marginBottom: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="doc-max-active-requests">Max Active Requests per Student</label>
                                 <input
@@ -714,9 +716,7 @@ function Documents() {
                                     How many open (not yet completed/claimed) requests a student can have for this document at once.
                                 </small>
                             </div>
-                        )}
 
-                        {currentRole === 'registrar_head' && (
                             <div className="form-group">
                                 <label className="form-label" htmlFor="doc-max-quantity">Max Quantity per Request</label>
                                 <input
@@ -732,12 +732,15 @@ function Documents() {
                                     How many copies of this document a student can request in a single submission.
                                 </small>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     <div className="form-group" style={{ marginBottom: 16 }}>
                         <label className="form-label" htmlFor="doc-description">Description</label>
                         <textarea id="doc-description" className="form-input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} disabled={saving} />
+                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                            Shown to students when they pick this document on the New Request page.
+                        </small>
                     </div>
 
                     <div className="form-group" style={{ marginBottom: 16 }}>

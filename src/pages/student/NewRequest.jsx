@@ -501,6 +501,12 @@ function NewRequest() {
                                 </div>
                             </div>
 
+                            {selectedDocumentDetails.description && (
+                                <p style={{ fontSize: 13, color: 'var(--ink)', marginTop: 14, whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                                    {selectedDocumentDetails.description}
+                                </p>
+                            )}
+
                             {loadingRequirements ? (
                                 <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 14 }}>Checking required documents...</p>
                             ) : selectedRequirements.length > 0 ? (
