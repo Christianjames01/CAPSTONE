@@ -1,6 +1,7 @@
 .app-modal-backdrop {
     position: fixed;
     inset: 0;
+    overscroll-behavior: contain;
     background: rgba(16, 24, 39, 0.55);
     display: flex;
     align-items: center;
@@ -58,6 +59,7 @@
 .app-modal-body {
     padding: 22px;
     overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 html[data-theme="dark"] .app-modal-card {

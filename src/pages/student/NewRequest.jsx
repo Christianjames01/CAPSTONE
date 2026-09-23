@@ -6,6 +6,7 @@ import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyWarning } from '../../lib/notify'
 import { IconX } from './icons'
 import { Skeleton } from '../../components/Skeleton'
+import { useScrollLock } from '../../lib/useScrollLock'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -74,6 +75,7 @@ function NewRequest() {
     const [selectedRequirements, setSelectedRequirements] = useState([])
     const [loadingRequirements, setLoadingRequirements] = useState(false)
     const [previewZoomed, setPreviewZoomed] = useState(false)
+    useScrollLock(previewZoomed)
 
     useEffect(() => {
         loadDocuments()
@@ -642,7 +644,7 @@ function NewRequest() {
                     style={{
                         position: 'fixed', inset: 0, background: 'rgba(10, 15, 30, 0.7)',
                         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-                        overflowY: 'auto', padding: '24px 24px 60px',
+                        overflowY: 'auto', overscrollBehavior: 'contain', padding: '24px 24px 60px',
                         zIndex: 100,
                     }}
                 >
