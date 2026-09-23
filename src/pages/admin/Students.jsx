@@ -22,6 +22,7 @@ function Students() {
     const [updating, setUpdating] = useState(null)
     const [removing, setRemoving] = useState(null)
     const [selectedProgramKey, setSelectedProgramKey] = useState(null)
+    const [yearLevelFilter, setYearLevelFilter] = useState('all')
 
     useEffect(() => {
         loadAllStudents()
@@ -209,9 +210,13 @@ function Students() {
     const results = (() => {
         const query = term.trim().toLowerCase()
 
-        if (!query) return allStudents
+        const byYear = yearLevelFilter === 'all'
+            ? allStudents
+            : allStudents.filter((s) => String(s.year_level) === yearLevelFilter)
 
-        return allStudents.filter((s) =>
+        if (!query) return byYear
+
+        return byYear.filter((s) =>
             s.student_number.toLowerCase().includes(query) ||
             s.fullName.toLowerCase().includes(query) ||
             s.email.toLowerCase().includes(query)
@@ -425,8 +430,27 @@ function Students() {
                 value={term}
                 onChange={(e) => onSearchTermChange(e.target.value)}
                 placeholder="Search by student number or name"
-                style={{ marginBottom: 24 }}
+                style={{ marginBottom: 16 }}
             />
+
+            <div className="admin-filter-row" style={{ marginBottom: 24 }}>
+                {[
+                    { key: 'all', label: 'All Years' },
+                    { key: '1', label: '1st Year' },
+                    { key: '2', label: '2nd Year' },
+                    { key: '3', label: '3rd Year' },
+                    { key: '4', label: '4th Year' },
+                    { key: '5', label: '5th Year' },
+                ].map((chip) => (
+                    <button
+                        key={chip.key}
+                        className={`admin-filter-chip${yearLevelFilter === chip.key ? ' active' : ''}`}
+                        onClick={() => { setYearLevelFilter(chip.key); setSelectedProgramKey(null) }}
+                    >
+                        {chip.label} ({chip.key === 'all' ? allStudents.length : allStudents.filter((s) => String(s.year_level) === chip.key).length})
+                    </button>
+                ))}
+            </div>
 
             {error && <div className="admin-error-box">{error}</div>}
 
