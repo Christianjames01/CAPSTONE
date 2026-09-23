@@ -45,13 +45,13 @@ Deno.serve(async (req) => {
         // Registrar-head-configurable via the Notifications page settings
         // card; falls back to the default if the settings row is somehow
         // missing rather than failing the whole run.
-        const { data: settings } = await supabaseAdmin
+        const { data: settingRow } = await supabaseAdmin
             .from('system_settings')
-            .select('overdue_alert_days')
-            .eq('id', 1)
+            .select('setting_value')
+            .eq('setting_key', 'overdue_alert_days')
             .maybeSingle()
 
-        const overdueDays = settings?.overdue_alert_days || DEFAULT_OVERDUE_DAYS
+        const overdueDays = Number(settingRow?.setting_value) || DEFAULT_OVERDUE_DAYS
 
         const overdueCutoff = new Date()
         overdueCutoff.setDate(overdueCutoff.getDate() - overdueDays)

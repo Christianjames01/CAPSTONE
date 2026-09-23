@@ -39,11 +39,11 @@ function Notifications() {
     const loadSettings = async () => {
         const { data } = await supabase
             .from('system_settings')
-            .select('overdue_alert_days')
-            .eq('id', 1)
+            .select('setting_value')
+            .eq('setting_key', 'overdue_alert_days')
             .maybeSingle()
 
-        setOverdueAlertDays(data?.overdue_alert_days ?? 2)
+        setOverdueAlertDays(data?.setting_value ?? 2)
     }
 
     const saveSettings = async () => {
@@ -61,8 +61,8 @@ function Notifications() {
 
             const { error: updateError } = await supabase
                 .from('system_settings')
-                .update({ overdue_alert_days: days, updated_at: new Date().toISOString(), updated_by: user?.id })
-                .eq('id', 1)
+                .update({ setting_value: String(days), updated_at: new Date().toISOString(), updated_by: user?.id })
+                .eq('setting_key', 'overdue_alert_days')
 
             if (updateError) throw new Error(updateError.message)
 
