@@ -248,7 +248,7 @@ function StudentHistory() {
             text: `This immediately sets a new login password for ${student.fullName}. Use this only if they can't use the email-based Forgot Password link.`,
             showCancelButton: true,
             confirmButtonText: 'Reset password',
-            confirmButtonColor: '#C8102E',
+            confirmButtonColor: '#123B78',
         })
 
         if (!confirmed.isConfirmed) return
@@ -294,7 +294,7 @@ function StudentHistory() {
             inputPlaceholder: 'you@gmail.com',
             showCancelButton: true,
             confirmButtonText: 'Change email',
-            confirmButtonColor: '#C8102E',
+            confirmButtonColor: '#123B78',
             inputValidator: (value) => {
                 if (!value) return 'Please enter an email address.'
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.'
@@ -533,7 +533,7 @@ function StudentHistory() {
                     Set a new login password for this student if they can't use the email-based Forgot Password link.
                 </p>
                 <button
-                    className="employee-danger-button"
+                    className="employee-primary-button"
                     onClick={handleResetPassword}
                     disabled={resettingPassword}
                 >
@@ -546,7 +546,7 @@ function StudentHistory() {
                     self-serve the change themselves.
                 </p>
                 <button
-                    className="employee-danger-button"
+                    className="employee-primary-button"
                     onClick={handleChangeLoginEmail}
                     disabled={changingEmail}
                 >

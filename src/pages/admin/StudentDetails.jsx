@@ -312,7 +312,7 @@ function StudentDetails() {
             text: `This immediately sets a new login password for ${student.fullName}. Use this only if they can't use the email-based Forgot Password link.`,
             showCancelButton: true,
             confirmButtonText: 'Reset password',
-            confirmButtonColor: '#C8102E',
+            confirmButtonColor: '#123B78',
         })
 
         if (!confirmed.isConfirmed) return
@@ -357,7 +357,7 @@ function StudentDetails() {
             inputPlaceholder: 'you@gmail.com',
             showCancelButton: true,
             confirmButtonText: 'Change email',
-            confirmButtonColor: '#C8102E',
+            confirmButtonColor: '#123B78',
             inputValidator: (value) => {
                 if (!value) return 'Please enter an email address.'
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.'
@@ -556,7 +556,7 @@ function StudentDetails() {
                     Set a new login password for this student if they can't use the email-based Forgot Password link.
                 </p>
                 <button
-                    className="admin-danger-button"
+                    className="admin-primary-button"
                     onClick={handleResetPassword}
                     disabled={resettingPassword}
                 >
@@ -571,7 +571,7 @@ function StudentDetails() {
                             self-serve the change themselves.
                         </p>
                         <button
-                            className="admin-danger-button"
+                            className="admin-primary-button"
                             onClick={handleChangeLoginEmail}
                             disabled={changingEmail}
                         >
