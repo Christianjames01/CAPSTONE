@@ -116,7 +116,7 @@ export function StatusDonutChart({ data }) {
                                     <path
                                         key={w.key}
                                         d={donutSegmentPath(cx, cy, hoverKey === w.key ? rOuter + 3 : rOuter, rInner, w.start, w.end)}
-                                        fill={w.color}
+                                        style={{ fill: w.color }}
                                         className="dash-donut-segment"
                                         onMouseEnter={() => setHoverKey(w.key)}
                                         onMouseMove={(e) => showMouse(e, w)}

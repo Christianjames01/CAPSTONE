@@ -6,14 +6,18 @@ import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../compon
 import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck } from './icons'
 import './AdminPages.css'
 
+// Colors are theme variables (see .admin-layout in AdminPages.css) with
+// separate, validated light and dark steps. Cancelled (neutral gray) sits
+// between Completed (green) and Rejected (red) so those two never touch
+// in the donut -- red/green is the pair color-blind readers confuse.
 const STATUS_BUCKETS = [
-    { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], color: '#2a78d6' },
-    { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], color: '#eb6834' },
-    { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], color: '#1baf7a' },
-    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], color: '#eda100' },
-    { key: 'completed', label: 'Completed', statuses: ['completed'], color: '#e87ba4' },
-    { key: 'rejected', label: 'Rejected', statuses: ['rejected'], color: '#C8102E' },
-    { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], color: '#8a94a6' },
+    { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], color: 'var(--status-pending)' },
+    { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], color: 'var(--status-verification)' },
+    { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], color: 'var(--status-processing)' },
+    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], color: 'var(--status-ready)' },
+    { key: 'completed', label: 'Completed', statuses: ['completed'], color: 'var(--status-completed)' },
+    { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], color: 'var(--status-cancelled)' },
+    { key: 'rejected', label: 'Rejected', statuses: ['rejected'], color: 'var(--status-rejected)' },
 ]
 
 const TREND_DAYS = 14
@@ -205,18 +209,39 @@ function AdminDashboard() {
         return days.map((date) => ({ date, count: countByDay[date] }))
     }, [requests])
 
-    // Same colors as STATUS_BUCKETS (the donut chart legend) so a status's
-    // color means the same thing everywhere on this dashboard.
-    const stats = [
-        { label: 'Total Students', Icon: IconUsers, value: studentCount, to: '/admin/students', color: '#123B78' },
-        { label: 'Total Requests', Icon: IconFileStack, value: requests.length, to: '/admin/requests', color: '#123B78' },
-        { label: 'Pending', Icon: IconHourglass, value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending', color: '#2a78d6' },
-        { label: 'Ready for Claiming', Icon: IconPackage, value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming', color: '#eda100' },
-        { label: 'Completed', Icon: IconCheckCircle, value: countByStatus(['completed']), to: '/admin/requests?status=completed', color: '#e87ba4' },
-        { label: 'Rejected', Icon: IconXCircle, value: countByStatus(['rejected']), to: '/admin/requests?status=rejected', color: '#C8102E' },
-        { label: 'Cancelled', Icon: IconBan, value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled', color: '#8a94a6' },
-        { label: "Today's Appointments", Icon: IconCalendarCheck, value: todayCount, to: '/admin/claim-schedules', color: '#123B78' },
+    // Requests received in the last 7 days vs the 7 days before, for the
+    // "Total Requests" tile's change line.
+    const weeklyRequests = useMemo(() => {
+        const now = Date.now()
+        const week = 7 * 24 * 60 * 60 * 1000
+        let current = 0
+        let previous = 0
+        for (const r of requests) {
+            if (!r.requested_at) continue
+            const age = now - new Date(r.requested_at).getTime()
+            if (age < week) current += 1
+            else if (age < 2 * week) previous += 1
+        }
+        return { current, previous, change: current - previous }
+    }, [requests])
+
+    const overviewStats = [
+        { label: 'Total Students', value: studentCount, to: '/admin/students', Icon: IconUsers, note: 'Registered student accounts' },
+        { label: 'Total Requests', value: requests.length, to: '/admin/requests', Icon: IconFileStack, note: `${weeklyRequests.current} this week`, change: weeklyRequests.change },
+        { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules', Icon: IconCalendarCheck, note: 'Scheduled to claim today' },
     ]
+
+    const statusStats = [
+        { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/admin/requests?status=pending,payment_pending', Icon: IconHourglass },
+        { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/admin/requests?status=ready_for_claiming', Icon: IconPackage },
+        { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/admin/requests?status=completed', Icon: IconCheckCircle },
+        { key: 'rejected', label: 'Rejected', statuses: ['rejected'], to: '/admin/requests?status=rejected', Icon: IconXCircle },
+        { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], to: '/admin/requests?status=cancelled', Icon: IconBan },
+    ].map((stat) => {
+        const value = countByStatus(stat.statuses)
+        const share = requests.length ? Math.round((value / requests.length) * 100) : 0
+        return { ...stat, value, share, color: `var(--status-${stat.key})` }
+    })
 
     const attentionStats = [
         { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules?status=missed' },
@@ -227,13 +252,8 @@ function AdminDashboard() {
         return (
             <div>
                 <SkeletonPageHeader />
-                <SkeletonStatGrid
-                    count={8}
-                    icon={false}
-                    gridClassName="admin-stat-grid"
-                    cardClassName="admin-card"
-                    cardStyle={{ margin: 0 }}
-                />
+                <SkeletonStatGrid count={3} gridClassName="dash-overview-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
+                <SkeletonStatGrid count={5} gridClassName="dash-status-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
                 <SkeletonList count={2} />
             </div>
         )
@@ -274,40 +294,55 @@ function AdminDashboard() {
                 </div>
             )}
 
-            <div className="admin-stat-grid" style={{ marginBottom: 28 }}>
-                {stats.map((stat) => (
-                    <button
-                        key={stat.label}
-                        className="admin-card"
-                        style={{ textAlign: 'left', margin: 0, borderTop: `3px solid ${stat.color}` }}
-                        onClick={() => navigate(stat.to)}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
-                            <span style={{ fontSize: 26, fontWeight: 700, color: stat.color, lineHeight: 1.2 }}>
-                                {stat.value}
+            <section className="dash-stats" aria-label="Key statistics">
+                <div className="dash-overview-grid">
+                    {overviewStats.map((stat) => (
+                        <button key={stat.label} className="dash-stat-tile dash-overview-tile" onClick={() => navigate(stat.to)}>
+                            <div className="dash-stat-top">
+                                <span className="dash-stat-label">{stat.label}</span>
+                                <span className="dash-stat-icon dash-stat-icon-brand" aria-hidden="true"><stat.Icon /></span>
+                            </div>
+                            <span className="dash-stat-value dash-stat-value-lg">{stat.value.toLocaleString()}</span>
+                            <span className="dash-stat-note">
+                                {stat.change !== undefined && stat.change !== 0 && (
+                                    <span className="dash-stat-change">
+                                        {stat.change > 0 ? '▲' : '▼'} {Math.abs(stat.change)} vs last week
+                                        <span aria-hidden="true"> · </span>
+                                    </span>
+                                )}
+                                {stat.note}
                             </span>
-                            <span
-                                aria-hidden="true"
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    flexShrink: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: 10,
-                                    color: stat.color,
-                                    // Same hue as the card, at ~12% opacity, so it reads in light and dark mode.
-                                    background: `${stat.color}1F`,
-                                }}
-                            >
-                                <span className="admin-stat-icon"><stat.Icon /></span>
-                            </span>
-                        </div>
-                        <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>{stat.label}</span>
-                    </button>
-                ))}
-            </div>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="dash-stats-heading">
+                    <h2>Requests by Status</h2>
+                    <span>Share of all {requests.length.toLocaleString()} requests</span>
+                </div>
+
+                <div className="dash-status-grid">
+                    {statusStats.map((stat) => (
+                        <button
+                            key={stat.key}
+                            className="dash-stat-tile dash-status-tile"
+                            style={{ '--tile-color': stat.color }}
+                            onClick={() => navigate(stat.to)}
+                            aria-label={`${stat.label}: ${stat.value} requests, ${stat.share}% of all requests`}
+                        >
+                            <div className="dash-stat-top">
+                                <span className="dash-stat-icon" aria-hidden="true"><stat.Icon /></span>
+                                <span className="dash-stat-label">{stat.label}</span>
+                            </div>
+                            <span className="dash-stat-value">{stat.value.toLocaleString()}</span>
+                            <div className="dash-stat-meter" aria-hidden="true">
+                                <span style={{ width: `${stat.share}%` }} />
+                            </div>
+                            <span className="dash-stat-note">{stat.share}% of requests</span>
+                        </button>
+                    ))}
+                </div>
+            </section>
 
             <div className="dash-charts-grid">
                 <StatusDonutChart data={statusChartData} />
