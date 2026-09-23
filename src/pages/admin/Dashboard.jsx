@@ -12,7 +12,7 @@ const STATUS_BUCKETS = [
     { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], color: '#1baf7a' },
     { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], color: '#eda100' },
     { key: 'completed', label: 'Completed', statuses: ['completed'], color: '#e87ba4' },
-    { key: 'rejected', label: 'Rejected', statuses: ['rejected'], color: '#008300' },
+    { key: 'rejected', label: 'Rejected', statuses: ['rejected'], color: '#C8102E' },
     { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], color: '#8a94a6' },
 ]
 
@@ -213,7 +213,7 @@ function AdminDashboard() {
         { label: 'Pending', Icon: IconHourglass, value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending', color: '#2a78d6' },
         { label: 'Ready for Claiming', Icon: IconPackage, value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming', color: '#eda100' },
         { label: 'Completed', Icon: IconCheckCircle, value: countByStatus(['completed']), to: '/admin/requests?status=completed', color: '#e87ba4' },
-        { label: 'Rejected', Icon: IconXCircle, value: countByStatus(['rejected']), to: '/admin/requests?status=rejected', color: '#008300' },
+        { label: 'Rejected', Icon: IconXCircle, value: countByStatus(['rejected']), to: '/admin/requests?status=rejected', color: '#C8102E' },
         { label: 'Cancelled', Icon: IconBan, value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled', color: '#8a94a6' },
         { label: "Today's Appointments", Icon: IconCalendarCheck, value: todayCount, to: '/admin/claim-schedules', color: '#123B78' },
     ]
