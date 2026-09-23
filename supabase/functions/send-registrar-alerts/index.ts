@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 )
 
 const OVERDUE_ELIGIBLE_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing']
-const OVERDUE_DAYS = 2
+const DEFAULT_OVERDUE_DAYS = 2
 const OPEN_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
     'processing', 'lacking_requirements', 'ready_for_claiming',
@@ -42,8 +42,19 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({ notified: 0, skipped: 'already sent within the last 20 hours' }), { status: 200 })
         }
 
+        // Registrar-head-configurable via the Notifications page settings
+        // card; falls back to the default if the settings row is somehow
+        // missing rather than failing the whole run.
+        const { data: settings } = await supabaseAdmin
+            .from('system_settings')
+            .select('overdue_alert_days')
+            .eq('id', 1)
+            .maybeSingle()
+
+        const overdueDays = settings?.overdue_alert_days || DEFAULT_OVERDUE_DAYS
+
         const overdueCutoff = new Date()
-        overdueCutoff.setDate(overdueCutoff.getDate() - OVERDUE_DAYS)
+        overdueCutoff.setDate(overdueCutoff.getDate() - overdueDays)
 
         const { data: overdueRows, error: overdueError } = await supabaseAdmin
             .from('document_requests')
@@ -71,7 +82,7 @@ Deno.serve(async (req) => {
         const lines: string[] = []
         if (overdueCount > 0) {
             const sample = (overdueRows || []).slice(0, 5).map((r) => r.request_number).join(', ')
-            lines.push(`${overdueCount} request(s) have sat unprocessed for ${OVERDUE_DAYS}+ days: ${sample}${overdueCount > 5 ? ', ...' : ''}.`)
+            lines.push(`${overdueCount} request(s) have sat unprocessed for ${overdueDays}+ days: ${sample}${overdueCount > 5 ? ', ...' : ''}.`)
         }
         if (unassignedCount > 0) {
             const sample = (unassignedRows || []).slice(0, 5).map((r) => r.request_number).join(', ')

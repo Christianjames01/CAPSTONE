@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { notifyError, notifySuccess } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
@@ -12,9 +13,68 @@ function Notifications() {
     const [error, setError] = useState('')
     const [userId, setUserId] = useState(null)
 
+    const [currentRole, setCurrentRole] = useState('')
+    const [overdueAlertDays, setOverdueAlertDays] = useState('')
+    const [savingSettings, setSavingSettings] = useState(false)
+
     useEffect(() => {
         loadNotifications()
+        loadCurrentRole()
+        loadSettings()
     }, [])
+
+    const loadCurrentRole = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single()
+
+        setCurrentRole(profile?.role || '')
+    }
+
+    const loadSettings = async () => {
+        const { data } = await supabase
+            .from('system_settings')
+            .select('overdue_alert_days')
+            .eq('id', 1)
+            .maybeSingle()
+
+        setOverdueAlertDays(data?.overdue_alert_days ?? 2)
+    }
+
+    const saveSettings = async () => {
+        const days = Number(overdueAlertDays)
+
+        if (!days || days < 1) {
+            notifyError('Enter a number of days of at least 1.')
+            return
+        }
+
+        try {
+            setSavingSettings(true)
+
+            const { data: { user } } = await supabase.auth.getUser()
+
+            const { error: updateError } = await supabase
+                .from('system_settings')
+                .update({ overdue_alert_days: days, updated_at: new Date().toISOString(), updated_by: user?.id })
+                .eq('id', 1)
+
+            if (updateError) throw new Error(updateError.message)
+
+            notifySuccess('Overdue alert threshold updated.')
+
+        } catch (err) {
+            console.error('SAVE SYSTEM SETTINGS ERROR:', err)
+            notifyError(err.message || 'Failed to save settings.')
+        } finally {
+            setSavingSettings(false)
+        }
+    }
 
     const loadNotifications = async () => {
         try {
@@ -105,6 +165,31 @@ function Notifications() {
                     <button className="admin-link-button" onClick={markAllAsRead}>Mark all as read</button>
                 )}
             </div>
+
+            {currentRole === 'registrar_head' && (
+                <div className="admin-card" style={{ marginBottom: 24 }}>
+                    <h2 style={{ fontSize: 15, marginBottom: 6 }}>Daily Registrar Alert Settings</h2>
+                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
+                        A request sitting unprocessed for this many days or more gets flagged in the daily "Daily registrar alert" notification.
+                    </p>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <input
+                            type="number"
+                            min="1"
+                            className="admin-search-input"
+                            style={{ width: 90 }}
+                            value={overdueAlertDays}
+                            onChange={(e) => setOverdueAlertDays(e.target.value)}
+                            disabled={savingSettings}
+                        />
+                        <span style={{ fontSize: 13.5, color: 'var(--slate)' }}>days</span>
+                        <button className="admin-primary-button" onClick={saveSettings} disabled={savingSettings}>
+                            {savingSettings ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {error && <div className="admin-error-box">{error}</div>}
 
