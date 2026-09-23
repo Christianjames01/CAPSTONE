@@ -20,6 +20,28 @@ Deno.serve(async (req) => {
     }
 
     try {
+        // Idempotency guard: the cron job is scheduled to fire once a day,
+        // but a retry, a stray duplicate pg_cron schedule, or a manual
+        // re-trigger would otherwise insert a second "Daily registrar
+        // alert" for everyone. Skip the whole run if one already went out
+        // recently, rather than relying on the caller to only ever invoke
+        // this once.
+        const recentCutoff = new Date(Date.now() - 20 * 60 * 60 * 1000)
+
+        const { data: recentAlert, error: recentAlertError } = await supabaseAdmin
+            .from('notifications')
+            .select('notification_id')
+            .eq('title', 'Daily registrar alert')
+            .gte('created_at', recentCutoff.toISOString())
+            .limit(1)
+            .maybeSingle()
+
+        if (recentAlertError) throw recentAlertError
+
+        if (recentAlert) {
+            return new Response(JSON.stringify({ notified: 0, skipped: 'already sent within the last 20 hours' }), { status: 200 })
+        }
+
         const overdueCutoff = new Date()
         overdueCutoff.setDate(overdueCutoff.getDate() - OVERDUE_DAYS)
 
