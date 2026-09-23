@@ -202,7 +202,8 @@ function NewRequest() {
         processing_days_min,
         processing_days_max,
         requires_purpose,
-        preview_image_url
+        preview_image_url,
+        max_active_requests
       `)
             .eq('is_available', true)
             .order('document_name')
@@ -304,9 +305,11 @@ function NewRequest() {
                 (r) => r.document_type_id === selectedDocument && ACTIVE_STATUSES.includes(r.status)
             ).length
 
-            if (activeCountForSameDocument >= 2) {
+            const maxActiveRequests = selectedDocumentDetails?.max_active_requests || 2
+
+            if (activeCountForSameDocument >= maxActiveRequests) {
                 throw new Error(
-                    "You already have 2 active requests for this document. Please wait for one to finish (or get claimed) before requesting another."
+                    `You already have ${maxActiveRequests} active request${maxActiveRequests === 1 ? '' : 's'} for this document. Please wait for one to finish (or get claimed) before requesting another.`
                 )
             }
 

@@ -53,6 +53,7 @@ const EMPTY_FORM = {
     is_available: true,
     requires_purpose: false,
     preview_image_url: null,
+    max_active_requests: 2,
 }
 
 function Documents() {
@@ -111,7 +112,7 @@ function Documents() {
 
             const { data, error: loadError } = await supabase
                 .from('document_types')
-                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose, preview_image_url')
+                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose, preview_image_url, max_active_requests')
                 .order('document_name')
 
             if (loadError) {
@@ -289,6 +290,7 @@ function Documents() {
             is_available: doc.is_available,
             requires_purpose: doc.requires_purpose,
             preview_image_url: doc.preview_image_url || null,
+            max_active_requests: doc.max_active_requests ?? 2,
         })
         setImageFile(null)
         setImageFilePreview('')
@@ -363,6 +365,7 @@ function Documents() {
                 is_available: form.is_available,
                 requires_purpose: form.requires_purpose,
                 preview_image_url: previewImageUrl,
+                max_active_requests: form.max_active_requests === '' ? 2 : Math.max(1, Number(form.max_active_requests)),
             }
 
             if (form.document_type_id) {
@@ -691,6 +694,24 @@ function Documents() {
                             <label className="form-label" htmlFor="doc-days-max">Processing Days (Max)</label>
                             <input id="doc-days-max" className="form-input" type="number" min="0" value={form.processing_days_max} onChange={(e) => setForm({ ...form, processing_days_max: e.target.value })} disabled={saving} />
                         </div>
+
+                        {currentRole === 'registrar_head' && (
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="doc-max-active-requests">Max Active Requests per Student</label>
+                                <input
+                                    id="doc-max-active-requests"
+                                    className="form-input"
+                                    type="number"
+                                    min="1"
+                                    value={form.max_active_requests}
+                                    onChange={(e) => setForm({ ...form, max_active_requests: e.target.value })}
+                                    disabled={saving}
+                                />
+                                <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                                    How many open (not yet completed/claimed) requests a student can have for this document at once.
+                                </small>
+                            </div>
+                        )}
                     </div>
 
                     <div className="form-group" style={{ marginBottom: 16 }}>
@@ -840,6 +861,11 @@ function Documents() {
                                         ? `${doc.processing_days_min}–${doc.processing_days_max} days`
                                         : 'Not set'}
                                 </strong>
+                            </div>
+
+                            <div className="admin-info-field">
+                                <span>Max Active Requests</span>
+                                <strong>{doc.max_active_requests ?? 2} per student</strong>
                             </div>
                         </div>
 
