@@ -45,7 +45,6 @@ function AdminDashboard() {
     const [recentStudents, setRecentStudents] = useState([])
     const [employeeNames, setEmployeeNames] = useState({})
     const [loadedAt, setLoadedAt] = useState(() => new Date())
-    const [refreshing, setRefreshing] = useState(false)
     const [headName, setHeadName] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -54,10 +53,9 @@ function AdminDashboard() {
         loadDashboard()
     }, [])
 
-    const loadDashboard = async ({ silent = false } = {}) => {
+    const loadDashboard = async () => {
         try {
-            if (silent) setRefreshing(true)
-            else setLoading(true)
+            setLoading(true)
             setError('')
 
             const { data: { user } } = await supabase.auth.getUser()
@@ -215,7 +213,6 @@ function AdminDashboard() {
             setError(err.message || 'Failed to load dashboard.')
         } finally {
             setLoading(false)
-            setRefreshing(false)
             setLoadedAt(new Date())
         }
     }
@@ -291,12 +288,6 @@ function AdminDashboard() {
                     <p>
                         <span className="dash-greeting-role">Registrar Dashboard</span>
                         {loadedAt.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                        <span className="dash-updated">
-                            Updated {loadedAt.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })}
-                            <button onClick={() => loadDashboard({ silent: true })} disabled={refreshing}>
-                                {refreshing ? 'Refreshing…' : 'Refresh'}
-                            </button>
-                        </span>
                     </p>
                 </div>
                 <nav className="dash-greeting-links" aria-label="Quick links">
