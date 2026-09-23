@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './DocumentPreviewModal.css'
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
@@ -18,6 +18,18 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
     const bodyRef = useRef(null)
     const draggingRef = useRef(false)
     const lastPointRef = useRef({ x: 0, y: 0 })
+
+    // Wheel-to-zoom only preventDefaults over the image itself, so without
+    // this the page behind the modal would still scroll whenever the wheel
+    // passes over the backdrop padding, a PDF, or an unsupported file.
+    useEffect(() => {
+        if (!url) return
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [url])
 
     if (!url) return null
 
