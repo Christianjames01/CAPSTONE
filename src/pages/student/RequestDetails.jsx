@@ -82,6 +82,29 @@ function formatTime(time) {
     return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
 }
 
+// e.g. "Sep 23, 2026, 10:38 PM"
+function formatDateTime(value) {
+    if (!value) return ''
+    return new Date(value).toLocaleString('en-PH', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    })
+}
+
+// A plain 'YYYY-MM-DD' date (no time), e.g. "Tue, Sep 29, 2026".
+function formatDay(dateStr) {
+    if (!dateStr) return ''
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    })
+}
+
 function RequestDetails() {
     const { requestId } = useParams()
     const navigate = useNavigate()
@@ -444,7 +467,7 @@ function RequestDetails() {
                     await notify({
                         userId: employeeRow.user_id,
                         title: 'Reschedule requested',
-                        message: `Student requested to reschedule claiming for request ${request.request_number} (currently ${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}). Reason: "${reason.trim()}"`,
+                        message: `Student requested to reschedule claiming for request ${request.request_number} (currently ${formatDay(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}). Reason: "${reason.trim()}"`,
                         notificationType: 'request_update',
                         relatedRequestId: request.request_id,
                     })
@@ -643,7 +666,7 @@ function RequestDetails() {
                         <p>{request.cancellation_reason}</p>
                         {request.cancelled_at && (
                             <p style={{ marginTop: 4, fontSize: 12.5 }}>
-                                Cancelled on {new Date(request.cancelled_at).toLocaleString()}
+                                Cancelled on {formatDateTime(request.cancelled_at)}
                             </p>
                         )}
                     </div>
@@ -651,20 +674,20 @@ function RequestDetails() {
 
                 <div className="student-info-field student-section">
                     <span>Requested At</span>
-                    <strong>{request.requested_at ? new Date(request.requested_at).toLocaleString() : 'Not available'}</strong>
+                    <strong>{request.requested_at ? formatDateTime(request.requested_at) : 'Not available'}</strong>
                 </div>
 
                 {request.processed_at && (
                     <div className="student-info-field" style={{ marginTop: 16 }}>
                         <span>Processed At</span>
-                        <strong>{new Date(request.processed_at).toLocaleString()}</strong>
+                        <strong>{formatDateTime(request.processed_at)}</strong>
                     </div>
                 )}
 
                 {request.completed_at && (
                     <div className="student-info-field" style={{ marginTop: 16 }}>
                         <span>Completed At</span>
-                        <strong>{new Date(request.completed_at).toLocaleString()}</strong>
+                        <strong>{formatDateTime(request.completed_at)}</strong>
                     </div>
                 )}
 
@@ -776,20 +799,20 @@ function RequestDetails() {
                                     Claimed on{' '}
                                     <strong>
                                         {claimSchedule.claimed_at
-                                            ? new Date(claimSchedule.claimed_at).toLocaleString()
-                                            : `${claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'} at ${formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}`}
+                                            ? formatDateTime(claimSchedule.claimed_at)
+                                            : `${formatDay(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'} at ${formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}`}
                                     </strong>
                                 </>
                             ) : claimSchedule.status === 'missed' ? (
                                 <span style={{ color: 'var(--red-dark)' }}>
                                     Missed appointment on{' '}
-                                    <strong>{claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}</strong>
+                                    <strong>{formatDay(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}</strong>
                                 </span>
                             ) : (
                                 <>
                                     Scheduled for{' '}
                                     <strong>
-                                        {claimSchedule.claim_date || claimSchedule.scheduled_date || 'N/A'}
+                                        {formatDay(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}
                                         {' at '}
                                         {formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}
                                     </strong>
