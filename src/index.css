@@ -245,8 +245,8 @@ code {
 }
 
 .swal2-cancel {
-  background: #EEF1F6 !important;
-  color: #101827 !important;
+  background: #C8102E !important;
+  color: #FFFFFF !important;
 }
 
 .swal2-input,
@@ -297,11 +297,6 @@ html[data-theme="dark"] .swal2-content {
 
 html[data-theme="dark"] .swal2-close {
   color: #97A0B3 !important;
-}
-
-html[data-theme="dark"] .swal2-cancel {
-  background: #2A2F3B !important;
-  color: #E7E9EE !important;
 }
 
 html[data-theme="dark"] .swal2-input,
