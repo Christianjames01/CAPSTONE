@@ -76,7 +76,7 @@
     padding: 14px 16px;
     border-radius: 8px;
     background: var(--danger-bg-soft);
-    color: var(--red-dark);
+    color: var(--danger-text, var(--red-dark));
     border: 1px solid rgba(200, 16, 46, 0.2);
     font-size: 13.5px;
     margin-bottom: 18px;
@@ -130,7 +130,7 @@
 .status-cancelled,
 .status-missed {
     background: var(--danger-bg-soft);
-    color: var(--red-dark);
+    color: var(--danger-text, var(--red-dark));
 }
 
 .employee-info-grid {
@@ -336,7 +336,7 @@
 
 .employee-notice.tone-danger {
     background: var(--danger-bg-soft);
-    color: var(--red-dark);
+    color: var(--danger-text, var(--red-dark));
 }
 
 .employee-code-block {
@@ -352,7 +352,7 @@
 .employee-badge-required {
     display: inline-block;
     background: var(--danger-bg-soft);
-    color: var(--red-dark);
+    color: var(--danger-text, var(--red-dark));
     padding: 4px 9px;
     border-radius: 4px;
     font-size: 11px;

@@ -82,6 +82,7 @@ html[data-theme="dark"] .student-layout {
   --success-bg: rgba(52, 199, 132, 0.2);
   --success-text: #4ADE9A;
   --danger-bg-soft: rgba(255, 107, 129, 0.14);
+  --danger-text: #FF8A9B;
 }
 
 

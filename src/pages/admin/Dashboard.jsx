@@ -3,24 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
-import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck } from './icons'
+import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers } from './icons'
+import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
+import '../../components/DashboardStats.css'
 import './AdminPages.css'
-
-// Colors are theme variables (see .admin-layout in AdminPages.css) with
-// separate, validated light and dark steps. Cancelled (neutral gray) sits
-// between Completed (green) and Rejected (red) so those two never touch
-// in the donut -- red/green is the pair color-blind readers confuse.
-const STATUS_BUCKETS = [
-    { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], color: 'var(--status-pending)' },
-    { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], color: 'var(--status-verification)' },
-    { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], color: 'var(--status-processing)' },
-    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], color: 'var(--status-ready)' },
-    { key: 'completed', label: 'Completed', statuses: ['completed'], color: 'var(--status-completed)' },
-    { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], color: 'var(--status-cancelled)' },
-    { key: 'rejected', label: 'Rejected', statuses: ['rejected'], color: 'var(--status-rejected)' },
-]
-
-const TREND_DAYS = 14
 
 function AdminDashboard() {
     const navigate = useNavigate()
@@ -54,7 +40,7 @@ function AdminDashboard() {
 
             setRequests(requestRows || [])
 
-            const today = new Date().toISOString().slice(0, 10)
+            const today = localDay()
 
             const { count } = await supabase
                 .from('claim_schedules')
@@ -179,56 +165,9 @@ function AdminDashboard() {
     const countByStatus = (statuses) =>
         requests.filter((r) => statuses.includes(r.status)).length
 
-    const statusChartData = useMemo(
-        () => STATUS_BUCKETS.map((bucket) => ({
-            key: bucket.key,
-            label: bucket.label,
-            color: bucket.color,
-            value: countByStatus(bucket.statuses),
-        })),
-        [requests]
-    )
-
-    const trendChartData = useMemo(() => {
-        // Local (Philippine) calendar days, not UTC -- toISOString() would
-        // file anything submitted before 8 AM under the previous day.
-        const localDay = (date) =>
-            `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-
-        const days = []
-
-        for (let i = TREND_DAYS - 1; i >= 0; i--) {
-            const d = new Date()
-            d.setDate(d.getDate() - i)
-            days.push(localDay(d))
-        }
-
-        const countByDay = Object.fromEntries(days.map((date) => [date, 0]))
-
-        requests.forEach((r) => {
-            if (!r.requested_at) return
-            const day = localDay(new Date(r.requested_at))
-            if (day in countByDay) countByDay[day] += 1
-        })
-
-        return days.map((date) => ({ date, count: countByDay[date] }))
-    }, [requests])
-
-    // Requests received in the last 7 days vs the 7 days before, for the
-    // "Total Requests" tile's change line.
-    const weeklyRequests = useMemo(() => {
-        const now = Date.now()
-        const week = 7 * 24 * 60 * 60 * 1000
-        let current = 0
-        let previous = 0
-        for (const r of requests) {
-            if (!r.requested_at) continue
-            const age = now - new Date(r.requested_at).getTime()
-            if (age < week) current += 1
-            else if (age < 2 * week) previous += 1
-        }
-        return { current, previous, change: current - previous }
-    }, [requests])
+    const statusChartData = useMemo(() => buildStatusChartData(requests), [requests])
+    const trendChartData = useMemo(() => dailyTrend(requests, 14), [requests])
+    const weeklyRequests = useMemo(() => weeklyChange(requests), [requests])
 
     const overviewStats = [
         { label: 'Total Students', value: studentCount, to: '/admin/students', Icon: IconUsers, note: 'Registered student accounts' },
@@ -238,6 +177,8 @@ function AdminDashboard() {
 
     const statusStats = [
         { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/admin/requests?status=pending,payment_pending', Icon: IconHourglass },
+        { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], to: '/admin/requests?status=receipt_uploaded,receipt_verified', Icon: IconClipboardCheck },
+        { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], to: '/admin/requests?status=processing,lacking_requirements', Icon: IconLayers },
         { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/admin/requests?status=ready_for_claiming', Icon: IconPackage },
         { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/admin/requests?status=completed', Icon: IconCheckCircle },
         { key: 'rejected', label: 'Rejected', statuses: ['rejected'], to: '/admin/requests?status=rejected', Icon: IconXCircle },
@@ -249,8 +190,8 @@ function AdminDashboard() {
     })
 
     const attentionStats = [
-        { label: 'Missed Claims', value: missedCount, to: '/admin/claim-schedules?status=missed' },
-        { label: 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules?status=reschedule' },
+        { label: missedCount === 1 ? 'Missed Claim' : 'Missed Claims', value: missedCount, to: '/admin/claim-schedules?status=missed', note: 'Students who did not show up' },
+        { label: rescheduleRequestCount === 1 ? 'Reschedule Request' : 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules?status=reschedule', note: 'Students asking for a new date' },
     ]
 
     if (loading) {
@@ -258,7 +199,7 @@ function AdminDashboard() {
             <div>
                 <SkeletonPageHeader />
                 <SkeletonStatGrid count={3} gridClassName="dash-overview-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
-                <SkeletonStatGrid count={5} gridClassName="dash-status-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
+                <SkeletonStatGrid count={7} gridClassName="dash-status-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
                 <SkeletonList count={2} />
             </div>
         )
@@ -275,25 +216,16 @@ function AdminDashboard() {
                 <p>System-wide overview of document requests and registrar activity.</p>
             </div>
 
-            {(attentionStats[0].value > 0 || attentionStats[1].value > 0) && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
-                    {attentionStats.filter((s) => s.value > 0).map((stat) => (
-                        <button
-                            key={stat.label}
-                            onClick={() => navigate(stat.to)}
-                            style={{
-                                textAlign: 'left',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 14,
-                                padding: '16px 18px',
-                                borderRadius: 10,
-                                border: '1px solid rgba(200, 16, 46, 0.25)',
-                                background: 'rgba(200, 16, 46, 0.06)',
-                            }}
-                        >
-                            <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--red)' }}>{stat.value}</span>
-                            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--red-dark)' }}>{stat.label}</span>
+            {attentionStats.some((stat) => stat.value > 0) && (
+                <div className="dash-alert-grid">
+                    {attentionStats.filter((stat) => stat.value > 0).map((stat) => (
+                        <button key={stat.to} className="dash-alert-tile" onClick={() => navigate(stat.to)}>
+                            <span className="dash-alert-icon" aria-hidden="true"><IconXCircle /></span>
+                            <span className="dash-alert-text">
+                                <strong>{stat.value} {stat.label}</strong>
+                                <span>{stat.note}</span>
+                            </span>
+                            <span className="dash-alert-arrow" aria-hidden="true">→</span>
                         </button>
                     ))}
                 </div>

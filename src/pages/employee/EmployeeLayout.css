@@ -40,6 +40,8 @@
 .employee-layout h2,
 .employee-layout h3 {
     font-family: var(--font-display);
+    /* Follow the app theme, not the OS setting the global h1/h2 rule uses. */
+    color: var(--ink);
     font-weight: 600;
     margin: 0;
     letter-spacing: -0.01em;
