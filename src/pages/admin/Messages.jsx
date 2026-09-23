@@ -110,35 +110,40 @@ function Messages() {
 
                     const otherId = group.participantA === user.id ? group.participantB : group.participantA
 
-                    const target = Object.values(grouped).find((g) =>
+                    // Every non-head conversation this person is part of (an
+                    // employee can be talking with several students).
+                    const candidates = Object.values(grouped).filter((g) =>
                         g.pairKey !== key &&
                         g.participantA !== user.id && g.participantB !== user.id &&
                         (g.participantA === otherId || g.participantB === otherId)
                     )
 
-                    if (!target) continue
+                    if (candidates.length === 0) continue
 
-                    const indexBySignature = new Map(
-                        target.messages.map((m, i) => [`${m.sender_user_id}|${m.message}|${m.created_at}`, i])
-                    )
+                    const signatureOf = (m) => `${m.sender_user_id}|${m.message}|${m.created_at}`
+                    const touched = new Set()
 
                     for (const m of group.messages) {
-                        const signature = `${m.sender_user_id}|${m.message}|${m.created_at}`
-                        const existingIndex = indexBySignature.get(signature)
+                        const signature = signatureOf(m)
 
-                        if (existingIndex !== undefined) {
-                            // Same fanned-out message already shown via the other
-                            // recipient's copy. Keep the head's own copy instead, so
-                            // its unread status counts and "Mark as read" can clear it.
-                            if (m.receiver_user_id === user.id) target.messages[existingIndex] = m
+                        // A fanned-out copy belongs in whichever conversation
+                        // already holds its sibling (same sender, text, time).
+                        const sibling = candidates
+                            .map((g) => ({ g, index: g.messages.findIndex((x) => signatureOf(x) === signature) }))
+                            .find((c) => c.index !== -1)
+
+                        if (sibling) {
+                            // Show it once, but keep the head's own copy so its
+                            // unread status counts and "Mark as read" can clear it.
+                            if (m.receiver_user_id === user.id) sibling.g.messages[sibling.index] = m
                             continue
                         }
 
-                        indexBySignature.set(signature, target.messages.length)
-                        target.messages.push(m)
+                        candidates[0].messages.push(m)
+                        touched.add(candidates[0])
                     }
 
-                    target.messages.sort((a, b) => a.created_at.localeCompare(b.created_at))
+                    for (const g of touched) g.messages.sort((a, b) => a.created_at.localeCompare(b.created_at))
                     delete grouped[key]
                 }
             }

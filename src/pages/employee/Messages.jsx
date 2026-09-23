@@ -93,12 +93,35 @@ function Messages() {
 
             const labels = await buildSenderLabels([...otherUserIds, ...studentIdsToFetch], { showRegistrarHeadName: true })
 
+            // A reply this employee sent into a shared conversation fans out
+            // as one row per recipient (student + head), all with the same
+            // text and timestamp. File every copy under the student so the
+            // reply stays in that conversation instead of also opening a
+            // separate thread with the head, and show it as one bubble.
+            const fanOutKey = (m) => `${m.message}|${m.created_at}`
+            const studentForFanOut = {}
+
+            for (const m of rows) {
+                if (m.sender_user_id !== user.id) continue
+                if (profileByUserId[m.receiver_user_id]?.role === 'student') {
+                    studentForFanOut[fanOutKey(m)] = m.receiver_user_id
+                }
+            }
+
+            const shownOwnReplies = new Set()
             const grouped = {}
 
             for (const m of rows) {
                 const rawOtherId = m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id
-                const otherId = redirectToStudent[m.message_id] || rawOtherId
+                const ownFanOutStudent = m.sender_user_id === user.id ? studentForFanOut[fanOutKey(m)] : null
+                const otherId = redirectToStudent[m.message_id] || ownFanOutStudent || rawOtherId
                 const displayMessage = m.message.replace(REF_TAG, '')
+
+                if (ownFanOutStudent) {
+                    const bubbleKey = `${otherId}|${fanOutKey(m)}`
+                    if (shownOwnReplies.has(bubbleKey)) continue
+                    shownOwnReplies.add(bubbleKey)
+                }
 
                 if (!grouped[otherId]) {
                     grouped[otherId] = {
