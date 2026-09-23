@@ -1,0 +1,11 @@
+-- The admin Documents page and its DOCUMENT_CATEGORIES list have always
+-- offered "Certificate" as a category, but the document_category enum in
+-- the database never actually had that value -- so no document could ever
+-- be saved with it, and the Certificate filter was structurally always
+-- empty. Adds the missing enum value.
+--
+-- Must run (and commit) as its own statement/migration: a newly added enum
+-- value can't be referenced by name in the same transaction that adds it,
+-- so this has to land before the recategorize_certificates migration that
+-- uses it.
+ALTER TYPE document_category ADD VALUE IF NOT EXISTS 'certificate';
