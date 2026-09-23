@@ -204,15 +204,17 @@ function AdminDashboard() {
         return days.map((date) => ({ date, count: countByDay[date] }))
     }, [requests])
 
+    // Same colors as STATUS_BUCKETS (the donut chart legend) so a status's
+    // color means the same thing everywhere on this dashboard.
     const stats = [
-        { label: 'Total Students', value: studentCount, to: '/admin/students' },
-        { label: 'Total Requests', value: requests.length, to: '/admin/requests' },
-        { label: 'Pending', value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending' },
-        { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming' },
-        { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests?status=completed' },
-        { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected' },
-        { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled' },
-        { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules' },
+        { label: 'Total Students', value: studentCount, to: '/admin/students', color: '#123B78' },
+        { label: 'Total Requests', value: requests.length, to: '/admin/requests', color: '#123B78' },
+        { label: 'Pending', value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending', color: '#2a78d6' },
+        { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming', color: '#eda100' },
+        { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests?status=completed', color: '#e87ba4' },
+        { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected', color: '#008300' },
+        { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled', color: '#8a94a6' },
+        { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules', color: '#123B78' },
     ]
 
     const attentionStats = [
@@ -276,7 +278,7 @@ function AdminDashboard() {
                     <button
                         key={stat.label}
                         className="admin-card"
-                        style={{ textAlign: 'left', margin: 0 }}
+                        style={{ textAlign: 'left', margin: 0, borderTop: `3px solid ${stat.color}` }}
                         onClick={() => navigate(stat.to)}
                     >
                         <span
@@ -284,7 +286,7 @@ function AdminDashboard() {
                                 display: 'block',
                                 fontSize: 26,
                                 fontWeight: 700,
-                                color: 'var(--blue)',
+                                color: stat.color,
                                 marginBottom: 4,
                             }}
                         >
