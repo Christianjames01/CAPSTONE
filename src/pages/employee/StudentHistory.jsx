@@ -6,7 +6,9 @@ import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
+import { updateStudentEmail } from '../../lib/updateStudentEmail'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -25,6 +27,7 @@ function StudentHistory() {
     const [form, setForm] = useState(null)
     const [saving, setSaving] = useState(false)
     const [resettingPassword, setResettingPassword] = useState(false)
+    const [changingEmail, setChangingEmail] = useState(false)
 
     useEffect(() => {
         loadHistory()
@@ -37,7 +40,7 @@ function StudentHistory() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, address, alternate_phone_number, emergency_contact_name, emergency_contact_number')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number')
                 .eq('student_id', studentId)
                 .single()
 
@@ -279,6 +282,62 @@ function StudentHistory() {
         }
     }
 
+    // Same flow as the registrar head's Student Details page.
+    const handleChangeLoginEmail = async () => {
+        const { value: newEmail } = await Swal.fire({
+            icon: 'warning',
+            title: 'Change login email?',
+            text: `Use this only if ${student.fullName}'s HCDC account has been deactivated and they can no longer log in or complete the self-serve email change themselves. This takes effect immediately, no confirmation link needed.`,
+            input: 'email',
+            inputLabel: 'New login email',
+            inputValue: student.alternate_email || '',
+            inputPlaceholder: 'you@gmail.com',
+            showCancelButton: true,
+            confirmButtonText: 'Change email',
+            confirmButtonColor: '#C8102E',
+            inputValidator: (value) => {
+                if (!value) return 'Please enter an email address.'
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.'
+            },
+        })
+
+        if (!newEmail) return
+
+        try {
+            setChangingEmail(true)
+
+            await updateStudentEmail({ studentUserId: student.user_id, newEmail })
+
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+
+            const { data: employee } = await supabase
+                .from('employees')
+                .select('employee_id')
+                .eq('user_id', user?.id)
+                .maybeSingle()
+
+            await logActivity({
+                employeeId: employee?.employee_id,
+                userId: employee ? null : user?.id,
+                action: 'change_student_email',
+                tableName: 'students',
+                recordId: student.student_id,
+                description: `Changed login email for "${student.fullName}" (${student.student_number}) to "${newEmail}" (HCDC account deactivated).`,
+            })
+
+            notifySuccess(`Login email changed to ${newEmail}.`)
+            await loadHistory()
+
+        } catch (err) {
+            console.error('CHANGE STUDENT LOGIN EMAIL ERROR:', err)
+            notifyError(err.message || 'Failed to change login email.')
+        } finally {
+            setChangingEmail(false)
+        }
+    }
+
     if (loading) {
         return (
             <div>
@@ -333,137 +392,140 @@ function StudentHistory() {
             <div className="employee-card">
                 <div className="employee-page-header-row" style={{ marginBottom: 16 }}>
                     <h2 style={{ fontSize: 16 }}>Student Information</h2>
-                    {!editing && (
-                        <button className="employee-link-button" onClick={startEditing}>
-                            Edit →
-                        </button>
-                    )}
+                    <button className="employee-link-button" onClick={startEditing}>
+                        Edit →
+                    </button>
                 </div>
 
-                {editing ? (
-                    <>
-                        <div className="employee-info-grid" style={{ marginBottom: 14 }}>
-                            <div className="form-group">
-                                <label className="form-label">First Name</label>
-                                <input className="employee-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Last Name</label>
-                                <input className="employee-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Student Number</label>
-                                <input className="employee-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Phone Number</label>
-                                <input className="employee-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">College</label>
-                                <select className="employee-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
-                                    <option value="">-- None --</option>
-                                    {colleges.map((c) => (
-                                        <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Program</label>
-                                <select className="employee-search-input" value={form.programId} onChange={(e) => setForm({ ...form, programId: e.target.value })} disabled={saving || !form.collegeId}>
-                                    <option value="">{form.collegeId ? '-- None --' : 'Select a college first'}</option>
-                                    {programs.map((p) => (
-                                        <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Year Level</label>
-                                <select className="employee-search-input" value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} disabled={saving}>
-                                    <option value="">-- None --</option>
-                                    <option value="1">1st Year</option>
-                                    <option value="2">2nd Year</option>
-                                    <option value="3">3rd Year</option>
-                                    <option value="4">4th Year</option>
-                                    <option value="5">5th Year</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Address</label>
-                                <input className="employee-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Alternate Phone Number</label>
-                                <input className="employee-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Emergency Contact Name</label>
-                                <input className="employee-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Emergency Contact Number</label>
-                                <input className="employee-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />
-                            </div>
-                        </div>
+                <div className="employee-info-grid">
+                    <div className="employee-info-field">
+                        <span>Student Number</span>
+                        <strong>{student.student_number}</strong>
+                    </div>
 
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="employee-primary-button" onClick={saveEdits} disabled={saving}>
-                                {saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button className="employee-danger-button" onClick={() => setEditing(false)} disabled={saving}>
-                                Cancel
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="employee-info-grid">
-                        <div className="employee-info-field">
-                            <span>Student Number</span>
-                            <strong>{student.student_number}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>College</span>
+                        <strong>{student.collegeName || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>College</span>
-                            <strong>{student.collegeName || 'N/A'}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Program</span>
+                        <strong>{student.programName || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Program</span>
-                            <strong>{student.programName || 'N/A'}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Year Level</span>
+                        <strong>{student.year_level || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Year Level</span>
-                            <strong>{student.year_level || 'N/A'}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Phone Number</span>
+                        <strong>{student.phoneNumber || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Phone Number</span>
-                            <strong>{student.phoneNumber || 'N/A'}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Status</span>
+                        <strong style={{ textTransform: 'capitalize' }}>{student.status}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Status</span>
-                            <strong style={{ textTransform: 'capitalize' }}>{student.status}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Address</span>
+                        <strong>{student.address || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Address</span>
-                            <strong>{student.address || 'N/A'}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Alternate Phone Number</span>
+                        <strong>{student.alternate_phone_number || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Alternate Phone Number</span>
-                            <strong>{student.alternate_phone_number || 'N/A'}</strong>
-                        </div>
+                    <div className="employee-info-field">
+                        <span>Personal Email</span>
+                        <strong>{student.alternate_email || 'N/A'}</strong>
+                    </div>
 
-                        <div className="employee-info-field">
-                            <span>Emergency Contact</span>
-                            <strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong>
+                    <div className="employee-info-field">
+                        <span>Emergency Contact</span>
+                        <strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong>
+                    </div>
+                </div>
+            </div>
+
+            {editing && form && (
+                <Modal title="Edit Student Information" maxWidth={720} onClose={() => !saving && setEditing(false)}>
+                    <div className="employee-info-grid" style={{ marginBottom: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
+                        <div className="form-group">
+                            <label className="form-label">First Name</label>
+                            <input className="employee-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Last Name</label>
+                            <input className="employee-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Student Number</label>
+                            <input className="employee-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Phone Number</label>
+                            <input className="employee-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">College</label>
+                            <select className="employee-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
+                                <option value="">-- None --</option>
+                                {colleges.map((c) => (
+                                    <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Program</label>
+                            <select className="employee-search-input" value={form.programId} onChange={(e) => setForm({ ...form, programId: e.target.value })} disabled={saving || !form.collegeId}>
+                                <option value="">{form.collegeId ? '-- None --' : 'Select a college first'}</option>
+                                {programs.map((p) => (
+                                    <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Year Level</label>
+                            <select className="employee-search-input" value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} disabled={saving}>
+                                <option value="">-- None --</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                                <option value="5">5th Year</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Address</label>
+                            <input className="employee-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Alternate Phone Number</label>
+                            <input className="employee-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Emergency Contact Name</label>
+                            <input className="employee-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Emergency Contact Number</label>
+                            <input className="employee-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />
                         </div>
                     </div>
-                )}
-            </div>
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button className="employee-primary-button" onClick={saveEdits} disabled={saving}>
+                            {saving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button className="employee-danger-button" onClick={() => setEditing(false)} disabled={saving}>
+                            Cancel
+                        </button>
+                    </div>
+                </Modal>
+            )}
 
             <div className="employee-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Account</h2>
@@ -476,6 +538,19 @@ function StudentHistory() {
                     disabled={resettingPassword}
                 >
                     {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                </button>
+
+                <p style={{ fontSize: 13, color: 'var(--slate)', margin: '18px 0 14px' }}>
+                    Current login email: <strong>{student.email || 'N/A'}</strong>. Change it if this student's HCDC
+                    account has been deactivated (e.g. after graduation) and they can no longer log in or
+                    self-serve the change themselves.
+                </p>
+                <button
+                    className="employee-danger-button"
+                    onClick={handleChangeLoginEmail}
+                    disabled={changingEmail}
+                >
+                    {changingEmail ? 'Changing...' : 'Change Login Email'}
                 </button>
             </div>
 

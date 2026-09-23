@@ -57,12 +57,29 @@ Deno.serve(async (req) => {
 
         const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
             .from('profiles')
-            .select('role')
+            .select('role, status')
             .eq('user_id', caller.id)
             .single()
 
-        if (callerProfileError || callerProfile?.role !== 'registrar_head') {
-            return jsonResponse({ error: 'Only the registrar head can change a student\'s login email.' }, 403)
+        // Same staff rule as reset-student-password: the registrar head and
+        // active employees, except releasing-only (front desk) accounts.
+        const isHead = callerProfile?.role === 'registrar_head'
+        const isActiveEmployee = callerProfile?.role === 'employee' && callerProfile?.status === 'active'
+
+        if (callerProfileError || (!isHead && !isActiveEmployee)) {
+            return jsonResponse({ error: 'Only the registrar head or registrar employees can change a student\'s login email.' }, 403)
+        }
+
+        if (isActiveEmployee) {
+            const { data: callerEmployeeScope } = await supabaseAdmin
+                .from('employees')
+                .select('access_scope')
+                .eq('user_id', caller.id)
+                .maybeSingle()
+
+            if (callerEmployeeScope?.access_scope === 'releasing') {
+                return jsonResponse({ error: 'Releasing-only accounts cannot change a student\'s login email.' }, 403)
+            }
         }
 
         const { studentUserId, newEmail } = await req.json()
