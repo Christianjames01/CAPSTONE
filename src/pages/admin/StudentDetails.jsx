@@ -17,6 +17,14 @@ function formatDate(value) {
     return new Date(value).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function formatTime(time) {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes), 0, 0)
+    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
 function StudentDetails() {
     const { studentId } = useParams()
     const navigate = useNavigate()
@@ -129,9 +137,31 @@ function StudentDetails() {
 
             const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
 
-            setRequests(rows.map((r) => ({ ...r, documentName: documentNameById[r.document_type_id] || 'Document' })))
-
             const requestIds = rows.map((r) => r.request_id)
+
+            const { data: scheduleRows } = requestIds.length
+                ? await supabase
+                    .from('claim_schedules')
+                    .select('request_id, status, scheduled_date, scheduled_time, claim_date, claim_time, created_at')
+                    .in('request_id', requestIds)
+                    .neq('status', 'cancelled')
+                    .order('created_at', { ascending: false })
+                : { data: [] }
+
+            // Most recent non-cancelled schedule per request -- a
+            // rescheduled request can have more than one row.
+            const claimScheduleByRequestId = {}
+            for (const s of scheduleRows || []) {
+                if (!claimScheduleByRequestId[s.request_id]) {
+                    claimScheduleByRequestId[s.request_id] = s
+                }
+            }
+
+            setRequests(rows.map((r) => ({
+                ...r,
+                documentName: documentNameById[r.document_type_id] || 'Document',
+                claimSchedule: claimScheduleByRequestId[r.request_id] || null,
+            })))
 
             const { data: requirementRows } = requestIds.length
                 ? await supabase
@@ -562,6 +592,13 @@ function StudentDetails() {
                             <div>
                                 <h3>{request.documentName}</h3>
                                 <p>{request.request_number}</p>
+                                {request.claimSchedule && (
+                                    <p>
+                                        Claiming: {formatDate(request.claimSchedule.claim_date || request.claimSchedule.scheduled_date)}
+                                        {(request.claimSchedule.claim_time || request.claimSchedule.scheduled_time) &&
+                                            ` · ${formatTime(request.claimSchedule.claim_time || request.claimSchedule.scheduled_time)}`}
+                                    </p>
+                                )}
                             </div>
                             <span className={`admin-status-pill status-${request.status}`}>
                                 {request.status.replace(/_/g, ' ')}
