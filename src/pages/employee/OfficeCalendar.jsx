@@ -832,7 +832,7 @@ function OfficeCalendar() {
                                 ? 'Adding...'
                                 : `Add to ${rangeDates.length} Day${rangeDates.length === 1 ? '' : 's'}`}
                         </button>
-                        <button className="employee-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setShowRangeModal(false)} disabled={addingRange}>
+                        <button className="employee-danger-button" onClick={() => setShowRangeModal(false)} disabled={addingRange}>
                             Cancel
                         </button>
                     </div>

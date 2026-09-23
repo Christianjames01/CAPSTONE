@@ -513,7 +513,7 @@ function StudentDetails() {
                         <button className="admin-primary-button" onClick={saveEdits} disabled={saving}>
                             {saving ? 'Saving...' : 'Save'}
                         </button>
-                        <button className="admin-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setEditing(false)} disabled={saving}>
+                        <button className="admin-danger-button" onClick={() => setEditing(false)} disabled={saving}>
                             Cancel
                         </button>
                     </div>

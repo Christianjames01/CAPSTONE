@@ -1821,8 +1821,7 @@ function EmployeeRequestDetails() {
                                     setSelectedRequirement(null)
                                     setRejectionReason('')
                                 }}
-                                className="employee-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="employee-danger-button"
                             >
                                 Cancel
                             </button>

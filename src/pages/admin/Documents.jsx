@@ -785,7 +785,7 @@ function Documents() {
                         <button className="admin-primary-button" onClick={saveDocument} disabled={saving}>
                             {uploadingImage ? 'Uploading image...' : saving ? 'Saving...' : 'Save'}
                         </button>
-                        <button className="admin-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setShowForm(false)} disabled={saving}>
+                        <button className="admin-danger-button" onClick={() => setShowForm(false)} disabled={saving}>
                             Cancel
                         </button>
                     </div>

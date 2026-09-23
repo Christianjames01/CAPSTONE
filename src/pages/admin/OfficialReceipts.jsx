@@ -305,8 +305,7 @@ function OfficialReceipts() {
 
                     <div style={{ display: 'flex', gap: 10 }}>
                         <button
-                            className="admin-secondary-button"
-                            style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                            className="admin-danger-button"
                             onClick={closeRejectModal}
                             disabled={processing === rejectTarget.receipt_id}
                         >

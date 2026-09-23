@@ -327,8 +327,7 @@ function Profile() {
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>
                             <button
-                                className="admin-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="admin-danger-button"
                                 onClick={() => { setPhoneNumber(profile?.phone_number || ''); setEditing(false) }}
                                 disabled={saving}
                             >
@@ -401,8 +400,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="admin-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="admin-danger-button"
                                 onClick={() => {
                                     setEmailCurrentPassword('')
                                     setNewEmail('')
@@ -492,8 +490,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="admin-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="admin-danger-button"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')
@@ -512,7 +509,7 @@ function Profile() {
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup linkButtonClassName="admin-link-button" secondaryButtonClassName="admin-secondary-button" />
+                <MfaSetup linkButtonClassName="admin-link-button" dangerButtonClassName="admin-danger-button" />
             </div>
         </div>
     )

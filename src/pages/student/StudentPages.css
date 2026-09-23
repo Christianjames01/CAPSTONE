@@ -324,6 +324,27 @@
     cursor: not-allowed;
 }
 
+.student-danger-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 13.5px;
+    background: var(--red);
+    color: var(--white);
+}
+
+.student-danger-button:hover {
+    background: var(--red-dark);
+}
+
+.student-danger-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .student-notice {
     padding: 16px 18px;
     border-radius: 8px;

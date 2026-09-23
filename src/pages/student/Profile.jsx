@@ -708,8 +708,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="student-danger-button"
                                 onClick={cancelEditing}
                                 disabled={saving}
                             >
@@ -789,8 +788,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="student-danger-button"
                                 onClick={() => {
                                     setEmailCurrentPassword('')
                                     setNewEmail('')
@@ -823,7 +821,7 @@ function Profile() {
 
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup linkButtonClassName="student-link-button" secondaryButtonClassName="student-secondary-button" />
+                <MfaSetup linkButtonClassName="student-link-button" dangerButtonClassName="student-danger-button" />
             </div>
 
             {changingPassword && (
@@ -885,8 +883,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-secondary-button"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                className="student-danger-button"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')

@@ -1340,8 +1340,7 @@ function AdminRequestDetails() {
 
                     <div style={{ display: 'flex', gap: 10 }}>
                         <button
-                            className="admin-secondary-button"
-                            style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                            className="admin-danger-button"
                             onClick={() => {
                                 setShowReject(false)
                                 setSelectedRequirement(null)

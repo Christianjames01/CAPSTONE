@@ -308,8 +308,7 @@ function EmployeeQueue() {
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
                                         <button
-                                            className="employee-secondary-button"
-                                            style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                            className="employee-danger-button"
                                             onClick={() => cancelTicket(t)}
                                             disabled={acting === t.queue_id}
                                         >

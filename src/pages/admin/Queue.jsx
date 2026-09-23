@@ -309,8 +309,7 @@ function AdminQueue() {
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
                                         <button
-                                            className="admin-secondary-button"
-                                            style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                            className="admin-danger-button"
                                             onClick={() => cancelTicket(t)}
                                             disabled={acting === t.queue_id}
                                         >

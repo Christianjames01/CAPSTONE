@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Modal from './Modal'
 
-function MfaSetup({ linkButtonClassName = 'employee-link-button', secondaryButtonClassName = 'employee-secondary-button' }) {
+function MfaSetup({ linkButtonClassName = 'employee-link-button', dangerButtonClassName = 'employee-danger-button' }) {
     const [factors, setFactors] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -227,8 +227,7 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button', secondaryButto
                                 </button>
                                 <button
                                     type="button"
-                                    className={secondaryButtonClassName}
-                                    style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                    className={dangerButtonClassName}
                                     onClick={cancelEnroll}
                                     disabled={verifying}
                                 >
