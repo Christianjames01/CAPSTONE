@@ -90,7 +90,7 @@ function Messages() {
                 for (const p of extraProfiles || []) profileByUserId[p.user_id] = p
             }
 
-            const labels = await buildSenderLabels([...otherUserIds, ...studentIdsToFetch])
+            const labels = await buildSenderLabels([...otherUserIds, ...studentIdsToFetch], { showRegistrarHeadName: true })
 
             const grouped = {}
 
