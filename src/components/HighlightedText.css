@@ -1,17 +1,17 @@
-/* Uses the same --blue/--red/--success-text tokens every other dashboard
+/* Uses the same --blue-accent/--red/--success-text tokens every other dashboard
    element uses, so this automatically matches whatever each layout (and
    light/dark mode) defines them as -- no separate dark-mode rule needed. */
 
 .log-highlight-quote {
     background: var(--blue-tint, rgba(18, 59, 120, 0.08));
-    color: var(--blue, #123B78);
+    color: var(--blue-accent, var(--blue, #123B78));
     font-weight: 600;
     padding: 1px 5px;
     border-radius: 4px;
 }
 
 .log-highlight-amount {
-    color: var(--blue, #123B78);
+    color: var(--blue-accent, var(--blue, #123B78));
     font-weight: 700;
 }
 

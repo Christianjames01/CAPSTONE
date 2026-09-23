@@ -101,7 +101,7 @@
 }
 
 .doc-preview-zoom-label:hover {
-    color: var(--blue, #123B78);
+    color: var(--blue-accent, var(--blue, #123B78));
 }
 
 .doc-preview-body {
