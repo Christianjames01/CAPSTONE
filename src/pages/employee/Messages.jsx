@@ -13,6 +13,7 @@ function Messages() {
     const [activeThread, setActiveThread] = useState(null)
     const [reply, setReply] = useState('')
     const [sending, setSending] = useState(false)
+    const [senderNames, setSenderNames] = useState({})
 
     useEffect(() => {
         loadMessages()
@@ -53,17 +54,47 @@ function Messages() {
             ]
 
             const { data: profiles } = otherUserIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', otherUserIds)
+                ? await supabase.from('profiles').select('user_id, first_name, last_name, role').in('user_id', otherUserIds)
                 : { data: [] }
 
             const profileByUserId = Object.fromEntries(
                 (profiles || []).map((p) => [p.user_id, p])
             )
 
+            // A message from the registrar head has no field linking it to
+            // "this was about student X" -- messages is strictly 1:1, and
+            // RLS only lets an employee query rows where they're the
+            // sender or receiver, so there's no query that could look up
+            // the fan-out sibling sent to the student either. The admin
+            // side tags the employee-facing copy's text with a hidden
+            // [[ref=<studentUserId>]] prefix when it fans a head reply out
+            // (see admin/Messages.jsx sendReply) specifically so this page
+            // can file it under that student instead of under the head.
+            const REF_TAG = /^\[\[ref=([0-9a-f-]+)\]\]/
+
+            const redirectToStudent = {}
+            const studentIdsToFetch = new Set()
+
+            for (const m of rows) {
+                const match = m.message.match(REF_TAG)
+                if (!match) continue
+                redirectToStudent[m.message_id] = match[1]
+                if (!profileByUserId[match[1]]) studentIdsToFetch.add(match[1])
+            }
+
+            if (studentIdsToFetch.size > 0) {
+                const { data: extraProfiles } = await supabase
+                    .from('profiles').select('user_id, first_name, last_name, role').in('user_id', [...studentIdsToFetch])
+
+                for (const p of extraProfiles || []) profileByUserId[p.user_id] = p
+            }
+
             const grouped = {}
 
             for (const m of rows) {
-                const otherId = m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id
+                const rawOtherId = m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id
+                const otherId = redirectToStudent[m.message_id] || rawOtherId
+                const displayMessage = m.message.replace(REF_TAG, '')
 
                 if (!grouped[otherId]) {
                     grouped[otherId] = {
@@ -76,11 +107,15 @@ function Messages() {
                     }
                 }
 
-                grouped[otherId].messages.push(m)
+                grouped[otherId].messages.push({ ...m, message: displayMessage })
 
                 if (m.receiver_user_id === user.id && !m.is_read) {
                     grouped[otherId].unreadCount += 1
                 }
+            }
+
+            for (const group of Object.values(grouped)) {
+                group.messages.sort((a, b) => a.created_at.localeCompare(b.created_at))
             }
 
             const threadList = Object.values(grouped).sort((a, b) => {
@@ -90,6 +125,11 @@ function Messages() {
             })
 
             setThreads(threadList)
+            setSenderNames(
+                Object.fromEntries(
+                    Object.entries(profileByUserId).map(([id, p]) => [id, `${p.first_name} ${p.last_name}`.trim()])
+                )
+            )
 
         } catch (err) {
             console.error('MESSAGES ERROR:', err)
@@ -178,24 +218,38 @@ function Messages() {
                 </div>
 
                 <div className="employee-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {activeThread.messages.map((m) => (
-                        <div
-                            key={m.message_id}
-                            style={{
-                                alignSelf: m.sender_user_id === userId ? 'flex-end' : 'flex-start',
-                                maxWidth: '70%',
-                                background: m.sender_user_id === userId ? 'var(--blue)' : 'var(--paper)',
-                                color: m.sender_user_id === userId ? 'var(--white)' : 'var(--ink)',
-                                padding: '10px 14px',
-                                borderRadius: 10,
-                            }}
-                        >
-                            <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
-                            <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
-                                {formatTime(m.created_at)}
-                            </span>
-                        </div>
-                    ))}
+                    {activeThread.messages.map((m) => {
+                        const isSelf = m.sender_user_id === userId
+                        // Only label it when it's from someone other than
+                        // this thread's usual counterpart -- e.g. the
+                        // registrar head replying on the student's behalf.
+                        const senderLabel = !isSelf && m.sender_user_id !== activeThread.otherUserId
+                            ? senderNames[m.sender_user_id] || 'Registrar'
+                            : null
+
+                        return (
+                            <div key={m.message_id} style={{ alignSelf: isSelf ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
+                                {senderLabel && (
+                                    <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                                        {senderLabel}
+                                    </span>
+                                )}
+                                <div
+                                    style={{
+                                        background: isSelf ? 'var(--blue)' : 'var(--paper)',
+                                        color: isSelf ? 'var(--white)' : 'var(--ink)',
+                                        padding: '10px 14px',
+                                        borderRadius: 10,
+                                    }}
+                                >
+                                    <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
+                                    <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
+                                        {formatTime(m.created_at)}
+                                    </span>
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
 
                 <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>

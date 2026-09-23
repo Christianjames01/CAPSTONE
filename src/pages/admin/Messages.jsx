@@ -54,7 +54,12 @@ function Messages() {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
 
-            const rows = data || []
+            // The [[ref=...]] tagged copy is a routing helper only the
+            // employee's own page needs (see sendReply) -- the untagged
+            // sibling sent to the student already carries the real
+            // content, so drop the tagged copy here rather than showing
+            // the same message twice.
+            const rows = (data || []).filter((m) => !m.message.startsWith('[[ref='))
 
             const userIds = [
                 ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
@@ -88,6 +93,42 @@ function Messages() {
                 }
 
                 grouped[pairKey].messages.push(m)
+            }
+
+            // A reply sent while viewing someone else's conversation is
+            // delivered as one row per recipient (messages is strictly
+            // 1:1), so a fresh reload naturally regroups it into its own
+            // "head <-> student" / "head <-> employee" pairs. Fold those
+            // back into whichever existing non-head thread the other
+            // person already belongs to, so it reads as one conversation
+            // in this list too, not three.
+            {
+                for (const [key, group] of Object.entries(grouped)) {
+                    const isHeadGroup = group.participantA === user.id || group.participantB === user.id
+                    if (!isHeadGroup) continue
+
+                    const otherId = group.participantA === user.id ? group.participantB : group.participantA
+
+                    const target = Object.values(grouped).find((g) =>
+                        g.pairKey !== key &&
+                        g.participantA !== user.id && g.participantB !== user.id &&
+                        (g.participantA === otherId || g.participantB === otherId)
+                    )
+
+                    if (!target) continue
+
+                    const seen = new Set(target.messages.map((m) => `${m.sender_user_id}|${m.message}|${m.created_at}`))
+
+                    for (const m of group.messages) {
+                        const signature = `${m.sender_user_id}|${m.message}|${m.created_at}`
+                        if (seen.has(signature)) continue
+                        seen.add(signature)
+                        target.messages.push(m)
+                    }
+
+                    target.messages.sort((a, b) => a.created_at.localeCompare(b.created_at))
+                    delete grouped[key]
+                }
             }
 
             const threadList = Object.values(grouped)
@@ -124,8 +165,8 @@ function Messages() {
     // sent into this same conversation rather than a separate DM.
     const otherParticipants = (thread) => {
         const both = [
-            { id: thread.participantA, name: thread.nameA },
-            { id: thread.participantB, name: thread.nameB },
+            { id: thread.participantA, name: thread.nameA, role: thread.roleA },
+            { id: thread.participantB, name: thread.nameB, role: thread.roleB },
         ]
         const others = both.filter((p) => p.id !== currentUserId)
         return others.length > 0 ? others : both
@@ -229,15 +270,26 @@ function Messages() {
         const recipients = otherParticipants(activeThread)
         if (recipients.length === 0) return
 
+        // The employee's own Messages page can't query the student's copy
+        // of a fanned-out message (RLS only allows sender=self or
+        // receiver=self), so there's no way for it to know these two rows
+        // are siblings other than reading it off the message itself. This
+        // tag is invisible to the student's copy and stripped back out
+        // before display on the employee's side.
+        const studentRecipient = recipients.find((r) => r.role === 'student')
+
         try {
             setSending(true)
 
-            const rows = recipients.map((r) => ({
-                sender_user_id: currentUserId,
-                receiver_user_id: r.id,
-                message: reply.trim(),
-                is_read: false,
-            }))
+            const rows = recipients.map((r) => {
+                const needsTag = recipients.length > 1 && studentRecipient && r.id !== studentRecipient.id
+                return {
+                    sender_user_id: currentUserId,
+                    receiver_user_id: r.id,
+                    message: needsTag ? `[[ref=${studentRecipient.id}]]${reply.trim()}` : reply.trim(),
+                    is_read: false,
+                }
+            })
 
             const { data, error: sendError } = await supabase
                 .from('messages')
@@ -248,8 +300,9 @@ function Messages() {
 
             // Delivered as one row per recipient under the hood, but shown
             // as a single bubble here -- it's one message from the head's
-            // point of view, not several.
-            const updatedThread = { ...activeThread, messages: [...activeThread.messages, data[0]] }
+            // point of view, not several. Show the untagged copy.
+            const displayRow = data.find((d) => !d.message.startsWith('[[ref=')) || data[0]
+            const updatedThread = { ...activeThread, messages: [...activeThread.messages, displayRow] }
             setActiveThread(updatedThread)
 
             setThreads((prev) => {
