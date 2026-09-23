@@ -248,7 +248,7 @@ function Dashboard() {
                     onClick={openFaq}
                     style={{
                         display: 'inline-flex', alignItems: 'center', gap: 6,
-                        fontSize: 13, fontWeight: 600, color: 'var(--blue)',
+                        fontSize: 13, fontWeight: 600, color: 'var(--blue-accent, var(--blue))',
                     }}
                 >
                     <IconHelp /> FAQs
@@ -287,7 +287,7 @@ function Dashboard() {
                     <div className="student-stat-grid" style={{ marginBottom: 24 }}>
                         <button
                             className="student-stat-card"
-                            style={{ '--stat-color': 'var(--blue)', '--stat-tint': 'var(--blue-tint)' }}
+                            style={{ '--stat-color': 'var(--blue-accent, var(--blue))', '--stat-tint': 'var(--blue-tint)' }}
                             onClick={() => navigate('/student/my-requests')}
                         >
                             <div className="student-stat-icon"><IconList /></div>
@@ -323,7 +323,7 @@ function Dashboard() {
 
                         <button
                             className="student-stat-card"
-                            style={{ '--stat-color': 'var(--blue)', '--stat-tint': 'var(--paper)' }}
+                            style={{ '--stat-color': 'var(--blue-accent, var(--blue))', '--stat-tint': 'var(--paper)' }}
                             onClick={() => navigate('/student/my-requests?status=completed')}
                         >
                             <div className="student-stat-icon"><IconDocumentPlus /></div>
@@ -445,7 +445,7 @@ function Dashboard() {
                             <div className="student-list-card-header">
                                 <div>
                                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <span style={{ color: 'var(--blue)', display: 'inline-flex' }}><IconMessage /></span>
+                                        <span style={{ color: 'var(--blue-accent, var(--blue))', display: 'inline-flex' }}><IconMessage /></span>
                                         Recent Message
                                     </h3>
                                     <p>

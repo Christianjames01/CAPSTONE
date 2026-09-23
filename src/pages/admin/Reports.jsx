@@ -204,29 +204,29 @@ function Reports() {
 
             <div className="admin-stat-grid" style={{ marginBottom: 28 }}>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{requests.length}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>{requests.length}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Total Requests</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{countByStatus(['completed'])}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>{countByStatus(['completed'])}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Completed</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{countByStatus(['rejected'])}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>{countByStatus(['rejected'])}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Rejected</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>₱{totalRevenue.toFixed(2)}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>₱{totalRevenue.toFixed(2)}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Revenue (Completed)</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>
                         {formatTurnaround(avgTurnaroundDays)}
                     </span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Avg Turnaround</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>
                         {avgRating === null ? 'N/A' : `${avgRating.toFixed(1)} ★`}
                     </span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>
@@ -298,15 +298,15 @@ function Reports() {
 
             <div className="admin-stat-grid">
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{scheduleCounts.scheduled}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>{scheduleCounts.scheduled}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Scheduled</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{scheduleCounts.claimed}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>{scheduleCounts.claimed}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Claimed</span>
                 </div>
                 <div className="admin-card" style={{ margin: 0 }}>
-                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>{scheduleCounts.cancelled}</span>
+                    <span style={{ display: 'block', fontSize: 24, fontWeight: 700, color: 'var(--blue-accent, var(--blue))' }}>{scheduleCounts.cancelled}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>Cancelled</span>
                 </div>
             </div>

@@ -198,13 +198,13 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     margin-top: 6px;
     margin-bottom: -6px;
 }
 
 .auth-back-link:hover {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .auth-card-header h1 {
@@ -252,7 +252,7 @@
 }
 
 .form-input:focus {
-    border-color: var(--blue);
+    border-color: var(--blue-accent, var(--blue));
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
@@ -283,7 +283,7 @@
 }
 
 .password-toggle:hover {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     background: var(--paper);
 }
 
@@ -399,7 +399,7 @@
 }
 
 .auth-footer a {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     font-weight: 600;
 }
 

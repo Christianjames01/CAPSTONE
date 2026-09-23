@@ -122,7 +122,7 @@ function Notifications() {
                             textAlign: 'left',
                             width: '100%',
                             cursor: 'pointer',
-                            borderColor: notification.is_read ? 'var(--line)' : 'var(--blue)',
+                            borderColor: notification.is_read ? 'var(--line)' : 'var(--blue-accent, var(--blue))',
                             background: notification.is_read ? 'var(--surface)' : 'var(--blue-tint)',
                         }}
                     >

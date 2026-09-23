@@ -81,7 +81,7 @@
     font-size: 12px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     background: var(--blue-tint);
     padding: 6px 12px;
     border-radius: 3px;
@@ -141,7 +141,7 @@ h2 span {
     height: 42px;
     border-radius: 50%;
     background: var(--white);
-    border: 2px solid var(--blue);
+    border: 2px solid var(--blue-accent, var(--blue));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -184,7 +184,7 @@ h2 span {
 }
 
 .desktop-nav a:hover {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .navbar-actions {
@@ -203,7 +203,7 @@ h2 span {
 }
 
 .nav-login:hover {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .nav-register {
@@ -250,7 +250,7 @@ h2 span {
     font-size: 12px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     margin-bottom: 22px;
 }
 
@@ -318,8 +318,8 @@ h2 span {
 }
 
 .secondary-button:hover {
-    border-color: var(--blue);
-    color: var(--blue);
+    border-color: var(--blue-accent, var(--blue));
+    color: var(--blue-accent, var(--blue));
 }
 
 .hero-trust {
@@ -340,7 +340,7 @@ h2 span {
 .trust-item strong {
     font-family: var(--font-display);
     font-size: 20px;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .trust-item span {
@@ -389,7 +389,7 @@ h2 span {
     height: 30px;
     border-radius: 50%;
     background: var(--white);
-    border: 1.5px solid var(--blue);
+    border: 1.5px solid var(--blue-accent, var(--blue));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -421,7 +421,7 @@ h2 span {
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.08em;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     background: var(--blue-tint);
     padding: 5px 9px;
     border-radius: 20px;
@@ -460,7 +460,7 @@ h2 span {
     height: 26px;
     border-radius: 50%;
     border: 1.5px solid var(--red);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -525,7 +525,7 @@ h2 span {
 
 .credential-footer strong {
     font-size: 13px;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 /* ===================================================
@@ -587,7 +587,7 @@ h2 span {
     height: 42px;
     border-radius: 10px;
     background: var(--blue-tint);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -612,7 +612,7 @@ h2 span {
 .service-card a {
     font-size: 13px;
     font-weight: 600;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 /* ===================================================
@@ -661,7 +661,7 @@ h2 span {
 .document-code {
     font-family: var(--font-mono);
     font-size: 10px;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     background: var(--blue-tint);
     border-radius: 3px;
     padding: 2px 6px;
@@ -676,7 +676,7 @@ h2 span {
 }
 
 .document-check {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     flex-shrink: 0;
     display: flex;
 }
@@ -719,7 +719,7 @@ h2 span {
     height: 44px;
     border-radius: 50%;
     background: var(--blue-tint);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -780,7 +780,7 @@ h2 span {
     display: block;
     font-family: var(--font-display);
     font-size: 20px;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .about-highlights span {
@@ -815,7 +815,7 @@ h2 span {
 }
 
 .verify-cta-input:focus {
-    border-color: var(--blue);
+    border-color: var(--blue-accent, var(--blue));
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
@@ -877,7 +877,7 @@ h2 span {
     flex-shrink: 0;
     font-size: 20px;
     font-weight: 400;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     transition: transform 0.2s ease;
 }
 

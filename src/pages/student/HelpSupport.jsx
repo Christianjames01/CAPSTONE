@@ -121,7 +121,7 @@ function HelpSupport() {
                                     }}
                                 >
                                     {faq.question}
-                                    <span style={{ color: 'var(--blue)' }}>{isOpen ? '−' : '+'}</span>
+                                    <span style={{ color: 'var(--blue-accent, var(--blue))' }}>{isOpen ? '−' : '+'}</span>
                                 </button>
 
                                 {isOpen && (

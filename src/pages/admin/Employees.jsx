@@ -491,7 +491,7 @@ function Employees() {
 
                             <button
                                 className="admin-link-button"
-                                style={{ color: employee.status === 'active' ? 'var(--red)' : 'var(--blue)' }}
+                                style={{ color: employee.status === 'active' ? 'var(--red)' : 'var(--blue-accent, var(--blue))' }}
                                 onClick={() => toggleStatus(employee)}
                                 disabled={updating === employee.employee_id}
                             >

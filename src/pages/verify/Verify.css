@@ -95,7 +95,7 @@
 }
 
 .verify-input:focus {
-    border-color: var(--blue);
+    border-color: var(--blue-accent, var(--blue));
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
@@ -174,7 +174,7 @@
 }
 
 .verify-result-invalid a {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     font-weight: 600;
 }
 

@@ -460,7 +460,7 @@ function NewRequest() {
                                                         padding: 14,
                                                         gap: 4,
                                                         cursor: 'pointer',
-                                                        border: isSelected ? '1.5px solid var(--blue)' : '1px solid var(--line)',
+                                                        border: isSelected ? '1.5px solid var(--blue-accent, var(--blue))' : '1px solid var(--line)',
                                                         background: isSelected ? 'var(--blue-tint)' : 'var(--surface)',
                                                     }}
                                                     onClick={() => setSelectedDocument(document.document_type_id)}

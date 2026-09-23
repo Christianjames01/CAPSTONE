@@ -693,7 +693,7 @@ function RequestDetails() {
 
                         {rating ? (
                             <>
-                                <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue)' }}>
+                                <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue-accent, var(--blue))' }}>
                                     {'★'.repeat(rating.rating)}{'☆'.repeat(5 - rating.rating)}
                                 </p>
                                 {rating.comment && (
@@ -724,7 +724,7 @@ function RequestDetails() {
                                                 fontSize: 26,
                                                 lineHeight: 1,
                                                 padding: 2,
-                                                color: star <= ratingValue ? 'var(--blue)' : 'var(--line)',
+                                                color: star <= ratingValue ? 'var(--blue-accent, var(--blue))' : 'var(--line)',
                                             }}
                                             aria-label={`${star} star${star > 1 ? 's' : ''}`}
                                         >

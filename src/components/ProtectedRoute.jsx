@@ -78,7 +78,7 @@ function ProtectedRoute({ children, allowedRoles }) {
                     {employeeIssueMessage(profile.employeeIssue, profile.role) ||
                         "Your account has been deactivated. Please contact the Registrar's Office for assistance."}
                 </p>
-                <Link to="/login" style={{ marginTop: 8, color: 'var(--blue)', fontWeight: 600 }}>
+                <Link to="/login" style={{ marginTop: 8, color: 'var(--blue-accent, var(--blue))', fontWeight: 600 }}>
                     Back to log in
                 </Link>
             </div>

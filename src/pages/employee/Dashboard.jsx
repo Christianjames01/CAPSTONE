@@ -285,7 +285,7 @@ function EmployeeDashboard() {
                                 display: 'block',
                                 fontSize: 26,
                                 fontWeight: 700,
-                                color: 'var(--blue)',
+                                color: 'var(--blue-accent, var(--blue))',
                                 marginBottom: 4,
                             }}
                         >
@@ -304,7 +304,7 @@ function EmployeeDashboard() {
                         style={{ display: 'flex', alignItems: 'center', gap: 10, margin: 0, padding: '14px 16px' }}
                         onClick={() => navigate(link.to)}
                     >
-                        <span style={{ color: 'var(--blue)', display: 'flex' }}>{link.icon}</span>
+                        <span style={{ color: 'var(--blue-accent, var(--blue))', display: 'flex' }}>{link.icon}</span>
                         <span style={{ fontSize: 13, fontWeight: 600 }}>{link.label}</span>
                     </button>
                 ))}

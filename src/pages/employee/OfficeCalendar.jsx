@@ -525,7 +525,7 @@ function OfficeCalendar() {
                         <div className="office-calendar-sidebar-title">Legend</div>
                         <div className="office-calendar-legend">
                             <div className="office-calendar-legend-item">
-                                <span className="office-calendar-legend-swatch" style={{ background: 'var(--blue-tint)', border: '1px solid var(--blue)' }} />
+                                <span className="office-calendar-legend-swatch" style={{ background: 'var(--blue-tint)', border: '1px solid var(--blue-accent, var(--blue))' }} />
                                 Weekend marked open for claiming
                             </div>
                             <div className="office-calendar-legend-item">
@@ -701,7 +701,7 @@ function OfficeCalendar() {
                             style={{
                                 marginBottom: 20,
                                 background: dayModalOpenEntry ? 'var(--blue-tint)' : 'var(--paper)',
-                                border: `1px solid ${dayModalOpenEntry ? 'var(--blue)' : 'var(--line)'}`,
+                                border: `1px solid ${dayModalOpenEntry ? 'var(--blue-accent, var(--blue))' : 'var(--line)'}`,
                             }}
                         >
                             <strong>{dayModalOpenEntry ? 'Office is open for claiming this day' : 'Weekend — office closed by default'}</strong>

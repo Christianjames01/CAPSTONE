@@ -321,7 +321,7 @@ function AllRequests() {
                     <div
                         className="admin-list-card"
                         key={request.request_id}
-                        style={{ borderLeft: `4px solid ${request.priority === 'urgent' ? 'var(--red)' : 'var(--blue)'}` }}
+                        style={{ borderLeft: `4px solid ${request.priority === 'urgent' ? 'var(--red)' : 'var(--blue-accent, var(--blue))'}` }}
                     >
                         <div className="admin-list-card-header">
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -358,7 +358,7 @@ function AllRequests() {
                                 <strong
                                     style={{
                                         textTransform: 'capitalize',
-                                        color: request.priority === 'urgent' ? 'var(--red)' : 'var(--blue)',
+                                        color: request.priority === 'urgent' ? 'var(--red)' : 'var(--blue-accent, var(--blue))',
                                     }}
                                 >
                                     {request.priority === 'urgent' ? '🔴 ' : '🔵 '}

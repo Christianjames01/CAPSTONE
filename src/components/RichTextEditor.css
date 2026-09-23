@@ -56,7 +56,7 @@
 
 .rich-text-btn.active {
     background: var(--blue-tint);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .rich-text-btn:disabled {

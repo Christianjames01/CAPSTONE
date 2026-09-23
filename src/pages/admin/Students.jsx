@@ -396,7 +396,7 @@ function Students() {
 
                 <button
                     className="admin-link-button"
-                    style={{ color: student.status === 'active' ? 'var(--red)' : 'var(--blue)' }}
+                    style={{ color: student.status === 'active' ? 'var(--red)' : 'var(--blue-accent, var(--blue))' }}
                     onClick={() => toggleStatus(student)}
                     disabled={updating === student.student_id}
                 >

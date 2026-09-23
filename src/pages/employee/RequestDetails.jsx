@@ -1424,7 +1424,7 @@ function EmployeeRequestDetails() {
             {rating && (
                 <div className="employee-card">
                     <h2 style={{ fontSize: 16, marginBottom: 12 }}>Student Rating</h2>
-                    <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue)' }}>
+                    <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue-accent, var(--blue))' }}>
                         {'★'.repeat(rating.rating)}{'☆'.repeat(5 - rating.rating)}
                     </p>
                     {rating.comment && (

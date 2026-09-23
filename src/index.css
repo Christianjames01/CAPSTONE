@@ -66,7 +66,10 @@ html[data-theme="light"] {
 html[data-theme="dark"] .admin-layout,
 html[data-theme="dark"] .employee-layout,
 html[data-theme="dark"] .student-layout {
-  --blue: #6FA8F5;
+  /* Fills (buttons, bubbles, sidebar) keep the brand navy in dark mode;
+     text, borders and chart lines use the lighter accent so they stay readable. */
+  --blue: #123B78;
+  --blue-accent: #6FA8F5;
   --blue-tint: rgba(111, 168, 245, 0.18);
   --bg: #12141B;
   --paper: #1C202B;

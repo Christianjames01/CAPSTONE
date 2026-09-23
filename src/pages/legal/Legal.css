@@ -121,7 +121,7 @@
 }
 
 .legal-content a {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     font-weight: 600;
 }
 

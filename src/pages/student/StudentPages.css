@@ -132,7 +132,7 @@
     padding: 14px 16px;
     border-radius: 8px;
     background: var(--blue-tint);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
     border: 1px solid rgba(18, 59, 120, 0.2);
     font-size: 13.5px;
     margin-bottom: 18px;
@@ -161,7 +161,7 @@
 .status-scheduled,
 .status-uploaded {
     background: var(--blue-tint);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .status-completed,
@@ -221,7 +221,7 @@
 }
 
 .student-search-input:focus {
-    border-color: var(--blue);
+    border-color: var(--blue-accent, var(--blue));
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
@@ -244,7 +244,7 @@
 
 .student-filter-chip.active {
     background: var(--blue);
-    border-color: var(--blue);
+    border-color: var(--blue-accent, var(--blue));
     color: var(--white);
 }
 
@@ -295,11 +295,11 @@
     align-self: flex-start;
     font-size: 13px;
     font-weight: 600;
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .student-link-button:hover {
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .student-secondary-button {
@@ -361,7 +361,7 @@
 
 .student-notice.tone-info {
     background: var(--blue-tint);
-    color: var(--blue);
+    color: var(--blue-accent, var(--blue));
 }
 
 .student-notice.tone-success {

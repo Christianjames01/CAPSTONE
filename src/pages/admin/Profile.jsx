@@ -259,7 +259,7 @@ function Profile() {
             <div className="admin-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div
                     style={{
-                        width: 56, height: 56, borderRadius: '50%', background: 'var(--blue)', color: 'var(--white)',
+                        width: 56, height: 56, borderRadius: '50%', background: 'var(--blue-accent, var(--blue))', color: 'var(--white)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18,
                         flexShrink: 0, overflow: 'hidden',
                     }}
