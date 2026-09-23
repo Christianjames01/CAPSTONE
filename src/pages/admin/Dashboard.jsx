@@ -3,10 +3,35 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import { SkeletonDashboard } from '../../components/Skeleton'
-import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers } from './icons'
+import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers, IconSwap, IconBarChart } from './icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
 import '../../components/DashboardStats.css'
 import './AdminPages.css'
+
+const QUICK_LINKS = [
+    { to: '/admin/requests', label: 'All Requests', Icon: IconFileStack },
+    { to: '/admin/assignments', label: 'Assignments', Icon: IconSwap },
+    { to: '/admin/claim-schedules', label: 'Claim Schedules', Icon: IconCalendarCheck },
+    { to: '/admin/reports', label: 'Reports', Icon: IconBarChart },
+]
+
+// Statuses that still need someone to act on them.
+const ACTIVE_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
+
+// "2m ago", "3h ago", "Yesterday", "Sep 18" -- compact times for the activity feed.
+const relativeTime = (value, now) => {
+    const then = new Date(value)
+    const minutes = Math.floor((now - then) / 60000)
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    if (hours < 48) return 'Yesterday'
+    return then.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
+}
+
+const initialsOf = (name) =>
+    (name || '?').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 
 function AdminDashboard() {
     const navigate = useNavigate()
@@ -18,6 +43,9 @@ function AdminDashboard() {
     const [recentActivity, setRecentActivity] = useState([])
     const [studentCount, setStudentCount] = useState(0)
     const [recentStudents, setRecentStudents] = useState([])
+    const [employeeNames, setEmployeeNames] = useState({})
+    const [loadedAt, setLoadedAt] = useState(() => new Date())
+    const [refreshing, setRefreshing] = useState(false)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -25,20 +53,37 @@ function AdminDashboard() {
         loadDashboard()
     }, [])
 
-    const loadDashboard = async () => {
+    const loadDashboard = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (silent) setRefreshing(true)
+            else setLoading(true)
             setError('')
 
             const { data: requestRows, error: requestError } = await supabase
                 .from('document_requests')
-                .select('request_id, status, requested_at')
+                .select('request_id, status, requested_at, assigned_employee_id')
 
             if (requestError) {
                 throw new Error('Failed to load requests: ' + requestError.message)
             }
 
             setRequests(requestRows || [])
+
+            const { data: employeeRows } = await supabase
+                .from('employees')
+                .select('employee_id, user_id, display_name, status')
+
+            const employeeUserIds = [...new Set((employeeRows || []).map((e) => e.user_id).filter(Boolean))]
+            const { data: employeeProfiles } = employeeUserIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', employeeUserIds)
+                : { data: [] }
+
+            const employeeProfileByUserId = Object.fromEntries((employeeProfiles || []).map((p) => [p.user_id, p]))
+            setEmployeeNames(Object.fromEntries((employeeRows || []).map((e) => {
+                const p = employeeProfileByUserId[e.user_id]
+                const realName = p ? `${p.first_name} ${p.last_name}`.trim() : 'Employee'
+                return [e.employee_id, e.display_name?.trim() || realName]
+            })))
 
             const today = localDay()
 
@@ -159,6 +204,8 @@ function AdminDashboard() {
             setError(err.message || 'Failed to load dashboard.')
         } finally {
             setLoading(false)
+            setRefreshing(false)
+            setLoadedAt(new Date())
         }
     }
 
@@ -169,10 +216,28 @@ function AdminDashboard() {
     const trendChartData = useMemo(() => dailyTrend(requests, 14), [requests])
     const weeklyRequests = useMemo(() => weeklyChange(requests), [requests])
 
+    const activeRequests = requests.filter((r) => ACTIVE_STATUSES.includes(r.status))
+    const unassignedCount = activeRequests.filter((r) => !r.assigned_employee_id).length
+
+    // Active requests per employee, busiest first.
+    const workload = useMemo(() => {
+        const counts = {}
+        for (const r of requests) {
+            if (!ACTIVE_STATUSES.includes(r.status) || !r.assigned_employee_id) continue
+            counts[r.assigned_employee_id] = (counts[r.assigned_employee_id] || 0) + 1
+        }
+        return Object.entries(counts)
+            .map(([employeeId, count]) => ({ employeeId, count, name: employeeNames[employeeId] || 'Employee' }))
+            .sort((a, b) => b.count - a.count)
+    }, [requests, employeeNames])
+    const workloadMax = Math.max(1, ...workload.map((w) => w.count))
+    const averageLoad = workload.length ? (workload.reduce((sum, w) => sum + w.count, 0) / workload.length) : 0
+
     const overviewStats = [
         { label: 'Total Students', value: studentCount, to: '/admin/students', Icon: IconUsers, note: 'Registered student accounts' },
         { label: 'Total Requests', value: requests.length, to: '/admin/requests', Icon: IconFileStack, note: `${weeklyRequests.current} this week`, change: weeklyRequests.change },
         { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules', Icon: IconCalendarCheck, note: 'Scheduled to claim today' },
+        { label: 'Unassigned', value: unassignedCount, to: '/admin/assignments', Icon: IconSwap, note: unassignedCount ? 'Active requests with no employee' : 'Every active request has an owner', warn: unassignedCount > 0 },
     ]
 
     const statusStats = [
@@ -196,7 +261,7 @@ function AdminDashboard() {
 
     if (loading) {
         return (
-            <SkeletonDashboard portal="admin" overview={3} status={7} charts list={3} />
+            <SkeletonDashboard portal="admin" overview={4} status={7} charts twoCol headerLinks={4} />
         )
     }
 
@@ -206,10 +271,28 @@ function AdminDashboard() {
 
     return (
         <div>
-            <div className="admin-page-header">
-                <h1>Registrar Dashboard</h1>
-                <p>System-wide overview of document requests and registrar activity.</p>
-            </div>
+            <header className="dash-greeting">
+                <div>
+                    <h1>Registrar Dashboard</h1>
+                    <p>
+                        {loadedAt.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                        <span className="dash-updated">
+                            Updated {loadedAt.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })}
+                            <button onClick={() => loadDashboard({ silent: true })} disabled={refreshing}>
+                                {refreshing ? 'Refreshing…' : 'Refresh'}
+                            </button>
+                        </span>
+                    </p>
+                </div>
+                <nav className="dash-greeting-links" aria-label="Quick links">
+                    {QUICK_LINKS.map((link) => (
+                        <button key={link.to} className="dash-greeting-link" onClick={() => navigate(link.to)}>
+                            <span aria-hidden="true"><link.Icon /></span>
+                            {link.label}
+                        </button>
+                    ))}
+                </nav>
+            </header>
 
             {attentionStats.some((stat) => stat.value > 0) && (
                 <div className="dash-alert-grid">
@@ -229,7 +312,7 @@ function AdminDashboard() {
             <section className="dash-stats" aria-label="Key statistics">
                 <div className="dash-overview-grid">
                     {overviewStats.map((stat) => (
-                        <button key={stat.label} className="dash-stat-tile dash-overview-tile" onClick={() => navigate(stat.to)}>
+                        <button key={stat.label} className={`dash-stat-tile dash-overview-tile${stat.warn ? ' is-warn' : ''}`} onClick={() => navigate(stat.to)}>
                             <div className="dash-stat-top">
                                 <span className="dash-stat-label">{stat.label}</span>
                                 <span className="dash-stat-icon dash-stat-icon-brand" aria-hidden="true"><stat.Icon /></span>
@@ -281,62 +364,104 @@ function AdminDashboard() {
                 <RequestsTrendChart data={trendChartData} />
             </div>
 
-            <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
-                <h2 style={{ fontSize: 17 }}>Employee Activity Overview</h2>
-                <button className="admin-link-button" onClick={() => navigate('/admin/activity-logs')}>
-                    View all →
-                </button>
+            <div className="dash-two-col dash-head-panels">
+                <section className="dash-panel">
+                    <div className="dash-panel-head">
+                        <div>
+                            <h2>Team workload</h2>
+                            <span>Active requests per employee{workload.length > 0 && ` · average ${averageLoad.toFixed(1)}`}</span>
+                        </div>
+                        <button className="admin-link-button" onClick={() => navigate('/admin/assignments')}>Rebalance →</button>
+                    </div>
+
+                    {workload.length === 0 ? (
+                        <p className="dash-panel-empty">No active requests are assigned right now.</p>
+                    ) : (
+                        <ul className="dash-workload">
+                            {workload.map((w) => (
+                                <li key={w.employeeId}>
+                                    <button onClick={() => navigate(`/admin/employees/${w.employeeId}`)}>
+                                        <span className="dash-avatar" aria-hidden="true">{initialsOf(w.name)}</span>
+                                        <span className="dash-workload-main">
+                                            <span className="dash-workload-top">
+                                                <strong>{w.name}</strong>
+                                                <span>{w.count} active</span>
+                                            </span>
+                                            <span className="dash-workload-track" aria-hidden="true">
+                                                <span
+                                                    className={w.count > averageLoad * 1.5 && workload.length > 1 ? 'is-heavy' : ''}
+                                                    style={{ width: `${(w.count / workloadMax) * 100}%` }}
+                                                />
+                                            </span>
+                                        </span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+
+                <section className="dash-panel">
+                    <div className="dash-panel-head">
+                        <div>
+                            <h2>Recent activity</h2>
+                            <span>What the team did last</span>
+                        </div>
+                        <button className="admin-link-button" onClick={() => navigate('/admin/activity-logs')}>View all →</button>
+                    </div>
+
+                    {recentActivity.length === 0 ? (
+                        <p className="dash-panel-empty">No employee activity has been recorded yet.</p>
+                    ) : (
+                        <ol className="dash-feed">
+                            {recentActivity.map((log) => (
+                                <li key={log.activity_log_id}>
+                                    <span className="dash-avatar is-small" aria-hidden="true">{initialsOf(log.actorName)}</span>
+                                    <span className="dash-feed-body">
+                                        <span className="dash-feed-line">
+                                            <strong>{log.actorName}</strong>
+                                            <span className="dash-feed-action">{log.action.replace(/_/g, ' ')}</span>
+                                        </span>
+                                        <span className="dash-feed-desc">{log.description}</span>
+                                    </span>
+                                    <time className="dash-feed-time" dateTime={log.created_at} title={new Date(log.created_at).toLocaleString('en-PH')}>
+                                        {relativeTime(log.created_at, loadedAt)}
+                                    </time>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+                </section>
             </div>
 
-            {recentActivity.length === 0 ? (
-                <div className="admin-empty">No employee activity has been recorded yet.</div>
-            ) : (
-                recentActivity.map((log) => (
-                    <div className="admin-list-card" key={log.activity_log_id}>
-                        <div className="admin-list-card-header">
-                            <div>
-                                <h3 style={{ textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</h3>
-                                <p>{log.actorName} · {log.description}</p>
-                            </div>
-
-                            <span style={{ fontSize: 12, color: 'var(--slate)', whiteSpace: 'nowrap' }}>
-                                {new Date(log.created_at).toLocaleString('en-PH', {
-                                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                                })}
-                            </span>
-                        </div>
+            <section className="dash-panel" style={{ marginTop: 20 }}>
+                <div className="dash-panel-head">
+                    <div>
+                        <h2>Recently registered students</h2>
+                        <span>{studentCount.toLocaleString()} students in total</span>
                     </div>
-                ))
-            )}
+                    <button className="admin-link-button" onClick={() => navigate('/admin/students')}>View all →</button>
+                </div>
 
-            <div className="admin-page-header-row" style={{ marginTop: 28, marginBottom: 16 }}>
-                <h2 style={{ fontSize: 17 }}>Recently Registered Students</h2>
-                <button className="admin-link-button" onClick={() => navigate('/admin/students')}>
-                    View all →
-                </button>
-            </div>
-
-            {recentStudents.length === 0 ? (
-                <div className="admin-empty">No students have registered yet.</div>
-            ) : (
-                recentStudents.map((student) => (
-                    <div className="admin-list-card" key={student.student_id}>
-                        <div className="admin-list-card-header">
-                            <div>
-                                <h3>{student.fullName}</h3>
-                                <p>{student.student_number} · {student.collegeName}</p>
-                            </div>
-                        </div>
-
-                        <button
-                            className="admin-link-button"
-                            onClick={() => navigate(`/admin/students/${student.student_id}`)}
-                        >
-                            View record →
-                        </button>
-                    </div>
-                ))
-            )}
+                {recentStudents.length === 0 ? (
+                    <p className="dash-panel-empty">No students have registered yet.</p>
+                ) : (
+                    <ul className="dash-students">
+                        {recentStudents.map((student) => (
+                            <li key={student.student_id}>
+                                <button onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                                    <span className="dash-avatar" aria-hidden="true">{initialsOf(student.fullName)}</span>
+                                    <span className="dash-students-body">
+                                        <strong>{student.fullName}</strong>
+                                        <span>{student.student_number}</span>
+                                        <span className="dash-students-college">{student.collegeName}</span>
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
         </div>
     )
 }
