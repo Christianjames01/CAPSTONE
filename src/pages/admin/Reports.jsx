@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { exportToExcel } from '../../lib/excelExport'
-import { notifyError, notifyWarning } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonStatGrid } from '../../components/Skeleton'
 import './AdminPages.css'
 
@@ -34,7 +32,6 @@ function Reports() {
     const [ratingCount, setRatingCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [exporting, setExporting] = useState(false)
 
     useEffect(() => {
         loadReports()
@@ -164,187 +161,6 @@ function Reports() {
         }
     }
 
-    const loadDetailedRequestRows = async () => {
-        const { data: fullRequests, error: requestError } = await supabase
-            .from('document_requests')
-            .select(`
-                request_id, request_number, document_type_id, student_id,
-                assigned_employee_id, status, priority, total_amount,
-                requested_at, completed_at
-            `)
-            .order('requested_at', { ascending: false })
-
-        if (requestError) {
-            throw new Error('Failed to load requests for export: ' + requestError.message)
-        }
-
-        const rows = fullRequests || []
-
-        const documentTypeIds = [...new Set(rows.map((r) => r.document_type_id).filter(Boolean))]
-        const studentIds = [...new Set(rows.map((r) => r.student_id).filter(Boolean))]
-        const employeeIds = [...new Set(rows.map((r) => r.assigned_employee_id).filter(Boolean))]
-
-        const [{ data: documentTypes }, { data: students }, { data: employees }] = await Promise.all([
-            documentTypeIds.length
-                ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
-                : Promise.resolve({ data: [] }),
-            studentIds.length
-                ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
-                : Promise.resolve({ data: [] }),
-            employeeIds.length
-                ? supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', employeeIds)
-                : Promise.resolve({ data: [] }),
-        ])
-
-        const studentUserIds = [...new Set((students || []).map((s) => s.user_id))]
-        const employeeUserIds = [...new Set((employees || []).map((e) => e.user_id))]
-        const allProfileUserIds = [...new Set([...studentUserIds, ...employeeUserIds])]
-
-        const { data: profiles } = allProfileUserIds.length
-            ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', allProfileUserIds)
-            : { data: [] }
-
-        const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
-        const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
-        const studentById = Object.fromEntries((students || []).map((s) => [s.student_id, s]))
-        const employeeById = Object.fromEntries((employees || []).map((e) => [e.employee_id, e]))
-
-        const profileName = (userId) => {
-            const p = profileByUserId[userId]
-            return p ? `${p.first_name} ${p.last_name}`.trim() : ''
-        }
-
-        const detailRows = rows.map((r) => {
-            const student = studentById[r.student_id]
-            const employee = employeeById[r.assigned_employee_id]
-
-            return {
-                documentName: documentNameById[r.document_type_id] || 'Unknown',
-                requestNumber: r.request_number,
-                studentNumber: student?.student_number || '',
-                studentName: student ? profileName(student.user_id) : '',
-                status: (r.status || '').replace(/_/g, ' '),
-                priority: r.priority || '',
-                assignedEmployee: employee ? profileName(employee.user_id) : 'Unassigned',
-                totalAmount: Number(r.total_amount || 0).toFixed(2),
-                requestedAt: r.requested_at ? new Date(r.requested_at).toLocaleString('en-PH') : '',
-                completedAt: r.completed_at ? new Date(r.completed_at).toLocaleString('en-PH') : '',
-                rawStatus: r.status,
-                documentNameRaw: documentNameById[r.document_type_id] || 'Unknown',
-            }
-        })
-
-        return detailRows
-    }
-
-    const exportRequestsToExcel = async () => {
-        try {
-            setExporting(true)
-
-            const detailRows = await loadDetailedRequestRows()
-
-            const summaryCounts = {}
-            for (const r of detailRows) {
-                summaryCounts[r.documentNameRaw] = (summaryCounts[r.documentNameRaw] || 0) + 1
-            }
-
-            const summaryRows = Object.entries(summaryCounts)
-                .map(([documentName, count]) => ({ documentName, count }))
-                .sort((a, b) => b.count - a.count)
-
-            const turnaroundRows = documentTurnaround.map((d) => ({
-                documentName: d.name,
-                completedCount: d.count,
-                avgTurnaroundDays: d.avgDays.toFixed(1),
-            }))
-
-            await exportToExcel(`certichain-requests-${new Date().toISOString().slice(0, 10)}`, [
-                {
-                    name: 'By Document (Summary)',
-                    columns: [
-                        { header: 'Document', key: 'documentName', width: 42 },
-                        { header: 'Requests', key: 'count', width: 14 },
-                    ],
-                    rows: summaryRows,
-                },
-                {
-                    name: 'Turnaround by Document',
-                    columns: [
-                        { header: 'Document', key: 'documentName', width: 42 },
-                        { header: 'Completed', key: 'completedCount', width: 14 },
-                        { header: 'Avg Turnaround (days)', key: 'avgTurnaroundDays', width: 20 },
-                    ],
-                    rows: turnaroundRows,
-                },
-                {
-                    name: 'All Requests',
-                    columns: [
-                        { header: 'Document', key: 'documentName', width: 32 },
-                        { header: 'Request Number', key: 'requestNumber', width: 20 },
-                        { header: 'Student Number', key: 'studentNumber', width: 18 },
-                        { header: 'Student Name', key: 'studentName', width: 24 },
-                        { header: 'Status', key: 'status', width: 16 },
-                        { header: 'Priority', key: 'priority', width: 12 },
-                        { header: 'Assigned Employee', key: 'assignedEmployee', width: 24 },
-                        { header: 'Total Amount (PHP)', key: 'totalAmount', width: 18 },
-                        { header: 'Requested At', key: 'requestedAt', width: 20 },
-                    ],
-                    rows: detailRows,
-                },
-            ])
-
-        } catch (err) {
-            console.error('EXPORT ERROR:', err)
-            notifyError(err.message || 'Failed to export requests.')
-        } finally {
-            setExporting(false)
-        }
-    }
-
-    const exportCompletedRequestsToExcel = async () => {
-        try {
-            setExporting(true)
-
-            const allRows = await loadDetailedRequestRows()
-            const completedRows = allRows.filter((r) => r.rawStatus === 'completed')
-
-            if (completedRows.length === 0) {
-                notifyWarning('There are no completed requests yet.')
-                return
-            }
-
-            const { getHcdcLogoBase64 } = await import('../../lib/hcdcLogoBase64')
-            const logoBase64 = await getHcdcLogoBase64()
-
-            await exportToExcel(`orrm-hcdc-completed-requests-${new Date().toISOString().slice(0, 10)}`, [
-                {
-                    name: 'Completed Requests',
-                    letterhead: {
-                        logoBase64,
-                        title: 'ORRM-HCDC',
-                        subtitle: 'Holy Cross of Davao College — Completed Document Requests',
-                    },
-                    columns: [
-                        { header: 'Document', key: 'documentName', width: 32 },
-                        { header: 'Request Number', key: 'requestNumber', width: 20 },
-                        { header: 'Student Number', key: 'studentNumber', width: 18 },
-                        { header: 'Student Name', key: 'studentName', width: 24 },
-                        { header: 'Assigned Employee', key: 'assignedEmployee', width: 24 },
-                        { header: 'Total Amount (PHP)', key: 'totalAmount', width: 18 },
-                        { header: 'Completed At', key: 'completedAt', width: 20 },
-                    ],
-                    rows: completedRows,
-                },
-            ])
-
-        } catch (err) {
-            console.error('EXPORT COMPLETED ERROR:', err)
-            notifyError(err.message || 'Failed to export completed requests.')
-        } finally {
-            setExporting(false)
-        }
-    }
-
     const countByStatus = (statuses) => requests.filter((r) => statuses.includes(r.status)).length
     const totalRevenue = requests
         .filter((r) => r.status === 'completed')
@@ -382,25 +198,9 @@ function Reports() {
                     <h1 style={{ fontSize: 26, marginBottom: 6 }}>Reports</h1>
                     <p>Request statistics, employee performance, and claiming statistics.</p>
                 </div>
-
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <button className="admin-secondary-button" onClick={exportCompletedRequestsToExcel} disabled={exporting}>
-                        {exporting ? 'Exporting...' : '⬇ Export Completed (ORRM-HCDC)'}
-                    </button>
-
-                    <button className="admin-primary-button" onClick={exportRequestsToExcel} disabled={exporting}>
-                        {exporting ? 'Exporting...' : '⬇ Export to Excel'}
-                    </button>
-                </div>
             </div>
 
-            <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 12, marginBottom: 24 }}>
-                "Export Completed" downloads a branded ORRM-HCDC report of only finished requests — the document
-                requested, student, and completion date. "Export to Excel" downloads every request regardless of
-                status, plus a document-count summary. Both open directly in Excel.
-            </p>
-
-            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Document Request Statistics</h2>
+            <h2 style={{ fontSize: 17, marginBottom: 14, marginTop: 24 }}>Document Request Statistics</h2>
 
             <div className="admin-stat-grid" style={{ marginBottom: 28 }}>
                 <div className="admin-card" style={{ margin: 0 }}>
