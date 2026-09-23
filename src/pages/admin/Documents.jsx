@@ -78,9 +78,25 @@ function Documents() {
     const [importing, setImporting] = useState(false)
     const [importSummary, setImportSummary] = useState(null)
 
+    const [currentRole, setCurrentRole] = useState('')
+
     useEffect(() => {
         loadDocuments()
+        loadCurrentRole()
     }, [])
+
+    const loadCurrentRole = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single()
+
+        setCurrentRole(profile?.role || '')
+    }
 
     // `silent` skips the loading/skeleton state for refreshes after a save,
     // availability toggle, or import. Swapping the list for the skeleton
@@ -440,6 +456,31 @@ function Documents() {
         } catch (err) {
             console.error('TOGGLE AVAILABILITY ERROR:', err)
             notifyError(err.message || 'Failed to update availability.')
+        }
+    }
+
+    const deleteDocument = async (doc) => {
+        const confirmed = await confirmModal(
+            `Permanently delete "${doc.document_name}"? This cannot be undone, and will fail if students already have requests for it.`,
+            { title: 'Delete document type?', confirmButtonText: 'Delete' }
+        )
+        if (!confirmed) return
+
+        try {
+            const { error: deleteError } = await supabase
+                .from('document_types')
+                .delete()
+                .eq('document_type_id', doc.document_type_id)
+
+            if (deleteError) throw new Error(deleteError.message)
+
+            await logAdmin('delete_document_type', doc.document_type_id, `Deleted document type "${doc.document_name}" (Registrar Head).`)
+
+            await loadDocuments({ silent: true })
+
+        } catch (err) {
+            console.error('DELETE DOCUMENT ERROR:', err)
+            notifyError(err.message || 'Failed to delete document type.')
         }
     }
 
@@ -813,6 +854,11 @@ function Documents() {
                             {doc.preview_image_url && (
                                 <button className="admin-link-button" onClick={() => setPreviewingDoc(doc)}>
                                     Preview image
+                                </button>
+                            )}
+                            {currentRole === 'registrar_head' && (
+                                <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => deleteDocument(doc)}>
+                                    Delete
                                 </button>
                             )}
                         </div>
