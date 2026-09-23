@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useScrollLock } from '../../lib/useScrollLock'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordRequirements from '../../components/PasswordRequirements'
@@ -48,6 +49,7 @@ function Register() {
     const [googleLoading, setGoogleLoading] = useState(false)
     const [agreedToTerms, setAgreedToTerms] = useState(false)
     const [showTermsModal, setShowTermsModal] = useState(false)
+    useScrollLock(showTermsModal)
     const [modalChecked, setModalChecked] = useState(false)
     const [legalTab, setLegalTab] = useState('terms')
 

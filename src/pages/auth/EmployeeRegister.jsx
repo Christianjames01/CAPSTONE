@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useScrollLock } from '../../lib/useScrollLock'
 import AuthLayout from './AuthLayout'
 import PasswordRequirements from '../../components/PasswordRequirements'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
@@ -18,6 +19,7 @@ function EmployeeRegister() {
     const [loading, setLoading] = useState(false)
     const [agreedToTerms, setAgreedToTerms] = useState(false)
     const [showTermsModal, setShowTermsModal] = useState(false)
+    useScrollLock(showTermsModal)
     const [modalChecked, setModalChecked] = useState(false)
     const [legalTab, setLegalTab] = useState('terms')
 

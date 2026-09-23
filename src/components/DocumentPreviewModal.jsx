@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useScrollLock } from '../lib/useScrollLock'
 import './DocumentPreviewModal.css'
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
@@ -13,6 +14,8 @@ function getExtension(nameOrUrl) {
 }
 
 function DocumentPreviewModal({ url, fileName, onClose }) {
+    useScrollLock()
+
     const [zoom, setZoom] = useState(1)
     // Pan is a self-tracked translate offset rather than the container's
     // native scrollLeft/scrollTop. A `transform: scale()`'d image doesn't
