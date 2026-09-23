@@ -57,9 +57,11 @@ function StudentLayout() {
 
         window.addEventListener('profile-updated', loadProfile)
         window.addEventListener('notifications-updated', loadUnreadCount)
+        window.addEventListener('messages-updated', loadUnreadMessageCount)
         return () => {
             window.removeEventListener('profile-updated', loadProfile)
             window.removeEventListener('notifications-updated', loadUnreadCount)
+            window.removeEventListener('messages-updated', loadUnreadMessageCount)
         }
     }, [])
 

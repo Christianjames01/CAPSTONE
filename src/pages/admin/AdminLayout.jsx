@@ -48,7 +48,11 @@ function AdminLayout() {
         loadBadgeCounts()
 
         window.addEventListener('notifications-updated', loadBadgeCounts)
-        return () => window.removeEventListener('notifications-updated', loadBadgeCounts)
+        window.addEventListener('messages-updated', loadBadgeCounts)
+        return () => {
+            window.removeEventListener('notifications-updated', loadBadgeCounts)
+            window.removeEventListener('messages-updated', loadBadgeCounts)
+        }
     }, [])
 
     async function loadProfile() {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notifyError } from '../../lib/notify'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
+import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
@@ -147,24 +148,32 @@ function Messages() {
         }
     }
 
-    const openThread = async (thread) => {
-        setActiveThread(thread)
+    // Marks every unread message in the given threads as read, in the
+    // database and in page state, and refreshes the sidebar badge.
+    const markThreadsRead = async (targetThreads) => {
+        const ids = targetThreads.flatMap((t) => unreadReceived(t.messages, userId).map((m) => m.message_id))
+        if (ids.length === 0) return
 
-        const unreadIds = thread.messages
-            .filter((m) => m.receiver_user_id === userId && !m.is_read)
-            .map((m) => m.message_id)
-
-        if (unreadIds.length > 0) {
-            await supabase
-                .from('messages')
-                .update({ is_read: true, read_at: new Date().toISOString() })
-                .in('message_id', unreadIds)
-
+        try {
+            await markMessagesRead(ids)
+            const targetKeys = new Set(targetThreads.map((t) => t.otherUserId))
             setThreads((prev) =>
-                prev.map((t) => (t.otherUserId === thread.otherUserId ? { ...t, unreadCount: 0 } : t))
+                prev.map((t) =>
+                    targetKeys.has(t.otherUserId) ? { ...t, messages: withRead(t.messages, ids), unreadCount: 0 } : t
+                )
             )
+        } catch (err) {
+            notifyError(err.message)
         }
     }
+
+    const openThread = (thread) => {
+        const readIds = unreadReceived(thread.messages, userId).map((m) => m.message_id)
+        setActiveThread({ ...thread, messages: withRead(thread.messages, readIds), unreadCount: 0 })
+        markThreadsRead([thread])
+    }
+
+    const totalUnread = threads.reduce((sum, t) => sum + t.unreadCount, 0)
 
     const sendReply = async () => {
         if (!reply.trim() || !activeThread) return
@@ -291,9 +300,17 @@ function Messages() {
 
     return (
         <div>
-            <div className="employee-page-header">
-                <h1>Messages</h1>
-                <p>Student inquiries and conversations.</p>
+            <div className="employee-page-header-row">
+                <div className="employee-page-header">
+                    <h1>Messages</h1>
+                    <p>Student inquiries and conversations.</p>
+                </div>
+
+                {totalUnread > 0 && (
+                    <button className="employee-link-button" onClick={() => markThreadsRead(threads)}>
+                        Mark all as read
+                    </button>
+                )}
             </div>
 
             {error && <div className="employee-error-box">{error}</div>}
@@ -307,11 +324,14 @@ function Messages() {
                     const lastMessage = thread.messages[thread.messages.length - 1]
 
                     return (
-                        <button
+                        <div
                             key={thread.otherUserId}
+                            role="button"
+                            tabIndex={0}
                             className="employee-list-card"
                             style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
                             onClick={() => openThread(thread)}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openThread(thread))}
                         >
                             <div className="employee-list-card-header">
                                 <div>
@@ -324,10 +344,22 @@ function Messages() {
                                 )}
                             </div>
 
-                            <span style={{ fontSize: 12, color: 'var(--slate)' }}>
-                                {lastMessage ? formatTime(lastMessage.created_at) : ''}
-                            </span>
-                        </button>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                                <span style={{ fontSize: 12, color: 'var(--slate)' }}>
+                                    {lastMessage ? formatTime(lastMessage.created_at) : ''}
+                                </span>
+
+                                {thread.unreadCount > 0 && (
+                                    <button
+                                        className="employee-link-button"
+                                        onClick={(e) => { e.stopPropagation(); markThreadsRead([thread]) }}
+                                        onKeyDown={(e) => e.stopPropagation()}
+                                    >
+                                        Mark as read
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     )
                 })
             )}

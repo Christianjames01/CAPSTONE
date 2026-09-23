@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError } from '../../lib/notify'
 import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
+import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -117,22 +118,27 @@ function Messages() {
                 setReply(DEFAULT_MESSAGE)
             }
 
-            const unreadIds = rows
-                .filter((m) => m.receiver_user_id === user.id && !m.is_read)
-                .map((m) => m.message_id)
-
-            if (unreadIds.length > 0) {
-                await supabase
-                    .from('messages')
-                    .update({ is_read: true, read_at: new Date().toISOString() })
-                    .in('message_id', unreadIds)
-            }
+            // Unread messages stay unread (and labeled "New") until the
+            // student clicks "Mark as read", so they can see what's new.
 
         } catch (err) {
             console.error('STUDENT MESSAGES ERROR:', err)
             setError(err.message || 'Failed to load messages.')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const unreadMessages = unreadReceived(messages, userId)
+
+    const markAllRead = async () => {
+        const ids = unreadMessages.map((m) => m.message_id)
+
+        try {
+            await markMessagesRead(ids)
+            setMessages((prev) => withRead(prev, ids))
+        } catch (err) {
+            notifyError(err.message)
         }
     }
 
@@ -185,9 +191,17 @@ function Messages() {
 
     return (
         <div>
-            <div className="student-page-header">
-                <h1>Messages</h1>
-                <p>Message the registrar employee assigned to your college and program.</p>
+            <div className="student-page-header-row">
+                <div className="student-page-header">
+                    <h1>Messages</h1>
+                    <p>Message the registrar employee assigned to your college and program.</p>
+                </div>
+
+                {unreadMessages.length > 0 && (
+                    <button className="student-link-button" onClick={markAllRead}>
+                        Mark as read
+                    </button>
+                )}
             </div>
 
             {error && <div className="student-error-box">{error}</div>}
@@ -233,6 +247,9 @@ function Messages() {
                                     {senderLabel && (
                                         <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
                                             {senderLabel}
+                                            {m.receiver_user_id === userId && !m.is_read && (
+                                                <span className="student-status-pill status-pending" style={{ marginLeft: 8 }}>New</span>
+                                            )}
                                         </span>
                                     )}
                                     <div

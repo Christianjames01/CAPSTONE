@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notifyError } from '../../lib/notify'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
+import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
@@ -154,6 +155,35 @@ function Messages() {
         } finally {
             setLoading(false)
         }
+    }
+
+    // Only messages sent to the head count as unread here -- oversight
+    // threads between a student and an employee belong to them.
+    const unreadCountFor = (thread) => unreadReceived(thread.messages, currentUserId).length
+
+    const totalUnread = threads.reduce((sum, t) => sum + unreadCountFor(t), 0)
+
+    // Marks every unread message the head received in the given threads
+    // as read, in the database and in page state, and refreshes the badge.
+    const markThreadsRead = async (targetThreads) => {
+        const ids = targetThreads.flatMap((t) => unreadReceived(t.messages, currentUserId).map((m) => m.message_id))
+        if (ids.length === 0) return
+
+        try {
+            await markMessagesRead(ids)
+            const targetKeys = new Set(targetThreads.map((t) => t.pairKey))
+            setThreads((prev) =>
+                prev.map((t) => (targetKeys.has(t.pairKey) ? { ...t, messages: withRead(t.messages, ids) } : t))
+            )
+        } catch (err) {
+            notifyError(err.message)
+        }
+    }
+
+    const openThread = (thread) => {
+        const readIds = unreadReceived(thread.messages, currentUserId).map((m) => m.message_id)
+        setActiveThread({ ...thread, messages: withRead(thread.messages, readIds) })
+        markThreadsRead([thread])
     }
 
     const isMyThread = (thread) =>
@@ -429,9 +459,17 @@ function Messages() {
                     <p>All conversations between students and registrar employees, for oversight — and your own with students.</p>
                 </div>
 
-                <button className="admin-primary-button" onClick={openStudentPicker}>
-                    + New Message
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {totalUnread > 0 && (
+                        <button className="admin-link-button" onClick={() => markThreadsRead(threads)}>
+                            Mark all as read
+                        </button>
+                    )}
+
+                    <button className="admin-primary-button" onClick={openStudentPicker}>
+                        + New Message
+                    </button>
+                </div>
             </div>
 
             {error && <div className="admin-error-box">{error}</div>}
@@ -443,13 +481,17 @@ function Messages() {
             ) : (
                 threads.map((thread) => {
                     const lastMessage = thread.messages[thread.messages.length - 1]
+                    const unread = unreadCountFor(thread)
 
                     return (
-                        <button
+                        <div
                             key={thread.pairKey}
+                            role="button"
+                            tabIndex={0}
                             className="admin-list-card"
                             style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                            onClick={() => setActiveThread(thread)}
+                            onClick={() => openThread(thread)}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openThread(thread))}
                         >
                             <div className="admin-list-card-header">
                                 <div>
@@ -457,13 +499,30 @@ function Messages() {
                                     <p>{lastMessage?.message}</p>
                                 </div>
 
-                                <span className="admin-status-pill">{thread.messages.length} messages</span>
+                                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                                    {unread > 0 && (
+                                        <span className="admin-status-pill status-pending">{unread} new</span>
+                                    )}
+                                    <span className="admin-status-pill">{thread.messages.length} messages</span>
+                                </div>
                             </div>
 
-                            <span style={{ fontSize: 12, color: 'var(--slate)' }}>
-                                {lastMessage ? formatTime(lastMessage.created_at) : ''}
-                            </span>
-                        </button>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                                <span style={{ fontSize: 12, color: 'var(--slate)' }}>
+                                    {lastMessage ? formatTime(lastMessage.created_at) : ''}
+                                </span>
+
+                                {unread > 0 && (
+                                    <button
+                                        className="admin-link-button"
+                                        onClick={(e) => { e.stopPropagation(); markThreadsRead([thread]) }}
+                                        onKeyDown={(e) => e.stopPropagation()}
+                                    >
+                                        Mark as read
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     )
                 })
             )}
