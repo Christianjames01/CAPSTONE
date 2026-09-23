@@ -9,6 +9,22 @@ import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
+// programs.duration_years is always stored in years -- these just let the
+// admin type/read a short vocational course's length in whichever unit
+// makes sense (e.g. "6 months" instead of mentally converting to 0.5) and
+// keep the same number of real days when switching the unit mid-edit.
+function convertDurationValue(value, fromUnit, toUnit) {
+    if (value === '' || value === null || fromUnit === toUnit) return value
+
+    const num = Number(value)
+    if (Number.isNaN(num)) return value
+
+    const years = fromUnit === 'months' ? num / 12 : num
+    const converted = toUnit === 'months' ? years * 12 : years
+
+    return String(Math.round(converted * 100) / 100)
+}
+
 function CollegesPrograms() {
     const [tab, setTab] = useState('colleges')
     const [search, setSearch] = useState('')
@@ -24,6 +40,7 @@ function CollegesPrograms() {
 
     const [programForm, setProgramForm] = useState(null)
     const [showProgramForm, setShowProgramForm] = useState(false)
+    const [programDurationUnit, setProgramDurationUnit] = useState('years')
 
     // Adding colleges/programs one at a time meant repeating the same modal
     // up to 56 times to seed the real catalog. One shared modal lets an
@@ -42,6 +59,7 @@ function CollegesPrograms() {
     const [customCollege, setCustomCollege] = useState({ code: '', name: '' })
     const [showCustomProgram, setShowCustomProgram] = useState(false)
     const [customProgram, setCustomProgram] = useState({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' })
+    const [customDurationUnit, setCustomDurationUnit] = useState('years')
 
     useEffect(() => {
         loadData()
@@ -147,7 +165,7 @@ function CollegesPrograms() {
         }
     }
 
-    const openEditProgram = (p) => { setProgramForm(p); setShowProgramForm(true) }
+    const openEditProgram = (p) => { setProgramForm(p); setProgramDurationUnit('years'); setShowProgramForm(true) }
 
     const saveProgram = async () => {
         if (!programForm.college_id || !programForm.program_code.trim() || !programForm.program_name.trim()) {
@@ -166,7 +184,11 @@ function CollegesPrograms() {
                 program_code: programForm.program_code.trim(),
                 program_name: programForm.program_name.trim(),
                 degree_level: programForm.degree_level?.trim() || null,
-                duration_years: programForm.duration_years === '' ? null : Number(programForm.duration_years),
+                duration_years: programForm.duration_years === ''
+                    ? null
+                    : programDurationUnit === 'months'
+                        ? Number(programForm.duration_years) / 12
+                        : Number(programForm.duration_years),
                 status: programForm.status,
             }
 
@@ -238,6 +260,7 @@ function CollegesPrograms() {
         setCustomCollege({ code: '', name: '' })
         setShowCustomProgram(false)
         setCustomProgram({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' })
+        setCustomDurationUnit('years')
         setShowAddModal(true)
     }
 
@@ -326,7 +349,11 @@ function CollegesPrograms() {
                     program_code: customProgram.code.trim(),
                     program_name: customProgram.name.trim(),
                     degree_level: customProgram.degreeLevel.trim() || null,
-                    duration_years: customProgram.durationYears === '' ? null : Number(customProgram.durationYears),
+                    duration_years: customProgram.durationYears === ''
+                        ? null
+                        : customDurationUnit === 'months'
+                            ? Number(customProgram.durationYears) / 12
+                            : Number(customProgram.durationYears),
                     status: 'active',
                 })
             }
@@ -494,8 +521,34 @@ function CollegesPrograms() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="program-duration">Duration (Years)</label>
-                                    <input id="program-duration" className="form-input" type="number" min="0" step="0.5" value={programForm.duration_years} onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })} disabled={saving} />
+                                    <label className="form-label" htmlFor="program-duration">Duration</label>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <input
+                                            id="program-duration"
+                                            className="form-input"
+                                            type="number"
+                                            min="0"
+                                            step={programDurationUnit === 'months' ? 1 : 0.5}
+                                            value={programForm.duration_years}
+                                            onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })}
+                                            disabled={saving}
+                                            style={{ flex: 1, minWidth: 0 }}
+                                        />
+                                        <select
+                                            className="form-input"
+                                            style={{ width: 108, flexShrink: 0 }}
+                                            value={programDurationUnit}
+                                            onChange={(e) => {
+                                                const nextUnit = e.target.value
+                                                setProgramForm({ ...programForm, duration_years: convertDurationValue(programForm.duration_years, programDurationUnit, nextUnit) })
+                                                setProgramDurationUnit(nextUnit)
+                                            }}
+                                            disabled={saving}
+                                        >
+                                            <option value="years">Years</option>
+                                            <option value="months">Months</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -638,10 +691,36 @@ function CollegesPrograms() {
                                 <input id="new-program-degree-level" className="form-input" value={customProgram.degreeLevel} onChange={(e) => setCustomProgram({ ...customProgram, degreeLevel: e.target.value })} disabled={addingBulk} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label" htmlFor="new-program-duration">Duration (Years)</label>
-                                <input id="new-program-duration" className="form-input" type="number" min="0" step="0.5" value={customProgram.durationYears} onChange={(e) => setCustomProgram({ ...customProgram, durationYears: e.target.value })} disabled={addingBulk} />
+                                <label className="form-label" htmlFor="new-program-duration">Duration</label>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <input
+                                        id="new-program-duration"
+                                        className="form-input"
+                                        type="number"
+                                        min="0"
+                                        step={customDurationUnit === 'months' ? 1 : 0.5}
+                                        value={customProgram.durationYears}
+                                        onChange={(e) => setCustomProgram({ ...customProgram, durationYears: e.target.value })}
+                                        disabled={addingBulk}
+                                        style={{ flex: 1, minWidth: 0 }}
+                                    />
+                                    <select
+                                        className="form-input"
+                                        style={{ width: 108, flexShrink: 0 }}
+                                        value={customDurationUnit}
+                                        onChange={(e) => {
+                                            const nextUnit = e.target.value
+                                            setCustomProgram({ ...customProgram, durationYears: convertDurationValue(customProgram.durationYears, customDurationUnit, nextUnit) })
+                                            setCustomDurationUnit(nextUnit)
+                                        }}
+                                        disabled={addingBulk}
+                                    >
+                                        <option value="years">Years</option>
+                                        <option value="months">Months</option>
+                                    </select>
+                                </div>
                             </div>
-                            <button type="button" className="admin-link-button" style={{ color: 'var(--slate)', gridColumn: '1 / -1' }} onClick={() => { setShowCustomProgram(false); setCustomProgram({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' }) }} disabled={addingBulk}>
+                            <button type="button" className="admin-link-button" style={{ color: 'var(--slate)', gridColumn: '1 / -1' }} onClick={() => { setShowCustomProgram(false); setCustomProgram({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' }); setCustomDurationUnit('years') }} disabled={addingBulk}>
                                 Cancel this one
                             </button>
                         </div>
