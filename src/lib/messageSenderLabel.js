@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const REGISTRAR_LABEL = 'HCDC-Registrar'
+export const REGISTRAR_LABEL = 'HCDC-Registrar'
 
 // Resolves the label to show for a message's sender, consistently across
 // all three Messages pages (admin/employee/student): the registrar head

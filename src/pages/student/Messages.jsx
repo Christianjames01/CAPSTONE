@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError } from '../../lib/notify'
-import { buildSenderLabels } from '../../lib/messageSenderLabel'
+import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
 import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -214,7 +214,13 @@ function Messages() {
                         ) : (
                             messages.map((m) => {
                                 const isSelf = m.sender_user_id === userId
-                                const senderLabel = !isSelf ? (senderNames[m.sender_user_id] || 'Unknown') : null
+                                // Students only ever receive messages from registrar staff.
+                                // Their access rules can't read the registrar head's profile,
+                                // so any sender we can't resolve is the registrar, never "Unknown".
+                                const senderLabel = isSelf
+                                    ? null
+                                    : senderNames[m.sender_user_id] ||
+                                      (m.sender_user_id === employee?.user_id ? employee.name : REGISTRAR_LABEL)
 
                                 return (
                                 <div
