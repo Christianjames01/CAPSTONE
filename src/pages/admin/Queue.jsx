@@ -308,7 +308,12 @@ function AdminQueue() {
                                         <button className="admin-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id}>
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
-                                        <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => cancelTicket(t)} disabled={acting === t.queue_id}>
+                                        <button
+                                            className="admin-secondary-button"
+                                            style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                            onClick={() => cancelTicket(t)}
+                                            disabled={acting === t.queue_id}
+                                        >
                                             Cancel
                                         </button>
                                     </div>
