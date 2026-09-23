@@ -190,19 +190,24 @@ function AdminDashboard() {
     )
 
     const trendChartData = useMemo(() => {
+        // Local (Philippine) calendar days, not UTC -- toISOString() would
+        // file anything submitted before 8 AM under the previous day.
+        const localDay = (date) =>
+            `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
         const days = []
 
         for (let i = TREND_DAYS - 1; i >= 0; i--) {
             const d = new Date()
             d.setDate(d.getDate() - i)
-            days.push(d.toISOString().slice(0, 10))
+            days.push(localDay(d))
         }
 
         const countByDay = Object.fromEntries(days.map((date) => [date, 0]))
 
         requests.forEach((r) => {
             if (!r.requested_at) return
-            const day = r.requested_at.slice(0, 10)
+            const day = localDay(new Date(r.requested_at))
             if (day in countByDay) countByDay[day] += 1
         })
 
