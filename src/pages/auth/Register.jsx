@@ -7,6 +7,13 @@ import PasswordRequirements from '../../components/PasswordRequirements'
 import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 
+const LEGAL_TABS = {
+    terms: { title: 'Terms of Service', src: '/terms?embed=1' },
+    privacy: { title: 'Privacy Policy', src: '/privacy-policy?embed=1' },
+    cookie: { title: 'Cookie Policy', src: '/cookie-policy?embed=1' },
+    refund: { title: 'Refund Policy', src: '/refund-policy?embed=1' },
+}
+
 function Register() {
     const navigate = useNavigate()
 
@@ -538,11 +545,11 @@ function Register() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--line)' }}>
-                            <h2 style={{ fontSize: 18, marginBottom: 4 }}>Terms of Service &amp; Privacy Policy</h2>
-                            <p style={{ fontSize: 13 }}>Please review both before creating your account.</p>
+                            <h2 style={{ fontSize: 18, marginBottom: 4 }}>Terms, Privacy, Cookie &amp; Refund Policy</h2>
+                            <p style={{ fontSize: 13 }}>Please review all four before creating your account.</p>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 4, padding: '10px 22px 0' }}>
+                        <div style={{ display: 'flex', gap: 4, padding: '10px 22px 0', flexWrap: 'wrap' }}>
                             <button
                                 type="button"
                                 onClick={() => setLegalTab('terms')}
@@ -559,12 +566,28 @@ function Register() {
                             >
                                 Privacy Policy
                             </button>
+                            <button
+                                type="button"
+                                onClick={() => setLegalTab('cookie')}
+                                className={legalTab === 'cookie' ? 'auth-submit' : 'auth-google-button'}
+                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                            >
+                                Cookie Policy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLegalTab('refund')}
+                                className={legalTab === 'refund' ? 'auth-submit' : 'auth-google-button'}
+                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                            >
+                                Refund Policy
+                            </button>
                         </div>
 
                         <div style={{ flex: 1, minHeight: 0, padding: '14px 22px' }}>
                             <iframe
-                                title={legalTab === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
-                                src={legalTab === 'terms' ? '/terms?embed=1' : '/privacy-policy?embed=1'}
+                                title={LEGAL_TABS[legalTab].title}
+                                src={LEGAL_TABS[legalTab].src}
                                 style={{ width: '100%', height: '100%', minHeight: 320, border: '1px solid var(--line)', borderRadius: 6 }}
                             />
                         </div>
@@ -577,7 +600,7 @@ function Register() {
                                     onChange={(e) => setModalChecked(e.target.checked)}
                                     style={{ marginTop: 2, flexShrink: 0 }}
                                 />
-                                <span>I have read and agree to CertiChain's Terms of Service and Privacy Policy.</span>
+                                <span>I have read and agree to CertiChain's Terms of Service, Privacy Policy, Cookie Policy, and Refund Policy.</span>
                             </label>
 
                             <div style={{ display: 'flex', gap: 10 }}>
