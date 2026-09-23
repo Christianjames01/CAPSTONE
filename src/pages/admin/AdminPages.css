@@ -526,6 +526,7 @@
 /* ---- main panel ---- */
 
 .office-calendar-main {
+    min-width: 0;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -603,6 +604,7 @@
 
 .office-calendar-cell {
     position: relative;
+    min-width: 0;
     min-height: 84px;
     border-radius: 10px;
     border: 1px solid var(--line);
@@ -683,6 +685,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    max-width: 100%;
     font-size: 10.5px;
     font-weight: 700;
     color: var(--blue);
