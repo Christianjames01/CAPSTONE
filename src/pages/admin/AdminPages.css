@@ -714,6 +714,14 @@
     background: var(--warning-text, #B45309);
 }
 
+.office-calendar-cell-chip-claim {
+    color: var(--success-text, #1e8a5f);
+}
+
+.office-calendar-cell-chip-dot-claim {
+    background: var(--success-text, #1e8a5f);
+}
+
 .office-calendar-sidebar-item-event {
     border-left-color: var(--warning-text, #B45309);
 }

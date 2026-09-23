@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
@@ -39,6 +40,14 @@ function formatDateShort(dateStr) {
     })
 }
 
+function formatTime(time) {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes), 0, 0)
+    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
 function getToday() {
     return formatLocal(new Date())
 }
@@ -76,8 +85,11 @@ function buildMonthGrid(viewDate) {
 }
 
 function OfficeCalendar() {
+    const navigate = useNavigate()
+
     const [openDays, setOpenDays] = useState([])
     const [events, setEvents] = useState([])
+    const [claimSchedules, setClaimSchedules] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -116,7 +128,7 @@ function OfficeCalendar() {
             // events/notes (e.g. backfilling something that was missed),
             // and so those past entries render correctly on the calendar
             // grid and are recognized as "already set" when toggling.
-            const [openDaysRes, eventsRes] = await Promise.all([
+            const [openDaysRes, eventsRes, claimSchedulesRes] = await Promise.all([
                 supabase
                     .from('office_open_days')
                     .select('open_day_id, open_date, note')
@@ -125,13 +137,19 @@ function OfficeCalendar() {
                     .from('office_events')
                     .select('event_id, event_date, title, note')
                     .order('event_date', { ascending: true }),
+                supabase
+                    .from('claim_schedules')
+                    .select('claim_schedule_id, request_id, status, scheduled_date, scheduled_time, claim_date, claim_time, document_requests(request_number)')
+                    .neq('status', 'cancelled'),
             ])
 
             if (openDaysRes.error) throw new Error(openDaysRes.error.message)
             if (eventsRes.error) throw new Error(eventsRes.error.message)
+            if (claimSchedulesRes.error) throw new Error(claimSchedulesRes.error.message)
 
             setOpenDays(openDaysRes.data || [])
             setEvents(eventsRes.data || [])
+            setClaimSchedules(claimSchedulesRes.data || [])
         } catch (err) {
             console.error('LOAD OFFICE CALENDAR ERROR:', err)
             setError(err.message || 'Failed to load office calendar.')
@@ -154,6 +172,20 @@ function OfficeCalendar() {
         }
         return map
     }, [events])
+
+    // Grouped by claim_date when the appointment's been rescheduled,
+    // otherwise the original scheduled_date -- same fallback used on the
+    // request details page.
+    const claimSchedulesByDate = useMemo(() => {
+        const map = {}
+        for (const cs of claimSchedules) {
+            const date = cs.claim_date || cs.scheduled_date
+            if (!date) continue
+            if (!map[date]) map[date] = []
+            map[date].push(cs)
+        }
+        return map
+    }, [claimSchedules])
 
     const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate])
 
@@ -440,6 +472,7 @@ function OfficeCalendar() {
     const today = getToday()
 
     const dayModalEvents = eventsByDate[dayModalDate] || []
+    const dayModalClaims = claimSchedulesByDate[dayModalDate] || []
     const dayModalIsWeekend = dayModalDate ? isWeekendDate(dayModalDate) : false
     const dayModalOpenEntry = dayModalDate ? openDaysByDate[dayModalDate] : null
     const dayModalIsPast = dayModalDate ? dayModalDate < today : false
@@ -574,6 +607,7 @@ function OfficeCalendar() {
                             const isToday = dateStr === today
                             const openEntry = openDaysByDate[dateStr]
                             const dayEvents = eventsByDate[dateStr] || []
+                            const dayClaims = claimSchedulesByDate[dateStr] || []
 
                             const classes = ['office-calendar-cell', 'is-clickable']
                             if (isPast) classes.push('is-past')
@@ -589,7 +623,7 @@ function OfficeCalendar() {
                                 classes.push('is-has-event')
                             }
 
-                            const itemCount = dayEvents.length > 0 ? dayEvents.length : (openEntry && isWeekend ? 1 : 0)
+                            const itemCount = (dayEvents.length > 0 ? dayEvents.length : (openEntry && isWeekend ? 1 : 0)) + (dayClaims.length > 0 ? 1 : 0)
                             const cellStyle = itemCount > 1 ? { minHeight: `${84 + (itemCount - 1) * 26}px` } : undefined
 
                             return (
@@ -612,6 +646,16 @@ function OfficeCalendar() {
                                         <span className="office-calendar-cell-chip" title={openEntry.note || 'Marked open'}>
                                             <span className="office-calendar-cell-chip-dot" />
                                             Open for claiming
+                                        </span>
+                                    )}
+
+                                    {dayClaims.length > 0 && (
+                                        <span
+                                            className="office-calendar-cell-chip office-calendar-cell-chip-claim"
+                                            title={`${dayClaims.length} student${dayClaims.length === 1 ? '' : 's'} scheduled to claim`}
+                                        >
+                                            <span className="office-calendar-cell-chip-dot office-calendar-cell-chip-dot-claim" />
+                                            {dayClaims.length} claiming
                                         </span>
                                     )}
                                 </div>
@@ -680,6 +724,34 @@ function OfficeCalendar() {
                                             disabled={removingEventId === ev.event_id}
                                         >
                                             {removingEventId === ev.event_id ? '...' : 'Remove'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <h3 style={{ fontSize: 14, marginBottom: 10 }}>Claiming Appointments</h3>
+
+                    {dayModalClaims.length === 0 ? (
+                        <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>No students scheduled to claim this day.</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                            {dayModalClaims.map((cs) => (
+                                <div key={cs.claim_schedule_id} className="admin-list-card" style={{ marginBottom: 0, padding: 12 }}>
+                                    <div className="admin-list-card-header" style={{ marginBottom: 0 }}>
+                                        <div>
+                                            <h3 style={{ fontSize: 13.5 }}>{cs.document_requests?.request_number || 'Request'}</h3>
+                                            <p style={{ fontSize: 12.5 }}>
+                                                {formatTime(cs.claim_time || cs.scheduled_time) || 'No time set'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            className="admin-link-button"
+                                            style={{ padding: '6px 12px', fontSize: 12.5 }}
+                                            onClick={() => navigate(`/admin/requests/${cs.request_id}`)}
+                                        >
+                                            Open →
                                         </button>
                                     </div>
                                 </div>
