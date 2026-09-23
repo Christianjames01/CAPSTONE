@@ -228,6 +228,7 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button', secondaryButto
                                 <button
                                     type="button"
                                     className={secondaryButtonClassName}
+                                    style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                     onClick={cancelEnroll}
                                     disabled={verifying}
                                 >

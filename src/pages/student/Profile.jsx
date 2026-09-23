@@ -709,6 +709,7 @@ function Profile() {
 
                             <button
                                 className="student-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={cancelEditing}
                                 disabled={saving}
                             >
@@ -789,6 +790,7 @@ function Profile() {
 
                             <button
                                 className="student-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => {
                                     setEmailCurrentPassword('')
                                     setNewEmail('')
@@ -884,6 +886,7 @@ function Profile() {
 
                             <button
                                 className="student-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')

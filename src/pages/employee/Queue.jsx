@@ -307,7 +307,12 @@ function EmployeeQueue() {
                                         <button className="employee-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id}>
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
-                                        <button className="employee-link-button" style={{ color: 'var(--red)' }} onClick={() => cancelTicket(t)} disabled={acting === t.queue_id}>
+                                        <button
+                                            className="employee-secondary-button"
+                                            style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                                            onClick={() => cancelTicket(t)}
+                                            disabled={acting === t.queue_id}
+                                        >
                                             Cancel
                                         </button>
                                     </div>

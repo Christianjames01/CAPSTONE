@@ -1822,6 +1822,7 @@ function EmployeeRequestDetails() {
                                     setRejectionReason('')
                                 }}
                                 className="employee-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                             >
                                 Cancel
                             </button>

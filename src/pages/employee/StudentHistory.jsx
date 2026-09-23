@@ -410,7 +410,7 @@ function StudentHistory() {
                             <button className="employee-primary-button" onClick={saveEdits} disabled={saving}>
                                 {saving ? 'Saving...' : 'Save'}
                             </button>
-                            <button className="employee-secondary-button" onClick={() => setEditing(false)} disabled={saving}>
+                            <button className="employee-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setEditing(false)} disabled={saving}>
                                 Cancel
                             </button>
                         </div>

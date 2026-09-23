@@ -380,6 +380,7 @@ function Profile() {
 
                             <button
                                 className="employee-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => {
                                     setPhoneNumber(profile?.phone_number || '')
                                     setEditing(false)
@@ -469,6 +470,7 @@ function Profile() {
 
                             <button
                                 className="employee-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')
