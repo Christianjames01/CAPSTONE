@@ -70,8 +70,8 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
     }
 
     return (
-        <div className="doc-preview-backdrop" onClick={onClose}>
-            <div className="doc-preview-card" onClick={(e) => e.stopPropagation()}>
+        <div className="doc-preview-backdrop">
+            <div className="doc-preview-card">
                 <div className="doc-preview-header">
                     <span className="doc-preview-title">{fileName || 'Document'}</span>
 
