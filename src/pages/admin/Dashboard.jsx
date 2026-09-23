@@ -286,7 +286,6 @@ function AdminDashboard() {
                         {headName ? `, ${headName}` : ''}
                     </h1>
                     <p>
-                        <span className="dash-greeting-role">Registrar Dashboard</span>
                         {loadedAt.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                     </p>
                 </div>
