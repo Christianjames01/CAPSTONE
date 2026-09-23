@@ -14,6 +14,7 @@ function Messages() {
     const [userId, setUserId] = useState(null)
     const [employee, setEmployee] = useState(null)
     const [messages, setMessages] = useState([])
+    const [senderNames, setSenderNames] = useState({})
     const [reply, setReply] = useState('')
 
     const [loading, setLoading] = useState(true)
@@ -83,23 +84,47 @@ function Messages() {
                 name: employeeRow.display_name?.trim() || realName,
             })
 
+            // Every message involving the student, not just the ones with
+            // their assigned employee -- the registrar head can also reply
+            // directly (e.g. from the admin oversight view), and those
+            // need to show up in this same feed instead of being silently
+            // excluded.
             const { data: messageRows, error: messagesError } = await supabase
                 .from('messages')
                 .select('message_id, sender_user_id, receiver_user_id, message, is_read, created_at')
-                .or(`and(sender_user_id.eq.${user.id},receiver_user_id.eq.${employeeRow.user_id}),and(sender_user_id.eq.${employeeRow.user_id},receiver_user_id.eq.${user.id})`)
+                .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
                 .order('created_at', { ascending: true })
 
             if (messagesError) {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
 
-            setMessages(messageRows || [])
+            const rows = messageRows || []
 
-            if (!messageRows || messageRows.length === 0) {
+            const otherUserIds = [
+                ...new Set(
+                    rows
+                        .map((m) => (m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id))
+                        .filter((id) => id !== employeeRow.user_id)
+                )
+            ]
+
+            const { data: otherProfiles } = otherUserIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', otherUserIds)
+                : { data: [] }
+
+            const otherNameByUserId = Object.fromEntries(
+                (otherProfiles || []).map((p) => [p.user_id, `${p.first_name} ${p.last_name}`.trim()])
+            )
+
+            setSenderNames(otherNameByUserId)
+            setMessages(rows)
+
+            if (rows.length === 0) {
                 setReply(DEFAULT_MESSAGE)
             }
 
-            const unreadIds = (messageRows || [])
+            const unreadIds = rows
                 .filter((m) => m.receiver_user_id === user.id && !m.is_read)
                 .map((m) => m.message_id)
 
@@ -194,24 +219,45 @@ function Messages() {
                                 No messages yet. Send a message below to start the conversation.
                             </p>
                         ) : (
-                            messages.map((m) => (
+                            messages.map((m) => {
+                                const isSelf = m.sender_user_id === userId
+                                // Only label the bubble when it's from
+                                // someone other than the one employee this
+                                // page otherwise assumes -- e.g. the
+                                // registrar head replying directly.
+                                const senderLabel = !isSelf && m.sender_user_id !== employee.user_id
+                                    ? senderNames[m.sender_user_id] || 'Registrar'
+                                    : null
+
+                                return (
                                 <div
                                     key={m.message_id}
                                     style={{
-                                        alignSelf: m.sender_user_id === userId ? 'flex-end' : 'flex-start',
+                                        alignSelf: isSelf ? 'flex-end' : 'flex-start',
                                         maxWidth: '70%',
-                                        background: m.sender_user_id === userId ? 'var(--blue)' : 'var(--paper)',
-                                        color: m.sender_user_id === userId ? 'var(--white)' : 'var(--ink)',
-                                        padding: '10px 14px',
-                                        borderRadius: 10,
                                     }}
                                 >
-                                    <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
-                                    <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
-                                        {formatTime(m.created_at)}
-                                    </span>
+                                    {senderLabel && (
+                                        <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                                            {senderLabel}
+                                        </span>
+                                    )}
+                                    <div
+                                        style={{
+                                            background: isSelf ? 'var(--blue)' : 'var(--paper)',
+                                            color: isSelf ? 'var(--white)' : 'var(--ink)',
+                                            padding: '10px 14px',
+                                            borderRadius: 10,
+                                        }}
+                                    >
+                                        <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
+                                        <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
+                                            {formatTime(m.created_at)}
+                                        </span>
+                                    </div>
                                 </div>
-                            ))
+                                )
+                            })
                         )}
                     </div>
 
