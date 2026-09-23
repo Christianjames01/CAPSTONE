@@ -8,9 +8,30 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Called directly from the browser (unlike the cron-triggered functions),
+// so without these headers the browser's CORS preflight fails before the
+// real request is even sent -- surfaces client-side as a bare
+// "Failed to fetch" with no further detail.
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+function jsonResponse(body: unknown, status: number) {
+    return new Response(JSON.stringify(body), {
+        status,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    })
+}
+
 Deno.serve(async (req) => {
+    if (req.method === 'OPTIONS') {
+        return new Response(null, { headers: CORS_HEADERS })
+    }
+
     if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 })
+        return jsonResponse({ error: 'Method not allowed' }, 405)
     }
 
     try {
@@ -18,7 +39,7 @@ Deno.serve(async (req) => {
         const token = authHeader.replace(/^Bearer\s+/i, '')
 
         if (!token) {
-            return new Response(JSON.stringify({ error: 'You are not logged in.' }), { status: 401 })
+            return jsonResponse({ error: 'You are not logged in.' }, 401)
         }
 
         // Verify the caller's own identity against their JWT (not a shared
@@ -31,7 +52,7 @@ Deno.serve(async (req) => {
         const { data: { user: caller }, error: callerError } = await supabaseAsCaller.auth.getUser()
 
         if (callerError || !caller) {
-            return new Response(JSON.stringify({ error: 'You are not logged in.' }), { status: 401 })
+            return jsonResponse({ error: 'You are not logged in.' }, 401)
         }
 
         const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
@@ -41,19 +62,19 @@ Deno.serve(async (req) => {
             .single()
 
         if (callerProfileError || callerProfile?.role !== 'registrar_head') {
-            return new Response(JSON.stringify({ error: 'Only the registrar head can change a student\'s login email.' }), { status: 403 })
+            return jsonResponse({ error: 'Only the registrar head can change a student\'s login email.' }, 403)
         }
 
         const { studentUserId, newEmail } = await req.json()
 
         if (!studentUserId || !newEmail) {
-            return new Response(JSON.stringify({ error: 'studentUserId and newEmail are required.' }), { status: 400 })
+            return jsonResponse({ error: 'studentUserId and newEmail are required.' }, 400)
         }
 
         const trimmedEmail = String(newEmail).trim()
 
         if (!EMAIL_PATTERN.test(trimmedEmail)) {
-            return new Response(JSON.stringify({ error: 'Please provide a valid email address.' }), { status: 400 })
+            return jsonResponse({ error: 'Please provide a valid email address.' }, 400)
         }
 
         const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
@@ -63,7 +84,7 @@ Deno.serve(async (req) => {
             .single()
 
         if (targetProfileError || targetProfile?.role !== 'student') {
-            return new Response(JSON.stringify({ error: 'Target account is not a student.' }), { status: 400 })
+            return jsonResponse({ error: 'Target account is not a student.' }, 400)
         }
 
         // email_confirm: true skips the normal "click a link to confirm"
@@ -84,10 +105,10 @@ Deno.serve(async (req) => {
 
         if (updateProfileError) throw updateProfileError
 
-        return new Response(JSON.stringify({ success: true, email: trimmedEmail }), { status: 200 })
+        return jsonResponse({ success: true, email: trimmedEmail }, 200)
 
     } catch (err) {
         console.error('ADMIN UPDATE STUDENT EMAIL ERROR:', err)
-        return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), { status: 500 })
+        return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 500)
     }
 })
