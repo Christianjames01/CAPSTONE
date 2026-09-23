@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notifyError } from '../../lib/notify'
+import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
@@ -71,11 +72,9 @@ function Messages() {
                 : { data: [] }
 
             const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
+            const labels = await buildSenderLabels(userIds)
 
-            const nameFor = (userId) => {
-                const p = profileByUserId[userId]
-                return p ? `${p.first_name} ${p.last_name}`.trim() : 'Unknown'
-            }
+            const nameFor = (userId) => labels[userId] || 'Unknown'
 
             const roleFor = (userId) => profileByUserId[userId]?.role || ''
 
@@ -147,11 +146,7 @@ function Messages() {
                 })
 
             setThreads(threadList)
-            setSenderNames(
-                Object.fromEntries(
-                    Object.entries(profileByUserId).map(([id, p]) => [id, `${p.first_name} ${p.last_name}`.trim()])
-                )
-            )
+            setSenderNames(labels)
 
         } catch (err) {
             console.error('ADMIN MESSAGES ERROR:', err)
@@ -258,7 +253,7 @@ function Messages() {
                 pairKey,
                 participantA: currentUserId,
                 participantB: userId,
-                nameA: 'You',
+                nameA: 'HCDC-Registrar',
                 roleA: 'admin',
                 nameB: name,
                 roleB: role,

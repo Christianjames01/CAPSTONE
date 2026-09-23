@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notifyError } from '../../lib/notify'
+import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
@@ -89,6 +90,8 @@ function Messages() {
                 for (const p of extraProfiles || []) profileByUserId[p.user_id] = p
             }
 
+            const labels = await buildSenderLabels([...otherUserIds, ...studentIdsToFetch])
+
             const grouped = {}
 
             for (const m of rows) {
@@ -99,9 +102,7 @@ function Messages() {
                 if (!grouped[otherId]) {
                     grouped[otherId] = {
                         otherUserId: otherId,
-                        name: profileByUserId[otherId]
-                            ? `${profileByUserId[otherId].first_name} ${profileByUserId[otherId].last_name}`.trim()
-                            : 'Unknown',
+                        name: labels[otherId] || 'Unknown',
                         messages: [],
                         unreadCount: 0,
                         // Anyone besides "the" other person (e.g. the head)
@@ -136,11 +137,7 @@ function Messages() {
             })
 
             setThreads(threadList)
-            setSenderNames(
-                Object.fromEntries(
-                    Object.entries(profileByUserId).map(([id, p]) => [id, `${p.first_name} ${p.last_name}`.trim()])
-                )
-            )
+            setSenderNames(labels)
 
         } catch (err) {
             console.error('MESSAGES ERROR:', err)
@@ -240,12 +237,7 @@ function Messages() {
                 <div className="employee-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {activeThread.messages.map((m) => {
                         const isSelf = m.sender_user_id === userId
-                        // Only label it when it's from someone other than
-                        // this thread's usual counterpart -- e.g. the
-                        // registrar head replying on the student's behalf.
-                        const senderLabel = !isSelf && m.sender_user_id !== activeThread.otherUserId
-                            ? senderNames[m.sender_user_id] || 'Registrar'
-                            : null
+                        const senderLabel = !isSelf ? (senderNames[m.sender_user_id] || 'Unknown') : null
 
                         return (
                             <div key={m.message_id} style={{ alignSelf: isSelf ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>

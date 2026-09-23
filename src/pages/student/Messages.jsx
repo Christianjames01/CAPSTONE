@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError } from '../../lib/notify'
+import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { SkeletonList } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -103,21 +104,13 @@ function Messages() {
 
             const otherUserIds = [
                 ...new Set(
-                    rows
-                        .map((m) => (m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id))
-                        .filter((id) => id !== employeeRow.user_id)
+                    rows.map((m) => (m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id))
                 )
             ]
 
-            const { data: otherProfiles } = otherUserIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', otherUserIds)
-                : { data: [] }
+            const labels = await buildSenderLabels(otherUserIds)
 
-            const otherNameByUserId = Object.fromEntries(
-                (otherProfiles || []).map((p) => [p.user_id, `${p.first_name} ${p.last_name}`.trim()])
-            )
-
-            setSenderNames(otherNameByUserId)
+            setSenderNames(labels)
             setMessages(rows)
 
             if (rows.length === 0) {
@@ -221,13 +214,7 @@ function Messages() {
                         ) : (
                             messages.map((m) => {
                                 const isSelf = m.sender_user_id === userId
-                                // Only label the bubble when it's from
-                                // someone other than the one employee this
-                                // page otherwise assumes -- e.g. the
-                                // registrar head replying directly.
-                                const senderLabel = !isSelf && m.sender_user_id !== employee.user_id
-                                    ? senderNames[m.sender_user_id] || 'Registrar'
-                                    : null
+                                const senderLabel = !isSelf ? (senderNames[m.sender_user_id] || 'Unknown') : null
 
                                 return (
                                 <div
