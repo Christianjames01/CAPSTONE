@@ -12,6 +12,7 @@ const TEMPLATE_MESSAGE = `Hi! This is the HCDC Registrar's Office (ORRM). You ca
 
 function Messages() {
     const [currentUserId, setCurrentUserId] = useState(null)
+    const [senderNames, setSenderNames] = useState({})
     const [threads, setThreads] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -146,6 +147,11 @@ function Messages() {
                 })
 
             setThreads(threadList)
+            setSenderNames(
+                Object.fromEntries(
+                    Object.entries(profileByUserId).map(([id, p]) => [id, `${p.first_name} ${p.last_name}`.trim()])
+                )
+            )
 
         } catch (err) {
             console.error('ADMIN MESSAGES ERROR:', err)
@@ -325,8 +331,11 @@ function Messages() {
     const formatTime = (value) =>
         new Date(value).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
-    const nameForSender = (thread, senderId) =>
-        senderId === currentUserId ? 'You' : (senderId === thread.participantA ? thread.nameA : thread.nameB)
+    // A merged thread can include messages from someone who isn't either
+    // of the original two participants (e.g. the head folded into a
+    // student<->employee conversation), so this has to resolve any
+    // sender's real name rather than just matching against A/B.
+    const nameForSender = (senderId) => senderNames[senderId] || 'Unknown'
 
     if (activeThread) {
         const mine = isMyThread(activeThread)
@@ -362,7 +371,7 @@ function Messages() {
                                     }}
                                 >
                                     <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
-                                        {nameForSender(activeThread, m.sender_user_id)}
+                                        {nameForSender(m.sender_user_id)}
                                     </span>
                                     <div
                                         style={{
