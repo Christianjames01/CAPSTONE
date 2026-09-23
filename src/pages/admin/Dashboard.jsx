@@ -46,6 +46,7 @@ function AdminDashboard() {
     const [employeeNames, setEmployeeNames] = useState({})
     const [loadedAt, setLoadedAt] = useState(() => new Date())
     const [refreshing, setRefreshing] = useState(false)
+    const [headName, setHeadName] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -58,6 +59,16 @@ function AdminDashboard() {
             if (silent) setRefreshing(true)
             else setLoading(true)
             setError('')
+
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: me } = await supabase
+                    .from('profiles')
+                    .select('first_name')
+                    .eq('user_id', user.id)
+                    .single()
+                setHeadName(me?.first_name?.trim() || '')
+            }
 
             const { data: requestRows, error: requestError } = await supabase
                 .from('document_requests')
@@ -273,8 +284,12 @@ function AdminDashboard() {
         <div>
             <header className="dash-greeting">
                 <div>
-                    <h1>Registrar Dashboard</h1>
+                    <h1>
+                        {loadedAt.getHours() < 12 ? 'Good morning' : loadedAt.getHours() < 18 ? 'Good afternoon' : 'Good evening'}
+                        {headName ? `, ${headName}` : ''}
+                    </h1>
                     <p>
+                        <span className="dash-greeting-role">Registrar Dashboard</span>
                         {loadedAt.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                         <span className="dash-updated">
                             Updated {loadedAt.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })}
