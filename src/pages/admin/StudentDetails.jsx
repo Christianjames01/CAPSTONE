@@ -12,6 +12,11 @@ import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
+function formatDate(value) {
+    if (!value) return '-'
+    return new Date(value).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 function StudentDetails() {
     const { studentId } = useParams()
     const navigate = useNavigate()
@@ -591,7 +596,7 @@ function StudentDetails() {
                                     <td>{r.document_requirements?.requirement_name || 'Requirement'}</td>
                                     <td>{r.requestNumber}</td>
                                     <td style={{ textTransform: 'capitalize' }}>{r.status}</td>
-                                    <td>{r.uploaded_at ? new Date(r.uploaded_at).toLocaleDateString() : '-'}</td>
+                                    <td>{formatDate(r.uploaded_at)}</td>
                                 </tr>
                             ))}
                         </tbody>
