@@ -203,7 +203,8 @@ function NewRequest() {
         processing_days_max,
         requires_purpose,
         preview_image_url,
-        max_active_requests
+        max_active_requests,
+        max_quantity_per_request
       `)
             .eq('is_available', true)
             .order('document_name')
@@ -251,8 +252,10 @@ function NewRequest() {
             return
         }
 
-        if (quantity < 1 || quantity > 2) {
-            setError('Quantity must be between 1 and 2.')
+        const maxQuantity = selectedDocumentDetails?.max_quantity_per_request || 2
+
+        if (quantity < 1 || quantity > maxQuantity) {
+            setError(`Quantity must be between 1 and ${maxQuantity}.`)
             return
         }
 
@@ -537,9 +540,9 @@ function NewRequest() {
                             className="form-input"
                             type="number"
                             min="1"
-                            max="2"
+                            max={selectedDocumentDetails?.max_quantity_per_request || 2}
                             value={quantity}
-                            onChange={(e) => setQuantity(Math.min(2, Number(e.target.value)))}
+                            onChange={(e) => setQuantity(Math.min(selectedDocumentDetails?.max_quantity_per_request || 2, Number(e.target.value)))}
                             disabled={loading}
                         />
                     </div>

@@ -54,6 +54,7 @@ const EMPTY_FORM = {
     requires_purpose: false,
     preview_image_url: null,
     max_active_requests: 2,
+    max_quantity_per_request: 2,
 }
 
 function Documents() {
@@ -112,7 +113,7 @@ function Documents() {
 
             const { data, error: loadError } = await supabase
                 .from('document_types')
-                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose, preview_image_url, max_active_requests')
+                .select('document_type_id, document_code, document_name, category, description, fee, processing_days_min, processing_days_max, is_available, requires_purpose, preview_image_url, max_active_requests, max_quantity_per_request')
                 .order('document_name')
 
             if (loadError) {
@@ -291,6 +292,7 @@ function Documents() {
             requires_purpose: doc.requires_purpose,
             preview_image_url: doc.preview_image_url || null,
             max_active_requests: doc.max_active_requests ?? 2,
+            max_quantity_per_request: doc.max_quantity_per_request ?? 2,
         })
         setImageFile(null)
         setImageFilePreview('')
@@ -366,6 +368,7 @@ function Documents() {
                 requires_purpose: form.requires_purpose,
                 preview_image_url: previewImageUrl,
                 max_active_requests: form.max_active_requests === '' ? 2 : Math.max(1, Number(form.max_active_requests)),
+                max_quantity_per_request: form.max_quantity_per_request === '' ? 2 : Math.max(1, Number(form.max_quantity_per_request)),
             }
 
             if (form.document_type_id) {
@@ -712,6 +715,24 @@ function Documents() {
                                 </small>
                             </div>
                         )}
+
+                        {currentRole === 'registrar_head' && (
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="doc-max-quantity">Max Quantity per Request</label>
+                                <input
+                                    id="doc-max-quantity"
+                                    className="form-input"
+                                    type="number"
+                                    min="1"
+                                    value={form.max_quantity_per_request}
+                                    onChange={(e) => setForm({ ...form, max_quantity_per_request: e.target.value })}
+                                    disabled={saving}
+                                />
+                                <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                                    How many copies of this document a student can request in a single submission.
+                                </small>
+                            </div>
+                        )}
                     </div>
 
                     <div className="form-group" style={{ marginBottom: 16 }}>
@@ -866,6 +887,11 @@ function Documents() {
                             <div className="admin-info-field">
                                 <span>Max Active Requests</span>
                                 <strong>{doc.max_active_requests ?? 2} per student</strong>
+                            </div>
+
+                            <div className="admin-info-field">
+                                <span>Max Quantity per Request</span>
+                                <strong>{doc.max_quantity_per_request ?? 2}</strong>
                             </div>
                         </div>
 
