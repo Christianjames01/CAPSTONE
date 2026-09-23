@@ -109,8 +109,12 @@
     min-height: 0;
     background: #101827;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    /* `safe` falls back to start-alignment once the (zoomed) image
+       overflows -- plain `center` leaves half the overflow in negative
+       scroll territory that can't be scrolled to, making the top-left of
+       a zoomed-in image permanently unreachable. */
+    align-items: safe center;
+    justify-content: safe center;
     overflow: auto;
 }
 
