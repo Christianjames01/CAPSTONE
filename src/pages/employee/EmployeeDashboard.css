@@ -1,345 +1,190 @@
-/* Employee dashboard: a personal "what do I do next" work view, styled
-   differently from the head's office-wide statistics dashboard. */
+/* Employee dashboard: an inbox of the work waiting on this employee.
+   Clean and light on purpose -- one clear queue, one side rail. */
 
-.emp-dash {
+.ed {
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    gap: 22px;
 }
 
-/* ---------- Welcome banner ---------- */
+/* ---------- Header ---------- */
 
-.emp-hero {
+.ed-header {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 24px;
+    gap: 16px;
     flex-wrap: wrap;
-    padding: 28px 30px;
-    border-radius: 16px;
-    color: #FFFFFF;
-    background:
-        radial-gradient(120% 140% at 100% 0%, rgba(111, 168, 245, 0.28) 0%, transparent 55%),
-        linear-gradient(135deg, #123B78 0%, #0A2450 100%);
-    box-shadow: 0 12px 30px rgba(10, 36, 80, 0.18);
 }
 
-html[data-theme="dark"] .emp-hero {
-    background:
-        radial-gradient(120% 140% at 100% 0%, rgba(111, 168, 245, 0.22) 0%, transparent 55%),
-        linear-gradient(135deg, #16366a 0%, #0c1a38 100%);
-    box-shadow: none;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+.employee-layout .ed-header h1 {
+    font-size: 28px;
+    margin-bottom: 6px;
 }
 
-.emp-hero-text {
-    flex: 1 1 380px;
-    min-width: 0;
-}
-
-.emp-hero-date {
-    display: block;
-    font-size: 12.5px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.employee-layout .emp-hero h1 {
-    margin: 6px 0 8px;
-    font-size: 30px;
-    color: #FFFFFF;
-}
-
-.employee-layout .emp-hero p {
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.85);
-    max-width: 560px;
-}
-
-.emp-hero-alerts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 16px;
-}
-
-.emp-hero-alert {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 12.5px;
-    color: #FFFFFF;
-    background: rgba(226, 72, 95, 0.28);
-    border: 1px solid rgba(255, 138, 155, 0.55);
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.emp-hero-alert:hover {
-    background: rgba(226, 72, 95, 0.42);
-}
-
-.emp-hero-alert svg {
-    width: 15px;
-    height: 15px;
-}
-
-.emp-hero-side {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 14px;
-}
-
-.emp-hero-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    font-size: 12.5px;
-    color: rgba(255, 255, 255, 0.72);
-    text-align: right;
-}
-
-.emp-hero-meta span:first-child {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.emp-hero-cta {
-    padding: 12px 20px;
-    border-radius: 10px;
+.employee-layout .ed-header p {
     font-size: 14px;
-    font-weight: 700;
-    color: #0A2450;
-    background: #FFFFFF;
-    border: 0;
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.emp-hero-cta:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-@media (max-width: 640px) {
-    .emp-hero {
-        padding: 22px 20px;
-    }
-
-    .emp-hero-side {
-        align-items: flex-start;
-        width: 100%;
-    }
-
-    .emp-hero-meta {
-        align-items: flex-start;
-        text-align: left;
-    }
-}
-
-/* ---------- Section headings ---------- */
-
-.emp-section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-.employee-layout .emp-section-head h2 {
-    font-size: 16px;
-}
-
-.emp-section-head > span {
-    font-size: 12.5px;
     color: var(--slate);
 }
 
-/* ---------- Pipeline: connected steps ---------- */
-
-.emp-pipeline {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    counter-reset: step;
-}
-
-.emp-pipeline-step {
-    position: relative;
-}
-
-/* Arrow between steps (hidden on the last one and when wrapped to one column). */
-.emp-pipeline-step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -11px;
-    width: 10px;
-    height: 10px;
-    border-top: 2px solid var(--line);
-    border-right: 2px solid var(--line);
-    transform: translateY(-50%) rotate(45deg);
-    z-index: 1;
-}
-
-.emp-pipeline-step button,
-.emp-pipeline-skeleton {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 16px 16px 14px;
-    text-align: left;
+.ed-header-link {
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
     background: var(--surface);
     border: 1px solid var(--line);
-    border-bottom: 3px solid var(--step-color, var(--line));
-    border-radius: 12px;
-    color: var(--ink);
+    border-radius: 10px;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.emp-pipeline-skeleton {
-    cursor: default;
-    gap: 8px;
+.ed-header-link:hover {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
 }
 
-.emp-pipeline-step button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(16, 24, 39, 0.08);
-    border-color: var(--step-color);
+/* ---------- Focus cards (also the queue tabs) ---------- */
+
+.ed-focus {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
 }
 
-.emp-pipeline-index {
-    width: 22px;
-    height: 22px;
+.ed-focus-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: 14px 16px;
+    text-align: left;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.ed-focus-card:hover {
+    border-color: var(--q-color, var(--line));
+}
+
+/* The selected queue: tinted and outlined in its own color. */
+.ed-focus-card.is-active {
+    border-color: var(--q-color);
+    background: color-mix(in srgb, var(--q-color) 7%, var(--surface));
+    box-shadow: 0 0 0 1px var(--q-color);
+}
+
+.ed-focus-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--step-color);
-    background: color-mix(in srgb, var(--step-color) 14%, transparent);
-    margin-bottom: 4px;
+    border-radius: 12px;
+    color: var(--q-color);
+    background: color-mix(in srgb, var(--q-color) 14%, transparent);
 }
 
-.emp-pipeline-count {
-    font-size: 28px;
+.ed-focus-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.ed-focus-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ed-focus-count {
+    font-size: 24px;
     font-weight: 700;
     line-height: 1.1;
-    color: var(--ink);
 }
 
-.emp-pipeline-label {
-    font-size: 13px;
+.ed-focus-label {
+    font-size: 12.5px;
+    color: var(--slate);
     font-weight: 600;
 }
 
-.emp-pipeline-hint {
-    font-size: 11.5px;
-    color: var(--slate);
-}
+/* ---------- Body: queue + rail ---------- */
 
-@media (max-width: 560px) {
-    .emp-pipeline-step::after {
-        display: none;
-    }
-}
-
-/* ---------- Two-column work area ---------- */
-
-.emp-columns {
+.ed-body {
     display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+    grid-template-columns: minmax(0, 1fr) 320px;
     gap: 20px;
     align-items: start;
 }
 
-@media (max-width: 980px) {
-    .emp-columns {
+@media (max-width: 1000px) {
+    .ed-body {
         grid-template-columns: 1fr;
     }
 }
 
-.emp-side {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+/* Work queue */
 
-.emp-panel {
+.ed-queue {
     background: var(--surface);
     border: 1px solid var(--line);
+    border-top: 3px solid var(--q-color, var(--line));
     border-radius: 14px;
-    padding: 20px;
+    padding: 20px 20px 12px;
 }
 
-.emp-empty {
+.ed-queue-head {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 22px 16px;
-    border-radius: 10px;
-    background: var(--paper);
-    text-align: center;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
-.emp-empty strong {
-    font-size: 14px;
+.employee-layout .ed-queue-head h2 {
+    font-size: 18px;
+    margin-bottom: 3px;
 }
 
-.emp-empty span {
+.ed-queue-head > div > span {
     font-size: 12.5px;
     color: var(--slate);
 }
 
-/* Needs your attention */
+.ed-queue-count {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--q-color);
+    background: color-mix(in srgb, var(--q-color) 12%, transparent);
+}
 
-.emp-attention {
+.ed-rows {
     list-style: none;
-    margin: 0 -8px;
+    margin: 0;
     padding: 0;
 }
 
-.emp-attention button {
+.ed-row {
     display: flex;
     align-items: center;
     gap: 14px;
-    width: 100%;
-    margin: 0;
-    padding: 12px 8px;
-    text-align: left;
-    background: transparent;
-    border: 0;
-    border-radius: 8px;
-    color: var(--ink);
-    cursor: pointer;
-    transition: background 0.12s ease;
+    padding: 14px 0;
 }
 
-.emp-attention li + li button {
+.ed-row + .ed-row {
     border-top: 1px solid var(--line);
-    border-radius: 0;
 }
 
-.emp-attention button:hover {
-    background: var(--paper);
-}
-
-.emp-attention-main {
+.ed-row-main {
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -347,26 +192,36 @@ html[data-theme="dark"] .emp-hero {
     min-width: 0;
 }
 
-.emp-attention-main strong {
-    font-size: 14px;
+.ed-row-main strong {
+    font-size: 14.5px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.emp-attention-main > span {
+.ed-row-main > span {
     font-size: 12.5px;
     color: var(--slate);
 }
 
-.emp-attention-status {
-    text-transform: capitalize;
+.ed-row-flag {
+    font-style: normal;
+    font-weight: 600;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--warning-text);
+    background: var(--warning-bg);
 }
 
-/* Waiting time: neutral, then amber at 3 days, red at 5 days. Always paired
-   with the day count, so color is never the only signal. */
-.emp-wait {
+/* How long it has waited: neutral, amber from 3 days, red from 5. The day
+   count is always shown, so color is never the only signal. */
+.ed-row-wait {
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     padding: 4px 10px;
     border-radius: 999px;
     font-size: 12px;
@@ -376,273 +231,324 @@ html[data-theme="dark"] .emp-hero {
     white-space: nowrap;
 }
 
-.emp-wait.is-aging {
+.ed-row-wait svg {
+    width: 13px;
+    height: 13px;
+}
+
+.ed-row-wait.is-aging {
     color: var(--warning-text);
     background: var(--warning-bg);
 }
 
-.emp-wait.is-late {
+.ed-row-wait.is-late {
     color: var(--danger-text, var(--red-dark));
     background: var(--danger-bg-soft);
 }
 
-/* Today's schedule timeline */
-
-.emp-timeline {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    position: relative;
+.ed-row-action {
+    flex-shrink: 0;
+    min-width: 84px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background: var(--blue);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: filter 0.15s ease;
 }
 
-.emp-timeline li {
-    position: relative;
-    padding-left: 22px;
+.ed-row-action:hover {
+    filter: brightness(1.12);
 }
 
-.emp-timeline li::before {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--line);
+.ed-queue-more {
+    display: block;
+    width: 100%;
+    margin: 4px 0 0;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
 }
 
-.emp-timeline li:first-child::before {
-    top: 18px;
-}
-
-.emp-timeline li:last-child::before {
-    bottom: calc(100% - 18px);
-}
-
-.emp-timeline li::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 13px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--surface);
-    border: 2px solid var(--blue-accent, var(--blue));
-}
-
-.emp-timeline li.is-missed::after {
-    border-color: var(--status-rejected);
-}
-
-.emp-timeline button {
+.ed-queue-empty {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 36px 16px 30px;
+    text-align: center;
+}
+
+.ed-queue-empty-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    border-radius: 50%;
+    color: var(--status-completed);
+    background: color-mix(in srgb, var(--status-completed) 12%, transparent);
+}
+
+.ed-queue-empty-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.ed-queue-empty strong {
+    font-size: 15px;
+}
+
+.ed-queue-empty span {
+    font-size: 13px;
+    color: var(--slate);
+}
+
+@media (max-width: 560px) {
+    .ed-row {
+        flex-wrap: wrap;
+    }
+
+    .ed-row-main {
+        flex-basis: 100%;
+    }
+}
+
+/* ---------- Side rail ---------- */
+
+.ed-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ed-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ed-alert {
+    display: flex;
+    align-items: center;
     gap: 12px;
     width: 100%;
     margin: 0;
-    padding: 8px 8px 10px;
+    padding: 12px 14px;
     text-align: left;
-    background: transparent;
-    border: 0;
-    border-radius: 8px;
     color: var(--ink);
+    background: color-mix(in srgb, var(--status-rejected) 7%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--status-rejected) 35%, transparent);
+    border-radius: 12px;
     cursor: pointer;
+    transition: border-color 0.15s ease;
 }
 
-.emp-timeline button:hover {
-    background: var(--paper);
+.ed-alert:hover {
+    border-color: var(--status-rejected);
 }
 
-.emp-timeline-time {
-    flex-shrink: 0;
-    min-width: 62px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--blue-accent, var(--blue));
+.ed-alert-icon {
+    display: flex;
+    color: var(--status-rejected);
 }
 
-.emp-timeline-body {
+.ed-alert-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.ed-alert-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    min-width: 0;
+    gap: 1px;
 }
 
-.emp-timeline-body strong {
+.ed-alert-text strong {
     font-size: 13.5px;
 }
 
-.emp-timeline-body span {
+.ed-alert-text span {
     font-size: 12px;
     color: var(--slate);
-    text-transform: capitalize;
 }
 
-/* This week: paired mini columns (received vs completed) */
+.ed-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+}
 
-.emp-week-totals {
+.ed-card-head {
     display: flex;
-    gap: 18px;
-    font-size: 12.5px;
-    color: var(--slate);
-    margin: -4px 0 14px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
-.emp-week-totals strong {
-    font-size: 18px;
-    color: var(--ink);
-    margin-right: 3px;
-}
-
-.emp-week {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
+.employee-layout .ed-card-head h2 {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    height: 120px;
+    font-size: 15.5px;
 }
 
-.emp-week-day {
-    position: relative;
+.ed-card-head h2 svg {
+    width: 18px;
+    height: 18px;
+    color: var(--blue-accent, var(--blue));
+}
+
+.employee-layout .ed-muted {
+    font-size: 13px;
+    color: var(--slate);
+}
+
+/* Today's appointments */
+
+.ed-appts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 6px;
+}
+
+.ed-appts button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: 8px;
+    text-align: left;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.ed-appts button:hover {
+    background: var(--paper);
+}
+
+.ed-appt-time {
+    flex-shrink: 0;
+    min-width: 72px;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+    border-radius: 8px;
+}
+
+.ed-appt-time.is-missed {
+    color: var(--danger-text, var(--red-dark));
+    background: var(--danger-bg-soft);
+}
+
+.ed-appt-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
     min-width: 0;
 }
 
-.emp-week-bars {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 2px;
-    border-bottom: 1px solid var(--line);
+.ed-appt-body strong {
+    font-size: 13.5px;
 }
 
-.emp-week-bar {
-    width: 38%;
-    max-width: 12px;
-    border-radius: 3px 3px 0 0;
-    transition: opacity 0.12s ease;
-}
-
-.emp-week-bar.is-received,
-.emp-week-legend i.is-received {
-    background: color-mix(in srgb, var(--blue-accent, var(--blue)) 45%, transparent);
-}
-
-.emp-week-bar.is-completed,
-.emp-week-legend i.is-completed {
-    background: var(--status-completed);
-}
-
-.emp-week-label {
-    font-size: 11px;
+.ed-appt-body span {
+    font-size: 12px;
     color: var(--slate);
 }
 
-.emp-week-day.is-today .emp-week-label {
+.ed-appt-flag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--danger-text, var(--red-dark));
+}
+
+.ed-appts-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+/* Weekly progress ring: the filled arc is completed / received; the track is
+   a light step of the same green so the ring reads as one measure. */
+
+.ed-progress {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.ed-ring {
+    --p: 0;
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, var(--surface) 62%, transparent 63%),
+        conic-gradient(var(--status-completed) calc(var(--p) * 1turn), color-mix(in srgb, var(--status-completed) 16%, transparent) 0);
+}
+
+.ed-ring span {
+    font-size: 20px;
     font-weight: 700;
     color: var(--ink);
 }
 
-.emp-week-tip {
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 6px 9px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    white-space: nowrap;
-    color: #FFFFFF;
-    background: var(--blue-dark);
-    pointer-events: none;
-    z-index: 3;
+.ed-progress-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.emp-week-legend {
-    display: flex;
-    gap: 14px;
-    margin-top: 12px;
-    font-size: 12px;
+.employee-layout .ed-progress-text p {
+    font-size: 13px;
     color: var(--slate);
 }
 
-.emp-week-legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.emp-week-legend i {
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
-}
-
-/* Quick actions */
-
-.emp-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-    gap: 8px;
-}
-
-.emp-actions button {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: left;
+.ed-progress-text strong {
+    font-size: 18px;
     color: var(--ink);
-    background: var(--paper);
-    border: 1px solid transparent;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: border-color 0.12s ease, background 0.12s ease;
+    margin-right: 4px;
 }
 
-.emp-actions button:hover {
-    border-color: var(--blue-accent, var(--blue));
-    background: var(--blue-tint);
-}
-
-.emp-actions-icon {
-    display: flex;
-    color: var(--blue-accent, var(--blue));
-}
-
-.emp-actions-icon svg {
-    width: 17px;
-    height: 17px;
-}
-
-/* Skeleton rows */
-
-.emp-skeleton-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 0;
-}
-
-.emp-skeleton-row + .emp-skeleton-row {
-    border-top: 1px solid var(--line);
+.ed-progress-text > span {
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--slate);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .emp-hero-cta,
-    .emp-pipeline-step button,
-    .emp-attention button {
+    .ed-focus-card,
+    .ed-row-action,
+    .ed-appts button {
         transition: none;
-    }
-
-    .emp-hero-cta:hover,
-    .emp-pipeline-step button:hover {
-        transform: none;
     }
 }

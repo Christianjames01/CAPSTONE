@@ -1,46 +1,59 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { IconCalendar, IconAlertCircle } from '../student/icons'
-import { IconShieldCheck, IconGear, IconUsers, IconMessage } from './icons'
+import { IconAlertCircle, IconClock } from '../student/icons'
+import { IconShieldCheck, IconGear } from './icons'
+import { IconPackage, IconCheckCircle, IconCalendarCheck } from '../admin/icons'
 import { Skeleton } from '../../components/Skeleton'
-import { localDay, countByStatus } from '../../lib/dashboardData'
+import { localDay } from '../../lib/dashboardData'
 import '../../components/DashboardStats.css'
 import './EmployeePages.css'
 import './EmployeeDashboard.css'
 
-// The employee dashboard is a personal work view ("what do I do next?"),
-// deliberately different from the head's office-wide statistics dashboard.
+// Employee dashboard: an inbox of the requests waiting on this employee,
+// grouped by the next step, with a direct action on every row. Deliberately
+// different from the head's office-wide statistics dashboard.
 
-const FULL_PIPELINE = [
-    { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/employee/verification', hint: 'Awaiting payment' },
-    { key: 'verification', label: 'Receipts to Verify', statuses: ['receipt_uploaded'], to: '/employee/verification', hint: 'Check the receipt' },
-    { key: 'processing', label: 'Processing', statuses: ['receipt_verified', 'processing', 'lacking_requirements'], to: '/employee/processing', hint: 'Prepare the document' },
-    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/claim-schedule', hint: 'Schedule the release' },
-    { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', hint: 'Released' },
+const QUEUES = [
+    {
+        key: 'verify',
+        label: 'To verify',
+        statuses: ['receipt_uploaded'],
+        action: 'Verify',
+        empty: 'No receipts are waiting to be checked.',
+        Icon: IconShieldCheck,
+        color: 'var(--status-verification)',
+    },
+    {
+        key: 'process',
+        label: 'In processing',
+        statuses: ['receipt_verified', 'processing', 'lacking_requirements'],
+        action: 'Process',
+        empty: 'Nothing is being processed right now.',
+        Icon: IconGear,
+        color: 'var(--status-processing)',
+    },
+    {
+        key: 'release',
+        label: 'Ready to release',
+        statuses: ['ready_for_claiming'],
+        action: 'Schedule',
+        empty: 'No documents are waiting to be released.',
+        Icon: IconPackage,
+        color: 'var(--status-ready)',
+    },
+    {
+        key: 'awaiting',
+        label: 'Awaiting payment',
+        statuses: ['pending', 'payment_pending'],
+        action: 'View',
+        empty: 'No requests are waiting on student payment.',
+        Icon: IconClock,
+        color: 'var(--status-pending)',
+    },
 ]
 
-const RELEASING_PIPELINE = [
-    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/claim-schedule', hint: 'Waiting to be released' },
-    { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', hint: 'Released to students' },
-]
-
-// Statuses where the next move is the employee's, oldest first.
-const ACTION_STATUSES = ['receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'pending', 'payment_pending']
-const RELEASING_ACTION_STATUSES = ['ready_for_claiming']
-
-const QUICK_ACTIONS = [
-    { to: '/employee/verification', label: 'Verify receipts', icon: <IconShieldCheck /> },
-    { to: '/employee/processing', label: 'Process documents', icon: <IconGear /> },
-    { to: '/employee/claim-schedule', label: 'Claim schedule', icon: <IconCalendar /> },
-    { to: '/employee/students', label: 'Find a student', icon: <IconUsers /> },
-    { to: '/employee/messages', label: 'Messages', icon: <IconMessage /> },
-]
-
-const RELEASING_QUICK_ACTIONS = [
-    { to: '/employee/claim-schedule', label: 'Claim schedule', icon: <IconCalendar /> },
-    { to: '/employee/messages', label: 'Messages', icon: <IconMessage /> },
-]
+const RELEASING_QUEUES = QUEUES.filter((q) => q.key === 'release')
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -52,14 +65,14 @@ const greetingFor = (date) => {
 }
 
 const formatTime = (time) => {
-    if (!time) return 'No time'
+    if (!time) return '—'
     const [hours, minutes] = time.split(':')
     const date = new Date()
     date.setHours(Number(hours), Number(minutes), 0, 0)
     return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
 }
 
-const waitingLabel = (days) => (days <= 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`)
+const waitingText = (days) => (days <= 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`)
 
 function EmployeeDashboard() {
     const navigate = useNavigate()
@@ -68,12 +81,15 @@ function EmployeeDashboard() {
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
     const [documentNames, setDocumentNames] = useState({})
+    const [studentNumbers, setStudentNumbers] = useState({})
     const [todaySchedules, setTodaySchedules] = useState([])
     const [missedCount, setMissedCount] = useState(0)
     const [rescheduleRequestCount, setRescheduleRequestCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
-    const [hoverDay, setHoverDay] = useState(null)
+    const [activeQueue, setActiveQueue] = useState(null)
+    // One clock reading per page load, so every "waiting N days" agrees.
+    const [now] = useState(() => new Date())
 
     useEffect(() => {
         loadDashboard()
@@ -122,7 +138,7 @@ function EmployeeDashboard() {
 
             let requestQuery = supabase
                 .from('document_requests')
-                .select('request_id, request_number, document_type_id, total_amount, status, requested_at, completed_at')
+                .select('request_id, request_number, student_id, document_type_id, total_amount, status, requested_at, completed_at')
                 .order('requested_at', { ascending: false })
 
             if (isReleasingScope) {
@@ -143,28 +159,6 @@ function EmployeeDashboard() {
             setRequests(rows)
 
             const documentTypeIds = [...new Set(rows.map((r) => r.document_type_id).filter(Boolean))]
-            if (documentTypeIds.length > 0) {
-                const { data: documentTypes } = await supabase
-                    .from('document_types')
-                    .select('document_type_id, document_name')
-                    .in('document_type_id', documentTypeIds)
-
-                setDocumentNames(Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name])))
-            }
-
-            const myRequestIds = rows.map((r) => r.request_id)
-
-            if (myRequestIds.length > 0) {
-                const { data: attentionSchedules } = await supabase
-                    .from('claim_schedules')
-                    .select('claim_schedule_id, request_id, status, reschedule_requested_at')
-                    .in('request_id', myRequestIds)
-                    .neq('status', 'cancelled')
-
-                const scheduleRows = attentionSchedules || []
-                setMissedCount(scheduleRows.filter((s) => s.status === 'missed').length)
-                setRescheduleRequestCount(scheduleRows.filter((s) => s.reschedule_requested_at).length)
-            }
 
             let todayScheduleQuery = supabase
                 .from('claim_schedules')
@@ -177,32 +171,50 @@ function EmployeeDashboard() {
                 todayScheduleQuery = todayScheduleQuery.eq('scheduled_by', employeeData.employee_id)
             }
 
-            const { data: scheduleRows, error: scheduleError } = await todayScheduleQuery
+            const myRequestIds = rows.map((r) => r.request_id)
+
+            const [{ data: documentTypes }, { data: attentionSchedules }, { data: scheduleRows, error: scheduleError }] = await Promise.all([
+                documentTypeIds.length
+                    ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
+                    : Promise.resolve({ data: [] }),
+                myRequestIds.length
+                    ? supabase.from('claim_schedules').select('claim_schedule_id, request_id, status, reschedule_requested_at').in('request_id', myRequestIds).neq('status', 'cancelled')
+                    : Promise.resolve({ data: [] }),
+                todayScheduleQuery,
+            ])
 
             if (scheduleError) {
                 console.error('TODAY SCHEDULE ERROR:', scheduleError)
             }
 
+            setDocumentNames(Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name])))
+
+            const attentionRows = attentionSchedules || []
+            setMissedCount(attentionRows.filter((s) => s.status === 'missed').length)
+            setRescheduleRequestCount(attentionRows.filter((s) => s.reschedule_requested_at).length)
+
             const sRows = scheduleRows || []
             const scheduleRequestIds = [...new Set(sRows.map((s) => s.request_id))]
-            const scheduleStudentIds = [...new Set(sRows.map((s) => s.student_id).filter(Boolean))]
+            const studentIds = [...new Set([...rows, ...sRows].map((r) => r.student_id).filter(Boolean))]
 
-            const [{ data: scheduleRequests }, { data: scheduleStudents }] = await Promise.all([
+            const [{ data: scheduleRequests }, { data: students }] = await Promise.all([
                 scheduleRequestIds.length
-                    ? supabase.from('document_requests').select('request_id, request_number').in('request_id', scheduleRequestIds)
+                    ? supabase.from('document_requests').select('request_id, request_number, document_type_id').in('request_id', scheduleRequestIds)
                     : Promise.resolve({ data: [] }),
-                scheduleStudentIds.length
-                    ? supabase.from('students').select('student_id, student_number').in('student_id', scheduleStudentIds)
+                studentIds.length
+                    ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
             ])
 
-            const requestNumberById = Object.fromEntries((scheduleRequests || []).map((r) => [r.request_id, r.request_number]))
-            const studentNumberById = Object.fromEntries((scheduleStudents || []).map((s) => [s.student_id, s.student_number]))
+            const studentNumberById = Object.fromEntries((students || []).map((s) => [s.student_id, s.student_number]))
+            setStudentNumbers(studentNumberById)
+
+            const scheduleRequestById = Object.fromEntries((scheduleRequests || []).map((r) => [r.request_id, r]))
 
             setTodaySchedules(
                 sRows.map((s) => ({
                     ...s,
-                    requestNumber: requestNumberById[s.request_id] || 'N/A',
+                    requestNumber: scheduleRequestById[s.request_id]?.request_number || 'N/A',
                     studentNumber: studentNumberById[s.student_id] || 'N/A',
                 }))
             )
@@ -216,71 +228,38 @@ function EmployeeDashboard() {
     }
 
     const isReleasingOnly = employee?.access_scope === 'releasing'
-    // One clock reading per page load, so every "waiting N days" agrees.
-    const [now] = useState(() => new Date())
+    const queueDefs = isReleasingOnly ? RELEASING_QUEUES : QUEUES
 
-    const pipeline = (isReleasingOnly ? RELEASING_PIPELINE : FULL_PIPELINE).map((stage) => {
-        const inStage = requests.filter((r) => stage.statuses.includes(r.status))
-        const oldest = inStage.reduce((min, r) => (r.requested_at && (!min || r.requested_at < min) ? r.requested_at : min), null)
-        const oldestDays = oldest ? Math.floor((now - new Date(oldest)) / DAY_MS) : null
-        return { ...stage, count: inStage.length, oldestDays }
-    })
+    // Each queue's requests, oldest first (the one waiting longest is next).
+    const queues = useMemo(
+        () => queueDefs.map((q) => ({
+            ...q,
+            items: requests
+                .filter((r) => q.statuses.includes(r.status))
+                .sort((a, b) => (a.requested_at || '').localeCompare(b.requested_at || ''))
+                .map((r) => ({ ...r, waitingDays: r.requested_at ? Math.floor((now - new Date(r.requested_at)) / DAY_MS) : 0 })),
+        })),
+        [requests, queueDefs, now]
+    )
 
-    const attention = useMemo(() => {
-        const statuses = isReleasingOnly ? RELEASING_ACTION_STATUSES : ACTION_STATUSES
-        return requests
-            .filter((r) => statuses.includes(r.status) && r.requested_at)
-            .sort((a, b) => a.requested_at.localeCompare(b.requested_at))
-            .slice(0, 6)
-            .map((r) => ({ ...r, waitingDays: Math.floor((now - new Date(r.requested_at)) / DAY_MS) }))
-    }, [requests, isReleasingOnly, now])
+    // Open on the first queue that has work in it.
+    const currentKey = activeQueue || queues.find((q) => q.items.length > 0)?.key || queues[0]?.key
+    const current = queues.find((q) => q.key === currentKey) || queues[0]
 
-    const actionCount = countByStatus(requests, isReleasingOnly ? RELEASING_ACTION_STATUSES : ACTION_STATUSES)
+    const weekAgo = now.getTime() - 7 * DAY_MS
+    const receivedThisWeek = requests.filter((r) => r.requested_at && new Date(r.requested_at).getTime() >= weekAgo).length
+    const completedThisWeek = requests.filter((r) => r.completed_at && new Date(r.completed_at).getTime() >= weekAgo).length
+    const progress = receivedThisWeek > 0 ? Math.min(1, completedThisWeek / receivedThisWeek) : completedThisWeek > 0 ? 1 : 0
 
-    // Last 7 local days: requests assigned (by request date) and completed.
-    const week = useMemo(() => {
-        const days = []
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date()
-            d.setDate(d.getDate() - i)
-            days.push({ key: localDay(d), label: d.toLocaleDateString('en-PH', { weekday: 'short' }), received: 0, completed: 0 })
-        }
-        const byKey = Object.fromEntries(days.map((d) => [d.key, d]))
-        for (const r of requests) {
-            if (r.requested_at) {
-                const k = localDay(new Date(r.requested_at))
-                if (byKey[k]) byKey[k].received += 1
-            }
-            if (r.completed_at) {
-                const k = localDay(new Date(r.completed_at))
-                if (byKey[k]) byKey[k].completed += 1
-            }
-        }
-        return days
-    }, [requests])
-
-    const weekReceived = week.reduce((sum, d) => sum + d.received, 0)
-    const weekCompleted = week.reduce((sum, d) => sum + d.completed, 0)
-    const weekMax = Math.max(1, ...week.map((d) => Math.max(d.received, d.completed)))
+    const openRequest = (r) => {
+        if (r.status === 'ready_for_claiming') navigate(`/employee/requests/${r.request_id}/claim-schedule`)
+        else navigate(`/employee/requests/${r.request_id}`)
+    }
 
     const alerts = [
-        { label: missedCount === 1 ? 'missed claim' : 'missed claims', value: missedCount, to: '/employee/claim-schedule' },
-        { label: rescheduleRequestCount === 1 ? 'reschedule request' : 'reschedule requests', value: rescheduleRequestCount, to: '/employee/claim-schedule' },
+        { label: missedCount === 1 ? 'Missed claim' : 'Missed claims', value: missedCount, note: 'Students who did not show up' },
+        { label: rescheduleRequestCount === 1 ? 'Reschedule request' : 'Reschedule requests', value: rescheduleRequestCount, note: 'Students asking for a new date' },
     ].filter((a) => a.value > 0)
-
-    const summary = (() => {
-        const parts = []
-        if (actionCount > 0) parts.push(`${actionCount} ${actionCount === 1 ? 'request needs' : 'requests need'} your action`)
-        if (todaySchedules.length > 0) parts.push(`${todaySchedules.length} ${todaySchedules.length === 1 ? 'student is' : 'students are'} claiming today`)
-        if (parts.length === 0) return "You're all caught up. Nothing is waiting on you right now."
-        return `${parts.join(' and ')}.`
-    })()
-
-    const primaryAction = isReleasingOnly
-        ? { label: 'Open claim schedule', to: '/employee/claim-schedule' }
-        : attention.some((r) => r.status === 'receipt_uploaded')
-            ? { label: 'Verify receipts', to: '/employee/verification' }
-            : { label: 'Continue processing', to: '/employee/processing' }
 
     if (loading) {
         return <EmployeeDashboardSkeleton />
@@ -298,168 +277,157 @@ function EmployeeDashboard() {
     }
 
     return (
-        <div className="emp-dash">
-            <section className="emp-hero">
-                <div className="emp-hero-text">
-                    <span className="emp-hero-date">
-                        {now.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}
-                    </span>
+        <div className="ed">
+            <header className="ed-header">
+                <div>
                     <h1>{greetingFor(now)}{name ? `, ${name}` : ''}</h1>
-                    <p>{summary}</p>
-
-                    {alerts.length > 0 && (
-                        <div className="emp-hero-alerts">
-                            {alerts.map((a) => (
-                                <button key={a.label} className="emp-hero-alert" onClick={() => navigate(a.to)}>
-                                    <IconAlertCircle />
-                                    <strong>{a.value}</strong> {a.label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                    <p>
+                        {now.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                        {employee?.position_title && <> · {employee.position_title}</>}
+                    </p>
                 </div>
+                <button className="ed-header-link" onClick={() => navigate('/employee/requests')}>
+                    All my requests →
+                </button>
+            </header>
 
-                <div className="emp-hero-side">
-                    <div className="emp-hero-meta">
-                        <span>{employee?.position_title}</span>
-                        <span>{employee?.employee_number}</span>
-                    </div>
-                    <button className="emp-hero-cta" onClick={() => navigate(primaryAction.to)}>
-                        {primaryAction.label} →
+            <div className="ed-focus" role="tablist" aria-label="Work queues">
+                {queues.map((q) => (
+                    <button
+                        key={q.key}
+                        role="tab"
+                        aria-selected={q.key === currentKey}
+                        className={`ed-focus-card${q.key === currentKey ? ' is-active' : ''}`}
+                        style={{ '--q-color': q.color }}
+                        onClick={() => setActiveQueue(q.key)}
+                    >
+                        <span className="ed-focus-icon" aria-hidden="true"><q.Icon /></span>
+                        <span className="ed-focus-text">
+                            <span className="ed-focus-count">{q.items.length}</span>
+                            <span className="ed-focus-label">{q.label}</span>
+                        </span>
                     </button>
-                </div>
-            </section>
+                ))}
+                <button
+                    className="ed-focus-card ed-focus-static"
+                    style={{ '--q-color': 'var(--status-completed)' }}
+                    onClick={() => navigate('/employee/requests?status=completed')}
+                >
+                    <span className="ed-focus-icon" aria-hidden="true"><IconCheckCircle /></span>
+                    <span className="ed-focus-text">
+                        <span className="ed-focus-count">{completedThisWeek}</span>
+                        <span className="ed-focus-label">Completed this week</span>
+                    </span>
+                </button>
+            </div>
 
-            <section className="emp-section">
-                <div className="emp-section-head">
-                    <h2>{isReleasingOnly ? 'Claiming pipeline' : 'Your request pipeline'}</h2>
-                    <span>{requests.length} {isReleasingOnly ? 'claiming' : 'assigned'} requests</span>
-                </div>
-
-                <ol className="emp-pipeline">
-                    {pipeline.map((stage, i) => (
-                        <li key={stage.key} className="emp-pipeline-step" style={{ '--step-color': `var(--status-${stage.key})` }}>
-                            <button onClick={() => navigate(stage.to)} aria-label={`${stage.label}: ${stage.count} requests`}>
-                                <span className="emp-pipeline-index" aria-hidden="true">{i + 1}</span>
-                                <span className="emp-pipeline-count">{stage.count}</span>
-                                <span className="emp-pipeline-label">{stage.label}</span>
-                                <span className="emp-pipeline-hint">
-                                    {stage.key !== 'completed' && stage.count > 0 && stage.oldestDays !== null
-                                        ? `Oldest: ${stage.oldestDays <= 0 ? "today" : waitingLabel(stage.oldestDays)}`
-                                        : stage.hint}
-                                </span>
-                            </button>
-                        </li>
-                    ))}
-                </ol>
-            </section>
-
-            <div className="emp-columns">
-                <div className="emp-side">
-                <section className="emp-panel">
-                    <div className="emp-section-head">
-                        <h2>Needs your attention</h2>
-                        <button className="employee-link-button" onClick={() => navigate('/employee/requests')}>View all →</button>
+            <div className="ed-body">
+                <section className="ed-queue" style={{ '--q-color': current?.color }}>
+                    <div className="ed-queue-head">
+                        <div>
+                            <h2>{current?.label}</h2>
+                            <span>{current?.items.length ? 'Oldest first — the top one has waited longest.' : ' '}</span>
+                        </div>
+                        <span className="ed-queue-count">{current?.items.length} {current?.items.length === 1 ? 'request' : 'requests'}</span>
                     </div>
 
-                    {attention.length === 0 ? (
-                        <div className="emp-empty">
-                            <strong>All caught up</strong>
-                            <span>No requests are waiting on you.</span>
+                    {!current || current.items.length === 0 ? (
+                        <div className="ed-queue-empty">
+                            <span className="ed-queue-empty-icon" aria-hidden="true"><IconCheckCircle /></span>
+                            <strong>Nothing here</strong>
+                            <span>{current?.empty}</span>
                         </div>
                     ) : (
-                        <ul className="emp-attention">
-                            {attention.map((r) => (
-                                <li key={r.request_id}>
-                                    <button onClick={() => navigate(`/employee/requests/${r.request_id}`)}>
-                                        <span className="emp-attention-main">
-                                            <strong>{documentNames[r.document_type_id] || 'Document request'}</strong>
-                                            <span>{r.request_number} · <span className="emp-attention-status">{r.status.replace(/_/g, ' ')}</span></span>
+                        <ul className="ed-rows">
+                            {current.items.slice(0, 8).map((r) => (
+                                <li key={r.request_id} className="ed-row">
+                                    <span className="ed-row-main">
+                                        <strong>{documentNames[r.document_type_id] || 'Document request'}</strong>
+                                        <span>
+                                            {r.request_number}
+                                            {studentNumbers[r.student_id] && <> · Student {studentNumbers[r.student_id]}</>}
+                                            {r.status === 'lacking_requirements' && <em className="ed-row-flag">Lacking requirements</em>}
                                         </span>
-                                        <span className={`emp-wait${r.waitingDays >= 5 ? ' is-late' : r.waitingDays >= 3 ? ' is-aging' : ''}`}>
-                                            {waitingLabel(r.waitingDays)}
-                                        </span>
+                                    </span>
+                                    <span className={`ed-row-wait${r.waitingDays >= 5 ? ' is-late' : r.waitingDays >= 3 ? ' is-aging' : ''}`}>
+                                        <IconClock /> {waitingText(r.waitingDays)}
+                                    </span>
+                                    <button className="ed-row-action" onClick={() => openRequest(r)}>
+                                        {current.action}
                                     </button>
                                 </li>
                             ))}
                         </ul>
                     )}
+
+                    {current && current.items.length > 8 && (
+                        <button className="ed-queue-more" onClick={() => navigate('/employee/requests')}>
+                            Show all {current.items.length} →
+                        </button>
+                    )}
                 </section>
 
-                <section className="emp-panel">
-                    <div className="emp-section-head">
-                        <h2>Quick actions</h2>
-                    </div>
-                    <div className="emp-actions">
-                        {(isReleasingOnly ? RELEASING_QUICK_ACTIONS : QUICK_ACTIONS).map((a) => (
-                            <button key={a.to} onClick={() => navigate(a.to)}>
-                                <span className="emp-actions-icon" aria-hidden="true">{a.icon}</span>
-                                {a.label}
-                            </button>
-                        ))}
-                    </div>
-                </section>
-                </div>
+                <aside className="ed-rail">
+                    {alerts.length > 0 && (
+                        <div className="ed-alerts">
+                            {alerts.map((a) => (
+                                <button key={a.note} className="ed-alert" onClick={() => navigate('/employee/claim-schedule')}>
+                                    <span className="ed-alert-icon" aria-hidden="true"><IconAlertCircle /></span>
+                                    <span className="ed-alert-text">
+                                        <strong>{a.value} {a.label}</strong>
+                                        <span>{a.note}</span>
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
-                <aside className="emp-side">
-                    <section className="emp-panel">
-                        <div className="emp-section-head">
-                            <h2>Today's schedule</h2>
-                            <button className="employee-link-button" onClick={() => navigate('/employee/claim-schedule')}>Open →</button>
+                    <section className="ed-card">
+                        <div className="ed-card-head">
+                            <h2><IconCalendarCheck /> Today</h2>
+                            <button className="employee-link-button" onClick={() => navigate('/employee/claim-schedule')}>Schedule →</button>
                         </div>
 
                         {todaySchedules.length === 0 ? (
-                            <div className="emp-empty">
-                                <strong>No appointments today</strong>
-                                <span>Nobody is scheduled to claim.</span>
-                            </div>
+                            <p className="ed-muted">No students are scheduled to claim today.</p>
                         ) : (
-                            <ol className="emp-timeline">
+                            <ul className="ed-appts">
                                 {todaySchedules.map((s) => (
-                                    <li key={s.claim_schedule_id} className={s.status === 'missed' ? 'is-missed' : ''}>
+                                    <li key={s.claim_schedule_id}>
                                         <button onClick={() => navigate(`/employee/requests/${s.request_id}`)}>
-                                            <span className="emp-timeline-time">{formatTime(s.claim_time || s.scheduled_time)}</span>
-                                            <span className="emp-timeline-body">
-                                                <strong>{s.requestNumber}</strong>
-                                                <span>Student {s.studentNumber} · {s.status.replace(/_/g, ' ')}</span>
+                                            <span className={`ed-appt-time${s.status === 'missed' ? ' is-missed' : ''}`}>
+                                                {formatTime(s.claim_time || s.scheduled_time)}
                                             </span>
+                                            <span className="ed-appt-body">
+                                                <strong>{s.requestNumber}</strong>
+                                                <span>Student {s.studentNumber}</span>
+                                            </span>
+                                            {s.status === 'missed' && <span className="ed-appt-flag">Missed</span>}
                                         </button>
                                     </li>
                                 ))}
-                            </ol>
+                            </ul>
                         )}
                     </section>
 
-                    <section className="emp-panel">
-                        <div className="emp-section-head">
+                    <section className="ed-card">
+                        <div className="ed-card-head">
                             <h2>This week</h2>
                         </div>
-                        <div className="emp-week-totals">
-                            <span><strong>{weekReceived}</strong> received</span>
-                            <span><strong>{weekCompleted}</strong> completed</span>
-                        </div>
-                        <div className="emp-week" role="img" aria-label={`Last 7 days: ${weekReceived} received, ${weekCompleted} completed`}>
-                            {week.map((d, i) => (
-                                <div
-                                    key={d.key}
-                                    className={`emp-week-day${i === week.length - 1 ? ' is-today' : ''}`}
-                                    onMouseEnter={() => setHoverDay(i)}
-                                    onMouseLeave={() => setHoverDay(null)}
-                                >
-                                    <div className="emp-week-bars">
-                                        <span className="emp-week-bar is-received" style={{ height: `${(d.received / weekMax) * 100}%` }} />
-                                        <span className="emp-week-bar is-completed" style={{ height: `${(d.completed / weekMax) * 100}%` }} />
-                                    </div>
-                                    <span className="emp-week-label">{i === week.length - 1 ? 'Today' : d.label}</span>
-                                    {hoverDay === i && (
-                                        <span className="emp-week-tip">{d.received} received · {d.completed} completed</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="emp-week-legend">
-                            <span><i className="is-received" /> Received</span>
-                            <span><i className="is-completed" /> Completed</span>
+                        <div className="ed-progress">
+                            <div
+                                className="ed-ring"
+                                style={{ '--p': progress }}
+                                role="img"
+                                aria-label={`${completedThisWeek} completed out of ${receivedThisWeek} received in the last 7 days`}
+                            >
+                                <span>{Math.round(progress * 100)}%</span>
+                            </div>
+                            <div className="ed-progress-text">
+                                <p><strong>{completedThisWeek}</strong> completed</p>
+                                <p><strong>{receivedThisWeek}</strong> received</p>
+                                <span>Last 7 days</span>
+                            </div>
                         </div>
                     </section>
                 </aside>
@@ -471,94 +439,71 @@ function EmployeeDashboard() {
 // Loading placeholder with the same shape as the dashboard above.
 function EmployeeDashboardSkeleton() {
     return (
-        <div className="emp-dash" role="status" aria-busy="true" aria-live="polite">
+        <div className="ed" role="status" aria-busy="true" aria-live="polite">
             <span className="skeleton-sr-only">Loading dashboard…</span>
-            <section className="emp-hero emp-hero-skeleton">
-                <div className="emp-hero-text">
-                    <Skeleton width={180} height={12} className="skeleton-on-dark" />
-                    <Skeleton width={320} height={30} radius={8} className="skeleton-on-dark" style={{ margin: '12px 0' }} />
-                    <Skeleton width="min(440px, 90%)" height={14} className="skeleton-on-dark" />
+            <header className="ed-header">
+                <div>
+                    <Skeleton width={300} height={28} radius={8} />
+                    <Skeleton width={320} height={13} style={{ marginTop: 10 }} />
                 </div>
-                <div className="emp-hero-side">
-                    <Skeleton width={160} height={12} className="skeleton-on-dark" />
-                    <Skeleton width={180} height={44} radius={10} className="skeleton-on-dark" />
-                </div>
-            </section>
+                <Skeleton width={140} height={36} radius={8} />
+            </header>
 
-            <section className="emp-section">
-                <div className="emp-section-head">
-                    <Skeleton width={200} height={17} radius={6} />
-                    <Skeleton width={120} height={12} />
-                </div>
-                <ol className="emp-pipeline">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <li className="emp-pipeline-step" key={i}>
-                            <div className="emp-pipeline-skeleton">
-                                <Skeleton width={22} height={22} radius={11} />
-                                <Skeleton width={40} height={30} radius={6} />
-                                <Skeleton width="70%" height={13} />
-                                <Skeleton width="85%" height={11} />
-                            </div>
-                        </li>
-                    ))}
-                </ol>
-            </section>
-
-            <div className="emp-columns">
-                <div className="emp-side">
-                <section className="emp-panel">
-                    <div className="emp-section-head">
-                        <Skeleton width={190} height={17} radius={6} />
-                        <Skeleton width={60} height={13} />
+            <div className="ed-focus">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div className="ed-focus-card ed-focus-static" key={i}>
+                        <Skeleton width={40} height={40} radius={12} />
+                        <span className="ed-focus-text">
+                            <Skeleton width={34} height={24} radius={6} />
+                            <Skeleton width={90} height={11} style={{ marginTop: 6 }} />
+                        </span>
                     </div>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <div className="emp-skeleton-row" key={i}>
-                            <div style={{ flex: 1 }}>
-                                <Skeleton width={i % 2 ? '45%' : '58%'} height={14} style={{ marginBottom: 7 }} />
-                                <Skeleton width="36%" height={11} />
-                            </div>
-                            <Skeleton width={64} height={24} radius={20} />
+                ))}
+            </div>
+
+            <div className="ed-body">
+                <section className="ed-queue">
+                    <div className="ed-queue-head">
+                        <div>
+                            <Skeleton width={150} height={18} radius={6} />
+                            <Skeleton width={240} height={11} style={{ marginTop: 8 }} />
                         </div>
-                    ))}
-                </section>
-
-                <section className="emp-panel">
-                    <div className="emp-section-head">
-                        <Skeleton width={130} height={17} radius={6} />
+                        <Skeleton width={80} height={24} radius={20} />
                     </div>
-                    <div className="emp-actions">
+                    <ul className="ed-rows">
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <Skeleton key={i} height={42} radius={10} />
+                            <li className="ed-row" key={i}>
+                                <span className="ed-row-main">
+                                    <Skeleton width={i % 2 ? '52%' : '64%'} height={14} />
+                                    <Skeleton width="42%" height={11} style={{ marginTop: 6 }} />
+                                </span>
+                                <Skeleton width={70} height={24} radius={20} />
+                                <Skeleton width={78} height={34} radius={8} />
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 </section>
-                </div>
 
-                <aside className="emp-side">
-                    {[3, 0].map((rows, p) => (
-                        <section className="emp-panel" key={p}>
-                            <div className="emp-section-head">
-                                <Skeleton width={140} height={17} radius={6} />
+                <aside className="ed-rail">
+                    <section className="ed-card">
+                        <div className="ed-card-head"><Skeleton width={90} height={17} radius={6} /></div>
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div className="ed-appts-skeleton" key={i}>
+                                <Skeleton width={64} height={28} radius={8} />
+                                <Skeleton width="50%" height={13} />
                             </div>
-                            {p === 1 ? (
-                                <div className="emp-week">
-                                    {[40, 65, 30, 80, 55, 20, 70].map((h, i) => (
-                                        <div className="emp-week-day" key={i}>
-                                            <div className="emp-week-bars"><Skeleton height={`${h}%`} radius={3} style={{ width: '100%' }} /></div>
-                                            <Skeleton width={26} height={10} />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                Array.from({ length: rows }).map((_, i) => (
-                                    <div className="emp-skeleton-row" key={i}>
-                                        <Skeleton width={p === 0 ? 58 : 30} height={p === 0 ? 13 : 30} radius={p === 0 ? 6 : 8} />
-                                        <Skeleton width="55%" height={13} />
-                                    </div>
-                                ))
-                            )}
-                        </section>
-                    ))}
+                        ))}
+                    </section>
+                    <section className="ed-card">
+                        <div className="ed-card-head"><Skeleton width={100} height={17} radius={6} /></div>
+                        <div className="ed-progress">
+                            <Skeleton width={96} height={96} radius={48} />
+                            <div style={{ flex: 1 }}>
+                                <Skeleton width="60%" height={14} style={{ marginBottom: 10 }} />
+                                <Skeleton width="50%" height={14} />
+                            </div>
+                        </div>
+                    </section>
                 </aside>
             </div>
         </div>
