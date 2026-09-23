@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
@@ -968,11 +968,18 @@ function AdminRequestDetails() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="admin"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', action: true },
+                    { type: 'card', fields: 8, titleWidth: 180 },
+                    { type: 'card', fields: 4, titleWidth: 150 },
+                    { type: 'card', rows: 2, titleWidth: 170 },
+                    { type: 'card', lines: 2, buttons: 1, titleWidth: 170 },
+                    { type: 'card', rows: 3, titleWidth: 140 },
+                ]}
+            />
         )
     }
 

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDate } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
 import { updateStudentEmail } from '../../lib/updateStudentEmail'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './EmployeePages.css'
@@ -370,11 +371,17 @@ function StudentHistory() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="employee"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', avatar: true },
+                    { type: 'card', action: true, fields: 7, titleWidth: 190 },
+                    { type: 'card', action: true, fields: 10, titleWidth: 180 },
+                    { type: 'card', titleWidth: 90, lines: 1, buttons: 2 },
+                    { type: 'list', count: 2, fields: 2, action: false },
+                ]}
+            />
         )
     }
 
@@ -650,7 +657,7 @@ function StudentHistory() {
                             <div className="employee-info-field">
                                 <span>Requested</span>
                                 <strong>
-                                    {request.requested_at ? new Date(request.requested_at).toLocaleDateString() : '-'}
+                                    {request.requested_at ? formatDisplayDate(request.requested_at) : '-'}
                                 </strong>
                             </div>
                         </div>

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, notifySuccess } from '../../lib/notify'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import CredentialQr from '../../components/CredentialQr'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -529,11 +529,14 @@ function RequestDetails() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="student"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', subtitle: false },
+                    { type: 'card', pill: true, fields: 8, media: 120, titleWidth: 150 },
+                ]}
+            />
         )
     }
 

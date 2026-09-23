@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
@@ -1278,11 +1279,18 @@ function EmployeeRequestDetails() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="employee"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', subtitle: false },
+                    { type: 'card', pill: true, fields: 8, titleWidth: 150 },
+                    { type: 'card', fields: 4, buttons: 2, titleWidth: 150 },
+                    { type: 'card', rows: 2, titleWidth: 170 },
+                    { type: 'card', lines: 2, buttons: 1, titleWidth: 170 },
+                    { type: 'card', rows: 3, titleWidth: 140 },
+                ]}
+            />
         )
     }
 
@@ -1406,7 +1414,7 @@ function EmployeeRequestDetails() {
 
                 <div className="employee-info-field">
                     <span>Requested At</span>
-                    <strong>{new Date(request.requested_at).toLocaleString()}</strong>
+                    <strong>{formatDisplayDateTime(request.requested_at)}</strong>
                 </div>
 
                 {request.cancellation_reason && (
@@ -1415,7 +1423,7 @@ function EmployeeRequestDetails() {
                         <p>{request.cancellation_reason}</p>
                         {request.cancelled_at && (
                             <p style={{ marginTop: 4, fontSize: 12.5 }}>
-                                Cancelled on {new Date(request.cancelled_at).toLocaleString()}
+                                Cancelled on {formatDisplayDateTime(request.cancelled_at)}
                             </p>
                         )}
                     </div>
@@ -1457,7 +1465,7 @@ function EmployeeRequestDetails() {
 
                                 <div className="employee-info-field">
                                     <span>Uploaded At</span>
-                                    <strong>{receipt.uploaded_at ? new Date(receipt.uploaded_at).toLocaleString() : 'N/A'}</strong>
+                                    <strong>{receipt.uploaded_at ? formatDisplayDateTime(receipt.uploaded_at) : 'N/A'}</strong>
                                 </div>
 
                                 <div className="employee-info-field">
@@ -1594,7 +1602,7 @@ function EmployeeRequestDetails() {
                                                     <span>Uploaded At</span>
                                                     <strong>
                                                         {requirement.uploaded_at
-                                                            ? new Date(requirement.uploaded_at).toLocaleString()
+                                                            ? formatDisplayDateTime(requirement.uploaded_at)
                                                             : 'Not uploaded'}
                                                     </strong>
                                                 </div>
@@ -1709,7 +1717,7 @@ function EmployeeRequestDetails() {
                             <p>The registrar employee can now prepare the student's requested academic document.</p>
 
                             {request.processed_at && (
-                                <p><strong>Processing Started:</strong> {new Date(request.processed_at).toLocaleString()}</p>
+                                <p><strong>Processing Started:</strong> {formatDisplayDateTime(request.processed_at)}</p>
                             )}
 
                             <button onClick={generateDigitalCredential} disabled={processing} className="employee-primary-button" style={{ marginTop: 12 }}>
@@ -1763,7 +1771,7 @@ function EmployeeRequestDetails() {
                                 <p>
                                     Claimed on{' '}
                                     {claimSchedule.claimed_at
-                                        ? new Date(claimSchedule.claimed_at).toLocaleString()
+                                        ? formatDisplayDateTime(claimSchedule.claimed_at)
                                         : (claimSchedule.claim_date || claimSchedule.scheduled_date)}.
                                 </p>
                             </div>

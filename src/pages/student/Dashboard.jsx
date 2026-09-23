@@ -6,7 +6,7 @@ import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
 import { sanitizeAnnouncementHtml } from '../../lib/sanitizeHtml'
 import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
-import { SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
+import { SkeletonStatGrid, SkeletonPage } from '../../components/Skeleton'
 import './StudentPages.css'
 import './Dashboard.css'
 
@@ -262,7 +262,7 @@ function Dashboard() {
                         gridClassName="student-stat-grid"
                         cardClassName="student-stat-card"
                     />
-                    <SkeletonList count={2} />
+                    <SkeletonPage portal="student" blocks={[{ type: 'list', count: 2, fields: 0, action: false }, { type: 'list', count: 3, fields: 0 }]} />
                 </>
             )}
 

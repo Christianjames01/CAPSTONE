@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
-import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
+import { SkeletonDashboard } from '../../components/Skeleton'
 import { StatusDonutChart, RequestsTrendChart } from '../admin/DashboardCharts'
 import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconCalendarCheck, IconXCircle } from '../admin/icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange, countByStatus } from '../../lib/dashboardData'
@@ -238,12 +238,7 @@ function EmployeeDashboard() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonStatGrid count={3} gridClassName="dash-overview-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
-                <SkeletonStatGrid count={5} gridClassName="dash-status-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
-                <SkeletonList count={2} />
-            </div>
+            <SkeletonDashboard portal="employee" overview={3} status={5} charts quickLinks={4} twoCol />
         )
     }
 

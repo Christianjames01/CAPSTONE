@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDate } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
@@ -321,11 +322,16 @@ function EmployeeDetails() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="admin"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header' },
+                    { type: 'card', action: true, fields: 8, titleWidth: 200 },
+                    { type: 'card', lines: 1, rows: 2, titleWidth: 230 },
+                    { type: 'card', lines: 1, rows: 3, titleWidth: 170 },
+                ]}
+            />
         )
     }
 
@@ -534,7 +540,7 @@ function EmployeeDetails() {
 
                                 <div className="admin-info-field">
                                     <span>Requested</span>
-                                    <strong>{r.requested_at ? new Date(r.requested_at).toLocaleDateString() : 'N/A'}</strong>
+                                    <strong>{r.requested_at ? formatDisplayDate(r.requested_at) : 'N/A'}</strong>
                                 </div>
                             </div>
 

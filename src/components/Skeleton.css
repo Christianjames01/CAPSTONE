@@ -188,3 +188,64 @@ html[data-theme="dark"] {
         animation: none;
     }
 }
+
+/* ---------- Layout-matched page skeleton helpers ---------- */
+
+.skeleton-page-block {
+    margin-bottom: 24px;
+}
+
+.skeleton-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.skeleton-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+}
+
+.skeleton-rows .skeleton-row + .skeleton-row,
+.dash-row-list .skeleton-row + .skeleton-row {
+    border-top: 1px solid var(--skeleton-card-border);
+}
+
+/* Donut placeholder: a ring the same size and thickness as the real chart. */
+.skeleton-donut {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 57%, var(--skeleton-base) 58%, var(--skeleton-base) 78%, transparent 79%);
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/* Daily-columns placeholder, same height as the real chart area. */
+.skeleton-columns {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    height: 200px;
+    padding: 10px 4px 26px 30px;
+    border-bottom: 1px solid var(--skeleton-card-border);
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-donut {
+        animation: none;
+    }
+}

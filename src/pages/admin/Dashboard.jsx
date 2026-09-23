@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
-import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
+import { SkeletonDashboard } from '../../components/Skeleton'
 import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers } from './icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
 import '../../components/DashboardStats.css'
@@ -196,12 +196,7 @@ function AdminDashboard() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonStatGrid count={3} gridClassName="dash-overview-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
-                <SkeletonStatGrid count={7} gridClassName="dash-status-grid" cardClassName="dash-stat-tile dash-skeleton-tile" />
-                <SkeletonList count={2} />
-            </div>
+            <SkeletonDashboard portal="admin" overview={3} status={7} charts list={3} />
         )
     }
 

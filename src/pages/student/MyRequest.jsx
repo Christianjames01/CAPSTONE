@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDate } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
@@ -274,7 +275,7 @@ function MyRequest() {
                                 <span>Requested</span>
                                 <strong>
                                     {request.requested_at
-                                        ? new Date(request.requested_at).toLocaleDateString()
+                                        ? formatDisplayDate(request.requested_at)
                                         : '-'}
                                 </strong>
                             </div>

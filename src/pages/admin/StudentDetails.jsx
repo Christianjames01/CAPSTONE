@@ -7,7 +7,7 @@ import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
 import { updateStudentEmail } from '../../lib/updateStudentEmail'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
@@ -419,11 +419,17 @@ function StudentDetails() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="admin"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', avatar: true },
+                    { type: 'card', action: true, fields: 7, titleWidth: 190 },
+                    { type: 'card', action: true, fields: 10, titleWidth: 180 },
+                    { type: 'card', titleWidth: 90, lines: 1, buttons: 2 },
+                    { type: 'list', count: 2, fields: 2, action: false },
+                ]}
+            />
         )
     }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -403,10 +403,15 @@ function UploadReceipt() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="student"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', titleWidth: 280 },
+                    { type: 'card', fields: 4, titleWidth: 180 },
+                    { type: 'card', lines: 2, media: 150, buttons: 1, titleWidth: 160 },
+                ]}
+            />
         )
     }
 

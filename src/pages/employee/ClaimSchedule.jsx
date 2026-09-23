@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
@@ -798,11 +798,17 @@ function ClaimSchedule() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="employee"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', titleWidth: 200 },
+                    { type: 'card', pill: true, fields: 6, titleWidth: 150 },
+                    { type: 'card', fields: 4, titleWidth: 190 },
+                    { type: 'card', lines: 2, buttons: 2, titleWidth: 190 },
+                    { type: 'card', rows: 3, titleWidth: 170 },
+                ]}
+            />
         )
     }
 

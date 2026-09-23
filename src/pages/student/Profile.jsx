@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import MfaSetup from '../../components/MfaSetup'
 import PasswordRequirements from '../../components/PasswordRequirements'
@@ -411,11 +411,19 @@ function Profile() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonDetailCard fields={6} />
-                <SkeletonDetailCard fields={4} />
-            </div>
+            <SkeletonPage
+                portal="student"
+                blocks={[
+                    { type: 'header', titleWidth: 120 },
+                    { type: 'profile' },
+                    { type: 'card', fields: 6, titleWidth: 200 },
+                    { type: 'card', fields: 3, titleWidth: 190 },
+                    { type: 'card', action: true, fields: 5, titleWidth: 180 },
+                    { type: 'card', action: true, lines: 1, titleWidth: 110 },
+                    { type: 'card', action: true, lines: 1, titleWidth: 100 },
+                    { type: 'card', lines: 2, buttons: 1, titleWidth: 220 },
+                ]}
+            />
         )
     }
 

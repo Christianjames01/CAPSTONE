@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notifyWarning, notifyError } from '../../lib/notify'
-import { SkeletonPageHeader, SkeletonList } from '../../components/Skeleton'
+import { SkeletonPage } from '../../components/Skeleton'
 import './StudentPages.css'
 
 function UploadRequirements() {
@@ -161,10 +161,14 @@ function UploadRequirements() {
 
     if (loading) {
         return (
-            <div>
-                <SkeletonPageHeader />
-                <SkeletonList count={3} />
-            </div>
+            <SkeletonPage
+                portal="student"
+                blocks={[
+                    { type: 'back' },
+                    { type: 'header', titleWidth: 260 },
+                    { type: 'list', title: false, count: 3, fields: 0 },
+                ]}
+            />
         )
     }
 
