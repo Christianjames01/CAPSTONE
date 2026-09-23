@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { SkeletonPageContent } from './Skeleton'
 
 function RequireFullEmployeeAccess({ children }) {
     const [loading, setLoading] = useState(true)
@@ -32,7 +33,7 @@ function RequireFullEmployeeAccess({ children }) {
     }
 
     if (loading) {
-        return <div>Loading...</div>
+        return <SkeletonPageContent />
     }
 
     if (!allowed) {

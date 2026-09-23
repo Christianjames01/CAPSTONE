@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { SkeletonAppShell } from './Skeleton'
 import { IconClock, IconAlertCircle, IconMail, IconPhone } from '../pages/student/icons'
 import hcdcLogo from '../assets/hcdc-logo.png'
 import './StudentVerificationGate.css'
@@ -50,7 +51,7 @@ function StudentVerificationGate({ children }) {
     }
 
     if (loading) {
-        return <div>Loading...</div>
+        return <SkeletonAppShell />
     }
 
     if (status === 'pending' || status === 'rejected') {

@@ -5,6 +5,7 @@ import hcdcLogo from '../../assets/hcdc-logo.png'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyWarning } from '../../lib/notify'
 import { IconX } from './icons'
+import { Skeleton } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -426,7 +427,12 @@ function NewRequest() {
                         <label className="form-label">Document</label>
 
                         {loadingDocuments ? (
-                            <p className="student-loading" style={{ padding: 0 }}>Loading documents...</p>
+                            <div role="status" aria-busy="true" aria-label="Loading documents">
+                                <Skeleton height={42} radius={8} style={{ marginBottom: 10 }} />
+                                {[0, 1, 2, 3].map((i) => (
+                                    <Skeleton key={i} height={52} radius={8} style={{ marginBottom: 8 }} />
+                                ))}
+                            </div>
                         ) : (
                             <>
                                 <input

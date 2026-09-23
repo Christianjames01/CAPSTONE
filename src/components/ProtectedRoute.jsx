@@ -1,6 +1,7 @@
 import { Navigate, Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { SkeletonAppShell } from './Skeleton'
 import { dashboardPathForRole } from '../lib/roleRedirect'
 import { getEmployeeAccountIssue, employeeIssueMessage } from '../lib/accountStatusMessage'
 
@@ -52,7 +53,7 @@ function ProtectedRoute({ children, allowedRoles }) {
     }
 
     if (loading) {
-        return <div>Loading...</div>
+        return <SkeletonAppShell />
     }
 
     if (!profile) {
