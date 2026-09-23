@@ -104,6 +104,12 @@ function Messages() {
                             : 'Unknown',
                         messages: [],
                         unreadCount: 0,
+                        // Anyone besides "the" other person (e.g. the head)
+                        // who has sent into this thread -- a reply here
+                        // fans out to them too, so this stays a shared
+                        // conversation rather than only ever routing back
+                        // to the one counterpart.
+                        extraParticipantIds: new Set(),
                     }
                 }
 
@@ -112,10 +118,15 @@ function Messages() {
                 if (m.receiver_user_id === user.id && !m.is_read) {
                     grouped[otherId].unreadCount += 1
                 }
+
+                if (m.sender_user_id !== user.id && m.sender_user_id !== otherId) {
+                    grouped[otherId].extraParticipantIds.add(m.sender_user_id)
+                }
             }
 
             for (const group of Object.values(grouped)) {
                 group.messages.sort((a, b) => a.created_at.localeCompare(b.created_at))
+                group.extraParticipantIds = [...group.extraParticipantIds]
             }
 
             const threadList = Object.values(grouped).sort((a, b) => {
@@ -161,27 +172,36 @@ function Messages() {
     const sendReply = async () => {
         if (!reply.trim() || !activeThread) return
 
+        // messages is strictly 1:1, so reaching everyone in this thread
+        // (the student plus anyone else who's messaged in, e.g. the head)
+        // means one row per recipient, same fan-out the admin side does.
+        const recipientIds = [activeThread.otherUserId, ...(activeThread.extraParticipantIds || [])]
+
         try {
             setSending(true)
 
+            const rows = recipientIds.map((id) => ({
+                sender_user_id: userId,
+                receiver_user_id: id,
+                message: reply.trim(),
+                is_read: false,
+            }))
+
             const { data, error: sendError } = await supabase
                 .from('messages')
-                .insert({
-                    sender_user_id: userId,
-                    receiver_user_id: activeThread.otherUserId,
-                    message: reply.trim(),
-                    is_read: false,
-                })
+                .insert(rows)
                 .select()
-                .single()
 
             if (sendError) {
                 throw new Error('Failed to send message: ' + sendError.message)
             }
 
+            // One bubble here even though it went out as multiple rows.
+            const displayRow = data.find((d) => d.receiver_user_id === activeThread.otherUserId) || data[0]
+
             const updatedThread = {
                 ...activeThread,
-                messages: [...activeThread.messages, data],
+                messages: [...activeThread.messages, displayRow],
             }
 
             setActiveThread(updatedThread)
