@@ -118,12 +118,23 @@ function Messages() {
 
                     if (!target) continue
 
-                    const seen = new Set(target.messages.map((m) => `${m.sender_user_id}|${m.message}|${m.created_at}`))
+                    const indexBySignature = new Map(
+                        target.messages.map((m, i) => [`${m.sender_user_id}|${m.message}|${m.created_at}`, i])
+                    )
 
                     for (const m of group.messages) {
                         const signature = `${m.sender_user_id}|${m.message}|${m.created_at}`
-                        if (seen.has(signature)) continue
-                        seen.add(signature)
+                        const existingIndex = indexBySignature.get(signature)
+
+                        if (existingIndex !== undefined) {
+                            // Same fanned-out message already shown via the other
+                            // recipient's copy. Keep the head's own copy instead, so
+                            // its unread status counts and "Mark as read" can clear it.
+                            if (m.receiver_user_id === user.id) target.messages[existingIndex] = m
+                            continue
+                        }
+
+                        indexBySignature.set(signature, target.messages.length)
                         target.messages.push(m)
                     }
 
