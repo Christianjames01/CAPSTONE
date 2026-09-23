@@ -1,25 +1,65 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { IconCalendar } from '../student/icons'
-import { IconShieldCheck, IconGear, IconUsers } from './icons'
-import { SkeletonDashboard } from '../../components/Skeleton'
-import { StatusDonutChart, RequestsTrendChart } from '../admin/DashboardCharts'
-import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconCalendarCheck, IconXCircle } from '../admin/icons'
-import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange, countByStatus } from '../../lib/dashboardData'
+import { IconCalendar, IconAlertCircle } from '../student/icons'
+import { IconShieldCheck, IconGear, IconUsers, IconMessage } from './icons'
+import { Skeleton } from '../../components/Skeleton'
+import { localDay, countByStatus } from '../../lib/dashboardData'
 import '../../components/DashboardStats.css'
 import './EmployeePages.css'
+import './EmployeeDashboard.css'
 
-const QUICK_LINKS = [
-    { to: '/employee/verification', label: 'Request Verification', icon: <IconShieldCheck /> },
-    { to: '/employee/processing', label: 'Document Processing', icon: <IconGear /> },
-    { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
-    { to: '/employee/students', label: 'Students', icon: <IconUsers /> },
+// The employee dashboard is a personal work view ("what do I do next?"),
+// deliberately different from the head's office-wide statistics dashboard.
+
+const FULL_PIPELINE = [
+    { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/employee/verification', hint: 'Awaiting payment' },
+    { key: 'verification', label: 'Receipts to Verify', statuses: ['receipt_uploaded'], to: '/employee/verification', hint: 'Check the receipt' },
+    { key: 'processing', label: 'Processing', statuses: ['receipt_verified', 'processing', 'lacking_requirements'], to: '/employee/processing', hint: 'Prepare the document' },
+    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/claim-schedule', hint: 'Schedule the release' },
+    { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', hint: 'Released' },
 ]
 
-const RELEASING_QUICK_LINKS = [
-    { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
+const RELEASING_PIPELINE = [
+    { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/claim-schedule', hint: 'Waiting to be released' },
+    { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', hint: 'Released to students' },
 ]
+
+// Statuses where the next move is the employee's, oldest first.
+const ACTION_STATUSES = ['receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'pending', 'payment_pending']
+const RELEASING_ACTION_STATUSES = ['ready_for_claiming']
+
+const QUICK_ACTIONS = [
+    { to: '/employee/verification', label: 'Verify receipts', icon: <IconShieldCheck /> },
+    { to: '/employee/processing', label: 'Process documents', icon: <IconGear /> },
+    { to: '/employee/claim-schedule', label: 'Claim schedule', icon: <IconCalendar /> },
+    { to: '/employee/students', label: 'Find a student', icon: <IconUsers /> },
+    { to: '/employee/messages', label: 'Messages', icon: <IconMessage /> },
+]
+
+const RELEASING_QUICK_ACTIONS = [
+    { to: '/employee/claim-schedule', label: 'Claim schedule', icon: <IconCalendar /> },
+    { to: '/employee/messages', label: 'Messages', icon: <IconMessage /> },
+]
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+const greetingFor = (date) => {
+    const hour = date.getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+}
+
+const formatTime = (time) => {
+    if (!time) return 'No time'
+    const [hours, minutes] = time.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes), 0, 0)
+    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+}
+
+const waitingLabel = (days) => (days <= 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`)
 
 function EmployeeDashboard() {
     const navigate = useNavigate()
@@ -27,11 +67,13 @@ function EmployeeDashboard() {
     const [employee, setEmployee] = useState(null)
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
+    const [documentNames, setDocumentNames] = useState({})
     const [todaySchedules, setTodaySchedules] = useState([])
     const [missedCount, setMissedCount] = useState(0)
     const [rescheduleRequestCount, setRescheduleRequestCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState('')
+    const [hoverDay, setHoverDay] = useState(null)
 
     useEffect(() => {
         loadDashboard()
@@ -60,19 +102,9 @@ function EmployeeDashboard() {
                 setName(profile.first_name)
             }
 
-            const {
-                data: employeeData,
-                error: employeeError
-            } = await supabase
+            const { data: employeeData, error: employeeError } = await supabase
                 .from('employees')
-                .select(`
-                    employee_id,
-                    employee_number,
-                    position_title,
-                    assigned_college_id,
-                    status,
-                    access_scope
-                `)
+                .select('employee_id, employee_number, position_title, assigned_college_id, status, access_scope')
                 .eq('user_id', user.id)
                 .single()
 
@@ -90,13 +122,7 @@ function EmployeeDashboard() {
 
             let requestQuery = supabase
                 .from('document_requests')
-                .select(`
-                    request_id,
-                    request_number,
-                    total_amount,
-                    status,
-                    requested_at
-                `)
+                .select('request_id, request_number, document_type_id, total_amount, status, requested_at, completed_at')
                 .order('requested_at', { ascending: false })
 
             if (isReleasingScope) {
@@ -107,18 +133,26 @@ function EmployeeDashboard() {
                 requestQuery = requestQuery.eq('assigned_employee_id', employeeData.employee_id)
             }
 
-            const {
-                data: requestData,
-                error: requestError
-            } = await requestQuery
+            const { data: requestData, error: requestError } = await requestQuery
 
             if (requestError) {
                 throw new Error('Failed to load requests: ' + requestError.message)
             }
 
-            setRequests(requestData || [])
+            const rows = requestData || []
+            setRequests(rows)
 
-            const myRequestIds = (requestData || []).map((r) => r.request_id)
+            const documentTypeIds = [...new Set(rows.map((r) => r.document_type_id).filter(Boolean))]
+            if (documentTypeIds.length > 0) {
+                const { data: documentTypes } = await supabase
+                    .from('document_types')
+                    .select('document_type_id, document_name')
+                    .in('document_type_id', documentTypeIds)
+
+                setDocumentNames(Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name])))
+            }
+
+            const myRequestIds = rows.map((r) => r.request_id)
 
             if (myRequestIds.length > 0) {
                 const { data: attentionSchedules } = await supabase
@@ -127,17 +161,15 @@ function EmployeeDashboard() {
                     .in('request_id', myRequestIds)
                     .neq('status', 'cancelled')
 
-                const rows = attentionSchedules || []
-                setMissedCount(rows.filter((s) => s.status === 'missed').length)
-                setRescheduleRequestCount(rows.filter((s) => s.reschedule_requested_at).length)
+                const scheduleRows = attentionSchedules || []
+                setMissedCount(scheduleRows.filter((s) => s.status === 'missed').length)
+                setRescheduleRequestCount(scheduleRows.filter((s) => s.reschedule_requested_at).length)
             }
-
-            const today = localDay()
 
             let todayScheduleQuery = supabase
                 .from('claim_schedules')
                 .select('claim_schedule_id, request_id, student_id, claim_time, scheduled_time, status')
-                .eq('claim_date', today)
+                .eq('claim_date', localDay())
                 .neq('status', 'cancelled')
                 .order('claim_time', { ascending: true })
 
@@ -184,62 +216,74 @@ function EmployeeDashboard() {
     }
 
     const isReleasingOnly = employee?.access_scope === 'releasing'
-    const recentRequests = requests.slice(0, 6)
+    // One clock reading per page load, so every "waiting N days" agrees.
+    const [now] = useState(() => new Date())
 
-    const statusChartData = useMemo(() => buildStatusChartData(requests), [requests])
-    const trendChartData = useMemo(() => dailyTrend(requests, 14), [requests])
-    const weekly = useMemo(() => weeklyChange(requests), [requests])
-
-    const count = (statuses) => countByStatus(requests, statuses)
-    const needsActionCount = count(['pending', 'payment_pending', 'receipt_uploaded'])
-
-    const overviewStats = isReleasingOnly
-        ? [
-            { label: 'Ready for Claiming', value: count(['ready_for_claiming']), to: '/employee/requests?status=ready_for_claiming', Icon: IconPackage, note: 'Waiting to be released' },
-            { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule', Icon: IconCalendarCheck, note: 'Scheduled to claim today' },
-            { label: 'Completed', value: count(['completed']), to: '/employee/requests?status=completed', Icon: IconCheckCircle, note: 'Released to students' },
-        ]
-        : [
-            { label: 'Assigned to Me', value: requests.length, to: '/employee/requests', Icon: IconFileStack, note: `${weekly.current} new this week`, change: weekly.change },
-            { label: 'Needs Action', value: needsActionCount, to: '/employee/verification', Icon: IconHourglass, note: 'Pending or awaiting receipt check' },
-            { label: "Today's Appointments", value: todaySchedules.length, to: '/employee/claim-schedule', Icon: IconCalendarCheck, note: 'Scheduled to claim today' },
-        ]
-
-    const statusStats = (isReleasingOnly
-        ? [
-            { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/requests?status=ready_for_claiming', Icon: IconPackage },
-            { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', Icon: IconCheckCircle },
-        ]
-        : [
-            { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/employee/verification', Icon: IconHourglass },
-            { key: 'verification', label: 'Receipts to Verify', statuses: ['receipt_uploaded'], to: '/employee/verification', Icon: IconFileStack },
-            { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], to: '/employee/processing', Icon: IconPackage },
-            { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/employee/requests?status=ready_for_claiming', Icon: IconCalendarCheck },
-            { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/employee/requests?status=completed', Icon: IconCheckCircle },
-        ]
-    ).map((stat) => {
-        const value = count(stat.statuses)
-        const share = requests.length ? Math.round((value / requests.length) * 100) : 0
-        return { ...stat, value, share, color: `var(--status-${stat.key})` }
+    const pipeline = (isReleasingOnly ? RELEASING_PIPELINE : FULL_PIPELINE).map((stage) => {
+        const inStage = requests.filter((r) => stage.statuses.includes(r.status))
+        const oldest = inStage.reduce((min, r) => (r.requested_at && (!min || r.requested_at < min) ? r.requested_at : min), null)
+        const oldestDays = oldest ? Math.floor((now - new Date(oldest)) / DAY_MS) : null
+        return { ...stage, count: inStage.length, oldestDays }
     })
 
-    const attentionStats = [
-        { label: missedCount === 1 ? 'Missed Claim' : 'Missed Claims', value: missedCount, to: '/employee/claim-schedule', note: 'Students who did not show up' },
-        { label: rescheduleRequestCount === 1 ? 'Reschedule Request' : 'Reschedule Requests', value: rescheduleRequestCount, to: '/employee/claim-schedule', note: 'Students asking for a new date' },
-    ].filter((s) => s.value > 0)
+    const attention = useMemo(() => {
+        const statuses = isReleasingOnly ? RELEASING_ACTION_STATUSES : ACTION_STATUSES
+        return requests
+            .filter((r) => statuses.includes(r.status) && r.requested_at)
+            .sort((a, b) => a.requested_at.localeCompare(b.requested_at))
+            .slice(0, 6)
+            .map((r) => ({ ...r, waitingDays: Math.floor((now - new Date(r.requested_at)) / DAY_MS) }))
+    }, [requests, isReleasingOnly, now])
 
-    const formatTime = (time) => {
-        if (!time) return 'N/A'
-        const [hours, minutes] = time.split(':')
-        const date = new Date()
-        date.setHours(Number(hours), Number(minutes), 0, 0)
-        return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
-    }
+    const actionCount = countByStatus(requests, isReleasingOnly ? RELEASING_ACTION_STATUSES : ACTION_STATUSES)
+
+    // Last 7 local days: requests assigned (by request date) and completed.
+    const week = useMemo(() => {
+        const days = []
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date()
+            d.setDate(d.getDate() - i)
+            days.push({ key: localDay(d), label: d.toLocaleDateString('en-PH', { weekday: 'short' }), received: 0, completed: 0 })
+        }
+        const byKey = Object.fromEntries(days.map((d) => [d.key, d]))
+        for (const r of requests) {
+            if (r.requested_at) {
+                const k = localDay(new Date(r.requested_at))
+                if (byKey[k]) byKey[k].received += 1
+            }
+            if (r.completed_at) {
+                const k = localDay(new Date(r.completed_at))
+                if (byKey[k]) byKey[k].completed += 1
+            }
+        }
+        return days
+    }, [requests])
+
+    const weekReceived = week.reduce((sum, d) => sum + d.received, 0)
+    const weekCompleted = week.reduce((sum, d) => sum + d.completed, 0)
+    const weekMax = Math.max(1, ...week.map((d) => Math.max(d.received, d.completed)))
+
+    const alerts = [
+        { label: missedCount === 1 ? 'missed claim' : 'missed claims', value: missedCount, to: '/employee/claim-schedule' },
+        { label: rescheduleRequestCount === 1 ? 'reschedule request' : 'reschedule requests', value: rescheduleRequestCount, to: '/employee/claim-schedule' },
+    ].filter((a) => a.value > 0)
+
+    const summary = (() => {
+        const parts = []
+        if (actionCount > 0) parts.push(`${actionCount} ${actionCount === 1 ? 'request needs' : 'requests need'} your action`)
+        if (todaySchedules.length > 0) parts.push(`${todaySchedules.length} ${todaySchedules.length === 1 ? 'student is' : 'students are'} claiming today`)
+        if (parts.length === 0) return "You're all caught up. Nothing is waiting on you right now."
+        return `${parts.join(' and ')}.`
+    })()
+
+    const primaryAction = isReleasingOnly
+        ? { label: 'Open claim schedule', to: '/employee/claim-schedule' }
+        : attention.some((r) => r.status === 'receipt_uploaded')
+            ? { label: 'Verify receipts', to: '/employee/verification' }
+            : { label: 'Continue processing', to: '/employee/processing' }
 
     if (loading) {
-        return (
-            <SkeletonDashboard portal="employee" overview={3} status={5} charts quickLinks={4} twoCol />
-        )
+        return <EmployeeDashboardSkeleton />
     }
 
     if (errorMessage) {
@@ -254,118 +298,87 @@ function EmployeeDashboard() {
     }
 
     return (
-        <div>
-            <div className="employee-page-header">
-                <h1>{name ? `Welcome back, ${name}` : 'Employee Dashboard'}</h1>
-                <p>
-                    {employee?.employee_number} · {employee?.position_title}
-                </p>
-            </div>
+        <div className="emp-dash">
+            <section className="emp-hero">
+                <div className="emp-hero-text">
+                    <span className="emp-hero-date">
+                        {now.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </span>
+                    <h1>{greetingFor(now)}{name ? `, ${name}` : ''}</h1>
+                    <p>{summary}</p>
 
-            {attentionStats.length > 0 && (
-                <div className="dash-alert-grid">
-                    {attentionStats.map((stat) => (
-                        <button key={stat.note} className="dash-alert-tile" onClick={() => navigate(stat.to)}>
-                            <span className="dash-alert-icon" aria-hidden="true"><IconXCircle /></span>
-                            <span className="dash-alert-text">
-                                <strong>{stat.value} {stat.label}</strong>
-                                <span>{stat.note}</span>
-                            </span>
-                            <span className="dash-alert-arrow" aria-hidden="true">→</span>
-                        </button>
-                    ))}
-                </div>
-            )}
-
-            <section className="dash-stats" aria-label="Key statistics">
-                <div className="dash-overview-grid">
-                    {overviewStats.map((stat) => (
-                        <button key={stat.label} className="dash-stat-tile dash-overview-tile" onClick={() => navigate(stat.to)}>
-                            <div className="dash-stat-top">
-                                <span className="dash-stat-label">{stat.label}</span>
-                                <span className="dash-stat-icon dash-stat-icon-brand" aria-hidden="true"><stat.Icon /></span>
-                            </div>
-                            <span className="dash-stat-value dash-stat-value-lg">{stat.value.toLocaleString()}</span>
-                            <span className="dash-stat-note">
-                                {stat.change !== undefined && stat.change !== 0 && (
-                                    <span className="dash-stat-change">
-                                        {stat.change > 0 ? '▲' : '▼'} {Math.abs(stat.change)} vs last week
-                                        <span aria-hidden="true"> · </span>
-                                    </span>
-                                )}
-                                {stat.note}
-                            </span>
-                        </button>
-                    ))}
+                    {alerts.length > 0 && (
+                        <div className="emp-hero-alerts">
+                            {alerts.map((a) => (
+                                <button key={a.label} className="emp-hero-alert" onClick={() => navigate(a.to)}>
+                                    <IconAlertCircle />
+                                    <strong>{a.value}</strong> {a.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                <div className="dash-stats-heading">
-                    <h2>{isReleasingOnly ? 'Claiming Status' : 'My Requests by Status'}</h2>
-                    <span>Share of {requests.length.toLocaleString()} {isReleasingOnly ? 'claiming' : 'assigned'} requests</span>
-                </div>
-
-                <div className="dash-status-grid">
-                    {statusStats.map((stat) => (
-                        <button
-                            key={stat.key}
-                            className="dash-stat-tile dash-status-tile"
-                            style={{ '--tile-color': stat.color }}
-                            onClick={() => navigate(stat.to)}
-                            aria-label={`${stat.label}: ${stat.value} requests, ${stat.share}% of requests`}
-                        >
-                            <div className="dash-stat-top">
-                                <span className="dash-stat-icon" aria-hidden="true"><stat.Icon /></span>
-                                <span className="dash-stat-label">{stat.label}</span>
-                            </div>
-                            <span className="dash-stat-value">{stat.value.toLocaleString()}</span>
-                            <div className="dash-stat-meter" aria-hidden="true">
-                                <span style={{ width: `${stat.share}%` }} />
-                            </div>
-                            <span className="dash-stat-note">{stat.share}% of requests</span>
-                        </button>
-                    ))}
+                <div className="emp-hero-side">
+                    <div className="emp-hero-meta">
+                        <span>{employee?.position_title}</span>
+                        <span>{employee?.employee_number}</span>
+                    </div>
+                    <button className="emp-hero-cta" onClick={() => navigate(primaryAction.to)}>
+                        {primaryAction.label} →
+                    </button>
                 </div>
             </section>
 
-            {!isReleasingOnly && (
-                <div className="dash-charts-grid">
-                    <StatusDonutChart data={statusChartData} />
-                    <RequestsTrendChart data={trendChartData} />
+            <section className="emp-section">
+                <div className="emp-section-head">
+                    <h2>{isReleasingOnly ? 'Claiming pipeline' : 'Your request pipeline'}</h2>
+                    <span>{requests.length} {isReleasingOnly ? 'claiming' : 'assigned'} requests</span>
                 </div>
-            )}
 
-            <div className="dash-quick-links">
-                {(isReleasingOnly ? RELEASING_QUICK_LINKS : QUICK_LINKS).map((link) => (
-                    <button key={link.to} className="dash-quick-link" onClick={() => navigate(link.to)}>
-                        <span className="dash-quick-link-icon" aria-hidden="true">{link.icon}</span>
-                        <span>{link.label}</span>
-                        <span className="dash-quick-link-arrow" aria-hidden="true">→</span>
-                    </button>
-                ))}
-            </div>
+                <ol className="emp-pipeline">
+                    {pipeline.map((stage, i) => (
+                        <li key={stage.key} className="emp-pipeline-step" style={{ '--step-color': `var(--status-${stage.key})` }}>
+                            <button onClick={() => navigate(stage.to)} aria-label={`${stage.label}: ${stage.count} requests`}>
+                                <span className="emp-pipeline-index" aria-hidden="true">{i + 1}</span>
+                                <span className="emp-pipeline-count">{stage.count}</span>
+                                <span className="emp-pipeline-label">{stage.label}</span>
+                                <span className="emp-pipeline-hint">
+                                    {stage.key !== 'completed' && stage.count > 0 && stage.oldestDays !== null
+                                        ? `Oldest: ${stage.oldestDays <= 0 ? "today" : waitingLabel(stage.oldestDays)}`
+                                        : stage.hint}
+                                </span>
+                            </button>
+                        </li>
+                    ))}
+                </ol>
+            </section>
 
-            <div className="dash-two-col">
-                <section>
-                    <div className="employee-page-header-row" style={{ marginBottom: 14 }}>
-                        <h2 style={{ fontSize: 16 }}>Today's Appointments</h2>
-                        <button className="employee-link-button" onClick={() => navigate('/employee/claim-schedule')}>
-                            Claim schedule →
-                        </button>
+            <div className="emp-columns">
+                <div className="emp-side">
+                <section className="emp-panel">
+                    <div className="emp-section-head">
+                        <h2>Needs your attention</h2>
+                        <button className="employee-link-button" onClick={() => navigate('/employee/requests')}>View all →</button>
                     </div>
 
-                    {todaySchedules.length === 0 ? (
-                        <div className="employee-empty">No students are scheduled to claim today.</div>
+                    {attention.length === 0 ? (
+                        <div className="emp-empty">
+                            <strong>All caught up</strong>
+                            <span>No requests are waiting on you.</span>
+                        </div>
                     ) : (
-                        <ul className="dash-row-list">
-                            {todaySchedules.map((schedule) => (
-                                <li key={schedule.claim_schedule_id}>
-                                    <button className="dash-row" onClick={() => navigate(`/employee/requests/${schedule.request_id}`)}>
-                                        <span className="dash-row-time">{formatTime(schedule.claim_time || schedule.scheduled_time)}</span>
-                                        <span className="dash-row-main">
-                                            <strong>{schedule.requestNumber}</strong>
-                                            <span>Student {schedule.studentNumber}</span>
+                        <ul className="emp-attention">
+                            {attention.map((r) => (
+                                <li key={r.request_id}>
+                                    <button onClick={() => navigate(`/employee/requests/${r.request_id}`)}>
+                                        <span className="emp-attention-main">
+                                            <strong>{documentNames[r.document_type_id] || 'Document request'}</strong>
+                                            <span>{r.request_number} · <span className="emp-attention-status">{r.status.replace(/_/g, ' ')}</span></span>
                                         </span>
-                                        <span className={`employee-status-pill status-${schedule.status}`}>{schedule.status.replace(/_/g, ' ')}</span>
+                                        <span className={`emp-wait${r.waitingDays >= 5 ? ' is-late' : r.waitingDays >= 3 ? ' is-aging' : ''}`}>
+                                            {waitingLabel(r.waitingDays)}
+                                        </span>
                                     </button>
                                 </li>
                             ))}
@@ -373,37 +386,180 @@ function EmployeeDashboard() {
                     )}
                 </section>
 
-                <section>
-                    <div className="employee-page-header-row" style={{ marginBottom: 14 }}>
-                        <h2 style={{ fontSize: 16 }}>{isReleasingOnly ? 'Recent Claiming Requests' : 'Recent Assigned Requests'}</h2>
-                        <button className="employee-link-button" onClick={() => navigate('/employee/requests')}>
-                            View all →
-                        </button>
+                <section className="emp-panel">
+                    <div className="emp-section-head">
+                        <h2>Quick actions</h2>
                     </div>
+                    <div className="emp-actions">
+                        {(isReleasingOnly ? RELEASING_QUICK_ACTIONS : QUICK_ACTIONS).map((a) => (
+                            <button key={a.to} onClick={() => navigate(a.to)}>
+                                <span className="emp-actions-icon" aria-hidden="true">{a.icon}</span>
+                                {a.label}
+                            </button>
+                        ))}
+                    </div>
+                </section>
+                </div>
 
-                    {recentRequests.length === 0 ? (
-                        <div className="employee-empty">No requests are currently assigned to you.</div>
-                    ) : (
-                        <ul className="dash-row-list">
-                            {recentRequests.map((request) => (
-                                <li key={request.request_id}>
-                                    <button className="dash-row" onClick={() => navigate(`/employee/requests/${request.request_id}`)}>
-                                        <span className="dash-row-main">
-                                            <strong>{request.request_number}</strong>
-                                            <span>
-                                                ₱{Number(request.total_amount || 0).toFixed(2)}
-                                                {request.requested_at && ` · ${new Date(request.requested_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}`}
+                <aside className="emp-side">
+                    <section className="emp-panel">
+                        <div className="emp-section-head">
+                            <h2>Today's schedule</h2>
+                            <button className="employee-link-button" onClick={() => navigate('/employee/claim-schedule')}>Open →</button>
+                        </div>
+
+                        {todaySchedules.length === 0 ? (
+                            <div className="emp-empty">
+                                <strong>No appointments today</strong>
+                                <span>Nobody is scheduled to claim.</span>
+                            </div>
+                        ) : (
+                            <ol className="emp-timeline">
+                                {todaySchedules.map((s) => (
+                                    <li key={s.claim_schedule_id} className={s.status === 'missed' ? 'is-missed' : ''}>
+                                        <button onClick={() => navigate(`/employee/requests/${s.request_id}`)}>
+                                            <span className="emp-timeline-time">{formatTime(s.claim_time || s.scheduled_time)}</span>
+                                            <span className="emp-timeline-body">
+                                                <strong>{s.requestNumber}</strong>
+                                                <span>Student {s.studentNumber} · {s.status.replace(/_/g, ' ')}</span>
                                             </span>
-                                        </span>
-                                        <span className={`employee-status-pill status-${request.status}`}>
-                                            {request.status.replace(/_/g, ' ')}
-                                        </span>
-                                    </button>
-                                </li>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ol>
+                        )}
+                    </section>
+
+                    <section className="emp-panel">
+                        <div className="emp-section-head">
+                            <h2>This week</h2>
+                        </div>
+                        <div className="emp-week-totals">
+                            <span><strong>{weekReceived}</strong> received</span>
+                            <span><strong>{weekCompleted}</strong> completed</span>
+                        </div>
+                        <div className="emp-week" role="img" aria-label={`Last 7 days: ${weekReceived} received, ${weekCompleted} completed`}>
+                            {week.map((d, i) => (
+                                <div
+                                    key={d.key}
+                                    className={`emp-week-day${i === week.length - 1 ? ' is-today' : ''}`}
+                                    onMouseEnter={() => setHoverDay(i)}
+                                    onMouseLeave={() => setHoverDay(null)}
+                                >
+                                    <div className="emp-week-bars">
+                                        <span className="emp-week-bar is-received" style={{ height: `${(d.received / weekMax) * 100}%` }} />
+                                        <span className="emp-week-bar is-completed" style={{ height: `${(d.completed / weekMax) * 100}%` }} />
+                                    </div>
+                                    <span className="emp-week-label">{i === week.length - 1 ? 'Today' : d.label}</span>
+                                    {hoverDay === i && (
+                                        <span className="emp-week-tip">{d.received} received · {d.completed} completed</span>
+                                    )}
+                                </div>
                             ))}
-                        </ul>
-                    )}
+                        </div>
+                        <div className="emp-week-legend">
+                            <span><i className="is-received" /> Received</span>
+                            <span><i className="is-completed" /> Completed</span>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </div>
+    )
+}
+
+// Loading placeholder with the same shape as the dashboard above.
+function EmployeeDashboardSkeleton() {
+    return (
+        <div className="emp-dash" role="status" aria-busy="true" aria-live="polite">
+            <span className="skeleton-sr-only">Loading dashboard…</span>
+            <section className="emp-hero emp-hero-skeleton">
+                <div className="emp-hero-text">
+                    <Skeleton width={180} height={12} className="skeleton-on-dark" />
+                    <Skeleton width={320} height={30} radius={8} className="skeleton-on-dark" style={{ margin: '12px 0' }} />
+                    <Skeleton width="min(440px, 90%)" height={14} className="skeleton-on-dark" />
+                </div>
+                <div className="emp-hero-side">
+                    <Skeleton width={160} height={12} className="skeleton-on-dark" />
+                    <Skeleton width={180} height={44} radius={10} className="skeleton-on-dark" />
+                </div>
+            </section>
+
+            <section className="emp-section">
+                <div className="emp-section-head">
+                    <Skeleton width={200} height={17} radius={6} />
+                    <Skeleton width={120} height={12} />
+                </div>
+                <ol className="emp-pipeline">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <li className="emp-pipeline-step" key={i}>
+                            <div className="emp-pipeline-skeleton">
+                                <Skeleton width={22} height={22} radius={11} />
+                                <Skeleton width={40} height={30} radius={6} />
+                                <Skeleton width="70%" height={13} />
+                                <Skeleton width="85%" height={11} />
+                            </div>
+                        </li>
+                    ))}
+                </ol>
+            </section>
+
+            <div className="emp-columns">
+                <div className="emp-side">
+                <section className="emp-panel">
+                    <div className="emp-section-head">
+                        <Skeleton width={190} height={17} radius={6} />
+                        <Skeleton width={60} height={13} />
+                    </div>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div className="emp-skeleton-row" key={i}>
+                            <div style={{ flex: 1 }}>
+                                <Skeleton width={i % 2 ? '45%' : '58%'} height={14} style={{ marginBottom: 7 }} />
+                                <Skeleton width="36%" height={11} />
+                            </div>
+                            <Skeleton width={64} height={24} radius={20} />
+                        </div>
+                    ))}
                 </section>
+
+                <section className="emp-panel">
+                    <div className="emp-section-head">
+                        <Skeleton width={130} height={17} radius={6} />
+                    </div>
+                    <div className="emp-actions">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <Skeleton key={i} height={42} radius={10} />
+                        ))}
+                    </div>
+                </section>
+                </div>
+
+                <aside className="emp-side">
+                    {[3, 0].map((rows, p) => (
+                        <section className="emp-panel" key={p}>
+                            <div className="emp-section-head">
+                                <Skeleton width={140} height={17} radius={6} />
+                            </div>
+                            {p === 1 ? (
+                                <div className="emp-week">
+                                    {[40, 65, 30, 80, 55, 20, 70].map((h, i) => (
+                                        <div className="emp-week-day" key={i}>
+                                            <div className="emp-week-bars"><Skeleton height={`${h}%`} radius={3} style={{ width: '100%' }} /></div>
+                                            <Skeleton width={26} height={10} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                Array.from({ length: rows }).map((_, i) => (
+                                    <div className="emp-skeleton-row" key={i}>
+                                        <Skeleton width={p === 0 ? 58 : 30} height={p === 0 ? 13 : 30} radius={p === 0 ? 6 : 8} />
+                                        <Skeleton width="55%" height={13} />
+                                    </div>
+                                ))
+                            )}
+                        </section>
+                    ))}
+                </aside>
             </div>
         </div>
     )
