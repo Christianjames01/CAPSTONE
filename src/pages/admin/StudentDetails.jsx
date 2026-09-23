@@ -6,6 +6,7 @@ import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
+import { updateStudentEmail } from '../../lib/updateStudentEmail'
 import { SkeletonPageHeader, SkeletonDetailCard } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
@@ -27,6 +28,7 @@ function StudentDetails() {
     const [form, setForm] = useState(null)
     const [saving, setSaving] = useState(false)
     const [resettingPassword, setResettingPassword] = useState(false)
+    const [changingEmail, setChangingEmail] = useState(false)
     const [currentRole, setCurrentRole] = useState('')
 
     useEffect(() => {
@@ -309,6 +311,54 @@ function StudentDetails() {
         }
     }
 
+    const handleChangeLoginEmail = async () => {
+        const { value: newEmail } = await Swal.fire({
+            icon: 'warning',
+            title: 'Change login email?',
+            text: `Use this only if ${student.fullName}'s HCDC account has been deactivated and they can no longer log in or complete the self-serve email change themselves. This takes effect immediately, no confirmation link needed.`,
+            input: 'email',
+            inputLabel: 'New login email',
+            inputValue: student.alternate_email || '',
+            inputPlaceholder: 'you@gmail.com',
+            showCancelButton: true,
+            confirmButtonText: 'Change email',
+            confirmButtonColor: '#C8102E',
+            inputValidator: (value) => {
+                if (!value) return 'Please enter an email address.'
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.'
+            },
+        })
+
+        if (!newEmail) return
+
+        try {
+            setChangingEmail(true)
+
+            await updateStudentEmail({ studentUserId: student.user_id, newEmail })
+
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+
+            await logActivity({
+                userId: user?.id,
+                action: 'admin_change_student_email',
+                tableName: 'students',
+                recordId: student.student_id,
+                description: `Changed login email for "${student.fullName}" (${student.student_number}) to "${newEmail}" (Registrar Head, HCDC account deactivated).`,
+            })
+
+            notifySuccess(`Login email changed to ${newEmail}.`)
+            await loadDetails()
+
+        } catch (err) {
+            console.error('CHANGE STUDENT LOGIN EMAIL ERROR:', err)
+            notifyError(err.message || 'Failed to change login email.')
+        } finally {
+            setChangingEmail(false)
+        }
+    }
+
     if (loading) {
         return (
             <div>
@@ -477,6 +527,23 @@ function StudentDetails() {
                 >
                     {resettingPassword ? 'Resetting...' : 'Reset Password'}
                 </button>
+
+                {currentRole === 'registrar_head' && (
+                    <>
+                        <p style={{ fontSize: 13, color: 'var(--slate)', margin: '18px 0 14px' }}>
+                            Current login email: <strong>{student.email || 'N/A'}</strong>. Change it if this student's HCDC
+                            account has been deactivated (e.g. after graduation) and they can no longer log in or
+                            self-serve the change themselves.
+                        </p>
+                        <button
+                            className="admin-danger-button"
+                            onClick={handleChangeLoginEmail}
+                            disabled={changingEmail}
+                        >
+                            {changingEmail ? 'Changing...' : 'Change Login Email'}
+                        </button>
+                    </>
+                )}
             </div>
 
             <h2 style={{ fontSize: 17, margin: '24px 0 14px' }}>Request History</h2>
