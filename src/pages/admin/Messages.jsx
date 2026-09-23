@@ -330,7 +330,13 @@ function Messages() {
     // of the original two participants (e.g. the head folded into a
     // student<->employee conversation), so this has to resolve any
     // sender's real name rather than just matching against A/B.
-    const nameForSender = (senderId) => senderNames[senderId] || 'Unknown'
+    // senderNames only knows about senders from messages that already
+    // existed at page load -- the head's own very first message ever
+    // (e.g. right after starting a brand-new "+ New Message" thread)
+    // wouldn't be in it yet, so resolve "self" directly instead of
+    // depending on that lookup for the one sender we always know for sure.
+    const nameForSender = (senderId) =>
+        senderId === currentUserId ? 'HCDC-Registrar' : (senderNames[senderId] || 'Unknown')
 
     if (activeThread) {
         const mine = isMyThread(activeThread)
