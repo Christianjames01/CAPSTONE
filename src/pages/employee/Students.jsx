@@ -69,6 +69,7 @@ function Students() {
     const rejectStudent = async (student) => {
         const { value: reason } = await Swal.fire({
             title: 'Reject registration',
+            allowOutsideClick: false,
             input: 'text',
             inputLabel: 'Reason (shown to the student)',
             inputPlaceholder: 'e.g. Student number not found in enrollment records',

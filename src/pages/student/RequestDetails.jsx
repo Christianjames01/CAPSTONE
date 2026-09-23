@@ -365,6 +365,7 @@ function RequestDetails() {
             title: 'Cancel Request',
             text: 'This cannot be undone. Please tell us why you\'re cancelling.',
             icon: 'warning',
+            allowOutsideClick: false,
             input: 'textarea',
             inputLabel: 'Reason for cancellation',
             inputPlaceholder: 'e.g. I no longer need this document',
@@ -435,6 +436,7 @@ function RequestDetails() {
         const { value: reason } = await Swal.fire({
             title: 'Request a Reschedule',
             text: 'Tell the Registrar why you need a new date. Mention a preferred date if you have one.',
+            allowOutsideClick: false,
             input: 'textarea',
             inputLabel: 'Reason',
             inputPlaceholder: 'e.g. I have a class conflict, could I come next Monday instead?',

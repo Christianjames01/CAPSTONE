@@ -952,6 +952,7 @@ function AdminRequestDetails() {
     const flagLackingRequirements = async () => {
         const { value: reason } = await Swal.fire({
             title: 'Flag as Lacking Requirements',
+            allowOutsideClick: false,
             input: 'text',
             inputLabel: 'What is missing? (shown to the student)',
             inputPlaceholder: 'e.g. Certificate of Registration not yet uploaded',

@@ -52,6 +52,7 @@ function Students() {
     const rejectStudent = async (student) => {
         const { value: reason } = await Swal.fire({
             title: 'Reject registration',
+            allowOutsideClick: false,
             input: 'text',
             inputLabel: 'Reason (shown to the student)',
             inputPlaceholder: 'e.g. Student number not found in enrollment records',
@@ -313,6 +314,7 @@ function Students() {
             const { value: password } = await Swal.fire({
                 title: 'Confirm your password',
                 text: 'For your security, enter your own password to permanently delete this account.',
+                allowOutsideClick: false,
                 input: 'password',
                 inputLabel: 'Your password',
                 inputPlaceholder: 'Enter your password',

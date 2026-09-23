@@ -1,6 +1,6 @@
 import './Modal.css'
 
-function Modal({ title, onClose, children, maxWidth, closeOnBackdropClick = true }) {
+function Modal({ title, onClose, children, maxWidth, closeOnBackdropClick = false }) {
     return (
         <div className="app-modal-backdrop" onClick={closeOnBackdropClick ? onClose : undefined}>
             <div className="app-modal-card" style={maxWidth ? { maxWidth } : undefined} onClick={(e) => e.stopPropagation()}>

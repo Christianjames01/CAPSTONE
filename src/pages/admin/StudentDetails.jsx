@@ -373,6 +373,7 @@ function StudentDetails() {
             icon: 'warning',
             title: 'Change login email?',
             text: `Use this only if ${student.fullName}'s HCDC account has been deactivated and they can no longer log in or complete the self-serve email change themselves. This takes effect immediately, no confirmation link needed.`,
+            allowOutsideClick: false,
             input: 'email',
             inputLabel: 'New login email',
             inputValue: student.alternate_email || '',

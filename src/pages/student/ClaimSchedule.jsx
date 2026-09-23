@@ -157,6 +157,7 @@ function ClaimSchedule() {
         const { value: reason } = await Swal.fire({
             title: 'Request a Reschedule',
             text: 'Tell the Registrar why you need a new date. Mention a preferred date if you have one.',
+            allowOutsideClick: false,
             input: 'textarea',
             inputLabel: 'Reason',
             inputPlaceholder: 'e.g. I have a class conflict, could I come next Monday instead?',

@@ -191,6 +191,7 @@ function AllRequests() {
             const { value } = await Swal.fire({
                 title: 'Reject Selected Requests',
                 text: `This will reject ${targets.length} request(s). Please provide a reason (shown to every affected student).`,
+                allowOutsideClick: false,
                 input: 'textarea',
                 inputLabel: 'Reason for rejection',
                 inputValidator: (value) => {
