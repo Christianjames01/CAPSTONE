@@ -383,8 +383,8 @@ function StudentDetails() {
             </div>
 
             {editing && form && (
-                <Modal title="Edit Student Information" maxWidth={640} onClose={() => !saving && setEditing(false)}>
-                    <div className="admin-info-grid" style={{ marginBottom: 14 }}>
+                <Modal title="Edit Student Information" maxWidth={720} onClose={() => !saving && setEditing(false)}>
+                    <div className="admin-info-grid" style={{ marginBottom: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
                         <div className="form-group">
                             <label className="form-label">First Name</label>
                             <input className="admin-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
