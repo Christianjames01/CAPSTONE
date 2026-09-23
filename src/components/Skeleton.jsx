@@ -351,12 +351,91 @@ export function SkeletonPage({ portal, blocks }) {
 
 const COLUMN_HEIGHTS = [35, 20, 55, 30, 70, 25, 45, 60, 40, 85, 50, 30, 65, 45]
 
-export function SkeletonDashboard({ portal = 'admin', alerts = 0, overview = 3, status = 5, charts = true, quickLinks = 0, twoCol = false, list = 0 }) {
+export function SkeletonDashboard({ portal = 'admin', alerts = 0, overview = 3, status = 5, charts = true, quickLinks = 0, twoCol = false, list = 0, listsFirst = false, headerLinks = 0 }) {
+    // Built as pieces so the order can follow each dashboard's real layout.
+    const chartsEl = charts ? (
+            <div className="dash-charts-grid">
+                <div className="dash-chart-card skeleton-card">
+                    <div className="skeleton-card-head" style={{ alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                            <Skeleton width="45%" height={16} style={{ marginBottom: 8 }} />
+                            <Skeleton width="65%" height={12} />
+                        </div>
+                        <Skeleton width={96} height={30} radius={6} />
+                    </div>
+                    <div className="dash-donut-row">
+                        <div className="dash-donut-wrap">
+                            <div className="skeleton-donut" />
+                        </div>
+                        <div className="dash-legend">
+                            {Array.from({ length: 7 }).map((_, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px' }}>
+                                    <Skeleton width={10} height={10} radius={3} />
+                                    <Skeleton width={`${40 + ((i * 13) % 30)}%`} height={12} />
+                                    <span style={{ flex: 1 }} />
+                                    <Skeleton width={34} height={12} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="dash-chart-card skeleton-card">
+                    <div className="skeleton-card-head" style={{ alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                            <Skeleton width="50%" height={16} style={{ marginBottom: 8 }} />
+                            <Skeleton width="40%" height={12} />
+                        </div>
+                        <Skeleton width={96} height={30} radius={6} />
+                    </div>
+                    <div className="skeleton-columns" aria-hidden="true">
+                        {COLUMN_HEIGHTS.map((h, i) => (
+                            <Skeleton key={i} height={`${h}%`} radius={4} style={{ width: 'auto', flex: 1 }} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+    ) : null
+
+    const twoColEl = twoCol ? (
+            <div className="dash-two-col" style={{ marginBottom: 28 }}>
+                {[3, 5].map((rows, col) => (
+                    <div key={col}>
+                        <div className="skeleton-card-head" style={{ marginBottom: 14 }}>
+                            <Skeleton width={190} height={17} radius={6} />
+                            <Skeleton width={90} height={13} />
+                        </div>
+                        <div className="dash-row-list skeleton-card">
+                            {Array.from({ length: rows }).map((_, i) => (
+                                <div className="skeleton-row" key={i} style={{ padding: '13px 16px' }}>
+                                    {col === 0 && <Skeleton width={58} height={13} />}
+                                    <div style={{ flex: 1 }}>
+                                        <Skeleton width="40%" height={13} style={{ marginBottom: 6 }} />
+                                        <Skeleton width="28%" height={10} />
+                                    </div>
+                                    <Skeleton width={78} height={22} radius={20} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+    ) : null
+
     return (
         <LoadingRegion label="Loading dashboard…">
-            <div className="skeleton-page-block" style={{ marginBottom: 26 }}>
-                <Skeleton width={300} height={30} radius={8} />
-                <Skeleton width="min(380px, 80%)" height={14} style={{ marginTop: 10 }} />
+            <div className="skeleton-page-block skeleton-card-head" style={{ marginBottom: 26, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div>
+                    <Skeleton width={300} height={30} radius={8} />
+                    <Skeleton width="min(380px, 80%)" height={14} style={{ marginTop: 10 }} />
+                </div>
+                {headerLinks > 0 && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {Array.from({ length: headerLinks }).map((_, i) => (
+                            <Skeleton key={i} width={i % 2 ? 130 : 150} height={34} radius={999} />
+                        ))}
+                    </div>
+                )}
             </div>
 
             {alerts > 0 && (
@@ -405,49 +484,7 @@ export function SkeletonDashboard({ portal = 'admin', alerts = 0, overview = 3, 
                 ))}
             </div>
 
-            {charts && (
-                <div className="dash-charts-grid">
-                    <div className="dash-chart-card skeleton-card">
-                        <div className="skeleton-card-head" style={{ alignItems: 'flex-start' }}>
-                            <div style={{ flex: 1 }}>
-                                <Skeleton width="45%" height={16} style={{ marginBottom: 8 }} />
-                                <Skeleton width="65%" height={12} />
-                            </div>
-                            <Skeleton width={96} height={30} radius={6} />
-                        </div>
-                        <div className="dash-donut-row">
-                            <div className="dash-donut-wrap">
-                                <div className="skeleton-donut" />
-                            </div>
-                            <div className="dash-legend">
-                                {Array.from({ length: 7 }).map((_, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px' }}>
-                                        <Skeleton width={10} height={10} radius={3} />
-                                        <Skeleton width={`${40 + ((i * 13) % 30)}%`} height={12} />
-                                        <span style={{ flex: 1 }} />
-                                        <Skeleton width={34} height={12} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="dash-chart-card skeleton-card">
-                        <div className="skeleton-card-head" style={{ alignItems: 'flex-start' }}>
-                            <div style={{ flex: 1 }}>
-                                <Skeleton width="50%" height={16} style={{ marginBottom: 8 }} />
-                                <Skeleton width="40%" height={12} />
-                            </div>
-                            <Skeleton width={96} height={30} radius={6} />
-                        </div>
-                        <div className="skeleton-columns" aria-hidden="true">
-                            {COLUMN_HEIGHTS.map((h, i) => (
-                                <Skeleton key={i} height={`${h}%`} radius={4} style={{ width: 'auto', flex: 1 }} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+            {!listsFirst && chartsEl}
 
             {quickLinks > 0 && (
                 <div className="dash-quick-links">
@@ -460,30 +497,8 @@ export function SkeletonDashboard({ portal = 'admin', alerts = 0, overview = 3, 
                 </div>
             )}
 
-            {twoCol && (
-                <div className="dash-two-col">
-                    {[3, 5].map((rows, col) => (
-                        <div key={col}>
-                            <div className="skeleton-card-head" style={{ marginBottom: 14 }}>
-                                <Skeleton width={190} height={17} radius={6} />
-                                <Skeleton width={90} height={13} />
-                            </div>
-                            <div className="dash-row-list skeleton-card">
-                                {Array.from({ length: rows }).map((_, i) => (
-                                    <div className="skeleton-row" key={i} style={{ padding: '13px 16px' }}>
-                                        {col === 0 && <Skeleton width={58} height={13} />}
-                                        <div style={{ flex: 1 }}>
-                                            <Skeleton width="40%" height={13} style={{ marginBottom: 6 }} />
-                                            <Skeleton width="28%" height={10} />
-                                        </div>
-                                        <Skeleton width={78} height={22} radius={20} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {twoColEl}
+            {listsFirst && chartsEl}
 
             {list > 0 && <SkeletonListBlock portal={portal} block={{ count: list, fields: 0 }} />}
         </LoadingRegion>
