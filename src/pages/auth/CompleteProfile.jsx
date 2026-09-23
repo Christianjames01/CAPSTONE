@@ -21,6 +21,7 @@ function CompleteProfile() {
     const [birthDate, setBirthDate] = useState('')
     const [address, setAddress] = useState('')
     const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
+    const [alternateEmail, setAlternateEmail] = useState('')
     const [emergencyContactName, setEmergencyContactName] = useState('')
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
 
@@ -154,6 +155,7 @@ function CompleteProfile() {
                 birth_date: birthDate || null,
                 address: address.trim() || null,
                 alternate_phone_number: alternatePhoneNumber.trim() || null,
+                alternate_email: alternateEmail.trim() || null,
                 emergency_contact_name: emergencyContactName.trim() || null,
                 emergency_contact_number: emergencyContactNumber.trim() || null,
             })
@@ -354,6 +356,22 @@ function CompleteProfile() {
                     />
                     <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
                         A second number the registrar can try if your main phone number is unreachable.
+                    </small>
+                </div>
+
+                <div className="form-group">
+                    <label className="form-label" htmlFor="alternate-email">Personal Email (optional)</label>
+                    <input
+                        id="alternate-email"
+                        type="email"
+                        className="form-input"
+                        value={alternateEmail}
+                        onChange={(e) => setAlternateEmail(e.target.value)}
+                        placeholder="you@gmail.com"
+                        autoComplete="off"
+                    />
+                    <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                        A personal, non-HCDC email you still control after graduation. Your HCDC account is deactivated once you graduate, so switch your login to this address beforehand from Profile &gt; Login Email.
                     </small>
                 </div>
 

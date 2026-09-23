@@ -25,6 +25,7 @@ function Profile() {
     const [phoneNumber, setPhoneNumber] = useState('')
     const [address, setAddress] = useState('')
     const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
+    const [alternateEmail, setAlternateEmail] = useState('')
     const [emergencyContactName, setEmergencyContactName] = useState('')
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
 
@@ -35,6 +36,13 @@ function Profile() {
     const [passwordSaving, setPasswordSaving] = useState(false)
     const [passwordError, setPasswordError] = useState('')
     const [passwordMessage, setPasswordMessage] = useState('')
+
+    const [changingEmail, setChangingEmail] = useState(false)
+    const [emailCurrentPassword, setEmailCurrentPassword] = useState('')
+    const [newEmail, setNewEmail] = useState('')
+    const [emailSaving, setEmailSaving] = useState(false)
+    const [emailError, setEmailError] = useState('')
+    const [emailMessage, setEmailMessage] = useState('')
 
     useEffect(() => {
         loadProfile()
@@ -86,6 +94,7 @@ function Profile() {
                     birth_date,
                     address,
                     alternate_phone_number,
+                    alternate_email,
                     emergency_contact_name,
                     emergency_contact_number,
                     graduation_year
@@ -100,6 +109,7 @@ function Profile() {
             setStudent(studentData)
             setAddress(studentData.address || '')
             setAlternatePhoneNumber(studentData.alternate_phone_number || '')
+            setAlternateEmail(studentData.alternate_email || '')
             setEmergencyContactName(studentData.emergency_contact_name || '')
             setEmergencyContactNumber(studentData.emergency_contact_number || '')
 
@@ -210,6 +220,7 @@ function Profile() {
         setPhoneNumber(profile?.phone_number || '')
         setAddress(student?.address || '')
         setAlternatePhoneNumber(student?.alternate_phone_number || '')
+        setAlternateEmail(student?.alternate_email || '')
         setEmergencyContactName(student?.emergency_contact_name || '')
         setEmergencyContactNumber(student?.emergency_contact_number || '')
         setEditing(false)
@@ -244,6 +255,7 @@ function Profile() {
                 .update({
                     address: address.trim() || null,
                     alternate_phone_number: alternatePhoneNumber.trim() || null,
+                    alternate_email: alternateEmail.trim() || null,
                     emergency_contact_name: emergencyContactName.trim() || null,
                     emergency_contact_number: emergencyContactNumber.trim() || null,
                 })
@@ -258,6 +270,7 @@ function Profile() {
                 ...prev,
                 address: address.trim() || null,
                 alternate_phone_number: alternatePhoneNumber.trim() || null,
+                alternate_email: alternateEmail.trim() || null,
                 emergency_contact_name: emergencyContactName.trim() || null,
                 emergency_contact_number: emergencyContactNumber.trim() || null,
             }))
@@ -321,6 +334,58 @@ function Profile() {
             setPasswordError(err.message || 'Failed to change password.')
         } finally {
             setPasswordSaving(false)
+        }
+    }
+
+    const changeEmail = async () => {
+        setEmailError('')
+        setEmailMessage('')
+
+        const trimmedEmail = newEmail.trim()
+
+        if (!emailCurrentPassword || !trimmedEmail) {
+            setEmailError('Please fill in all fields.')
+            return
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            setEmailError('Please enter a valid email address.')
+            return
+        }
+
+        if (trimmedEmail.toLowerCase() === (profile?.email || '').toLowerCase()) {
+            setEmailError('That is already your current login email.')
+            return
+        }
+
+        try {
+            setEmailSaving(true)
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: profile.email,
+                password: emailCurrentPassword,
+            })
+
+            if (signInError) {
+                throw new Error('Current password is incorrect.')
+            }
+
+            const { error: updateError } = await supabase.auth.updateUser({ email: trimmedEmail })
+
+            if (updateError) {
+                throw new Error(updateError.message)
+            }
+
+            setEmailMessage(`A confirmation link has been sent to ${trimmedEmail}. Your login email won't change until you click that link — keep signing in with your current email until then.`)
+            setEmailCurrentPassword('')
+            setNewEmail('')
+            setChangingEmail(false)
+
+        } catch (err) {
+            console.error('CHANGE EMAIL ERROR:', err)
+            setEmailError(err.message || 'Failed to change email.')
+        } finally {
+            setEmailSaving(false)
         }
     }
 
@@ -540,6 +605,11 @@ function Profile() {
                     </div>
 
                     <div className="student-info-field">
+                        <span>Personal Email</span>
+                        <strong>{student?.alternate_email || 'Not set'}</strong>
+                    </div>
+
+                    <div className="student-info-field">
                         <span>Emergency Contact Name</span>
                         <strong>{student?.emergency_contact_name || 'Not set'}</strong>
                     </div>
@@ -592,6 +662,21 @@ function Profile() {
                         </div>
 
                         <div className="form-group">
+                            <label className="form-label">Personal Email</label>
+                            <input
+                                className="form-input"
+                                type="email"
+                                value={alternateEmail}
+                                onChange={(e) => setAlternateEmail(e.target.value)}
+                                placeholder="you@gmail.com"
+                                disabled={saving}
+                            />
+                            <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                                A personal email you still control after your HCDC account is deactivated post-graduation.
+                            </small>
+                        </div>
+
+                        <div className="form-group">
                             <label className="form-label">Emergency Contact Name</label>
                             <input
                                 className="form-input"
@@ -626,6 +711,91 @@ function Profile() {
                                 className="student-secondary-button"
                                 onClick={cancelEditing}
                                 disabled={saving}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            <div className="student-card">
+                <div className="student-page-header-row">
+                    <h2 style={{ fontSize: 16 }}>Login Email</h2>
+                    <button
+                        className="student-link-button"
+                        onClick={() => {
+                            setNewEmail(student?.alternate_email || '')
+                            setChangingEmail(true)
+                        }}
+                    >
+                        Change email
+                    </button>
+                </div>
+
+                {emailMessage && <div className="student-success-box" style={{ marginTop: 16 }}>{emailMessage}</div>}
+                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: emailMessage ? 0 : 16 }}>
+                    Your HCDC account is deactivated once you graduate. Switch your login to a personal email
+                    beforehand so you can still sign in and track requests afterward.
+                </p>
+            </div>
+
+            {changingEmail && (
+                <Modal
+                    title="Change Login Email"
+                    onClose={() => {
+                        if (emailSaving) return
+                        setEmailCurrentPassword('')
+                        setNewEmail('')
+                        setEmailError('')
+                        setChangingEmail(false)
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div className="form-group">
+                            <label className="form-label">Current Password</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                value={emailCurrentPassword}
+                                onChange={(e) => setEmailCurrentPassword(e.target.value)}
+                                disabled={emailSaving}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">New Email Address</label>
+                            <input
+                                className="form-input"
+                                type="email"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                placeholder="you@gmail.com"
+                                disabled={emailSaving}
+                            />
+                        </div>
+
+                        {emailError && <div className="student-error-box">{emailError}</div>}
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                className="auth-submit"
+                                style={{ width: 'auto', padding: '11px 20px' }}
+                                onClick={changeEmail}
+                                disabled={emailSaving}
+                            >
+                                {emailSaving ? 'Saving...' : 'Send confirmation link'}
+                            </button>
+
+                            <button
+                                className="student-secondary-button"
+                                onClick={() => {
+                                    setEmailCurrentPassword('')
+                                    setNewEmail('')
+                                    setEmailError('')
+                                    setChangingEmail(false)
+                                }}
+                                disabled={emailSaving}
                             >
                                 Cancel
                             </button>
