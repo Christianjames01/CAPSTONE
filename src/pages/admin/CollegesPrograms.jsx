@@ -61,9 +61,25 @@ function CollegesPrograms() {
     const [customProgram, setCustomProgram] = useState({ code: '', name: '', collegeId: '', degreeLevel: '', durationYears: '' })
     const [customDurationUnit, setCustomDurationUnit] = useState('years')
 
+    const [currentRole, setCurrentRole] = useState('')
+
     useEffect(() => {
         loadData()
+        loadCurrentRole()
     }, [])
+
+    const loadCurrentRole = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single()
+
+        setCurrentRole(profile?.role || '')
+    }
 
     // `silent` skips the loading/skeleton state for refreshes after a save,
     // toggle, or bulk-add. Swapping the list for a short skeleton mid-edit
@@ -165,6 +181,23 @@ function CollegesPrograms() {
         }
     }
 
+    const deleteCollege = async (college) => {
+        const confirmed = await confirmModal(
+            `Permanently delete "${college.college_name}"? This cannot be undone, and will fail if it still has programs or enrolled students.`,
+            { title: 'Delete college?', confirmButtonText: 'Delete' }
+        )
+        if (!confirmed) return
+
+        try {
+            const { error: deleteError } = await supabase.from('colleges').delete().eq('college_id', college.college_id)
+            if (deleteError) throw new Error(deleteError.message)
+            await logAdmin('delete_college', 'colleges', college.college_id, `Deleted college "${college.college_name}" (Registrar Head).`)
+            await loadData({ silent: true })
+        } catch (err) {
+            notifyError(err.message || 'Failed to delete college.')
+        }
+    }
+
     const openEditProgram = (p) => {
         // A stored duration under a year (e.g. 0.5) is virtually always a
         // short vocational course entered in months, not a fraction of a
@@ -247,6 +280,23 @@ function CollegesPrograms() {
             await loadData({ silent: true })
         } catch (err) {
             notifyError(err.message || 'Failed to update program status.')
+        }
+    }
+
+    const deleteProgram = async (program) => {
+        const confirmed = await confirmModal(
+            `Permanently delete "${program.program_name}"? This cannot be undone, and will fail if students are still enrolled in it.`,
+            { title: 'Delete program?', confirmButtonText: 'Delete' }
+        )
+        if (!confirmed) return
+
+        try {
+            const { error: deleteError } = await supabase.from('programs').delete().eq('program_id', program.program_id)
+            if (deleteError) throw new Error(deleteError.message)
+            await logAdmin('delete_program', 'programs', program.program_id, `Deleted program "${program.program_name}" (Registrar Head).`)
+            await loadData({ silent: true })
+        } catch (err) {
+            notifyError(err.message || 'Failed to delete program.')
         }
     }
 
@@ -492,6 +542,11 @@ function CollegesPrograms() {
                                     <button className="admin-link-button" onClick={() => toggleCollegeStatus(c)}>
                                         {c.status === 'active' ? 'Deactivate' : 'Activate'}
                                     </button>
+                                    {currentRole === 'registrar_head' && (
+                                        <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => deleteCollege(c)}>
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -594,6 +649,11 @@ function CollegesPrograms() {
                                     <button className="admin-link-button" onClick={() => toggleProgramStatus(p)}>
                                         {p.status === 'active' ? 'Deactivate' : 'Activate'}
                                     </button>
+                                    {currentRole === 'registrar_head' && (
+                                        <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => deleteProgram(p)}>
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))
