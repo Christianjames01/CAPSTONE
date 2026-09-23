@@ -109,13 +109,15 @@
     min-height: 0;
     background: #101827;
     display: flex;
-    /* `safe` falls back to start-alignment once the (zoomed) image
-       overflows -- plain `center` leaves half the overflow in negative
-       scroll territory that can't be scrolled to, making the top-left of
-       a zoomed-in image permanently unreachable. */
-    align-items: safe center;
-    justify-content: safe center;
-    overflow: auto;
+    align-items: center;
+    justify-content: center;
+    /* Pan is driven entirely by the image's own translate() offset (see
+       DocumentPreviewModal.jsx) rather than native scroll -- a
+       transform: scale()'d child doesn't reliably grow the browser's
+       scrollable overflow region in every direction, which made the
+       top-left of a zoomed image unreachable via overflow: auto. Hidden
+       here since our own transform already handles all of it. */
+    overflow: hidden;
 }
 
 .doc-preview-body img {

@@ -14,8 +14,15 @@ function getExtension(nameOrUrl) {
 
 function DocumentPreviewModal({ url, fileName, onClose }) {
     const [zoom, setZoom] = useState(1)
+    // Pan is a self-tracked translate offset rather than the container's
+    // native scrollLeft/scrollTop. A `transform: scale()`'d image doesn't
+    // reliably grow the browser's scrollable overflow region in every
+    // direction (Chrome/Firefox both under-report it for the "start" side
+    // once content is centered), so relying on native scroll left parts of
+    // a zoomed image -- notably the top-left -- permanently unreachable.
+    // Driving the offset ourselves sidesteps that entirely.
+    const [pan, setPan] = useState({ x: 0, y: 0 })
     const [isDragging, setIsDragging] = useState(false)
-    const bodyRef = useRef(null)
     const draggingRef = useRef(false)
     const lastPointRef = useRef({ x: 0, y: 0 })
 
@@ -29,6 +36,13 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
         return () => {
             document.body.style.overflow = previousOverflow
         }
+    }, [url])
+
+    // A fresh document shouldn't open still panned/zoomed from whatever the
+    // previous preview was left at.
+    useEffect(() => {
+        setZoom(1)
+        setPan({ x: 0, y: 0 })
     }, [url])
 
     if (!url) return null
@@ -46,8 +60,15 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
     // has its own zoom controls -- all of this is only meaningful for the
     // plain <img> case.
     const zoomIn = () => setZoom((z) => Math.min(MAX_ZOOM, Math.round((z + ZOOM_STEP) * 100) / 100))
-    const zoomOut = () => setZoom((z) => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 100) / 100))
-    const resetZoom = () => setZoom(1)
+    const zoomOut = () => setZoom((z) => {
+        const next = Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 100) / 100)
+        if (next <= 1) setPan({ x: 0, y: 0 })
+        return next
+    })
+    const resetZoom = () => {
+        setZoom(1)
+        setPan({ x: 0, y: 0 })
+    }
 
     // Scrolling over the image zooms instead of scrolling the page -- this
     // is a dedicated preview surface, not a document to read top-to-bottom.
@@ -58,8 +79,8 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
         else zoomOut()
     }
 
-    // Click-and-drag pans by scrolling the body container -- there's
-    // nothing to drag once back at 100%, so this is a no-op below that.
+    // Click-and-drag pans the image -- there's nothing to drag once back
+    // at 100%, so this is a no-op below that.
     const handleMouseDown = (e) => {
         if (zoom <= 1) return
         draggingRef.current = true
@@ -68,11 +89,10 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
     }
 
     const handleMouseMove = (e) => {
-        if (!draggingRef.current || !bodyRef.current) return
+        if (!draggingRef.current) return
         const dx = e.clientX - lastPointRef.current.x
         const dy = e.clientY - lastPointRef.current.y
-        bodyRef.current.scrollLeft -= dx
-        bodyRef.current.scrollTop -= dy
+        setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
         lastPointRef.current = { x: e.clientX, y: e.clientY }
     }
 
@@ -125,7 +145,6 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
 
                 <div
                     className="doc-preview-body"
-                    ref={bodyRef}
                     onWheel={handleWheel}
                     onMouseMove={handleMouseMove}
                     onMouseUp={stopDragging}
@@ -137,7 +156,10 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
                             alt={fileName || 'Document preview'}
                             draggable={false}
                             onMouseDown={handleMouseDown}
-                            style={{ transform: `scale(${zoom})`, cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+                            style={{
+                                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                                cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+                            }}
                         />
                     ) : isPdf ? (
                         <iframe src={url} title={fileName || 'Document preview'} />
