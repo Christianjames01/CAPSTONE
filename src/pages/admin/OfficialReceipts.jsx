@@ -98,7 +98,7 @@ function OfficialReceipts() {
     }
 
     const verifyReceipt = async (receipt) => {
-        const confirmed = await confirmModal(`Verify receipt ${receipt.receipt_number}?`)
+        const confirmed = await confirmModal(`Verify the receipt for ${receipt.requestNumber}?`)
         if (!confirmed) return
 
         try {
@@ -126,7 +126,7 @@ function OfficialReceipts() {
                 action: 'verify_receipt',
                 tableName: 'official_receipts',
                 recordId: receipt.receipt_id,
-                description: `Verified official receipt "${receipt.receipt_number}" for request "${receipt.requestNumber}" (Registrar Head).`,
+                description: `Verified official receipt for request "${receipt.requestNumber}" (Registrar Head).`,
             })
 
             await notifyStudentByStudentId({
@@ -192,7 +192,7 @@ function OfficialReceipts() {
                 action: 'reject_receipt',
                 tableName: 'official_receipts',
                 recordId: receipt.receipt_id,
-                description: `Rejected official receipt "${receipt.receipt_number}" for request "${receipt.requestNumber}": "${reason}" (Registrar Head).`,
+                description: `Rejected official receipt for request "${receipt.requestNumber}": "${reason}" (Registrar Head).`,
             })
 
             await notifyStudentByStudentId({
@@ -247,8 +247,8 @@ function OfficialReceipts() {
                     <div className="admin-list-card" key={r.receipt_id}>
                         <div className="admin-list-card-header">
                             <div>
-                                <h3>{r.receipt_number}</h3>
-                                <p>{r.requestNumber} · {r.studentName} ({r.studentNumber})</p>
+                                <h3>{r.requestNumber}</h3>
+                                <p>{r.studentName} ({r.studentNumber})</p>
                             </div>
                             <span className={`admin-status-pill status-${r.status}`}>{r.status}</span>
                         </div>
@@ -291,7 +291,7 @@ function OfficialReceipts() {
             {rejectTarget && (
                 <Modal title="Reject Receipt" maxWidth={480} onClose={closeRejectModal}>
                     <p style={{ fontSize: 13.5, marginBottom: 12 }}>
-                        Enter the reason why receipt <strong>{rejectTarget.receipt_number}</strong> ({rejectTarget.requestNumber}) is being rejected.
+                        Enter the reason why the receipt for <strong>{rejectTarget.requestNumber}</strong> is being rejected.
                     </p>
 
                     <textarea

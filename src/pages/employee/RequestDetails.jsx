@@ -1454,11 +1454,6 @@ function EmployeeRequestDetails() {
                         <>
                             <div className="employee-info-grid">
                                 <div className="employee-info-field">
-                                    <span>Receipt Number</span>
-                                    <strong>{receipt.receipt_number || 'Not provided'}</strong>
-                                </div>
-
-                                <div className="employee-info-field">
                                     <span>Amount Paid</span>
                                     <strong>₱{Number(receipt.amount_paid || 0).toFixed(2)}</strong>
                                 </div>

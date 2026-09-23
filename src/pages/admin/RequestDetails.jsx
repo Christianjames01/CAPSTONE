@@ -1111,11 +1111,6 @@ function AdminRequestDetails() {
                     <>
                         <div className="admin-info-grid">
                             <div className="admin-info-field">
-                                <span>Receipt Number</span>
-                                <strong>{receipt.receipt_number}</strong>
-                            </div>
-
-                            <div className="admin-info-field">
                                 <span>Amount Paid</span>
                                 <strong>₱{Number(receipt.amount_paid || 0).toFixed(2)}</strong>
                             </div>
