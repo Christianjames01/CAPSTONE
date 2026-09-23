@@ -165,7 +165,20 @@ function CollegesPrograms() {
         }
     }
 
-    const openEditProgram = (p) => { setProgramForm(p); setProgramDurationUnit('years'); setShowProgramForm(true) }
+    const openEditProgram = (p) => {
+        // A stored duration under a year (e.g. 0.5) is virtually always a
+        // short vocational course entered in months, not a fraction of a
+        // year an admin actually thinks in -- defaulting to Months here
+        // means it displays correctly right away instead of showing an
+        // awkward decimal until they manually switch the unit.
+        const unit = p.duration_years != null && p.duration_years > 0 && p.duration_years < 1 ? 'months' : 'years'
+        setProgramForm({
+            ...p,
+            duration_years: unit === 'months' ? convertDurationValue(p.duration_years, 'years', unit) : p.duration_years,
+        })
+        setProgramDurationUnit(unit)
+        setShowProgramForm(true)
+    }
 
     const saveProgram = async () => {
         if (!programForm.college_id || !programForm.program_code.trim() || !programForm.program_name.trim()) {
