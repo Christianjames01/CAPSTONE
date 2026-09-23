@@ -69,7 +69,7 @@ function StudentDetails() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number, birth_date')
                 .eq('student_id', studentId)
                 .single()
 
@@ -79,7 +79,7 @@ function StudentDetails() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name, email, phone_number, profile_photo_url')
+                .select('first_name, middle_name, last_name, suffix, email, phone_number, profile_photo_url')
                 .eq('user_id', studentData.user_id)
                 .single()
 
@@ -108,8 +108,12 @@ function StudentDetails() {
             setStudent({
                 ...studentData,
                 firstName: profile?.first_name || '',
+                middleName: profile?.middle_name || '',
                 lastName: profile?.last_name || '',
-                fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
+                suffix: profile?.suffix || '',
+                fullName: profile
+                    ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ')
+                    : 'Unknown',
                 email: profile?.email || '',
                 phoneNumber: profile?.phone_number || '',
                 photoUrl: profile?.profile_photo_url || '',
@@ -191,7 +195,10 @@ function StudentDetails() {
     const startEditing = () => {
         setForm({
             firstName: student.firstName,
+            middleName: student.middleName,
             lastName: student.lastName,
+            suffix: student.suffix,
+            birthDate: student.birth_date || '',
             phoneNumber: student.phoneNumber,
             studentNumber: student.student_number,
             collegeId: student.college_id || '',
@@ -245,7 +252,9 @@ function StudentDetails() {
                 .from('profiles')
                 .update({
                     first_name: form.firstName.trim(),
+                    middle_name: form.middleName.trim() || null,
                     last_name: form.lastName.trim(),
+                    suffix: form.suffix.trim() || null,
                     phone_number: form.phoneNumber.trim() || null,
                 })
                 .eq('user_id', student.user_id)
@@ -261,6 +270,7 @@ function StudentDetails() {
                     college_id: form.collegeId || null,
                     program_id: form.programId || null,
                     year_level: form.yearLevel || null,
+                    birth_date: form.birthDate || null,
                     address: form.address.trim() || null,
                     alternate_phone_number: form.alternatePhoneNumber.trim() || null,
                     alternate_email: form.alternateEmail.trim() || null,
@@ -277,7 +287,9 @@ function StudentDetails() {
             const newProgramName = programs.find((p) => p.program_id === form.programId)?.program_name || ''
 
             const changes = describeChanges([
-                ['name', `${student.firstName} ${student.lastName}`.trim(), `${form.firstName.trim()} ${form.lastName.trim()}`],
+                ['name', student.fullName, [form.firstName, form.middleName, form.lastName, form.suffix].map((v) => v.trim()).filter(Boolean).join(' ')],
+                ['birth date', student.birth_date || '', form.birthDate],
+                ['personal email', student.alternate_email || '', form.alternateEmail.trim()],
                 ['student number', student.student_number, form.studentNumber.trim()],
                 ['college', student.collegeName, newCollegeName],
                 ['program', student.programName, newProgramName],
@@ -447,6 +459,25 @@ function StudentDetails() {
 
             <div className="admin-card">
                 <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
+                    <h2 style={{ fontSize: 16 }}>Personal Information</h2>
+                    <button className="admin-link-button" onClick={startEditing}>
+                        Edit →
+                    </button>
+                </div>
+
+                <div className="admin-info-grid">
+                    <div className="admin-info-field"><span>First Name</span><strong>{student.firstName || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Middle Name</span><strong>{student.middleName || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Last Name</span><strong>{student.lastName || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Suffix</span><strong>{student.suffix || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Birth Date</span><strong>{formatDate(student.birth_date)}</strong></div>
+                    <div className="admin-info-field"><span>Login Email</span><strong>{student.email || 'N/A'}</strong></div>
+                    <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
+                </div>
+            </div>
+
+            <div className="admin-card">
+                <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
                     <h2 style={{ fontSize: 16 }}>Student Information</h2>
                     <button className="admin-link-button" onClick={startEditing}>
                         Edit →
@@ -462,7 +493,6 @@ function StudentDetails() {
                     <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
                     <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Alternate Phone Number</span><strong>{student.alternate_phone_number || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
                     <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
                 </div>
             </div>
@@ -475,8 +505,20 @@ function StudentDetails() {
                             <input className="admin-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
                         </div>
                         <div className="form-group">
+                            <label className="form-label">Middle Name</label>
+                            <input className="admin-search-input" value={form.middleName} onChange={(e) => setForm({ ...form, middleName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
                             <label className="form-label">Last Name</label>
                             <input className="admin-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Suffix</label>
+                            <input className="admin-search-input" placeholder="e.g. Jr., III" value={form.suffix} onChange={(e) => setForm({ ...form, suffix: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Birth Date</label>
+                            <input className="admin-search-input" type="date" value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Student Number</label>
