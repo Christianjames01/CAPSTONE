@@ -515,7 +515,7 @@ function CollegesPrograms() {
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <button className="admin-primary-button" onClick={saveCollege} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                                <button className="admin-secondary-button" onClick={() => setShowCollegeForm(false)}>Cancel</button>
+                                <button className="admin-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setShowCollegeForm(false)}>Cancel</button>
                             </div>
                         </Modal>
                     )}
@@ -622,7 +622,7 @@ function CollegesPrograms() {
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <button className="admin-primary-button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                                <button className="admin-secondary-button" onClick={() => setShowProgramForm(false)}>Cancel</button>
+                                <button className="admin-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setShowProgramForm(false)}>Cancel</button>
                             </div>
                         </Modal>
                     )}
@@ -803,7 +803,7 @@ function CollegesPrograms() {
                         <button className="admin-primary-button" onClick={saveBulkAdd} disabled={addingBulk}>
                             {addingBulk ? 'Adding...' : `Add Selected (${totalSelectedCount})`}
                         </button>
-                        <button className="admin-secondary-button" onClick={() => setShowAddModal(false)} disabled={addingBulk}>Cancel</button>
+                        <button className="admin-secondary-button" style={{ color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => setShowAddModal(false)} disabled={addingBulk}>Cancel</button>
                     </div>
                 </Modal>
             )}

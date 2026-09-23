@@ -328,6 +328,7 @@ function Profile() {
                             </button>
                             <button
                                 className="admin-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => { setPhoneNumber(profile?.phone_number || ''); setEditing(false) }}
                                 disabled={saving}
                             >
@@ -401,6 +402,7 @@ function Profile() {
 
                             <button
                                 className="admin-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => {
                                     setEmailCurrentPassword('')
                                     setNewEmail('')
@@ -491,6 +493,7 @@ function Profile() {
 
                             <button
                                 className="admin-secondary-button"
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')
