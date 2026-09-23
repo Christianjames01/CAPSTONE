@@ -12,6 +12,11 @@ import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 
+function formatDate(value) {
+    if (!value) return '-'
+    return new Date(value).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 function StudentHistory() {
     const { studentId } = useParams()
     const navigate = useNavigate()
@@ -40,7 +45,7 @@ function StudentHistory() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number, graduation_year')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number, graduation_year, birth_date')
                 .eq('student_id', studentId)
                 .single()
 
@@ -50,7 +55,7 @@ function StudentHistory() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name, email, phone_number, profile_photo_url')
+                .select('first_name, middle_name, last_name, suffix, email, phone_number, profile_photo_url')
                 .eq('user_id', studentData.user_id)
                 .single()
 
@@ -78,8 +83,12 @@ function StudentHistory() {
             setStudent({
                 ...studentData,
                 firstName: profile?.first_name || '',
+                middleName: profile?.middle_name || '',
                 lastName: profile?.last_name || '',
-                fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
+                suffix: profile?.suffix || '',
+                fullName: profile
+                    ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ')
+                    : 'Unknown',
                 email: profile?.email || '',
                 phoneNumber: profile?.phone_number || '',
                 photoUrl: profile?.profile_photo_url || '',
@@ -122,7 +131,10 @@ function StudentHistory() {
     const startEditing = () => {
         setForm({
             firstName: student.firstName,
+            middleName: student.middleName,
             lastName: student.lastName,
+            suffix: student.suffix,
+            birthDate: student.birth_date || '',
             phoneNumber: student.phoneNumber,
             studentNumber: student.student_number,
             collegeId: student.college_id || '',
@@ -131,6 +143,7 @@ function StudentHistory() {
             graduationYear: student.graduation_year ? String(student.graduation_year) : '',
             address: student.address || '',
             alternatePhoneNumber: student.alternate_phone_number || '',
+            alternateEmail: student.alternate_email || '',
             emergencyContactName: student.emergency_contact_name || '',
             emergencyContactNumber: student.emergency_contact_number || '',
         })
@@ -183,7 +196,9 @@ function StudentHistory() {
                 .from('profiles')
                 .update({
                     first_name: form.firstName.trim(),
+                    middle_name: form.middleName.trim() || null,
                     last_name: form.lastName.trim(),
+                    suffix: form.suffix.trim() || null,
                     phone_number: form.phoneNumber.trim() || null,
                 })
                 .eq('user_id', student.user_id)
@@ -200,8 +215,10 @@ function StudentHistory() {
                     program_id: form.programId || null,
                     year_level: form.yearLevel || null,
                     graduation_year: graduationYear ? Number(graduationYear) : null,
+                    birth_date: form.birthDate || null,
                     address: form.address.trim() || null,
                     alternate_phone_number: form.alternatePhoneNumber.trim() || null,
+                    alternate_email: form.alternateEmail.trim() || null,
                     emergency_contact_name: form.emergencyContactName.trim() || null,
                     emergency_contact_number: form.emergencyContactNumber.trim() || null,
                 })
@@ -221,7 +238,9 @@ function StudentHistory() {
             const newProgramName = programs.find((p) => p.program_id === form.programId)?.program_name || ''
 
             const changes = describeChanges([
-                ['name', `${student.firstName} ${student.lastName}`.trim(), `${form.firstName.trim()} ${form.lastName.trim()}`],
+                ['name', student.fullName, [form.firstName, form.middleName, form.lastName, form.suffix].map((v) => v.trim()).filter(Boolean).join(' ')],
+                ['birth date', student.birth_date || '', form.birthDate],
+                ['personal email', student.alternate_email || '', form.alternateEmail.trim()],
                 ['student number', student.student_number, form.studentNumber.trim()],
                 ['college', student.collegeName, newCollegeName],
                 ['program', student.programName, newProgramName],
@@ -402,6 +421,25 @@ function StudentHistory() {
 
             <div className="employee-card">
                 <div className="employee-page-header-row" style={{ marginBottom: 16 }}>
+                    <h2 style={{ fontSize: 16 }}>Personal Information</h2>
+                    <button className="employee-link-button" onClick={startEditing}>
+                        Edit →
+                    </button>
+                </div>
+
+                <div className="employee-info-grid">
+                    <div className="employee-info-field"><span>First Name</span><strong>{student.firstName || 'N/A'}</strong></div>
+                    <div className="employee-info-field"><span>Middle Name</span><strong>{student.middleName || 'N/A'}</strong></div>
+                    <div className="employee-info-field"><span>Last Name</span><strong>{student.lastName || 'N/A'}</strong></div>
+                    <div className="employee-info-field"><span>Suffix</span><strong>{student.suffix || 'N/A'}</strong></div>
+                    <div className="employee-info-field"><span>Birth Date</span><strong>{formatDate(student.birth_date)}</strong></div>
+                    <div className="employee-info-field"><span>Login Email</span><strong>{student.email || 'N/A'}</strong></div>
+                    <div className="employee-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
+                </div>
+            </div>
+
+            <div className="employee-card">
+                <div className="employee-page-header-row" style={{ marginBottom: 16 }}>
                     <h2 style={{ fontSize: 16 }}>Student Information</h2>
                     <button className="employee-link-button" onClick={startEditing}>
                         Edit →
@@ -455,11 +493,6 @@ function StudentHistory() {
                     </div>
 
                     <div className="employee-info-field">
-                        <span>Personal Email</span>
-                        <strong>{student.alternate_email || 'N/A'}</strong>
-                    </div>
-
-                    <div className="employee-info-field">
                         <span>Emergency Contact</span>
                         <strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong>
                     </div>
@@ -474,8 +507,20 @@ function StudentHistory() {
                             <input className="employee-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
                         </div>
                         <div className="form-group">
+                            <label className="form-label">Middle Name</label>
+                            <input className="employee-search-input" value={form.middleName} onChange={(e) => setForm({ ...form, middleName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
                             <label className="form-label">Last Name</label>
                             <input className="employee-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Suffix</label>
+                            <input className="employee-search-input" placeholder="e.g. Jr., III" value={form.suffix} onChange={(e) => setForm({ ...form, suffix: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Birth Date</label>
+                            <input className="employee-search-input" type="date" value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Student Number</label>
@@ -525,6 +570,10 @@ function StudentHistory() {
                         <div className="form-group">
                             <label className="form-label">Alternate Phone Number</label>
                             <input className="employee-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Personal Email</label>
+                            <input className="employee-search-input" type="email" value={form.alternateEmail} onChange={(e) => setForm({ ...form, alternateEmail: e.target.value })} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Emergency Contact Name</label>
