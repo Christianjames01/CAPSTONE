@@ -14,7 +14,9 @@ function getExtension(nameOrUrl) {
 }
 
 function DocumentPreviewModal({ url, fileName, onClose }) {
-    useScrollLock()
+    // Pages keep this component mounted and pass url=null when it is closed,
+    // so the page is only locked while a document is actually open.
+    useScrollLock(Boolean(url))
 
     const [zoom, setZoom] = useState(1)
     // Pan is a self-tracked translate offset rather than the container's
@@ -28,18 +30,6 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
     const [isDragging, setIsDragging] = useState(false)
     const draggingRef = useRef(false)
     const lastPointRef = useRef({ x: 0, y: 0 })
-
-    // Wheel-to-zoom only preventDefaults over the image itself, so without
-    // this the page behind the modal would still scroll whenever the wheel
-    // passes over the backdrop padding, a PDF, or an unsupported file.
-    useEffect(() => {
-        if (!url) return
-        const previousOverflow = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
-        return () => {
-            document.body.style.overflow = previousOverflow
-        }
-    }, [url])
 
     // A fresh document shouldn't open still panned/zoomed from whatever the
     // previous preview was left at.
