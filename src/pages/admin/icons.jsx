@@ -68,3 +68,64 @@ export const IconClipboardCheck = () => (
         <path d="m9 13 2 2 4-4.3" />
     </svg>
 )
+
+// Dashboard stat card icons (same 24px line style as the rest of this set).
+export const IconUsers = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8" />
+    </svg>
+)
+
+export const IconFileStack = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 3.5h7l4 4v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z" />
+        <path d="M15 3.5v4h4M9.5 12h6M9.5 15.5h6" />
+        <path d="M6 7H5a1.5 1.5 0 0 0-1.5 1.5V20A1.5 1.5 0 0 0 5 21.5h9" />
+    </svg>
+)
+
+export const IconHourglass = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 3.5h12M6 20.5h12" />
+        <path d="M7.5 3.5v2.5a4.5 4.5 0 0 0 2 3.7L12 11.5l2.5-1.8a4.5 4.5 0 0 0 2-3.7V3.5" />
+        <path d="M7.5 20.5V18a4.5 4.5 0 0 1 2-3.7l2.5-1.8 2.5 1.8a4.5 4.5 0 0 1 2 3.7v2.5" />
+    </svg>
+)
+
+export const IconPackage = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z" />
+        <path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.3l8 4.4" />
+    </svg>
+)
+
+export const IconCheckCircle = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="m8.3 12.3 2.5 2.5 5-5.2" />
+    </svg>
+)
+
+export const IconXCircle = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="m9 9 6 6M15 9l-6 6" />
+    </svg>
+)
+
+export const IconBan = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="m6 6 12 12" />
+    </svg>
+)
+
+export const IconCalendarCheck = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+        <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+        <path d="m9 15 2 2 4-4" />
+    </svg>
+)

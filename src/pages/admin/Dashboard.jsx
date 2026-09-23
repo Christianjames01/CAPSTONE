@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import { SkeletonPageHeader, SkeletonStatGrid, SkeletonList } from '../../components/Skeleton'
+import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck } from './icons'
 import './AdminPages.css'
 
 const STATUS_BUCKETS = [
@@ -207,14 +208,14 @@ function AdminDashboard() {
     // Same colors as STATUS_BUCKETS (the donut chart legend) so a status's
     // color means the same thing everywhere on this dashboard.
     const stats = [
-        { label: 'Total Students', value: studentCount, to: '/admin/students', color: '#123B78' },
-        { label: 'Total Requests', value: requests.length, to: '/admin/requests', color: '#123B78' },
-        { label: 'Pending', value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending', color: '#2a78d6' },
-        { label: 'Ready for Claiming', value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming', color: '#eda100' },
-        { label: 'Completed', value: countByStatus(['completed']), to: '/admin/requests?status=completed', color: '#e87ba4' },
-        { label: 'Rejected', value: countByStatus(['rejected']), to: '/admin/requests?status=rejected', color: '#008300' },
-        { label: 'Cancelled', value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled', color: '#8a94a6' },
-        { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules', color: '#123B78' },
+        { label: 'Total Students', Icon: IconUsers, value: studentCount, to: '/admin/students', color: '#123B78' },
+        { label: 'Total Requests', Icon: IconFileStack, value: requests.length, to: '/admin/requests', color: '#123B78' },
+        { label: 'Pending', Icon: IconHourglass, value: countByStatus(['pending', 'payment_pending']), to: '/admin/requests?status=pending,payment_pending', color: '#2a78d6' },
+        { label: 'Ready for Claiming', Icon: IconPackage, value: countByStatus(['ready_for_claiming']), to: '/admin/requests?status=ready_for_claiming', color: '#eda100' },
+        { label: 'Completed', Icon: IconCheckCircle, value: countByStatus(['completed']), to: '/admin/requests?status=completed', color: '#e87ba4' },
+        { label: 'Rejected', Icon: IconXCircle, value: countByStatus(['rejected']), to: '/admin/requests?status=rejected', color: '#008300' },
+        { label: 'Cancelled', Icon: IconBan, value: countByStatus(['cancelled']), to: '/admin/requests?status=cancelled', color: '#8a94a6' },
+        { label: "Today's Appointments", Icon: IconCalendarCheck, value: todayCount, to: '/admin/claim-schedules', color: '#123B78' },
     ]
 
     const attentionStats = [
@@ -281,17 +282,28 @@ function AdminDashboard() {
                         style={{ textAlign: 'left', margin: 0, borderTop: `3px solid ${stat.color}` }}
                         onClick={() => navigate(stat.to)}
                     >
-                        <span
-                            style={{
-                                display: 'block',
-                                fontSize: 26,
-                                fontWeight: 700,
-                                color: stat.color,
-                                marginBottom: 4,
-                            }}
-                        >
-                            {stat.value}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+                            <span style={{ fontSize: 26, fontWeight: 700, color: stat.color, lineHeight: 1.2 }}>
+                                {stat.value}
+                            </span>
+                            <span
+                                aria-hidden="true"
+                                style={{
+                                    width: 36,
+                                    height: 36,
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: 10,
+                                    color: stat.color,
+                                    // Same hue as the card, at ~12% opacity, so it reads in light and dark mode.
+                                    background: `${stat.color}1F`,
+                                }}
+                            >
+                                <span className="admin-stat-icon"><stat.Icon /></span>
+                            </span>
+                        </div>
                         <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>{stat.label}</span>
                     </button>
                 ))}

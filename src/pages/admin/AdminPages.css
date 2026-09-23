@@ -751,3 +751,12 @@
         font-size: 17px;
     }
 }
+
+.admin-stat-icon {
+    display: flex;
+}
+
+.admin-stat-icon svg {
+    width: 20px;
+    height: 20px;
+}
