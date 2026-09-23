@@ -68,9 +68,6 @@ html[data-theme="dark"] .employee-layout,
 html[data-theme="dark"] .student-layout {
   --blue: #6FA8F5;
   --blue-tint: rgba(111, 168, 245, 0.18);
-  --red: #FF6B81;
-  --red-dark: #FF95A4;
-  --red-light: #FFB3BE;
   --bg: #12141B;
   --paper: #1C202B;
   --surface: #1A1E28;
