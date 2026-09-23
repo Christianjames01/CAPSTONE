@@ -28,6 +28,7 @@ function EmployeeDashboard() {
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
     const [documentNames, setDocumentNames] = useState({})
+    const [studentNames, setStudentNames] = useState({})
     // One clock reading per page load, so every "waiting N days" agrees.
     const [now] = useState(() => new Date())
     const [todaySchedules, setTodaySchedules] = useState([])
@@ -93,7 +94,7 @@ function EmployeeDashboard() {
 
             let requestQuery = supabase
                 .from('document_requests')
-                .select('request_id, request_number, document_type_id, total_amount, status, requested_at')
+                .select('request_id, request_number, student_id, document_type_id, total_amount, status, requested_at')
                 .order('requested_at', { ascending: false })
 
             if (isReleasingScope) {
@@ -160,25 +161,40 @@ function EmployeeDashboard() {
 
             const sRows = scheduleRows || []
             const scheduleRequestIds = [...new Set(sRows.map((s) => s.request_id))]
-            const scheduleStudentIds = [...new Set(sRows.map((s) => s.student_id).filter(Boolean))]
+            const recentStudentIds = (requestData || []).slice(0, 6).map((r) => r.student_id)
+            const scheduleStudentIds = [...new Set([...sRows.map((s) => s.student_id), ...recentStudentIds].filter(Boolean))]
 
             const [{ data: scheduleRequests }, { data: scheduleStudents }] = await Promise.all([
                 scheduleRequestIds.length
                     ? supabase.from('document_requests').select('request_id, request_number').in('request_id', scheduleRequestIds)
                     : Promise.resolve({ data: [] }),
                 scheduleStudentIds.length
-                    ? supabase.from('students').select('student_id, student_number').in('student_id', scheduleStudentIds)
+                    ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', scheduleStudentIds)
                     : Promise.resolve({ data: [] }),
             ])
 
             const requestNumberById = Object.fromEntries((scheduleRequests || []).map((r) => [r.request_id, r.request_number]))
             const studentNumberById = Object.fromEntries((scheduleStudents || []).map((s) => [s.student_id, s.student_number]))
 
+            const studentUserIds = [...new Set((scheduleStudents || []).map((s) => s.user_id).filter(Boolean))]
+            const { data: studentProfiles } = studentUserIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', studentUserIds)
+                : { data: [] }
+
+            const nameByUserId = Object.fromEntries(
+                (studentProfiles || []).map((p) => [p.user_id, `${p.first_name || ''} ${p.last_name || ''}`.trim()])
+            )
+            const studentNameById = Object.fromEntries(
+                (scheduleStudents || []).map((s) => [s.student_id, nameByUserId[s.user_id] || ''])
+            )
+            setStudentNames(studentNameById)
+
             setTodaySchedules(
                 sRows.map((s) => ({
                     ...s,
                     requestNumber: requestNumberById[s.request_id] || 'N/A',
                     studentNumber: studentNumberById[s.student_id] || 'N/A',
+                    studentName: studentNameById[s.student_id] || '',
                 }))
             )
 
@@ -369,8 +385,8 @@ function EmployeeDashboard() {
                                     <button className="dash-row" onClick={() => navigate(`/employee/requests/${schedule.request_id}`)}>
                                         <span className="dash-row-time">{formatTime(schedule.claim_time || schedule.scheduled_time)}</span>
                                         <span className="dash-row-main">
-                                            <strong>{schedule.requestNumber}</strong>
-                                            <span>Student {schedule.studentNumber}</span>
+                                            <strong>{schedule.studentName || `Student ${schedule.studentNumber}`}</strong>
+                                            <span>{schedule.requestNumber} · {schedule.studentNumber}</span>
                                         </span>
                                         <span className={`employee-status-pill status-${schedule.status}`}>{schedule.status.replace(/_/g, ' ')}</span>
                                     </button>
@@ -398,6 +414,7 @@ function EmployeeDashboard() {
                                         <span className="dash-row-main">
                                             <strong>{documentNames[request.document_type_id] || request.request_number}</strong>
                                             <span>
+                                                {studentNames[request.student_id] && <>{studentNames[request.student_id]} · </>}
                                                 {request.request_number}
                                                 {request.requested_at && ` · ${new Date(request.requested_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}`}
                                             </span>
