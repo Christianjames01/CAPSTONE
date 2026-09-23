@@ -117,9 +117,18 @@ function Messages() {
     const isMyThread = (thread) =>
         !!currentUserId && (thread.participantA === currentUserId || thread.participantB === currentUserId)
 
-    const otherParticipant = (thread) => {
-        if (thread.participantA === currentUserId) return { id: thread.participantB, name: thread.nameB }
-        return { id: thread.participantA, name: thread.nameA }
+    // Normally just the one other person. Viewing a student<->employee
+    // thread the head isn't part of, neither A nor B is the head, so both
+    // come back -- a reply there fans out to each of them individually
+    // (the schema is strictly 1:1 rows), but still reads as one message
+    // sent into this same conversation rather than a separate DM.
+    const otherParticipants = (thread) => {
+        const both = [
+            { id: thread.participantA, name: thread.nameA },
+            { id: thread.participantB, name: thread.nameB },
+        ]
+        const others = both.filter((p) => p.id !== currentUserId)
+        return others.length > 0 ? others : both
     }
 
     const openStudentPicker = () => {
@@ -217,25 +226,30 @@ function Messages() {
     const sendReply = async () => {
         if (!reply.trim() || !activeThread || !currentUserId) return
 
-        const receiverId = otherParticipant(activeThread).id
+        const recipients = otherParticipants(activeThread)
+        if (recipients.length === 0) return
 
         try {
             setSending(true)
 
+            const rows = recipients.map((r) => ({
+                sender_user_id: currentUserId,
+                receiver_user_id: r.id,
+                message: reply.trim(),
+                is_read: false,
+            }))
+
             const { data, error: sendError } = await supabase
                 .from('messages')
-                .insert({
-                    sender_user_id: currentUserId,
-                    receiver_user_id: receiverId,
-                    message: reply.trim(),
-                    is_read: false,
-                })
+                .insert(rows)
                 .select()
-                .single()
 
             if (sendError) throw new Error(sendError.message)
 
-            const updatedThread = { ...activeThread, messages: [...activeThread.messages, data] }
+            // Delivered as one row per recipient under the hood, but shown
+            // as a single bubble here -- it's one message from the head's
+            // point of view, not several.
+            const updatedThread = { ...activeThread, messages: [...activeThread.messages, data[0]] }
             setActiveThread(updatedThread)
 
             setThreads((prev) => {
@@ -275,7 +289,7 @@ function Messages() {
                     <p>
                         {activeThread.roleA === 'student' ? 'Student' : 'Registrar Staff'} and{' '}
                         {activeThread.roleB === 'student' ? 'Student' : 'Registrar Staff'}
-                        {!mine && ' · view only'}
+                        {!mine && ' · replying here reaches both of them'}
                     </p>
                 </div>
 
@@ -284,13 +298,13 @@ function Messages() {
                         <p style={{ fontSize: 13, color: 'var(--slate)' }}>No messages yet — say hello below.</p>
                     ) : (
                         activeThread.messages.map((m) => {
-                            const isA = m.sender_user_id === activeThread.participantA
+                            const isSelf = m.sender_user_id === currentUserId
 
                             return (
                                 <div
                                     key={m.message_id}
                                     style={{
-                                        alignSelf: isA ? 'flex-start' : 'flex-end',
+                                        alignSelf: isSelf ? 'flex-end' : 'flex-start',
                                         maxWidth: '70%',
                                     }}
                                 >
@@ -299,8 +313,8 @@ function Messages() {
                                     </span>
                                     <div
                                         style={{
-                                            background: isA ? 'var(--paper)' : 'var(--blue)',
-                                            color: isA ? 'var(--ink)' : 'var(--white)',
+                                            background: isSelf ? 'var(--blue)' : 'var(--paper)',
+                                            color: isSelf ? 'var(--white)' : 'var(--ink)',
                                             padding: '10px 14px',
                                             borderRadius: 10,
                                         }}
@@ -316,49 +330,30 @@ function Messages() {
                     )}
                 </div>
 
-                {mine ? (
-                    <>
-                        <button
-                            className="admin-link-button"
-                            style={{ marginTop: 12 }}
-                            onClick={() => setReply(TEMPLATE_MESSAGE)}
-                        >
-                            Use registrar contact template
-                        </button>
+                <button
+                    className="admin-link-button"
+                    style={{ marginTop: 12 }}
+                    onClick={() => setReply(TEMPLATE_MESSAGE)}
+                >
+                    Use registrar contact template
+                </button>
 
-                        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                            <input
-                                className="admin-search-input"
-                                style={{ flex: 1, maxWidth: 'none' }}
-                                value={reply}
-                                onChange={(e) => setReply(e.target.value)}
-                                placeholder="Type a message..."
-                                aria-label="Type a message"
-                                onKeyDown={(e) => e.key === 'Enter' && sendReply()}
-                                disabled={sending}
-                            />
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                    <input
+                        className="admin-search-input"
+                        style={{ flex: 1, maxWidth: 'none' }}
+                        value={reply}
+                        onChange={(e) => setReply(e.target.value)}
+                        placeholder={mine ? 'Type a message...' : 'Type a message to both...'}
+                        aria-label="Type a message"
+                        onKeyDown={(e) => e.key === 'Enter' && sendReply()}
+                        disabled={sending}
+                    />
 
-                            <button className="admin-primary-button" onClick={sendReply} disabled={sending}>
-                                {sending ? 'Sending...' : 'Send'}
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-                        <button
-                            className="admin-secondary-button"
-                            onClick={() => startThreadWithUser({ userId: activeThread.participantA, name: activeThread.nameA, role: activeThread.roleA })}
-                        >
-                            Message {activeThread.nameA}
-                        </button>
-                        <button
-                            className="admin-secondary-button"
-                            onClick={() => startThreadWithUser({ userId: activeThread.participantB, name: activeThread.nameB, role: activeThread.roleB })}
-                        >
-                            Message {activeThread.nameB}
-                        </button>
-                    </div>
-                )}
+                    <button className="admin-primary-button" onClick={sendReply} disabled={sending}>
+                        {sending ? 'Sending...' : 'Send'}
+                    </button>
+                </div>
             </div>
         )
     }
