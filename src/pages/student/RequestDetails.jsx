@@ -886,7 +886,10 @@ function RequestDetails() {
                     </div>
                 )}
 
-                {(request.status === 'pending' || request.status === 'processing') && (
+                {/* payment_pending is exactly when the status banner tells the
+                    student to "upload your official receipt below", so the
+                    upload card has to show then too. */}
+                {['pending', 'payment_pending', 'processing'].includes(request.status) && (
                     <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
                         <h3 style={{ fontSize: 15, marginBottom: 10 }}>Payment</h3>
 
@@ -904,6 +907,25 @@ function RequestDetails() {
                             onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
                         >
                             Upload Official Receipt
+                        </button>
+                    </div>
+                )}
+
+                {request.status === 'receipt_uploaded' && (
+                    <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
+                        <h3 style={{ fontSize: 15, marginBottom: 10 }}>Official Receipt Uploaded</h3>
+
+                        <p style={{ color: 'var(--slate)', fontSize: 13.5, marginBottom: 12 }}>
+                            Your receipt is waiting for the Registrar to verify your payment. Uploaded the wrong
+                            file? You can replace it until it's verified.
+                        </p>
+
+                        <button
+                            className="auth-submit"
+                            style={{ width: 'auto', padding: '11px 20px' }}
+                            onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
+                        >
+                            View or Replace Receipt
                         </button>
                     </div>
                 )}
