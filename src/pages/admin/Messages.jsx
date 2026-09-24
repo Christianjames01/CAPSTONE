@@ -442,23 +442,26 @@ function Messages() {
         }
     }
 
-    const deleteConversation = async () => {
-        const count = activeThread.messages.length
+    // Used from both the conversation list and the open conversation.
+    const deleteConversation = async (thread) => {
+        const count = thread.messages.length
         const confirmed = await confirmModal(
-            `Delete this entire conversation (${count} message${count === 1 ? '' : 's'})? It will be removed for everyone in it. This cannot be undone.`,
+            `Delete the conversation "${thread.nameA} ↔ ${thread.nameB}" (${count} message${count === 1 ? '' : 's'})? It will be removed for everyone in it. This cannot be undone.`,
             { title: 'Delete conversation?', confirmButtonText: 'Delete conversation', icon: 'warning' }
         )
         if (!confirmed) return
 
         try {
-            setDeletingKey('thread')
-            await deleteRows(siblingIdsOf(activeThread.messages))
+            setDeletingKey(`thread:${thread.pairKey}`)
+            await deleteRows(siblingIdsOf(thread.messages))
 
-            setThreads((prev) => prev.filter((t) => t.pairKey !== activeThread.pairKey))
-            await logDelete(`Deleted the conversation "${activeThread.nameA}" ↔ "${activeThread.nameB}" (${count} message${count === 1 ? '' : 's'}).`)
+            setThreads((prev) => prev.filter((t) => t.pairKey !== thread.pairKey))
+            await logDelete(`Deleted the conversation "${thread.nameA}" ↔ "${thread.nameB}" (${count} message${count === 1 ? '' : 's'}).`)
 
-            setActiveThread(null)
-            setReply('')
+            if (activeThread?.pairKey === thread.pairKey) {
+                setActiveThread(null)
+                setReply('')
+            }
             notifySuccess('Conversation deleted.')
         } catch (err) {
             console.error('DELETE CONVERSATION ERROR:', err)
@@ -505,10 +508,10 @@ function Messages() {
                     {activeThread.messages.length > 0 && (
                         <button
                             className="admin-danger-button"
-                            onClick={deleteConversation}
+                            onClick={() => deleteConversation(activeThread)}
                             disabled={deletingKey !== null}
                         >
-                            {deletingKey === 'thread' ? 'Deleting...' : 'Delete conversation'}
+                            {deletingKey === `thread:${activeThread.pairKey}` ? 'Deleting...' : 'Delete conversation'}
                         </button>
                     )}
                 </div>
@@ -649,15 +652,26 @@ function Messages() {
                                     {lastMessage ? formatTime(lastMessage.created_at) : ''}
                                 </span>
 
-                                {unread > 0 && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                    {unread > 0 && (
+                                        <button
+                                            className="admin-link-button"
+                                            onClick={(e) => { e.stopPropagation(); markThreadsRead([thread]) }}
+                                            onKeyDown={(e) => e.stopPropagation()}
+                                        >
+                                            Mark as read
+                                        </button>
+                                    )}
                                     <button
-                                        className="admin-link-button"
-                                        onClick={(e) => { e.stopPropagation(); markThreadsRead([thread]) }}
+                                        className="admin-link-button admin-thread-delete"
+                                        onClick={(e) => { e.stopPropagation(); deleteConversation(thread) }}
                                         onKeyDown={(e) => e.stopPropagation()}
+                                        disabled={deletingKey !== null}
+                                        aria-label={`Delete conversation ${thread.nameA} and ${thread.nameB}`}
                                     >
-                                        Mark as read
+                                        {deletingKey === `thread:${thread.pairKey}` ? 'Deleting...' : 'Delete'}
                                     </button>
-                                )}
+                                </div>
                             </div>
                         </div>
                     )
