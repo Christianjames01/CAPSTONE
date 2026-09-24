@@ -1,0 +1,91 @@
+/* Student's reschedule requests on the Claim Schedule pages. Colors come
+   from the portal layout's theme variables. Paragraph rules are scoped
+   under .rsh so they outrank the layouts' `p { color: var(--slate) }`. */
+
+.rsh {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper);
+}
+
+.rsh-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.rsh-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rsh-item {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.rsh-item.is-pending {
+    border-left-color: var(--warning-text, #B45309);
+}
+
+.rsh-item.is-handled {
+    border-left-color: var(--success-text, #1e8a5f);
+}
+
+.rsh-item-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.rsh-pill {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.rsh-pill.is-pending {
+    background: var(--warning-bg, rgba(255, 193, 7, 0.18));
+    color: var(--warning-text, #B45309);
+}
+
+.rsh-pill.is-handled {
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+    color: var(--success-text, #1e8a5f);
+}
+
+.rsh .rsh-reason {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.rsh .rsh-meta {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.rsh-item-top .rsh-meta {
+    margin: 0;
+}

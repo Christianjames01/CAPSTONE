@@ -9,6 +9,7 @@ import '../auth/Auth.css'
 import './EmployeePages.css'
 import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claimCounter'
 import { loadStudentsById } from '../../lib/studentNames'
+import RescheduleHistory from '../../components/RescheduleHistory'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -894,12 +895,15 @@ function ClaimSchedule() {
                         Choose the exact date and time when the student should arrive at the Registrar's Office.
                     </p>
 
-                    {existingSchedule?.reschedule_requested_at && (
-                        <div className="employee-notice tone-warning" style={{ marginBottom: 18 }}>
-                            <strong>Student Requested a Reschedule</strong>
-                            <p>{existingSchedule.reschedule_reason}</p>
-                        </div>
-                    )}
+                    {/* Every reschedule request the student sent -- kept (marked
+                        handled) when a new date is saved, not wiped. */}
+                    <RescheduleHistory
+                        scheduleId={existingSchedule?.claim_schedule_id}
+                        pending={existingSchedule?.reschedule_requested_at
+                            ? { reason: existingSchedule.reschedule_reason, requestedAt: existingSchedule.reschedule_requested_at }
+                            : null}
+                        reloadKey={existingSchedule?.updated_at}
+                    />
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 18 }}>
                         <div className="form-group">
