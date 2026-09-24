@@ -886,10 +886,11 @@ function RequestDetails() {
                     </div>
                 )}
 
-                {/* payment_pending is exactly when the status banner tells the
-                    student to "upload your official receipt below", so the
-                    upload card has to show then too. */}
-                {['pending', 'payment_pending', 'processing'].includes(request.status) && (
+                {/* Every status where the request isn't paid yet: payment_pending
+                    is exactly when the banner says "upload your official receipt
+                    below", and a request sent back for requirements
+                    (lacking_requirements) can still be unpaid. */}
+                {['pending', 'payment_pending', 'processing', 'lacking_requirements'].includes(request.status) && (
                     <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
                         <h3 style={{ fontSize: 15, marginBottom: 10 }}>Payment</h3>
 
