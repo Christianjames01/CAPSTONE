@@ -371,27 +371,33 @@ function Announcements() {
                             <h4>Content</h4>
 
                             <div className="form-group">
-                                <label className="form-label" htmlFor="ann-title">Title</label>
+                                <label className="form-label" htmlFor="ann-title" onClick={() => document.getElementById('ann-title')?.focus()}>Title</label>
                                 <RichTextEditor
                                     editorKey={form.announcement_id || 'new'}
                                     value={form.title}
                                     onChange={(html) => setForm({ ...form, title: html })}
                                     placeholder="e.g. Office closed Friday for a holiday"
+                                    id="ann-title"
+                                    ariaLabel="Announcement title"
+                                    singleLine
                                     disabled={saving}
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label" htmlFor="ann-message">Message</label>
+                                <label className="form-label" htmlFor="ann-message" onClick={() => document.getElementById('ann-message')?.focus()}>Message</label>
                                 <RichTextEditor
                                     editorKey={form.announcement_id || 'new'}
                                     value={form.message}
                                     onChange={(html) => setForm({ ...form, message: html })}
                                     placeholder="Details students should know"
+                                    id="ann-message"
+                                    ariaLabel="Announcement message"
+                                    showCount
                                     disabled={saving}
                                 />
                                 <small className="ann-help">
-                                    Bold, italicize, underline, resize, or color the text so it stands out the way you want students to see it.
+                                    Select text, then use the toolbar to bold, resize, color, or turn it into a list. Pasted text comes in plain, so it picks up no stray formatting.
                                 </small>
                             </div>
                         </section>

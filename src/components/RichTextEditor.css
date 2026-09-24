@@ -1,28 +1,41 @@
 .rich-text-editor {
+    position: relative;
     border: 1px solid var(--line);
-    border-radius: 8px;
-    overflow: hidden;
+    border-radius: 10px;
     background: var(--surface);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rich-text-editor:focus-within {
+    border-color: var(--blue-accent, var(--blue));
+    box-shadow: 0 0 0 3px var(--blue-tint);
 }
 
 .rich-text-editor.is-disabled {
     opacity: 0.65;
 }
 
+/* ---------- Toolbar ---------- */
+
 .rich-text-toolbar {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 4px;
-    padding: 6px 8px;
+    padding: 6px;
     background: var(--paper);
     border-bottom: 1px solid var(--line);
+    border-radius: 10px 10px 0 0;
 }
 
 .rich-text-group {
     display: flex;
     align-items: center;
     gap: 2px;
+}
+
+.rich-text-group-end {
+    margin-left: auto;
 }
 
 .rich-text-divider {
@@ -37,21 +50,33 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 28px;
-    height: 28px;
-    padding: 0 8px;
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
     border: none;
     border-radius: 6px;
     background: transparent;
-    color: var(--ink);
-    font-size: 13px;
+    color: var(--slate);
     line-height: 1;
     cursor: pointer;
     transition: background 0.12s ease, color 0.12s ease;
 }
 
+.rich-text-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
 .rich-text-btn:hover:not(:disabled) {
     background: var(--surface);
+    color: var(--ink);
+}
+
+.rich-text-btn:focus-visible,
+.rich-text-select-wrap:focus-within {
+    outline: 2px solid var(--blue-accent, var(--blue));
+    outline-offset: 1px;
 }
 
 .rich-text-btn.active {
@@ -64,24 +89,64 @@
     cursor: not-allowed;
 }
 
-.rich-text-clear {
-    font-size: 12.5px;
-    color: var(--slate);
-}
+/* ---------- Size dropdown ---------- */
 
-.rich-text-size-select {
-    height: 28px;
-    padding: 0 6px;
-    border: none;
+.rich-text-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
     border-radius: 6px;
-    background: transparent;
-    color: var(--ink);
-    font-size: 12.5px;
+    color: var(--slate);
     cursor: pointer;
 }
 
-.rich-text-size-select:hover:not(:disabled) {
+.rich-text-select-wrap:hover {
     background: var(--surface);
+    color: var(--ink);
+}
+
+.rich-text-select-icon,
+.rich-text-select-chevron {
+    position: absolute;
+    display: flex;
+    pointer-events: none;
+}
+
+.rich-text-select-icon {
+    left: 7px;
+}
+
+.rich-text-select-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.rich-text-select-chevron {
+    right: 5px;
+}
+
+.rich-text-select-chevron svg {
+    width: 13px;
+    height: 13px;
+}
+
+.rich-text-size-select {
+    height: 30px;
+    padding: 0 22px 0 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.rich-text-size-select:focus {
+    outline: none;
 }
 
 .rich-text-size-select:disabled {
@@ -89,68 +154,208 @@
     cursor: not-allowed;
 }
 
+.rich-text-size-select option {
+    color: var(--ink);
+    background: var(--surface);
+}
+
+/* ---------- Text color (split button + popover) ---------- */
+
+.rich-text-color {
+    position: relative;
+}
+
+.rich-text-split {
+    display: flex;
+    align-items: center;
+}
+
+.rich-text-color-apply {
+    flex-direction: column;
+    gap: 2px;
+    border-radius: 6px 0 0 6px;
+}
+
+.rich-text-color-letter {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+}
+
+.rich-text-color-bar {
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.rich-text-color-toggle {
+    width: 18px;
+    border-radius: 0 6px 6px 0;
+}
+
+.rich-text-color-toggle svg {
+    width: 13px;
+    height: 13px;
+}
+
+.rich-text-color-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    width: 176px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+}
+
+.rich-text-color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
 .rich-text-color-swatch {
-    width: 20px;
-    height: 20px;
+    width: 100%;
+    aspect-ratio: 1;
+    margin: 0;
     padding: 0;
-    border-radius: 5px;
+    border-radius: 7px;
     border: 1px solid rgba(0, 0, 0, 0.12);
     background: var(--swatch-color);
     cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-.rich-text-color-swatch:hover:not(:disabled) {
-    transform: scale(1.12);
-    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--swatch-color);
+.rich-text-color-swatch:hover,
+.rich-text-color-swatch:focus-visible {
+    transform: scale(1.08);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch-color);
 }
 
-.rich-text-color-swatch:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.rich-text-color-swatch.is-current {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue-accent, var(--blue));
+}
+
+.rich-text-color-custom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-top: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.rich-text-color-custom:hover {
+    background: var(--paper);
 }
 
 .rich-text-color-picker {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.12);
     background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
-    cursor: pointer;
-    overflow: hidden;
-    transition: transform 0.12s ease;
 }
 
-.rich-text-color-picker:hover {
-    transform: scale(1.12);
-}
-
-.rich-text-color-picker input {
-    opacity: 0;
+.rich-text-color-custom input {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    opacity: 0;
     cursor: pointer;
 }
 
+/* ---------- Editable area ---------- */
+
 .rich-text-body {
-    min-height: 110px;
-    padding: 10px 12px;
-    line-height: 1.5;
+    min-height: 120px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    line-height: 1.6;
     overflow-wrap: anywhere;
     background: var(--surface);
     color: var(--ink);
     font-size: 14px;
+    border-radius: 0 0 10px 10px;
+}
+
+.rich-text-editor.is-single-line .rich-text-body {
+    min-height: 0;
+    max-height: none;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .rich-text-body:focus {
     outline: none;
 }
 
-.rich-text-body:empty::before {
+.rich-text-body p {
+    margin: 0 0 6px;
+}
+
+.rich-text-body ul,
+.rich-text-body ol {
+    margin: 4px 0 6px;
+    padding-left: 22px;
+}
+
+/* Browsers leave a stray <br> behind after clearing a contentEditable, so
+   :empty alone misses it -- the component also flags emptiness itself. */
+.rich-text-editor.is-empty .rich-text-body {
+    position: relative;
+}
+
+.rich-text-editor.is-empty .rich-text-body::before {
     content: attr(data-placeholder);
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    right: 14px;
     color: var(--slate);
+    font-weight: 400;
     pointer-events: none;
+}
+
+.rich-text-footer {
+    padding: 6px 12px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--slate);
+    text-align: right;
+}
+
+.rich-text-editor:has(.rich-text-footer) .rich-text-body {
+    border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rich-text-editor,
+    .rich-text-btn,
+    .rich-text-color-swatch {
+        transition: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .rich-text-group-end {
+        margin-left: 0;
+    }
+
+    .rich-text-divider {
+        display: none;
+    }
 }
