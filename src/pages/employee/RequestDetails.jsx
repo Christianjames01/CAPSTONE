@@ -10,6 +10,8 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './EmployeePages.css'
+import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
+import '../../components/ReceiptActions.css'
 
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
@@ -1474,10 +1476,10 @@ function EmployeeRequestDetails() {
 
                                 {receiptUrl ? (
                                     <button
-                                        className="employee-file-link"
+                                        className="ra-btn ra-view"
                                         onClick={() => setPreviewFile({ url: receiptUrl, name: receipt.receipt_file_name })}
                                     >
-                                        View Official Receipt
+                                        <ReceiptFileIcon /> View Official Receipt
                                     </button>
                                 ) : (
                                     <div className="employee-notice tone-danger">
@@ -1499,9 +1501,9 @@ function EmployeeRequestDetails() {
                             )}
 
                             {receipt.status === 'uploaded' && (
-                                <div className="employee-actions-row">
-                                    <button onClick={verifyPayment} disabled={processing} className="employee-primary-button">
-                                        {processing ? 'Processing...' : '✓ Verify Payment'}
+                                <div className="ra-row">
+                                    <button onClick={verifyPayment} disabled={processing} className="ra-btn ra-verify">
+                                        <CheckIcon /> {processing ? 'Processing...' : 'Verify Payment'}
                                     </button>
 
                                     <button
@@ -1511,9 +1513,9 @@ function EmployeeRequestDetails() {
                                             setRejectionReason('')
                                         }}
                                         disabled={processing}
-                                        className="employee-danger-button"
+                                        className="ra-btn ra-reject"
                                     >
-                                        ✕ Reject Payment
+                                        <XIcon /> Reject Payment
                                     </button>
                                 </div>
                             )}

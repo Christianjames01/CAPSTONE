@@ -10,6 +10,8 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
+import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
+import '../../components/ReceiptActions.css'
 
 const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
@@ -1121,13 +1123,13 @@ function AdminRequestDetails() {
                             </div>
                         </div>
 
-                        <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        <div className="ra-row">
                             {receiptUrl ? (
                                 <button
-                                    className="admin-primary-button"
+                                    className="ra-btn ra-view"
                                     onClick={() => setPreviewFile({ url: receiptUrl, name: receipt.receipt_file_name })}
                                 >
-                                    View Official Receipt
+                                    <ReceiptFileIcon /> View Official Receipt
                                 </button>
                             ) : (
                                 <p style={{ fontSize: 13, color: 'var(--slate)' }}>Receipt file could not be opened.</p>
@@ -1135,12 +1137,12 @@ function AdminRequestDetails() {
 
                             {receipt.status === 'uploaded' && (
                                 <>
-                                    <button className="admin-primary-button" onClick={verifyPayment} disabled={processing}>
-                                        {processing ? 'Processing...' : '✓ Verify Payment'}
+                                    <button className="ra-btn ra-verify" onClick={verifyPayment} disabled={processing}>
+                                        <CheckIcon /> {processing ? 'Processing...' : 'Verify Payment'}
                                     </button>
 
                                     <button
-                                        className="admin-danger-button"
+                                        className="ra-btn ra-reject"
                                         onClick={() => {
                                             setShowReject(true)
                                             setSelectedRequirement(null)
@@ -1148,7 +1150,7 @@ function AdminRequestDetails() {
                                         }}
                                         disabled={processing}
                                     >
-                                        ✕ Reject Payment
+                                        <XIcon /> Reject Payment
                                     </button>
                                 </>
                             )}
