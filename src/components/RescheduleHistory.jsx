@@ -22,8 +22,11 @@ function formatClaimSlot(date, time) {
 //
 // `pending` is the schedule's current reschedule_requested_at/reason, used
 // if the history table isn't there yet or doesn't have this request.
+// `lastReason` (with `lastUpdatedAt` / `lastSlot`) is the schedule's
+// reschedule_reason after staff handled it -- shown as handled when there's
+// no history row for it, so the student's message never just disappears.
 // `reloadKey` re-fetches after staff save a new date.
-function RescheduleHistory({ scheduleId, pending, reloadKey }) {
+function RescheduleHistory({ scheduleId, pending, lastReason, lastUpdatedAt, lastSlot, reloadKey }) {
     const [rows, setRows] = useState([])
 
     useEffect(() => {
@@ -49,6 +52,17 @@ function RescheduleHistory({ scheduleId, pending, reloadKey }) {
         items.unshift({ reschedule_request_id: 'pending', reason: pending.reason, requested_at: pending.requestedAt, handled_at: null })
     }
 
+    if (!pending?.requestedAt && lastReason?.trim() && !items.some((r) => (r.reason || '').trim() === lastReason.trim())) {
+        items.unshift({
+            reschedule_request_id: 'last',
+            reason: lastReason,
+            requested_at: null,
+            handled_at: lastUpdatedAt || true,
+            new_claim_date: lastSlot?.date,
+            new_claim_time: lastSlot?.time,
+        })
+    }
+
     if (items.length === 0) return null
 
     const openCount = items.filter((r) => !r.handled_at).length
@@ -67,14 +81,14 @@ function RescheduleHistory({ scheduleId, pending, reloadKey }) {
                             <span className={`rsh-pill ${r.handled_at ? 'is-handled' : 'is-pending'}`}>
                                 {r.handled_at ? 'Handled' : 'Pending'}
                             </span>
-                            <span className="rsh-meta">Sent {formatDateTime(r.requested_at)}</span>
+                            {r.requested_at && <span className="rsh-meta">Sent {formatDateTime(r.requested_at)}</span>}
                         </div>
 
                         <p className="rsh-reason">{r.reason?.trim() ? `“${r.reason.trim()}”` : 'No message provided.'}</p>
 
                         {r.handled_at && (
                             <p className="rsh-meta">
-                                Rescheduled {formatDateTime(r.handled_at)}
+                                Rescheduled{typeof r.handled_at === 'string' ? ` ${formatDateTime(r.handled_at)}` : ''}
                                 {r.new_claim_date && <> · moved to <strong>{formatClaimSlot(r.new_claim_date, r.new_claim_time)}</strong></>}
                             </p>
                         )}

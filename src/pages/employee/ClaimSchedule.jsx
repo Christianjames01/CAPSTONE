@@ -357,10 +357,9 @@ function ClaimSchedule() {
                         status:
                             'scheduled',
 
+                        // Clears the "pending" flag only; the student's message
+                        // (reschedule_reason) stays so it's still shown as handled.
                         reschedule_requested_at:
-                            null,
-
-                        reschedule_reason:
                             null,
 
                         updated_at:
@@ -902,6 +901,9 @@ function ClaimSchedule() {
                         pending={existingSchedule?.reschedule_requested_at
                             ? { reason: existingSchedule.reschedule_reason, requestedAt: existingSchedule.reschedule_requested_at }
                             : null}
+                        lastReason={existingSchedule?.reschedule_reason}
+                        lastUpdatedAt={existingSchedule?.updated_at}
+                        lastSlot={existingSchedule ? { date: existingSchedule.claim_date || existingSchedule.scheduled_date, time: existingSchedule.claim_time || existingSchedule.scheduled_time } : null}
                         reloadKey={existingSchedule?.updated_at}
                     />
 
