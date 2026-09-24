@@ -121,7 +121,7 @@ function AdminDashboard() {
 
             const { data: logs, error: logsError } = await supabase
                 .from('activity_logs')
-                .select('activity_log_id, action, description, employee_id, created_at')
+                .select('activity_log_id, action, description, employee_id, user_id, created_at')
                 .order('created_at', { ascending: false })
                 .limit(8)
 
@@ -135,7 +135,14 @@ function AdminDashboard() {
                 ? await supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', employeeIds)
                 : { data: [] }
 
-            const userIds = [...new Set((employees || []).map((e) => e.user_id))]
+            // Employees are logged by employee_id; the registrar head and
+            // admins are logged by user_id directly -- resolve both, the same
+            // way the Activity Logs page does. Only rows with neither (e.g.
+            // scheduled jobs) are really "System".
+            const userIds = [...new Set([
+                ...(employees || []).map((e) => e.user_id),
+                ...(logs || []).map((l) => l.user_id).filter(Boolean),
+            ])]
 
             const { data: profiles } = userIds.length
                 ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
@@ -147,7 +154,9 @@ function AdminDashboard() {
             setRecentActivity(
                 (logs || []).map((log) => {
                     const employee = employeeById[log.employee_id]
-                    const profile = employee ? profileByUserId[employee.user_id] : null
+                    const profile = employee
+                        ? profileByUserId[employee.user_id]
+                        : log.user_id ? profileByUserId[log.user_id] : null
 
                     return {
                         ...log,
