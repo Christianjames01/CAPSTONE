@@ -42,23 +42,35 @@
 .msg.is-self .msg-bubble {
     background: var(--blue);
     border-color: var(--blue);
-    color: var(--white, #fff);
+    color: #fff;
 }
 
-.msg-text {
+/* Scoped under .msg .msg-bubble so it outranks each portal layout's
+   `.admin-layout p { color: var(--slate) }` (and employee/student
+   equivalents), which otherwise turned the text gray -- nearly invisible
+   on the blue bubble. */
+.msg .msg-bubble .msg-text {
     margin: 0;
-    color: inherit;
+    color: var(--ink);
     font-size: 14px;
     line-height: 1.55;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
+.msg.is-self .msg-bubble .msg-text {
+    color: #fff;
+}
+
 .msg-time {
     display: block;
     margin-top: 4px;
     font-size: 11px;
-    opacity: 0.75;
+    color: var(--slate);
+}
+
+.msg.is-self .msg-time {
+    color: rgba(255, 255, 255, 0.78);
 }
 
 .msg-edited {
