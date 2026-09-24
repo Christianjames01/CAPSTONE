@@ -1,0 +1,520 @@
+/* ===================================================
+   ANNOUNCEMENTS (admin) -- list cards, toolbar, editor.
+   Colors come from AdminLayout's theme variables.
+=================================================== */
+
+.ann-header {
+    margin-bottom: 20px;
+}
+
+/* ---------- Toolbar ---------- */
+
+.ann-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ann-toolbar .admin-filter-row {
+    margin-bottom: 0;
+}
+
+.ann-toolbar .admin-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.ann-chip-count {
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    text-align: center;
+    background: var(--paper);
+    color: var(--slate);
+}
+
+.admin-filter-chip.active .ann-chip-count {
+    background: rgba(255, 255, 255, 0.22);
+    color: inherit;
+}
+
+/* ---------- Cards ---------- */
+
+.ann-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ann-card {
+    --ann-accent: var(--blue-accent, var(--blue));
+    --ann-tint: var(--blue-tint);
+
+    display: flex;
+    gap: 16px;
+    padding: 20px 22px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ann-accent);
+    border-radius: 12px;
+    transition: box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.ann-card:hover {
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.ann-card.tone-closed {
+    --ann-accent: var(--danger-text, var(--red));
+    --ann-tint: var(--danger-bg-soft);
+}
+
+.ann-card.tone-open {
+    --ann-accent: var(--success-text);
+    --ann-tint: var(--success-bg);
+}
+
+/* Inactive announcements stay readable but visibly recede. */
+.ann-card.is-inactive {
+    --ann-accent: var(--line);
+    background: var(--paper);
+}
+
+.ann-card.is-inactive .ann-card-icon,
+.ann-card.is-inactive .ann-card-title,
+.ann-card.is-inactive .ann-card-message {
+    opacity: 0.62;
+}
+
+.ann-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--ann-tint);
+    color: var(--ann-accent);
+}
+
+.ann-card.is-inactive .ann-card-icon {
+    background: var(--surface);
+    color: var(--slate);
+}
+
+.ann-card-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.ann-card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.ann-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px 16px;
+    flex-wrap: wrap;
+}
+
+.ann-card-title {
+    flex: 1 1 260px;
+    min-width: 0;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.ann-card-title p {
+    display: inline;
+    margin: 0;
+}
+
+.ann-card-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ann-visibility-pill {
+    gap: 6px;
+}
+
+.ann-visibility-pill.is-live {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.ann-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.55;
+}
+
+.ann-visibility-pill.is-live .ann-dot {
+    opacity: 1;
+}
+
+.ann-card-meta {
+    margin: 4px 0 10px;
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.ann-past {
+    color: var(--warning-text);
+    font-weight: 600;
+}
+
+.ann-card-message {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+.ann-card-message p {
+    margin: 0 0 6px;
+}
+
+.ann-card-message p:last-child {
+    margin-bottom: 0;
+}
+
+.ann-card-message.is-clamped {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.ann-more-button {
+    margin: 6px 0 0;
+    padding: 0;
+    background: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+    cursor: pointer;
+}
+
+.ann-more-button:hover {
+    text-decoration: underline;
+}
+
+.ann-hint {
+    margin: 12px 0 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.ann-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.ann-action {
+    margin: 0;
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ann-action:hover:not(:disabled) {
+    border-color: var(--blue-accent, var(--blue));
+    color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.ann-action.is-danger {
+    margin-left: auto;
+    color: var(--danger-text, var(--red));
+}
+
+.ann-action.is-danger:hover:not(:disabled) {
+    border-color: var(--danger-text, var(--red));
+    color: var(--danger-text, var(--red));
+    background: var(--danger-bg-soft);
+}
+
+.ann-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ---------- Empty state ---------- */
+
+.ann-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 56px 24px;
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+}
+
+.ann-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 4px;
+    border-radius: 16px;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+}
+
+.ann-empty-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.ann-empty h3 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.ann-empty p {
+    max-width: 420px;
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    color: var(--slate);
+}
+
+/* ---------- Editor (modal) ---------- */
+
+.ann-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.ann-form-section {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.ann-form-section:first-child {
+    padding-top: 0;
+}
+
+.ann-form-section h4 {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+}
+
+.ann-optional {
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.ann-form .form-group {
+    margin-bottom: 14px;
+}
+
+.ann-form .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.ann-help {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.ann-date-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ann-date-row .form-input {
+    max-width: 220px;
+}
+
+.ann-segmented {
+    display: inline-flex;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+}
+
+.ann-segmented button {
+    margin: 0;
+    padding: 7px 20px;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--slate);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ann-segmented button.is-selected.is-open {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.ann-segmented button.is-selected.is-closed {
+    background: var(--danger-bg-soft);
+    color: var(--danger-text, var(--red));
+}
+
+/* Toggle switch built on a real checkbox so it stays keyboard/AT friendly. */
+.ann-switch {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.ann-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.ann-switch-track {
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 22px;
+    margin-top: 1px;
+    border-radius: 999px;
+    background: var(--line);
+    transition: background 0.15s ease;
+}
+
+.ann-switch-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--white, #fff);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease;
+}
+
+.ann-switch input:checked + .ann-switch-track {
+    background: var(--success-text);
+}
+
+.ann-switch input:checked + .ann-switch-track::after {
+    transform: translateX(18px);
+}
+
+.ann-switch input:focus-visible + .ann-switch-track {
+    outline: 2px solid var(--blue-accent, var(--blue));
+    outline-offset: 2px;
+}
+
+.ann-switch input:disabled + .ann-switch-track {
+    opacity: 0.6;
+}
+
+.ann-switch strong {
+    display: block;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.ann-switch small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.ann-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ann-card,
+    .ann-action,
+    .ann-switch-track,
+    .ann-switch-track::after {
+        transition: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .ann-card {
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .ann-card-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .ann-card-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .ann-card-title {
+        flex-basis: 100%;
+    }
+
+    .ann-action.is-danger {
+        margin-left: 0;
+    }
+
+    .ann-form-footer {
+        flex-direction: column-reverse;
+    }
+
+    .ann-form-footer > * {
+        justify-content: center;
+        width: 100%;
+    }
+}

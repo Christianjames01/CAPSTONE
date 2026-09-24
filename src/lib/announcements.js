@@ -16,3 +16,19 @@ export async function fetchActiveAnnouncements(audienceFlag) {
 
     return data || []
 }
+
+export function formatAnnouncementDate(dateStr, { withYear = false } = {}) {
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        ...(withYear ? { year: 'numeric' } : {}),
+    })
+}
+
+// 'closed' | 'open' | 'general' -- drives the accent color, icon, and badge
+// so the admin list, the admin preview, and the student dashboard agree.
+export function announcementTone(a) {
+    if (!a.announcement_date) return 'general'
+    return a.is_closed ? 'closed' : 'open'
+}

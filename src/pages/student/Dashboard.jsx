@@ -4,7 +4,7 @@ import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
-import { sanitizeAnnouncementHtml } from '../../lib/sanitizeHtml'
+import AnnouncementNotice from '../../components/AnnouncementNotice'
 import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
 import { SkeletonStatGrid, SkeletonPage } from '../../components/Skeleton'
 import './StudentPages.css'
@@ -18,14 +18,6 @@ const IN_PROGRESS_STATUSES = [
 const ACTION_NEEDED = {
     payment_pending: { label: 'Payment needed', cta: 'Upload receipt →', to: (id) => `/student/request/${id}/upload-receipt` },
     lacking_requirements: { label: 'Requirement needs fixing', cta: 'Submit requirements →', to: (id) => `/student/request/${id}/requirements` },
-}
-
-function formatAnnouncementDate(dateStr) {
-    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-    })
 }
 
 const STEPPER_STEPS = ['Submitted', 'Processing', 'Ready', 'Completed']
@@ -268,21 +260,13 @@ function Dashboard() {
 
             {!loading && (
                 <>
-                    {announcements.map((a) => (
-                        <div
-                            className={`student-notice ${a.announcement_date ? (a.is_closed ? 'tone-danger' : 'tone-success') : 'tone-info'}`}
-                            style={{ marginTop: 0, marginBottom: 16 }}
-                            key={a.announcement_id}
-                        >
-                            <strong>
-                                <span dangerouslySetInnerHTML={{ __html: sanitizeAnnouncementHtml(a.title) }} />
-                                {a.announcement_date && (
-                                    <> — {a.is_closed ? 'Closed' : 'Open'} on {formatAnnouncementDate(a.announcement_date)}</>
-                                )}
-                            </strong>
-                            <div dangerouslySetInnerHTML={{ __html: sanitizeAnnouncementHtml(a.message) }} />
-                        </div>
-                    ))}
+                    {announcements.length > 0 && (
+                        <section className="student-announcements" aria-label="Announcements">
+                            {announcements.map((a) => (
+                                <AnnouncementNotice key={a.announcement_id} announcement={a} />
+                            ))}
+                        </section>
+                    )}
 
                     <div className="student-stat-grid" style={{ marginBottom: 24 }}>
                         <button
