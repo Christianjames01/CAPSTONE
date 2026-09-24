@@ -390,3 +390,47 @@
     width: 20px;
     height: 20px;
 }
+
+/* A detail card switched into in-place edit mode (e.g. Student Details'
+   Personal / Student Information): highlight it and lay the inputs out on
+   the same grid as the read-only fields. */
+.admin-card.is-editing {
+    border-color: var(--blue-accent, var(--blue));
+    box-shadow: 0 0 0 3px var(--blue-tint);
+}
+
+.admin-edit-grid {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    align-items: end;
+}
+
+.admin-edit-grid .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+}
+
+.admin-edit-grid .admin-search-input {
+    max-width: none;
+}
+
+.admin-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+@media (max-width: 640px) {
+    .admin-edit-actions {
+        flex-direction: column-reverse;
+    }
+
+    .admin-edit-actions > * {
+        justify-content: center;
+        width: 100%;
+    }
+}

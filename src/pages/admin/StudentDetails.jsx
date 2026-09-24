@@ -8,7 +8,6 @@ import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
 import { updateStudentEmail } from '../../lib/updateStudentEmail'
 import { SkeletonPage } from '../../components/Skeleton'
-import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -37,7 +36,8 @@ function StudentDetails() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    const [editing, setEditing] = useState(false)
+    // 'personal' | 'student' | null -- which card is being edited in place.
+    const [editingSection, setEditingSection] = useState(null)
     const [form, setForm] = useState(null)
     const [saving, setSaving] = useState(false)
     const [resettingPassword, setResettingPassword] = useState(false)
@@ -192,7 +192,7 @@ function StudentDetails() {
         }
     }
 
-    const startEditing = () => {
+    const startEditing = (section) => {
         setForm({
             firstName: student.firstName,
             middleName: student.middleName,
@@ -211,7 +211,7 @@ function StudentDetails() {
             emergencyContactName: student.emergency_contact_name || '',
             emergencyContactNumber: student.emergency_contact_number || '',
         })
-        setEditing(true)
+        setEditingSection(section)
     }
 
     const onCollegeChange = async (collegeId) => {
@@ -316,7 +316,7 @@ function StudentDetails() {
             })
 
             notifySuccess('Student information updated.')
-            setEditing(false)
+            setEditingSection(null)
             await loadDetails()
 
         } catch (err) {
@@ -417,6 +417,34 @@ function StudentDetails() {
         }
     }
 
+    const cancelEditing = () => {
+        if (saving) return
+        setEditingSection(null)
+    }
+
+    const submitEdits = (e) => {
+        e.preventDefault()
+        saveEdits()
+    }
+
+    const editField = (label, control) => (
+        <label className="form-group">
+            <span className="form-label">{label}</span>
+            {control}
+        </label>
+    )
+
+    const editActions = (
+        <div className="admin-edit-actions">
+            <button type="button" className="admin-secondary-button" onClick={cancelEditing} disabled={saving}>
+                Cancel
+            </button>
+            <button type="submit" className="admin-primary-button" disabled={saving}>
+                {saving ? 'Saving...' : 'Save changes'}
+            </button>
+        </div>
+    )
+
     if (loading) {
         return (
             <SkeletonPage
@@ -474,145 +502,109 @@ function StudentDetails() {
                 </div>
             </div>
 
-            <div className="admin-card">
+            <div className={`admin-card${editingSection === 'personal' ? ' is-editing' : ''}`}>
                 <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
                     <h2 style={{ fontSize: 16 }}>Personal Information</h2>
-                    <button className="admin-link-button" onClick={startEditing}>
-                        Edit →
-                    </button>
+                    {!editingSection && (
+                        <button className="admin-link-button" onClick={() => startEditing('personal')}>
+                            Edit →
+                        </button>
+                    )}
                 </div>
 
-                <div className="admin-info-grid">
-                    <div className="admin-info-field"><span>First Name</span><strong>{student.firstName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Middle Name</span><strong>{student.middleName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Last Name</span><strong>{student.lastName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Suffix</span><strong>{student.suffix || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Birth Date</span><strong>{formatDate(student.birth_date)}</strong></div>
-                    <div className="admin-info-field"><span>Login Email</span><strong>{student.email || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
-                </div>
+                {editingSection === 'personal' && form ? (
+                    <form onSubmit={submitEdits}>
+                        <div className="admin-info-grid admin-edit-grid">
+                            {editField('First Name', <input className="admin-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} autoFocus />)}
+                            {editField('Middle Name', <input className="admin-search-input" value={form.middleName} onChange={(e) => setForm({ ...form, middleName: e.target.value })} disabled={saving} />)}
+                            {editField('Last Name', <input className="admin-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />)}
+                            {editField('Suffix', <input className="admin-search-input" placeholder="e.g. Jr., III" value={form.suffix} onChange={(e) => setForm({ ...form, suffix: e.target.value })} disabled={saving} />)}
+                            {editField('Birth Date', <input className="admin-search-input" type="date" value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} disabled={saving} />)}
+                            <div className="admin-info-field"><span>Login Email</span><strong>{student.email || 'N/A'}</strong></div>
+                            {currentRole === 'registrar_head'
+                                ? editField('Personal Email', <input className="admin-search-input" type="email" value={form.alternateEmail} onChange={(e) => setForm({ ...form, alternateEmail: e.target.value })} disabled={saving} />)
+                                : <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>}
+                        </div>
+                        {editActions}
+                    </form>
+                ) : (
+                    <div className="admin-info-grid">
+                        <div className="admin-info-field"><span>First Name</span><strong>{student.firstName || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Middle Name</span><strong>{student.middleName || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Last Name</span><strong>{student.lastName || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Suffix</span><strong>{student.suffix || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Birth Date</span><strong>{formatDate(student.birth_date)}</strong></div>
+                        <div className="admin-info-field"><span>Login Email</span><strong>{student.email || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
+                    </div>
+                )}
             </div>
 
-            <div className="admin-card">
+            <div className={`admin-card${editingSection === 'student' ? ' is-editing' : ''}`}>
                 <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
                     <h2 style={{ fontSize: 16 }}>Student Information</h2>
-                    <button className="admin-link-button" onClick={startEditing}>
-                        Edit →
-                    </button>
+                    {!editingSection && (
+                        <button className="admin-link-button" onClick={() => startEditing('student')}>
+                            Edit →
+                        </button>
+                    )}
                 </div>
 
-                <div className="admin-info-grid">
-                    <div className="admin-info-field"><span>Student Number</span><strong>{student.student_number}</strong></div>
-                    <div className="admin-info-field"><span>College</span><strong>{student.collegeName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Program</span><strong>{student.programName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Year Level</span><strong>{student.year_level || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Graduation Year</span><strong>{student.graduation_year || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Phone Number</span><strong>{student.phoneNumber || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
-                    <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Alternate Phone Number</span><strong>{student.alternate_phone_number || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
-                </div>
+                {editingSection === 'student' && form ? (
+                    <form onSubmit={submitEdits}>
+                        <div className="admin-info-grid admin-edit-grid">
+                            {editField('Student Number', <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} autoFocus />)}
+                            {editField('College', (
+                                <select className="admin-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
+                                    <option value="">-- None --</option>
+                                    {colleges.map((c) => (
+                                        <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                    ))}
+                                </select>
+                            ))}
+                            {editField('Program', (
+                                <select className="admin-search-input" value={form.programId} onChange={(e) => setForm({ ...form, programId: e.target.value })} disabled={saving || !form.collegeId}>
+                                    <option value="">{form.collegeId ? '-- None --' : 'Select a college first'}</option>
+                                    {programs.map((p) => (
+                                        <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
+                                    ))}
+                                </select>
+                            ))}
+                            {editField('Year Level', (
+                                <select className="admin-search-input" value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} disabled={saving}>
+                                    <option value="">-- None --</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                    <option value="5">5th Year</option>
+                                </select>
+                            ))}
+                            {editField('Graduation Year', <input className="admin-search-input" inputMode="numeric" placeholder="e.g. 2026" value={form.graduationYear} onChange={(e) => setForm({ ...form, graduationYear: e.target.value.replace(/\D/g, '').slice(0, 4) })} disabled={saving} />)}
+                            {editField('Phone Number', <input className="admin-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />)}
+                            <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
+                            {editField('Address', <input className="admin-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />)}
+                            {editField('Alternate Phone Number', <input className="admin-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />)}
+                            {editField('Emergency Contact Name', <input className="admin-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />)}
+                            {editField('Emergency Contact Number', <input className="admin-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />)}
+                        </div>
+                        {editActions}
+                    </form>
+                ) : (
+                    <div className="admin-info-grid">
+                        <div className="admin-info-field"><span>Student Number</span><strong>{student.student_number}</strong></div>
+                        <div className="admin-info-field"><span>College</span><strong>{student.collegeName || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Program</span><strong>{student.programName || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Year Level</span><strong>{student.year_level || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Graduation Year</span><strong>{student.graduation_year || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Phone Number</span><strong>{student.phoneNumber || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
+                        <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Alternate Phone Number</span><strong>{student.alternate_phone_number || 'N/A'}</strong></div>
+                        <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
+                    </div>
+                )}
             </div>
-
-            {editing && form && (
-                <Modal title="Edit Student Information" maxWidth={720} onClose={() => !saving && setEditing(false)}>
-                    <div className="admin-info-grid" style={{ marginBottom: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
-                        <div className="form-group">
-                            <label className="form-label">First Name</label>
-                            <input className="admin-search-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Middle Name</label>
-                            <input className="admin-search-input" value={form.middleName} onChange={(e) => setForm({ ...form, middleName: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Last Name</label>
-                            <input className="admin-search-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Suffix</label>
-                            <input className="admin-search-input" placeholder="e.g. Jr., III" value={form.suffix} onChange={(e) => setForm({ ...form, suffix: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Birth Date</label>
-                            <input className="admin-search-input" type="date" value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Student Number</label>
-                            <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Phone Number</label>
-                            <input className="admin-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">College</label>
-                            <select className="admin-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
-                                <option value="">-- None --</option>
-                                {colleges.map((c) => (
-                                    <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Program</label>
-                            <select className="admin-search-input" value={form.programId} onChange={(e) => setForm({ ...form, programId: e.target.value })} disabled={saving || !form.collegeId}>
-                                <option value="">{form.collegeId ? '-- None --' : 'Select a college first'}</option>
-                                {programs.map((p) => (
-                                    <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Year Level</label>
-                            <select className="admin-search-input" value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} disabled={saving}>
-                                <option value="">-- None --</option>
-                                <option value="1">1st Year</option>
-                                <option value="2">2nd Year</option>
-                                <option value="3">3rd Year</option>
-                                <option value="4">4th Year</option>
-                                <option value="5">5th Year</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Graduation Year</label>
-                            <input className="admin-search-input" inputMode="numeric" placeholder="e.g. 2026" value={form.graduationYear} onChange={(e) => setForm({ ...form, graduationYear: e.target.value.replace(/\D/g, '').slice(0, 4) })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Address</label>
-                            <input className="admin-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Alternate Phone Number</label>
-                            <input className="admin-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
-                        </div>
-                        {currentRole === 'registrar_head' && (
-                            <div className="form-group">
-                                <label className="form-label">Personal Email</label>
-                                <input className="admin-search-input" type="email" value={form.alternateEmail} onChange={(e) => setForm({ ...form, alternateEmail: e.target.value })} disabled={saving} />
-                            </div>
-                        )}
-                        <div className="form-group">
-                            <label className="form-label">Emergency Contact Name</label>
-                            <input className="admin-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Emergency Contact Number</label>
-                            <input className="admin-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 10 }}>
-                        <button className="admin-primary-button" onClick={saveEdits} disabled={saving}>
-                            {saving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button className="admin-danger-button" onClick={() => setEditing(false)} disabled={saving}>
-                            Cancel
-                        </button>
-                    </div>
-                </Modal>
-            )}
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Account</h2>
