@@ -8,6 +8,13 @@ import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 
+// Pending registrations are reviewed in their own section and rejected ones
+// aren't real students, so only verified (or pre-verification) students are
+// listed and counted.
+function isListedStudent(s) {
+    return s.verification_status !== 'pending' && s.verification_status !== 'rejected'
+}
+
 function Students() {
     const navigate = useNavigate()
 
@@ -118,10 +125,13 @@ function Students() {
 
             setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
 
-            if (decision === 'rejected') {
-                setAllStudents((prev) => prev.filter((s) => s.student_id !== student.student_id))
+            if (decision === 'approved') {
+                setAllStudents((prev) =>
+                    [...prev.filter((s) => s.student_id !== student.student_id), { ...student, status: nextStatus, verification_status: decision }]
+                        .sort((x, y) => x.student_number.localeCompare(y.student_number))
+                )
             } else {
-                applyToResults(student.student_id, { status: nextStatus, verification_status: decision })
+                setAllStudents((prev) => prev.filter((s) => s.student_id !== student.student_id))
             }
 
         } catch (err) {
@@ -178,10 +188,12 @@ function Students() {
                 throw new Error('Failed to load students: ' + studentsError.message)
             }
 
-            // Rejected registrations aren't real students -- keep them out
-            // of the list and counts. They still count as "has a student
-            // row" below, so they don't reappear as incomplete setups.
-            setAllStudents(await enrichStudents((rows || []).filter((s) => s.verification_status !== 'rejected')))
+            // Only verified students belong in the list, the college/course
+            // table, and the year counts -- pending ones have their own
+            // section above and rejected ones are left out. Every row still
+            // counts as "has a student row" below, so none of them reappear
+            // as incomplete setups.
+            setAllStudents(await enrichStudents((rows || []).filter(isListedStudent)))
             setSearched(true)
 
             await loadPendingProfiles(rows || [])

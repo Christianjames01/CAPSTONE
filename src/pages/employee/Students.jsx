@@ -7,10 +7,11 @@ import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
-// Rejected registrations aren't real students, so they stay out of the
-// student list and search results.
-function withoutRejected(rows) {
-    return rows.filter((s) => s.verification_status !== 'rejected')
+// Pending registrations are reviewed in their own section and rejected ones
+// aren't real students, so only verified (or pre-verification) students
+// appear in the student list and search results.
+function onlyListedStudents(rows) {
+    return rows.filter((s) => s.verification_status !== 'pending' && s.verification_status !== 'rejected')
 }
 
 function Students() {
@@ -197,7 +198,7 @@ function Students() {
                 throw new Error('Failed to load students: ' + studentsError.message)
             }
 
-            setResults(await enrichStudents(withoutRejected(rows || [])))
+            setResults(await enrichStudents(onlyListedStudents(rows || [])))
             setSearched(true)
 
         } catch (err) {
@@ -252,7 +253,7 @@ function Students() {
                 Object.fromEntries(merged.map((s) => [s.student_id, s]))
             )
 
-            setResults(await enrichStudents(withoutRejected(uniqueByStudentId)))
+            setResults(await enrichStudents(onlyListedStudents(uniqueByStudentId)))
 
         } catch (err) {
             console.error('STUDENT SEARCH ERROR:', err)
