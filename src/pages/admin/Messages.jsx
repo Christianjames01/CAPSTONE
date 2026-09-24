@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
-import { logActivity } from '../../lib/activityLog'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
+import MessageBubble from '../../components/MessageBubble'
+import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
 
 // Same contact block already shown to students on the Help & Support page
@@ -18,7 +19,7 @@ function Messages() {
     const [senderNames, setSenderNames] = useState({})
     const [threads, setThreads] = useState([])
     // Every row loaded, including the hidden [[ref=]] routing copies, so a
-    // delete can also remove those siblings (see siblingIdsOf).
+    // delete can also hide those siblings (see hideRows).
     const [rawMessages, setRawMessages] = useState([])
     const [deletingKey, setDeletingKey] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -55,20 +56,24 @@ function Messages() {
 
             const { data, error: messagesError } = await supabase
                 .from('messages')
-                .select('message_id, request_id, sender_user_id, receiver_user_id, message, is_read, created_at')
+                .select('*')
                 .order('created_at', { ascending: true })
 
             if (messagesError) {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
 
+            // Messages this user deleted "for me".
+            const hiddenIds = await loadHiddenMessageIds(user.id)
+            const visible = (data || []).filter((m) => !hiddenIds.has(m.message_id))
+
             // The [[ref=...]] tagged copy is a routing helper only the
             // employee's own page needs (see sendReply) -- the untagged
             // sibling sent to the student already carries the real
             // content, so drop the tagged copy here rather than showing
             // the same message twice.
-            setRawMessages(data || [])
-            const rows = (data || []).filter((m) => !m.message.startsWith('[[ref='))
+            setRawMessages(visible)
+            const rows = visible.filter((m) => !m.message.startsWith('[[ref='))
 
             const userIds = [
                 ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
@@ -377,54 +382,28 @@ function Messages() {
         }
     }
 
-    // One message on screen can be several rows: a reply is inserted once per
-    // recipient (plus a hidden [[ref=]] copy for the employee), all from the
-    // same sender in the same insert, so they share sender + created_at.
-    // Deleting by that pair removes every copy instead of leaving orphans on
-    // the other participants' pages.
-    const siblingIdsOf = (msgs) => {
-        const keys = new Set(msgs.map((m) => `${m.sender_user_id}|${m.created_at}`))
-        const ids = new Set(msgs.map((m) => m.message_id))
-        for (const r of rawMessages) {
-            if (keys.has(`${r.sender_user_id}|${r.created_at}`)) ids.add(r.message_id)
-        }
-        return [...ids]
-    }
-
-    const deleteRows = async (ids) => {
-        // .select() returns what was actually deleted -- RLS filters a
-        // disallowed delete down to 0 rows instead of raising an error.
-        const { data, error: deleteError } = await supabase
-            .from('messages')
-            .delete()
-            .in('message_id', ids)
-            .select('message_id')
-
-        if (deleteError) throw new Error(deleteError.message)
-        if (!data || data.length === 0) throw new Error('You do not have permission to delete these messages.')
-
-        const deleted = new Set(data.map((d) => d.message_id))
-        setRawMessages((prev) => prev.filter((m) => !deleted.has(m.message_id)))
-        return deleted
-    }
-
-    const logDelete = async (description) => {
-        if (!currentUserId) return
-        await logActivity({ userId: currentUserId, action: 'delete_messages', tableName: 'messages', recordId: null, description })
+    // "Delete for me": hides every stored copy of the message(s) for this
+    // user only; the other people in the conversation keep theirs.
+    const hideRows = async (msgs) => {
+        const ids = siblingMessageIds(msgs, rawMessages)
+        await hideMessagesForMe(currentUserId, ids)
+        const hidden = new Set(ids)
+        setRawMessages((prev) => prev.filter((m) => !hidden.has(m.message_id)))
+        return hidden
     }
 
     const deleteMessage = async (m) => {
         const confirmed = await confirmModal(
-            'Delete this message? It will be removed for everyone in the conversation. This cannot be undone.',
-            { title: 'Delete message?', confirmButtonText: 'Delete', icon: 'warning' }
+            'Delete this message for you? It will be removed from your Messages only; the others in the conversation will still see it.',
+            { title: 'Delete message?', confirmButtonText: 'Delete for me', icon: 'warning' }
         )
         if (!confirmed) return
 
         try {
             setDeletingKey(m.message_id)
-            const deleted = await deleteRows(siblingIdsOf([m]))
+            const hidden = await hideRows([m])
 
-            const remaining = activeThread.messages.filter((x) => !deleted.has(x.message_id))
+            const remaining = activeThread.messages.filter((x) => !hidden.has(x.message_id))
             const updatedThread = { ...activeThread, messages: remaining }
             setActiveThread(updatedThread)
             setThreads((prev) =>
@@ -432,8 +411,6 @@ function Messages() {
                     ? prev.filter((t) => t.pairKey !== updatedThread.pairKey)
                     : prev.map((t) => (t.pairKey === updatedThread.pairKey ? updatedThread : t))
             )
-
-            await logDelete(`Deleted a message from the conversation "${activeThread.nameA}" ↔ "${activeThread.nameB}".`)
         } catch (err) {
             console.error('DELETE MESSAGE ERROR:', err)
             notifyError(err.message || 'Failed to delete message.')
@@ -442,27 +419,47 @@ function Messages() {
         }
     }
 
+    // Only offered on the head's own messages (see MessageBubble). Returns
+    // false on failure so the bubble stays in edit mode.
+    const editMessage = async (m, newText) => {
+        try {
+            await editOwnMessage(m.message_id, newText)
+            const edited_at = new Date().toISOString()
+            const apply = (list) => list.map((x) => (isSameSend(x, m) ? { ...x, message: newText, edited_at } : x))
+
+            const updatedThread = { ...activeThread, messages: apply(activeThread.messages) }
+            setActiveThread(updatedThread)
+            setThreads((prev) => prev.map((t) => (t.pairKey === updatedThread.pairKey ? updatedThread : t)))
+            setRawMessages((prev) => prev.map((x) => (isSameSend(x, m) && !x.message.startsWith('[[ref=') ? { ...x, message: newText, edited_at } : x)))
+            return true
+        } catch (err) {
+            console.error('EDIT MESSAGE ERROR:', err)
+            notifyError(err.message || 'Failed to edit message.')
+            return false
+        }
+    }
+
     // Used from both the conversation list and the open conversation.
+    // New messages sent into the conversation later will bring it back.
     const deleteConversation = async (thread) => {
         const count = thread.messages.length
         const confirmed = await confirmModal(
-            `Delete the conversation "${thread.nameA} ↔ ${thread.nameB}" (${count} message${count === 1 ? '' : 's'})? It will be removed for everyone in it. This cannot be undone.`,
-            { title: 'Delete conversation?', confirmButtonText: 'Delete conversation', icon: 'warning' }
+            `Delete the conversation "${thread.nameA} ↔ ${thread.nameB}" (${count} message${count === 1 ? '' : 's'}) for you? It will be removed from your Messages only; the others in it will still see it.`,
+            { title: 'Delete conversation?', confirmButtonText: 'Delete for me', icon: 'warning' }
         )
         if (!confirmed) return
 
         try {
             setDeletingKey(`thread:${thread.pairKey}`)
-            await deleteRows(siblingIdsOf(thread.messages))
+            await hideRows(thread.messages)
 
             setThreads((prev) => prev.filter((t) => t.pairKey !== thread.pairKey))
-            await logDelete(`Deleted the conversation "${thread.nameA}" ↔ "${thread.nameB}" (${count} message${count === 1 ? '' : 's'}).`)
 
             if (activeThread?.pairKey === thread.pairKey) {
                 setActiveThread(null)
                 setReply('')
             }
-            notifySuccess('Conversation deleted.')
+            notifySuccess('Conversation deleted from your Messages.')
         } catch (err) {
             console.error('DELETE CONVERSATION ERROR:', err)
             notifyError(err.message || 'Failed to delete conversation.')
@@ -524,40 +521,17 @@ function Messages() {
                             const isSelf = m.sender_user_id === currentUserId
 
                             return (
-                                <div
+                                <MessageBubble
                                     key={m.message_id}
-                                    className="admin-message"
-                                    style={{
-                                        alignSelf: isSelf ? 'flex-end' : 'flex-start',
-                                        maxWidth: '70%',
-                                    }}
-                                >
-                                    <div className={`admin-message-meta${isSelf ? ' is-self' : ''}`}>
-                                        <span>{nameForSender(m.sender_user_id)}</span>
-                                        <button
-                                            type="button"
-                                            className="admin-message-delete"
-                                            onClick={() => deleteMessage(m)}
-                                            disabled={deletingKey !== null}
-                                            aria-label={`Delete message from ${nameForSender(m.sender_user_id)}`}
-                                        >
-                                            {deletingKey === m.message_id ? 'Deleting...' : 'Delete'}
-                                        </button>
-                                    </div>
-                                    <div
-                                        style={{
-                                            background: isSelf ? 'var(--blue)' : 'var(--paper)',
-                                            color: isSelf ? 'var(--white)' : 'var(--ink)',
-                                            padding: '10px 14px',
-                                            borderRadius: 10,
-                                        }}
-                                    >
-                                        <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
-                                        <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
-                                            {formatTime(m.created_at)}
-                                        </span>
-                                    </div>
-                                </div>
+                                    isSelf={isSelf}
+                                    senderLabel={nameForSender(m.sender_user_id)}
+                                    text={m.message}
+                                    time={formatTime(m.created_at)}
+                                    edited={!!m.edited_at}
+                                    onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
+                                    onDelete={isSelf ? () => deleteMessage(m) : undefined}
+                                    disabled={deletingKey !== null}
+                                />
                             )
                         })
                     )}

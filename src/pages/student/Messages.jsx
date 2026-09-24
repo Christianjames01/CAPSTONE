@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { notify, notifyError } from '../../lib/notify'
+import { notify, notifyError, confirmModal } from '../../lib/notify'
 import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
+import MessageBubble from '../../components/MessageBubble'
+import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -21,6 +23,7 @@ function Messages() {
 
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
+    const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
     useEffect(() => {
@@ -93,7 +96,7 @@ function Messages() {
             // excluded.
             const { data: messageRows, error: messagesError } = await supabase
                 .from('messages')
-                .select('message_id, sender_user_id, receiver_user_id, message, is_read, created_at')
+                .select('*')
                 .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
                 .order('created_at', { ascending: true })
 
@@ -101,7 +104,9 @@ function Messages() {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
 
-            const rows = messageRows || []
+            // Messages this student deleted "for me".
+            const hiddenIds = await loadHiddenMessageIds(user.id)
+            const rows = (messageRows || []).filter((m) => !hiddenIds.has(m.message_id))
 
             const otherUserIds = [
                 ...new Set(
@@ -181,6 +186,42 @@ function Messages() {
         }
     }
 
+    // "Delete for me": the registrar staff still see the message.
+    const deleteMessage = async (m) => {
+        const confirmed = await confirmModal(
+            'Delete this message for you? It will be removed from your Messages only; the registrar staff will still see it.',
+            { title: 'Delete message?', confirmButtonText: 'Delete for me', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setBusy(true)
+            const ids = siblingMessageIds([m], messages)
+            await hideMessagesForMe(userId, ids)
+            const hidden = new Set(ids)
+            setMessages((prev) => prev.filter((x) => !hidden.has(x.message_id)))
+        } catch (err) {
+            console.error('DELETE MESSAGE ERROR:', err)
+            notifyError(err.message || 'Failed to delete message.')
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    // Returns false on failure so the bubble stays in edit mode.
+    const editMessage = async (m, newText) => {
+        try {
+            await editOwnMessage(m.message_id, newText)
+            const edited_at = new Date().toISOString()
+            setMessages((prev) => prev.map((x) => (isSameSend(x, m) ? { ...x, message: newText, edited_at } : x)))
+            return true
+        } catch (err) {
+            console.error('EDIT MESSAGE ERROR:', err)
+            notifyError(err.message || 'Failed to edit message.')
+            return false
+        }
+    }
+
     const formatTime = (value) =>
         new Date(value).toLocaleString('en-PH', {
             month: 'short',
@@ -237,35 +278,20 @@ function Messages() {
                                       (m.sender_user_id === employee?.user_id ? employee.name : REGISTRAR_LABEL)
 
                                 return (
-                                <div
-                                    key={m.message_id}
-                                    style={{
-                                        alignSelf: isSelf ? 'flex-end' : 'flex-start',
-                                        maxWidth: '70%',
-                                    }}
-                                >
-                                    {senderLabel && (
-                                        <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
-                                            {senderLabel}
-                                            {m.receiver_user_id === userId && !m.is_read && (
-                                                <span className="student-status-pill status-pending" style={{ marginLeft: 8 }}>New</span>
-                                            )}
-                                        </span>
-                                    )}
-                                    <div
-                                        style={{
-                                            background: isSelf ? 'var(--blue)' : 'var(--paper)',
-                                            color: isSelf ? 'var(--white)' : 'var(--ink)',
-                                            padding: '10px 14px',
-                                            borderRadius: 10,
-                                        }}
-                                    >
-                                        <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
-                                        <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
-                                            {formatTime(m.created_at)}
-                                        </span>
-                                    </div>
-                                </div>
+                                    <MessageBubble
+                                        key={m.message_id}
+                                        isSelf={isSelf}
+                                        senderLabel={senderLabel}
+                                        badge={m.receiver_user_id === userId && !m.is_read && (
+                                            <span className="student-status-pill status-pending">New</span>
+                                        )}
+                                        text={m.message}
+                                        time={formatTime(m.created_at)}
+                                        edited={!!m.edited_at}
+                                        onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
+                                        onDelete={isSelf ? () => deleteMessage(m) : undefined}
+                                        disabled={busy}
+                                    />
                                 )
                             })
                         )}

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { notifyError } from '../../lib/notify'
+import { notifyError, confirmModal } from '../../lib/notify'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
+import MessageBubble from '../../components/MessageBubble'
+import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './EmployeePages.css'
 
 function Messages() {
@@ -16,6 +18,10 @@ function Messages() {
     const [reply, setReply] = useState('')
     const [sending, setSending] = useState(false)
     const [senderNames, setSenderNames] = useState({})
+    // Every loaded row (incl. fan-out copies not shown as their own bubble),
+    // so delete can hide all copies of a message.
+    const [rawRows, setRawRows] = useState([])
+    const [busy, setBusy] = useState(false)
 
     useEffect(() => {
         loadMessages()
@@ -39,7 +45,7 @@ function Messages() {
 
             const { data, error: messagesError } = await supabase
                 .from('messages')
-                .select('message_id, request_id, sender_user_id, receiver_user_id, message, is_read, created_at')
+                .select('*')
                 .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
                 .order('created_at', { ascending: true })
 
@@ -47,7 +53,10 @@ function Messages() {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
 
-            const rows = data || []
+            // Messages this user deleted "for me" stay out of every thread.
+            const hiddenIds = await loadHiddenMessageIds(user.id)
+            const rows = (data || []).filter((m) => !hiddenIds.has(m.message_id))
+            setRawRows(rows)
 
             const otherUserIds = [
                 ...new Set(
@@ -225,6 +234,8 @@ function Messages() {
                 throw new Error('Failed to send message: ' + sendError.message)
             }
 
+            setRawRows((prev) => [...prev, ...data])
+
             // One bubble here even though it went out as multiple rows.
             const displayRow = data.find((d) => d.receiver_user_id === activeThread.otherUserId) || data[0]
 
@@ -244,6 +255,56 @@ function Messages() {
             notifyError(err.message || 'Failed to send message.')
         } finally {
             setSending(false)
+        }
+    }
+
+    const replaceActiveThread = (updatedThread) => {
+        setActiveThread(updatedThread)
+        setThreads((prev) =>
+            updatedThread.messages.length === 0
+                ? prev.filter((t) => t.otherUserId !== updatedThread.otherUserId)
+                : prev.map((t) => (t.otherUserId === updatedThread.otherUserId ? updatedThread : t))
+        )
+    }
+
+    // "Delete for me": hides every copy of the message for this employee
+    // only; the student (and anyone else in the thread) keeps theirs.
+    const deleteMessage = async (m) => {
+        const confirmed = await confirmModal(
+            'Delete this message for you? It will be removed from your Messages only; the others in the conversation will still see it.',
+            { title: 'Delete message?', confirmButtonText: 'Delete for me', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setBusy(true)
+            const ids = siblingMessageIds([m], rawRows)
+            await hideMessagesForMe(userId, ids)
+            const hidden = new Set(ids)
+            setRawRows((prev) => prev.filter((x) => !hidden.has(x.message_id)))
+            replaceActiveThread({ ...activeThread, messages: activeThread.messages.filter((x) => !isSameSend(x, m)) })
+        } catch (err) {
+            console.error('DELETE MESSAGE ERROR:', err)
+            notifyError(err.message || 'Failed to delete message.')
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    // Returns false on failure so the bubble stays in edit mode.
+    const editMessage = async (m, newText) => {
+        try {
+            await editOwnMessage(m.message_id, newText)
+            const edited_at = new Date().toISOString()
+            replaceActiveThread({
+                ...activeThread,
+                messages: activeThread.messages.map((x) => (isSameSend(x, m) ? { ...x, message: newText, edited_at } : x)),
+            })
+            return true
+        } catch (err) {
+            console.error('EDIT MESSAGE ERROR:', err)
+            notifyError(err.message || 'Failed to edit message.')
+            return false
         }
     }
 
@@ -269,29 +330,19 @@ function Messages() {
                 <div className="employee-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {activeThread.messages.map((m) => {
                         const isSelf = m.sender_user_id === userId
-                        const senderLabel = !isSelf ? (senderNames[m.sender_user_id] || 'Unknown') : null
 
                         return (
-                            <div key={m.message_id} style={{ alignSelf: isSelf ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
-                                {senderLabel && (
-                                    <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
-                                        {senderLabel}
-                                    </span>
-                                )}
-                                <div
-                                    style={{
-                                        background: isSelf ? 'var(--blue)' : 'var(--paper)',
-                                        color: isSelf ? 'var(--white)' : 'var(--ink)',
-                                        padding: '10px 14px',
-                                        borderRadius: 10,
-                                    }}
-                                >
-                                    <p style={{ color: 'inherit', fontSize: 14 }}>{m.message}</p>
-                                    <span style={{ fontSize: 10.5, opacity: 0.7, display: 'block', marginTop: 4 }}>
-                                        {formatTime(m.created_at)}
-                                    </span>
-                                </div>
-                            </div>
+                            <MessageBubble
+                                key={m.message_id}
+                                isSelf={isSelf}
+                                senderLabel={!isSelf ? (senderNames[m.sender_user_id] || 'Unknown') : null}
+                                text={m.message}
+                                time={formatTime(m.created_at)}
+                                edited={!!m.edited_at}
+                                onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
+                                onDelete={isSelf ? () => deleteMessage(m) : undefined}
+                                disabled={busy}
+                            />
                         )
                     })}
                 </div>

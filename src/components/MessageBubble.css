@@ -1,0 +1,143 @@
+/* Chat bubble shared by all three Messages pages. Colors come from the
+   portal layout's theme variables. */
+
+.msg {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: flex-start;
+    max-width: 70%;
+}
+
+.msg.is-self {
+    align-items: flex-end;
+    align-self: flex-end;
+}
+
+.msg-sender {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--slate);
+}
+
+.msg-bubble {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--paper);
+    color: var(--ink);
+}
+
+.msg.is-self .msg-bubble {
+    background: var(--blue);
+    color: var(--white, #fff);
+}
+
+.msg-bubble.is-editing {
+    width: min(460px, 70vw);
+}
+
+.msg-text {
+    margin: 0;
+    color: inherit;
+    font-size: 14px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.msg-time {
+    display: block;
+    margin-top: 4px;
+    font-size: 10.5px;
+    opacity: 0.7;
+}
+
+.msg-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.msg-actions button {
+    margin: 0;
+    padding: 0;
+    background: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--slate);
+    cursor: pointer;
+}
+
+.msg-actions button:hover:not(:disabled) {
+    color: var(--blue-accent, var(--blue));
+    text-decoration: underline;
+}
+
+.msg-actions button.is-danger:hover:not(:disabled) {
+    color: var(--danger-text, var(--red));
+}
+
+.msg-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.msg-edit-input {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+}
+
+.msg-edit-input:focus {
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.msg-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.msg-edit-actions button {
+    margin: 0;
+    padding: 5px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.msg-edit-actions button.is-primary {
+    background: var(--white, #fff);
+    border-color: var(--white, #fff);
+    color: var(--blue);
+}
+
+.msg-edit-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .msg {
+        max-width: 88%;
+    }
+
+    .msg-bubble.is-editing {
+        width: 80vw;
+    }
+}
