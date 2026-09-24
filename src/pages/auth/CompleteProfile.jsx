@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
+import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
 import AuthLayout from './AuthLayout'
 
 function CompleteProfile() {
@@ -11,6 +12,9 @@ function CompleteProfile() {
 
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
+    const [middleName, setMiddleName] = useState('')
+    const [noMiddleName, setNoMiddleName] = useState(false)
+    const [suffix, setSuffix] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
 
     const [studentNumber, setStudentNumber] = useState('')
@@ -114,6 +118,18 @@ function CompleteProfile() {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
+        const problem = validateRegistrationDetails({
+            phoneNumber,
+            alternatePhoneNumber,
+            alternateEmail,
+            emergencyContactNumber,
+        })
+        if (problem) {
+            setStatus('error')
+            setMessage(problem)
+            return
+        }
+
         setLoading(true)
         setMessage('')
         setStatus('idle')
@@ -131,7 +147,9 @@ function CompleteProfile() {
             .from('profiles')
             .update({
                 first_name: firstName.trim(),
+                middle_name: noMiddleName ? null : middleName.trim() || null,
                 last_name: lastName.trim(),
+                suffix: suffix === SUFFIX_NONE ? null : suffix,
                 phone_number: phoneNumber.trim(),
             })
             .eq('user_id', user.id)
@@ -216,6 +234,47 @@ function CompleteProfile() {
 
                 <div className="auth-form-row">
                     <div className="form-group">
+                        <label className="form-label" htmlFor="middle-name">Middle Name</label>
+                        <input
+                            id="middle-name"
+                            type="text"
+                            className="form-input"
+                            value={noMiddleName ? '' : middleName}
+                            onChange={(e) => setMiddleName(e.target.value)}
+                            placeholder={noMiddleName ? 'No middle name' : ''}
+                            disabled={noMiddleName}
+                            required={!noMiddleName}
+                        />
+                        <label className="auth-inline-check">
+                            <input
+                                type="checkbox"
+                                checked={noMiddleName}
+                                onChange={(e) => setNoMiddleName(e.target.checked)}
+                            />
+                            I don't have a middle name
+                        </label>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="suffix">Suffix</label>
+                        <select
+                            id="suffix"
+                            className="form-input"
+                            value={suffix}
+                            onChange={(e) => setSuffix(e.target.value)}
+                            required
+                        >
+                            <option value="">Select</option>
+                            <option value={SUFFIX_NONE}>None</option>
+                            {SUFFIX_OPTIONS.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="auth-form-row">
+                    <div className="form-group">
                         <label className="form-label" htmlFor="phone-number">Phone Number</label>
                         <input
                             id="phone-number"
@@ -245,6 +304,7 @@ function CompleteProfile() {
                                 if (yearPart && yearPart.length > 4) return
                                 setBirthDate(e.target.value)
                             }}
+                            required
                         />
                     </div>
                 </div>
@@ -338,11 +398,12 @@ function CompleteProfile() {
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         autoComplete="off"
+                        required
                     />
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label" htmlFor="alternate-phone">Alternate Phone Number (optional)</label>
+                    <label className="form-label" htmlFor="alternate-phone">Alternate Phone Number</label>
                     <input
                         id="alternate-phone"
                         type="tel"
@@ -353,6 +414,7 @@ function CompleteProfile() {
                         onChange={handlePhoneInput(setAlternatePhoneNumber)}
                         placeholder="09XXXXXXXXX"
                         autoComplete="off"
+                        required
                     />
                     <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
                         A second number the registrar can try if your main phone number is unreachable.
@@ -360,7 +422,7 @@ function CompleteProfile() {
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label" htmlFor="alternate-email">Personal Email (optional)</label>
+                    <label className="form-label" htmlFor="alternate-email">Personal Email</label>
                     <input
                         id="alternate-email"
                         type="email"
@@ -369,6 +431,7 @@ function CompleteProfile() {
                         onChange={(e) => setAlternateEmail(e.target.value)}
                         placeholder="you@gmail.com"
                         autoComplete="off"
+                        required
                     />
                     <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
                         A personal, non-HCDC email you still control after graduation. Your HCDC account is deactivated once you graduate, so switch your login to this address beforehand from Profile &gt; Login Email.
@@ -385,6 +448,7 @@ function CompleteProfile() {
                             value={emergencyContactName}
                             onChange={(e) => setEmergencyContactName(e.target.value)}
                             autoComplete="off"
+                            required
                         />
                     </div>
 
@@ -400,6 +464,7 @@ function CompleteProfile() {
                             onChange={handlePhoneInput(setEmergencyContactNumber)}
                             placeholder="09XXXXXXXXX"
                             autoComplete="off"
+                            required
                         />
                     </div>
                 </div>

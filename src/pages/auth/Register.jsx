@@ -7,6 +7,7 @@ import GoogleIcon from './GoogleIcon'
 import PasswordRequirements from '../../components/PasswordRequirements'
 import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
+import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
 
 const LEGAL_TABS = {
     terms: { title: 'Terms of Service', src: '/terms?embed=1' },
@@ -24,6 +25,7 @@ function Register() {
 
     const [firstName, setFirstName] = useState('')
     const [middleName, setMiddleName] = useState('')
+    const [noMiddleName, setNoMiddleName] = useState(false)
     const [lastName, setLastName] = useState('')
     const [suffix, setSuffix] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
@@ -135,6 +137,18 @@ function Register() {
             return
         }
 
+        const problem = validateRegistrationDetails({
+            phoneNumber,
+            alternatePhoneNumber,
+            alternateEmail,
+            emergencyContactNumber,
+        })
+        if (problem) {
+            setStatus('error')
+            setMessage(problem)
+            return
+        }
+
         if (agreedToTerms) {
             submitRegistration()
         } else {
@@ -162,9 +176,9 @@ function Register() {
                 emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     first_name: firstName.trim(),
-                    middle_name: middleName.trim() || null,
+                    middle_name: noMiddleName ? null : middleName.trim() || null,
                     last_name: lastName.trim(),
-                    suffix: suffix.trim() || null,
+                    suffix: suffix === SUFFIX_NONE ? null : suffix,
                     phone_number: phoneNumber.trim() || null,
                 },
             },
@@ -303,21 +317,37 @@ function Register() {
                             id="middle-name"
                             type="text"
                             className="form-input"
-                            value={middleName}
+                            value={noMiddleName ? '' : middleName}
                             onChange={(e) => setMiddleName(e.target.value)}
+                            placeholder={noMiddleName ? 'No middle name' : ''}
+                            disabled={noMiddleName}
+                            required={!noMiddleName}
                         />
+                        <label className="auth-inline-check">
+                            <input
+                                type="checkbox"
+                                checked={noMiddleName}
+                                onChange={(e) => setNoMiddleName(e.target.checked)}
+                            />
+                            I don't have a middle name
+                        </label>
                     </div>
 
                     <div className="form-group">
                         <label className="form-label" htmlFor="suffix">Suffix</label>
-                        <input
+                        <select
                             id="suffix"
-                            type="text"
                             className="form-input"
                             value={suffix}
                             onChange={(e) => setSuffix(e.target.value)}
-                            placeholder="Jr., III, etc. (optional)"
-                        />
+                            required
+                        >
+                            <option value="">Select</option>
+                            <option value={SUFFIX_NONE}>None</option>
+                            {SUFFIX_OPTIONS.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
@@ -352,6 +382,7 @@ function Register() {
                                 if (yearPart && yearPart.length > 4) return
                                 setBirthDate(e.target.value)
                             }}
+                            required
                         />
                     </div>
                 </div>
@@ -445,11 +476,12 @@ function Register() {
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         autoComplete="off"
+                        required
                     />
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label" htmlFor="alternate-phone">Alternate Phone Number (optional)</label>
+                    <label className="form-label" htmlFor="alternate-phone">Alternate Phone Number</label>
                     <input
                         id="alternate-phone"
                         type="tel"
@@ -460,6 +492,7 @@ function Register() {
                         onChange={handlePhoneInput(setAlternatePhoneNumber)}
                         placeholder="09XXXXXXXXX"
                         autoComplete="off"
+                        required
                     />
                     <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
                         A second number the registrar can try if your main phone number is unreachable.
@@ -467,7 +500,7 @@ function Register() {
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label" htmlFor="alternate-email">Personal Email (optional)</label>
+                    <label className="form-label" htmlFor="alternate-email">Personal Email</label>
                     <input
                         id="alternate-email"
                         type="email"
@@ -476,6 +509,7 @@ function Register() {
                         onChange={(e) => setAlternateEmail(e.target.value)}
                         placeholder="you@gmail.com"
                         autoComplete="off"
+                        required
                     />
                     <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
                         A personal, non-HCDC email you still control after graduation. Your HCDC account is deactivated once you graduate, so switch your login to this address beforehand from Profile &gt; Login Email.
@@ -492,6 +526,7 @@ function Register() {
                             value={emergencyContactName}
                             onChange={(e) => setEmergencyContactName(e.target.value)}
                             autoComplete="off"
+                            required
                         />
                     </div>
 
@@ -507,6 +542,7 @@ function Register() {
                             onChange={handlePhoneInput(setEmergencyContactNumber)}
                             placeholder="09XXXXXXXXX"
                             autoComplete="off"
+                            required
                         />
                     </div>
                 </div>
