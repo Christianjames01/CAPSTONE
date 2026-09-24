@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { notifyError } from '../../lib/notify'
+import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
+import { logActivity } from '../../lib/activityLog'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
@@ -16,6 +17,10 @@ function Messages() {
     const [currentUserId, setCurrentUserId] = useState(null)
     const [senderNames, setSenderNames] = useState({})
     const [threads, setThreads] = useState([])
+    // Every row loaded, including the hidden [[ref=]] routing copies, so a
+    // delete can also remove those siblings (see siblingIdsOf).
+    const [rawMessages, setRawMessages] = useState([])
+    const [deletingKey, setDeletingKey] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [activeThread, setActiveThread] = useState(null)
@@ -62,6 +67,7 @@ function Messages() {
             // sibling sent to the student already carries the real
             // content, so drop the tagged copy here rather than showing
             // the same message twice.
+            setRawMessages(data || [])
             const rows = (data || []).filter((m) => !m.message.startsWith('[[ref='))
 
             const userIds = [
@@ -345,6 +351,8 @@ function Messages() {
 
             if (sendError) throw new Error(sendError.message)
 
+            setRawMessages((prev) => [...prev, ...data])
+
             // Delivered as one row per recipient under the hood, but shown
             // as a single bubble here -- it's one message from the head's
             // point of view, not several. Show the untagged copy.
@@ -366,6 +374,97 @@ function Messages() {
             notifyError(err.message || 'Failed to send message.')
         } finally {
             setSending(false)
+        }
+    }
+
+    // One message on screen can be several rows: a reply is inserted once per
+    // recipient (plus a hidden [[ref=]] copy for the employee), all from the
+    // same sender in the same insert, so they share sender + created_at.
+    // Deleting by that pair removes every copy instead of leaving orphans on
+    // the other participants' pages.
+    const siblingIdsOf = (msgs) => {
+        const keys = new Set(msgs.map((m) => `${m.sender_user_id}|${m.created_at}`))
+        const ids = new Set(msgs.map((m) => m.message_id))
+        for (const r of rawMessages) {
+            if (keys.has(`${r.sender_user_id}|${r.created_at}`)) ids.add(r.message_id)
+        }
+        return [...ids]
+    }
+
+    const deleteRows = async (ids) => {
+        // .select() returns what was actually deleted -- RLS filters a
+        // disallowed delete down to 0 rows instead of raising an error.
+        const { data, error: deleteError } = await supabase
+            .from('messages')
+            .delete()
+            .in('message_id', ids)
+            .select('message_id')
+
+        if (deleteError) throw new Error(deleteError.message)
+        if (!data || data.length === 0) throw new Error('You do not have permission to delete these messages.')
+
+        const deleted = new Set(data.map((d) => d.message_id))
+        setRawMessages((prev) => prev.filter((m) => !deleted.has(m.message_id)))
+        return deleted
+    }
+
+    const logDelete = async (description) => {
+        if (!currentUserId) return
+        await logActivity({ userId: currentUserId, action: 'delete_messages', tableName: 'messages', recordId: null, description })
+    }
+
+    const deleteMessage = async (m) => {
+        const confirmed = await confirmModal(
+            'Delete this message? It will be removed for everyone in the conversation. This cannot be undone.',
+            { title: 'Delete message?', confirmButtonText: 'Delete', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setDeletingKey(m.message_id)
+            const deleted = await deleteRows(siblingIdsOf([m]))
+
+            const remaining = activeThread.messages.filter((x) => !deleted.has(x.message_id))
+            const updatedThread = { ...activeThread, messages: remaining }
+            setActiveThread(updatedThread)
+            setThreads((prev) =>
+                remaining.length === 0
+                    ? prev.filter((t) => t.pairKey !== updatedThread.pairKey)
+                    : prev.map((t) => (t.pairKey === updatedThread.pairKey ? updatedThread : t))
+            )
+
+            await logDelete(`Deleted a message from the conversation "${activeThread.nameA}" ↔ "${activeThread.nameB}".`)
+        } catch (err) {
+            console.error('DELETE MESSAGE ERROR:', err)
+            notifyError(err.message || 'Failed to delete message.')
+        } finally {
+            setDeletingKey(null)
+        }
+    }
+
+    const deleteConversation = async () => {
+        const count = activeThread.messages.length
+        const confirmed = await confirmModal(
+            `Delete this entire conversation (${count} message${count === 1 ? '' : 's'})? It will be removed for everyone in it. This cannot be undone.`,
+            { title: 'Delete conversation?', confirmButtonText: 'Delete conversation', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setDeletingKey('thread')
+            await deleteRows(siblingIdsOf(activeThread.messages))
+
+            setThreads((prev) => prev.filter((t) => t.pairKey !== activeThread.pairKey))
+            await logDelete(`Deleted the conversation "${activeThread.nameA}" ↔ "${activeThread.nameB}" (${count} message${count === 1 ? '' : 's'}).`)
+
+            setActiveThread(null)
+            setReply('')
+            notifySuccess('Conversation deleted.')
+        } catch (err) {
+            console.error('DELETE CONVERSATION ERROR:', err)
+            notifyError(err.message || 'Failed to delete conversation.')
+        } finally {
+            setDeletingKey(null)
         }
     }
 
@@ -393,13 +492,25 @@ function Messages() {
                     ← Back to Messages
                 </button>
 
-                <div className="admin-page-header">
-                    <h1>{activeThread.nameA} ↔ {activeThread.nameB}</h1>
-                    <p>
-                        {activeThread.roleA === 'student' ? 'Student' : 'Registrar Staff'} and{' '}
-                        {activeThread.roleB === 'student' ? 'Student' : 'Registrar Staff'}
-                        {!mine && ' · replying here reaches both of them'}
-                    </p>
+                <div className="admin-page-header-row admin-page-header">
+                    <div>
+                        <h1>{activeThread.nameA} ↔ {activeThread.nameB}</h1>
+                        <p>
+                            {activeThread.roleA === 'student' ? 'Student' : 'Registrar Staff'} and{' '}
+                            {activeThread.roleB === 'student' ? 'Student' : 'Registrar Staff'}
+                            {!mine && ' · replying here reaches both of them'}
+                        </p>
+                    </div>
+
+                    {activeThread.messages.length > 0 && (
+                        <button
+                            className="admin-danger-button"
+                            onClick={deleteConversation}
+                            disabled={deletingKey !== null}
+                        >
+                            {deletingKey === 'thread' ? 'Deleting...' : 'Delete conversation'}
+                        </button>
+                    )}
                 </div>
 
                 <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -412,14 +523,24 @@ function Messages() {
                             return (
                                 <div
                                     key={m.message_id}
+                                    className="admin-message"
                                     style={{
                                         alignSelf: isSelf ? 'flex-end' : 'flex-start',
                                         maxWidth: '70%',
                                     }}
                                 >
-                                    <span style={{ fontSize: 11, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
-                                        {nameForSender(m.sender_user_id)}
-                                    </span>
+                                    <div className={`admin-message-meta${isSelf ? ' is-self' : ''}`}>
+                                        <span>{nameForSender(m.sender_user_id)}</span>
+                                        <button
+                                            type="button"
+                                            className="admin-message-delete"
+                                            onClick={() => deleteMessage(m)}
+                                            disabled={deletingKey !== null}
+                                            aria-label={`Delete message from ${nameForSender(m.sender_user_id)}`}
+                                        >
+                                            {deletingKey === m.message_id ? 'Deleting...' : 'Delete'}
+                                        </button>
+                                    </div>
                                     <div
                                         style={{
                                             background: isSelf ? 'var(--blue)' : 'var(--paper)',
