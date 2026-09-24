@@ -7,6 +7,12 @@ import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
+// Rejected registrations aren't real students, so they stay out of the
+// student list and search results.
+function withoutRejected(rows) {
+    return rows.filter((s) => s.verification_status !== 'rejected')
+}
+
 function Students() {
     const navigate = useNavigate()
 
@@ -126,6 +132,9 @@ function Students() {
             })
 
             setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
+            if (decision === 'rejected') {
+                setResults((prev) => prev.filter((s) => s.student_id !== student.student_id))
+            }
 
         } catch (err) {
             console.error('REVIEW STUDENT ERROR:', err)
@@ -181,14 +190,14 @@ function Students() {
 
             const { data: rows, error: studentsError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
                 .order('student_number', { ascending: true })
 
             if (studentsError) {
                 throw new Error('Failed to load students: ' + studentsError.message)
             }
 
-            setResults(await enrichStudents(rows || []))
+            setResults(await enrichStudents(withoutRejected(rows || [])))
             setSearched(true)
 
         } catch (err) {
@@ -219,7 +228,7 @@ function Students() {
 
             const { data: byNumber } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
                 .ilike('student_number', `%${query}%`)
                 .limit(20)
 
@@ -234,7 +243,7 @@ function Students() {
             const { data: byName } = matchingUserIds.length
                 ? await supabase
                     .from('students')
-                    .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
+                    .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
                     .in('user_id', matchingUserIds)
                 : { data: [] }
 
@@ -243,7 +252,7 @@ function Students() {
                 Object.fromEntries(merged.map((s) => [s.student_id, s]))
             )
 
-            setResults(await enrichStudents(uniqueByStudentId))
+            setResults(await enrichStudents(withoutRejected(uniqueByStudentId)))
 
         } catch (err) {
             console.error('STUDENT SEARCH ERROR:', err)

@@ -117,7 +117,12 @@ function Students() {
             })
 
             setPendingVerifications((prev) => prev.filter((s) => s.student_id !== student.student_id))
-            applyToResults(student.student_id, { status: nextStatus })
+
+            if (decision === 'rejected') {
+                setAllStudents((prev) => prev.filter((s) => s.student_id !== student.student_id))
+            } else {
+                applyToResults(student.student_id, { status: nextStatus, verification_status: decision })
+            }
 
         } catch (err) {
             console.error('REVIEW STUDENT ERROR:', err)
@@ -166,14 +171,17 @@ function Students() {
 
             const { data: rows, error: studentsError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status')
+                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
                 .order('student_number', { ascending: true })
 
             if (studentsError) {
                 throw new Error('Failed to load students: ' + studentsError.message)
             }
 
-            setAllStudents(await enrichStudents(rows || []))
+            // Rejected registrations aren't real students -- keep them out
+            // of the list and counts. They still count as "has a student
+            // row" below, so they don't reappear as incomplete setups.
+            setAllStudents(await enrichStudents((rows || []).filter((s) => s.verification_status !== 'rejected')))
             setSearched(true)
 
             await loadPendingProfiles(rows || [])
