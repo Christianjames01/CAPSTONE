@@ -3,86 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
-import { SkeletonList } from '../../components/Skeleton'
-import Modal from '../../components/Modal'
+import { claimDate, claimTime, eachDateInRange, formatDate, getToday, isWeekendDate } from '../../lib/officeCalendar'
+import CalendarBoard from '../../components/officeCalendar/CalendarBoard'
+import DayModal from '../../components/officeCalendar/DayModal'
+import RangeModal from '../../components/officeCalendar/RangeModal'
 import './EmployeePages.css'
-
-const WEEKDAY_HEADS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-// Quick-fill presets for the most common day notes, so staff don't have
-// to retype the same wording each time (e.g. every fiesta/holiday closure).
-const EVENT_PRESETS = [
-    'Mental Health Break',
-    'Office Closed — Fiesta',
-    'Office Closed — Holiday',
-    'Enrollment Week',
-    'System Maintenance',
-]
-
-function formatLocal(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-function formatDate(dateStr) {
-    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    })
-}
-
-function formatDateShort(dateStr) {
-    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-    })
-}
-
-function formatTime(time) {
-    if (!time) return ''
-    const [hours, minutes] = time.split(':')
-    const date = new Date()
-    date.setHours(Number(hours), Number(minutes), 0, 0)
-    return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
-}
-
-function getToday() {
-    return formatLocal(new Date())
-}
-
-function isWeekendDate(dateStr) {
-    const dow = new Date(`${dateStr}T00:00:00`).getDay()
-    return dow === 0 || dow === 6
-}
-
-// Every date from start to end, inclusive, as 'YYYY-MM-DD' strings -- used
-// to apply one event/note to a whole span of days (e.g. the 20th to the
-// 26th) in a single action instead of one day at a time.
-function eachDateInRange(startStr, endStr) {
-    const dates = []
-    let cursor = new Date(`${startStr}T00:00:00`)
-    const end = new Date(`${endStr}T00:00:00`)
-    while (cursor <= end) {
-        dates.push(formatLocal(cursor))
-        cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1)
-    }
-    return dates
-}
-
-function buildMonthGrid(viewDate) {
-    const year = viewDate.getFullYear()
-    const month = viewDate.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const startWeekday = firstDay.getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-
-    const cells = []
-    for (let i = 0; i < startWeekday; i++) cells.push(null)
-    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d))
-    return cells
-}
 
 function OfficeCalendar() {
     const navigate = useNavigate()
@@ -200,18 +125,16 @@ function OfficeCalendar() {
     const claimSchedulesByDate = useMemo(() => {
         const map = {}
         for (const cs of claimSchedules) {
-            const date = cs.claim_date || cs.scheduled_date
+            const date = claimDate(cs)
             if (!date) continue
             if (!map[date]) map[date] = []
             map[date].push(cs)
         }
         for (const list of Object.values(map)) {
-            list.sort((a, b) => (a.claim_time || a.scheduled_time || '').localeCompare(b.claim_time || b.scheduled_time || ''))
+            list.sort((a, b) => (claimTime(a) || '').localeCompare(claimTime(b) || ''))
         }
         return map
     }, [claimSchedules])
-
-    const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate])
 
     // The sidebar is meant as an at-a-glance look-ahead, so it stays
     // upcoming-only even though `events`/`openDays` now also hold past
@@ -427,8 +350,6 @@ function OfficeCalendar() {
         setShowRangeModal(true)
     }
 
-    const rangeDates = rangeStart && rangeEnd && rangeStart <= rangeEnd ? eachDateInRange(rangeStart, rangeEnd) : []
-
     const addRangeEvent = async () => {
         if (!rangeTitle.trim()) {
             notifyWarning('Please enter a title for this event.')
@@ -492,14 +413,15 @@ function OfficeCalendar() {
         }
     }
 
-    const monthLabel = viewDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })
-    const today = getToday()
+    const closeDayModal = () => {
+        if (saving || togglingOpen) return
+        setShowDayModal(false)
+    }
 
-    const dayModalEvents = eventsByDate[dayModalDate] || []
-    const dayModalClaims = claimSchedulesByDate[dayModalDate] || []
-    const dayModalIsWeekend = dayModalDate ? isWeekendDate(dayModalDate) : false
-    const dayModalOpenEntry = dayModalDate ? openDaysByDate[dayModalDate] : null
-    const dayModalIsPast = dayModalDate ? dayModalDate < today : false
+    const closeRangeModal = () => {
+        if (addingRange) return
+        setShowRangeModal(false)
+    }
 
     return (
         <div>
@@ -519,420 +441,61 @@ function OfficeCalendar() {
                 </div>
             </div>
 
-            <div className="office-calendar-layout">
-                <aside className="office-calendar-sidebar">
-                    <div className="office-calendar-sidebar-section">
-                        <div className="office-calendar-sidebar-title">Legend</div>
-                        <div className="office-calendar-legend">
-                            <div className="office-calendar-legend-item">
-                                <span className="office-calendar-legend-swatch" style={{ background: 'var(--blue-tint)', border: '1px solid var(--blue-accent, var(--blue))' }} />
-                                Weekend marked open for claiming
-                            </div>
-                            <div className="office-calendar-legend-item">
-                                <span className="office-calendar-legend-swatch" style={{ background: 'var(--warning-bg, rgba(255,193,7,0.18))', border: '1px solid var(--warning-text, #FFCF66)' }} />
-                                Has an event or note
-                            </div>
-                            <div className="office-calendar-legend-item">
-                                <span className="office-calendar-legend-swatch" style={{ background: 'transparent', border: '1px dashed var(--slate)' }} />
-                                Weekend, closed
-                            </div>
-                            <div className="office-calendar-legend-item">
-                                <span className="office-calendar-legend-swatch" style={{ background: 'transparent', border: '2px solid var(--red)' }} />
-                                Today
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="office-calendar-sidebar-section">
-                        <div className="office-calendar-sidebar-title">Upcoming Events</div>
-
-                        {loading ? (
-                            <SkeletonList count={2} />
-                        ) : upcomingEvents.length === 0 ? (
-                            <div className="office-calendar-sidebar-empty">No upcoming events added yet.</div>
-                        ) : (
-                            <div className="office-calendar-sidebar-list">
-                                {upcomingEvents.map((ev) => (
-                                    <div className="office-calendar-sidebar-item office-calendar-sidebar-item-event" key={ev.event_id}>
-                                        <div>
-                                            <div className="office-calendar-sidebar-item-date">{formatDateShort(ev.event_date)}</div>
-                                            <div className="office-calendar-sidebar-item-note">{ev.title}</div>
-                                        </div>
-                                        <button
-                                            className="office-calendar-sidebar-remove"
-                                            onClick={() => removeEvent(ev)}
-                                            disabled={removingEventId === ev.event_id}
-                                            aria-label={`Remove ${ev.title}`}
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="office-calendar-sidebar-section">
-                        <div className="office-calendar-sidebar-title">Upcoming Open Days</div>
-
-                        {loading ? (
-                            <SkeletonList count={2} />
-                        ) : upcomingOpenDays.length === 0 ? (
-                            <div className="office-calendar-sidebar-empty">None added yet — tap a weekend on the calendar.</div>
-                        ) : (
-                            <div className="office-calendar-sidebar-list">
-                                {upcomingOpenDays.map((day) => (
-                                    <div className="office-calendar-sidebar-item" key={day.open_day_id}>
-                                        <div>
-                                            <div className="office-calendar-sidebar-item-date">{formatDateShort(day.open_date)}</div>
-                                            {day.note && <div className="office-calendar-sidebar-item-note">{day.note}</div>}
-                                        </div>
-                                        <button
-                                            className="office-calendar-sidebar-remove"
-                                            onClick={() => removeOpenDayFromSidebar(day)}
-                                            disabled={removingOpenDayId === day.open_day_id}
-                                            aria-label={`Remove ${formatDate(day.open_date)}`}
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </aside>
-
-                <main className="office-calendar-main">
-                    <div className="office-calendar-toolbar">
-                        <div className="office-calendar-nav-controls">
-                            <button className="office-calendar-nav-button" onClick={() => goToMonth(-1)} aria-label="Previous month">‹</button>
-                            <span className="office-calendar-month-label">{monthLabel}</span>
-                            <button className="office-calendar-nav-button" onClick={() => goToMonth(1)} aria-label="Next month">›</button>
-                        </div>
-                        <button className="office-calendar-today-button" onClick={goToToday}>Today</button>
-                    </div>
-
-                    {error && <div className="employee-error-box" style={{ marginBottom: 16 }}>{error}</div>}
-
-                    <div className="office-calendar-grid">
-                        {WEEKDAY_HEADS.map((h) => (
-                            <div className="office-calendar-weekday-head" key={h}>{h}</div>
-                        ))}
-
-                        {monthGrid.map((date, i) => {
-                            if (!date) {
-                                return <div className="office-calendar-cell is-empty" key={`empty-${i}`} />
-                            }
-
-                            const dateStr = formatLocal(date)
-                            const dow = date.getDay()
-                            const isWeekend = dow === 0 || dow === 6
-                            const isPast = dateStr < today
-                            const isToday = dateStr === today
-                            const openEntry = openDaysByDate[dateStr]
-                            const dayEvents = eventsByDate[dateStr] || []
-                            const dayClaims = claimSchedulesByDate[dateStr] || []
-
-                            const classes = ['office-calendar-cell', 'is-clickable']
-                            if (isPast) classes.push('is-past')
-                            if (isToday) classes.push('is-today')
-
-                            if (isWeekend && openEntry) {
-                                classes.push('is-weekend-open')
-                            } else if (isWeekend) {
-                                classes.push('is-weekend-closed')
-                            }
-
-                            if (dayEvents.length > 0) {
-                                classes.push('is-has-event')
-                            }
-
-                            const itemCount = (dayEvents.length > 0 ? dayEvents.length : (openEntry && isWeekend ? 1 : 0)) + (dayClaims.length > 0 ? 1 : 0)
-                            const cellStyle = itemCount > 1 ? { minHeight: `${84 + (itemCount - 1) * 26}px` } : undefined
-
-                            return (
-                                <div
-                                    className={classes.join(' ')}
-                                    key={dateStr}
-                                    style={cellStyle}
-                                    onClick={() => openDayModal(dateStr)}
-                                >
-                                    <span className="office-calendar-cell-daynum">{date.getDate()}</span>
-
-                                    {dayEvents.map((ev) => (
-                                        <span className="office-calendar-cell-chip office-calendar-cell-chip-event" key={ev.event_id} title={ev.note || ev.title}>
-                                            <span className="office-calendar-cell-chip-dot office-calendar-cell-chip-dot-event" />
-                                            {ev.title}
-                                        </span>
-                                    ))}
-
-                                    {openEntry && dayEvents.length === 0 && (
-                                        <span className="office-calendar-cell-chip" title={openEntry.note || 'Marked open'}>
-                                            <span className="office-calendar-cell-chip-dot" />
-                                            Open for claiming
-                                        </span>
-                                    )}
-
-                                    {dayClaims.length > 0 && (
-                                        <span
-                                            className="office-calendar-cell-chip office-calendar-cell-chip-claim"
-                                            title={`${dayClaims.length} student${dayClaims.length === 1 ? '' : 's'} scheduled to claim`}
-                                        >
-                                            <span className="office-calendar-cell-chip-dot office-calendar-cell-chip-dot-claim" />
-                                            {dayClaims.length} claiming
-                                        </span>
-                                    )}
-                                </div>
-                            )
-                        })}
-                    </div>
-                </main>
-            </div>
+            <CalendarBoard
+                loading={loading}
+                error={error}
+                viewDate={viewDate}
+                onMonthChange={goToMonth}
+                onToday={goToToday}
+                openDaysByDate={openDaysByDate}
+                eventsByDate={eventsByDate}
+                claimSchedulesByDate={claimSchedulesByDate}
+                upcomingEvents={upcomingEvents}
+                upcomingOpenDays={upcomingOpenDays}
+                onDayClick={openDayModal}
+                onRemoveEvent={removeEvent}
+                onRemoveOpenDay={removeOpenDayFromSidebar}
+                removingEventId={removingEventId}
+                removingOpenDayId={removingOpenDayId}
+            />
 
             {showDayModal && (
-                <Modal
-                    title={formatDate(dayModalDate)}
-                    maxWidth={480}
-                    onClose={() => { if (saving || togglingOpen) return; setShowDayModal(false) }}
-                >
-                    {dayModalIsWeekend && (
-                        <div
-                            className="employee-notice"
-                            style={{
-                                marginBottom: 20,
-                                background: dayModalOpenEntry ? 'var(--blue-tint)' : 'var(--paper)',
-                                border: `1px solid ${dayModalOpenEntry ? 'var(--blue-accent, var(--blue))' : 'var(--line)'}`,
-                            }}
-                        >
-                            <strong>{dayModalOpenEntry ? 'Office is open for claiming this day' : 'Weekend — office closed by default'}</strong>
-                            <p style={{ marginBottom: 12 }}>
-                                {dayModalIsPast
-                                    ? dayModalOpenEntry
-                                        ? 'This past date is recorded as an open day.'
-                                        : 'Backfill this past date as an open day if claiming actually happened.'
-                                    : dayModalOpenEntry
-                                        ? 'Missed claims can be auto-rescheduled to this date.'
-                                        : 'Missed claims will skip this date unless marked open.'}
-                            </p>
-                            <button
-                                className={dayModalOpenEntry ? 'employee-danger-button' : 'employee-primary-button'}
-                                onClick={toggleOpenDay}
-                                disabled={togglingOpen}
-                            >
-                                {togglingOpen
-                                    ? 'Saving...'
-                                    : dayModalOpenEntry
-                                        ? 'Remove Open Status'
-                                        : 'Mark Open for Claiming'}
-                            </button>
-                        </div>
-                    )}
-
-                    <h3 style={{ fontSize: 14, marginBottom: 10 }}>Claiming Appointments</h3>
-
-                    {dayModalClaims.length === 0 ? (
-                        <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>No students scheduled to claim this day.</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                            {dayModalClaims.map((cs) => (
-                                <div key={cs.claim_schedule_id} className="employee-list-card" style={{ marginBottom: 0, padding: 12 }}>
-                                    <div className="employee-list-card-header" style={{ marginBottom: 0 }}>
-                                        <div>
-                                            <h3 style={{ fontSize: 13.5 }}>{cs.document_requests?.request_number || 'Request'}</h3>
-                                            <p style={{ fontSize: 12.5 }}>
-                                                {formatTime(cs.claim_time || cs.scheduled_time) || 'No time set'}
-                                            </p>
-                                        </div>
-                                        <button
-                                            className="employee-link-button"
-                                            style={{ padding: '6px 12px', fontSize: 12.5 }}
-                                            onClick={() => navigate(`/employee/requests/${cs.request_id}`)}
-                                        >
-                                            Open →
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <h3 style={{ fontSize: 14, marginBottom: 10 }}>Events &amp; Notes</h3>
-
-                    {dayModalEvents.length === 0 ? (
-                        <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>No events added for this day yet.</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                            {dayModalEvents.map((ev) => (
-                                <div key={ev.event_id} className="employee-list-card" style={{ marginBottom: 0, padding: 12 }}>
-                                    <div className="employee-list-card-header" style={{ marginBottom: 0 }}>
-                                        <div>
-                                            <h3 style={{ fontSize: 13.5 }}>{ev.title}</h3>
-                                            {ev.note && <p style={{ fontSize: 12.5 }}>{ev.note}</p>}
-                                        </div>
-                                        <button
-                                            className="employee-danger-button"
-                                            style={{ padding: '6px 12px', fontSize: 12.5 }}
-                                            onClick={() => removeEvent(ev)}
-                                            disabled={removingEventId === ev.event_id}
-                                        >
-                                            {removingEventId === ev.event_id ? '...' : 'Remove'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {dayModalIsPast && (
-                        <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 12 }}>
-                            This is a past date — you can still add a note for the record.
-                        </p>
-                    )}
-
-                    <div className="form-group" style={{ marginBottom: 12 }}>
-                        <label className="form-label" htmlFor="event-title">Add an Event</label>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                            {EVENT_PRESETS.map((preset) => (
-                                <button
-                                    type="button"
-                                    key={preset}
-                                    className="employee-filter-chip"
-                                    style={{ fontSize: 12 }}
-                                    onClick={() => setNewEventTitle(preset)}
-                                    disabled={saving}
-                                >
-                                    {preset}
-                                </button>
-                            ))}
-                        </div>
-
-                        <input
-                            id="event-title"
-                            type="text"
-                            className="form-input"
-                            value={newEventTitle}
-                            onChange={(e) => setNewEventTitle(e.target.value)}
-                            placeholder="e.g. Enrollment Week, Office Closed — Holiday"
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: 16 }}>
-                        <label className="form-label" htmlFor="event-note">Note (optional)</label>
-                        <textarea
-                            id="event-note"
-                            className="form-input"
-                            rows={2}
-                            value={newEventNote}
-                            onChange={(e) => setNewEventNote(e.target.value)}
-                            placeholder="Any additional details"
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <button className="employee-secondary-button" onClick={addEvent} disabled={saving}>
-                        {saving ? 'Adding...' : '+ Add Event'}
-                    </button>
-                </Modal>
+                <DayModal
+                    portal="employee"
+                    date={dayModalDate}
+                    events={eventsByDate[dayModalDate] || []}
+                    claims={claimSchedulesByDate[dayModalDate] || []}
+                    openEntry={isWeekendDate(dayModalDate) ? openDaysByDate[dayModalDate] : null}
+                    onClose={closeDayModal}
+                    onToggleOpen={toggleOpenDay}
+                    togglingOpen={togglingOpen}
+                    onRemoveEvent={removeEvent}
+                    removingEventId={removingEventId}
+                    onOpenRequest={(cs) => navigate(`/employee/requests/${cs.request_id}`)}
+                    eventTitle={newEventTitle}
+                    onEventTitleChange={setNewEventTitle}
+                    eventNote={newEventNote}
+                    onEventNoteChange={setNewEventNote}
+                    onAddEvent={addEvent}
+                    saving={saving}
+                />
             )}
 
             {showRangeModal && (
-                <Modal
-                    title="Add Event to a Range of Days"
-                    maxWidth={480}
-                    onClose={() => { if (addingRange) return; setShowRangeModal(false) }}
-                >
-                    <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 16 }}>
-                        Applies the same event/note to every day in the range (e.g. the 20th to the
-                        26th), including weekends, so you don't have to add it one day at a time.
-                    </p>
-
-                    <div className="employee-info-grid" style={{ marginBottom: 14 }}>
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="range-start">Start Date</label>
-                            <input
-                                id="range-start"
-                                type="date"
-                                className="form-input"
-                                value={rangeStart}
-                                onChange={(e) => setRangeStart(e.target.value)}
-                                disabled={addingRange}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="range-end">End Date</label>
-                            <input
-                                id="range-end"
-                                type="date"
-                                className="form-input"
-                                value={rangeEnd}
-                                onChange={(e) => setRangeEnd(e.target.value)}
-                                disabled={addingRange}
-                            />
-                        </div>
-                    </div>
-
-                    {rangeStart && rangeEnd && rangeStart > rangeEnd && (
-                        <p style={{ fontSize: 12.5, color: 'var(--red)', marginBottom: 12 }}>
-                            Start date must be on or before the end date.
-                        </p>
-                    )}
-
-                    <div className="form-group" style={{ marginBottom: 12 }}>
-                        <label className="form-label" htmlFor="range-title">Event Title</label>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                            {EVENT_PRESETS.map((preset) => (
-                                <button
-                                    type="button"
-                                    key={preset}
-                                    className="employee-filter-chip"
-                                    style={{ fontSize: 12 }}
-                                    onClick={() => setRangeTitle(preset)}
-                                    disabled={addingRange}
-                                >
-                                    {preset}
-                                </button>
-                            ))}
-                        </div>
-
-                        <input
-                            id="range-title"
-                            type="text"
-                            className="form-input"
-                            value={rangeTitle}
-                            onChange={(e) => setRangeTitle(e.target.value)}
-                            placeholder="e.g. Mental Health Break"
-                            disabled={addingRange}
-                        />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: 16 }}>
-                        <label className="form-label" htmlFor="range-note">Note (optional)</label>
-                        <textarea
-                            id="range-note"
-                            className="form-input"
-                            rows={2}
-                            value={rangeNote}
-                            onChange={(e) => setRangeNote(e.target.value)}
-                            placeholder="Any additional details"
-                            disabled={addingRange}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <button className="employee-primary-button" onClick={addRangeEvent} disabled={addingRange}>
-                            {addingRange
-                                ? 'Adding...'
-                                : `Add to ${rangeDates.length} Day${rangeDates.length === 1 ? '' : 's'}`}
-                        </button>
-                        <button className="employee-danger-button" onClick={() => setShowRangeModal(false)} disabled={addingRange}>
-                            Cancel
-                        </button>
-                    </div>
-                </Modal>
+                <RangeModal
+                    portal="employee"
+                    start={rangeStart}
+                    end={rangeEnd}
+                    onStartChange={setRangeStart}
+                    onEndChange={setRangeEnd}
+                    title={rangeTitle}
+                    onTitleChange={setRangeTitle}
+                    note={rangeNote}
+                    onNoteChange={setRangeNote}
+                    onSubmit={addRangeEvent}
+                    onClose={closeRangeModal}
+                    adding={addingRange}
+                />
             )}
         </div>
     )
