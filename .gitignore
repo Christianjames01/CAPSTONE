@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Local environment files (real values live in Vercel settings)
-.env*
-!.env.example
