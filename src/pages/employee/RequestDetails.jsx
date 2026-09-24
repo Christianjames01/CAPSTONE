@@ -12,6 +12,7 @@ import Modal from '../../components/Modal'
 import './EmployeePages.css'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
+import { loadStudentsById } from '../../lib/studentNames'
 
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
@@ -194,7 +195,9 @@ function EmployeeRequestDetails() {
                 )
             }
 
-            setStudent(studentData || null)
+            // Add the student's name (profiles) alongside the number.
+            const studentInfo = studentData ? (await loadStudentsById([studentData.student_id]))[studentData.student_id] : null
+            setStudent(studentData ? { ...studentData, name: studentInfo?.name || '' } : null)
 
             const {
                 data: receiptData,
@@ -1335,7 +1338,10 @@ function EmployeeRequestDetails() {
 
             <div className="employee-page-header">
                 <h1>{documentName || 'Request Details'}</h1>
-                <p>Review the student's document request, payment, and requirements.</p>
+                <p>
+                    {student?.name ? <><strong style={{ color: 'var(--ink)' }}>{student.name}</strong> · </> : null}
+                    Review the student's document request, payment, and requirements.
+                </p>
             </div>
 
             {isOverdue && (
@@ -1375,6 +1381,11 @@ function EmployeeRequestDetails() {
                     <div className="employee-info-field">
                         <span>Document Requested</span>
                         <strong>{documentName || 'N/A'}</strong>
+                    </div>
+
+                    <div className="employee-info-field">
+                        <span>Student Name</span>
+                        <strong>{student?.name || 'N/A'}</strong>
                     </div>
 
                     <div className="employee-info-field">

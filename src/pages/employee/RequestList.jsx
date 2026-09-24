@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDate } from '../../lib/formatDate'
+import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 
@@ -114,18 +115,12 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             const studentIds = [...new Set(rows.map((r) => r.student_id).filter(Boolean))]
             const documentTypeIds = [...new Set(rows.map((r) => r.document_type_id).filter(Boolean))]
 
-            const [{ data: students }, { data: documentTypes }] = await Promise.all([
-                studentIds.length
-                    ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
-                    : Promise.resolve({ data: [] }),
+            const [studentsById, { data: documentTypes }] = await Promise.all([
+                loadStudentsById(studentIds),
                 documentTypeIds.length
                     ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
                     : Promise.resolve({ data: [] }),
             ])
-
-            const studentNumberById = Object.fromEntries(
-                (students || []).map((s) => [s.student_id, s.student_number])
-            )
 
             const documentNameById = Object.fromEntries(
                 (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
@@ -134,7 +129,8 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             setRequests(
                 rows.map((r) => ({
                     ...r,
-                    studentNumber: studentNumberById[r.student_id] || 'N/A',
+                    studentNumber: studentsById[r.student_id]?.number || 'N/A',
+                    studentName: studentsById[r.student_id]?.name || 'Unknown student',
                     documentName: documentNameById[r.document_type_id] || 'Document',
                 }))
             )
@@ -155,6 +151,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             return (
                 r.request_number.toLowerCase().includes(term) ||
                 r.studentNumber.toLowerCase().includes(term) ||
+                r.studentName.toLowerCase().includes(term) ||
                 r.documentName.toLowerCase().includes(term)
             )
         })
@@ -172,7 +169,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by request number, student number, or document"
+                placeholder="Search by request number, student name or number, or document"
             />
 
             {showFilterChips && (
@@ -202,6 +199,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                     <div className="employee-list-card" key={request.request_id}>
                         <div className="employee-list-card-header">
                             <div>
+                                <p className="request-student-name">{request.studentName}</p>
                                 <h3>{request.documentName}</h3>
                                 <p>
                                     {request.request_number} · Student {request.studentNumber}

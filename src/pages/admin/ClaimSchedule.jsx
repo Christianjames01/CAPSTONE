@@ -8,6 +8,7 @@ import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
 import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claimCounter'
+import { loadStudentsById } from '../../lib/studentNames'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -72,7 +73,9 @@ function AdminClaimSchedule() {
                 .eq('student_id', requestData.student_id)
                 .single()
 
-            setStudent(studentData || null)
+            // Add the student's name (profiles) alongside the number.
+            const studentInfo = studentData ? (await loadStudentsById([studentData.student_id]))[studentData.student_id] : null
+            setStudent(studentData ? { ...studentData, name: studentInfo?.name || '' } : null)
 
             const { data: scheduleData, error: scheduleError } = await supabase
                 .from('claim_schedules')
@@ -447,6 +450,11 @@ function AdminClaimSchedule() {
                 <h3 style={{ fontSize: 15, marginBottom: 14 }}>Student Information</h3>
 
                 <div className="admin-info-grid">
+                    <div className="admin-info-field">
+                        <span>Student Name</span>
+                        <strong>{student?.name || 'N/A'}</strong>
+                    </div>
+
                     <div className="admin-info-field">
                         <span>Student Number</span>
                         <strong>{student?.student_number || 'N/A'}</strong>

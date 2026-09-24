@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import { loadStudentsById } from '../../lib/studentNames'
 import './EmployeePages.css'
 
 function ClaimScheduleList() {
@@ -105,11 +106,15 @@ function ClaimScheduleList() {
                 return 2
             }
 
+            const readyStudents = await loadStudentsById((requests || []).map((r) => r.student_id))
+
             setNeedsScheduling(
                 (requests || [])
                     .map((r) => ({
                         ...r,
                         documentName: documentNameById[r.document_type_id] || 'Document',
+                        studentName: readyStudents[r.student_id]?.name || 'Unknown student',
+                        studentNumber: readyStudents[r.student_id]?.number || 'N/A',
                         schedule: scheduleByRequestId[r.request_id] || null,
                     }))
                     .sort((a, b) => priority(a.schedule) - priority(b.schedule))
@@ -169,13 +174,7 @@ function ClaimScheduleList() {
 
             const studentIds = [...new Set((todaySchedules || []).map((s) => s.student_id).filter(Boolean))]
 
-            const { data: studentsData } = studentIds.length
-                ? await supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
-                : { data: [] }
-
-            const studentNumberById = Object.fromEntries(
-                (studentsData || []).map((s) => [s.student_id, s.student_number])
-            )
+            const todayStudents = await loadStudentsById(studentIds)
 
             setTodayAppointments(
                 (todaySchedules || []).map((s) => {
@@ -185,7 +184,8 @@ function ClaimScheduleList() {
                         ...s,
                         requestNumber: request?.request_number || 'N/A',
                         documentName: todayDocNameById[request?.document_type_id] || 'Document',
-                        studentNumber: studentNumberById[s.student_id] || 'N/A',
+                        studentNumber: todayStudents[s.student_id]?.number || 'N/A',
+                        studentName: todayStudents[s.student_id]?.name || 'Unknown student',
                     }
                 })
             )
@@ -302,6 +302,7 @@ function ClaimScheduleList() {
                         <div className="employee-list-card" key={appt.claim_schedule_id}>
                             <div className="employee-list-card-header">
                                 <div>
+                                    <p className="request-student-name">{appt.studentName}</p>
                                     <h3>{appt.documentName}</h3>
                                     <p>
                                         {appt.requestNumber} · Student {appt.studentNumber}
@@ -341,8 +342,9 @@ function ClaimScheduleList() {
                     <div className="employee-list-card" key={request.request_id}>
                         <div className="employee-list-card-header">
                             <div>
+                                <p className="request-student-name">{request.studentName}</p>
                                 <h3>{request.documentName}</h3>
-                                <p>{request.request_number}</p>
+                                <p>{request.request_number} · Student {request.studentNumber}</p>
                             </div>
 
                             <span className={`employee-status-pill status-${request.schedule ? request.schedule.status : 'ready_for_claiming'}`}>
