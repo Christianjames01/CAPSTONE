@@ -6,7 +6,7 @@ import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
-import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -186,20 +186,18 @@ function Messages() {
         }
     }
 
-    // "Delete for me": the registrar staff still see the message.
+    // Unsend for everyone: the registrar staff see "... deleted a message".
     const deleteMessage = async (m) => {
         const confirmed = await confirmModal(
-            'Delete this message for you? It will be removed from your Messages only; the registrar staff will still see it.',
-            { title: 'Delete message?', confirmButtonText: 'Delete for me', icon: 'warning' }
+            'Delete this message for everyone? The registrar staff will see that you deleted a message instead.',
+            { title: 'Delete message?', confirmButtonText: 'Delete', icon: 'warning' }
         )
         if (!confirmed) return
 
         try {
             setBusy(true)
-            const ids = siblingMessageIds([m], messages)
-            await hideMessagesForMe(userId, ids)
-            const hidden = new Set(ids)
-            setMessages((prev) => prev.filter((x) => !hidden.has(x.message_id)))
+            await deleteOwnMessage(m.message_id)
+            setMessages((prev) => markSendDeleted(prev, m, userId))
         } catch (err) {
             console.error('DELETE MESSAGE ERROR:', err)
             notifyError(err.message || 'Failed to delete message.')
@@ -288,6 +286,9 @@ function Messages() {
                                         text={m.message}
                                         time={formatTime(m.created_at)}
                                         edited={!!m.edited_at}
+                                        deletedNote={m.deleted_at
+                                            ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
+                                            : null}
                                         onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                         onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                         disabled={busy}

@@ -6,7 +6,7 @@ import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessag
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import MessageBubble from '../../components/MessageBubble'
-import { loadHiddenMessageIds, loadDeletionsByOthers, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, loadDeletedMessageContent, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
 
 // Same contact block already shown to students on the Help & Support page
@@ -22,6 +22,8 @@ function Messages() {
     // delete can also hide those siblings (see hideRows).
     const [rawMessages, setRawMessages] = useState([])
     const [deletingKey, setDeletingKey] = useState(null)
+    // Original text of unsent messages (head-only archive), by message_id.
+    const [deletedContent, setDeletedContent] = useState(() => new Map())
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [activeThread, setActiveThread] = useState(null)
@@ -73,12 +75,10 @@ function Messages() {
             // content, so drop the tagged copy here rather than showing
             // the same message twice.
             setRawMessages(visible)
-            // Oversight: flag messages a participant deleted for themselves
-            // ("Yul deleted this message"). They stay visible here.
-            const deletions = await loadDeletionsByOthers(user.id, data || [])
-            const rows = visible
-                .filter((m) => !m.message.startsWith('[[ref='))
-                .map((m) => ({ ...m, deletedBy: [...(deletions.get(`${m.sender_user_id}|${m.created_at}`) || [])] }))
+            const rows = visible.filter((m) => !m.message.startsWith('[[ref='))
+
+            // Oversight: the head can reveal what an unsent message said.
+            setDeletedContent(await loadDeletedMessageContent())
 
             const userIds = [
                 ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
@@ -397,25 +397,23 @@ function Messages() {
         return hidden
     }
 
+    // Unsend for everyone: all participants see "... deleted a message".
     const deleteMessage = async (m) => {
         const confirmed = await confirmModal(
-            'Delete this message for you? It will be removed from your Messages only; the others in the conversation will still see it.',
-            { title: 'Delete message?', confirmButtonText: 'Delete for me', icon: 'warning' }
+            'Delete this message for everyone? Everyone in the conversation will see "HCDC-Registrar deleted a message" instead.',
+            { title: 'Delete message?', confirmButtonText: 'Delete', icon: 'warning' }
         )
         if (!confirmed) return
 
         try {
             setDeletingKey(m.message_id)
-            const hidden = await hideRows([m])
+            await deleteOwnMessage(m.message_id)
 
-            const remaining = activeThread.messages.filter((x) => !hidden.has(x.message_id))
-            const updatedThread = { ...activeThread, messages: remaining }
+            const updatedThread = { ...activeThread, messages: markSendDeleted(activeThread.messages, m, currentUserId) }
             setActiveThread(updatedThread)
-            setThreads((prev) =>
-                remaining.length === 0
-                    ? prev.filter((t) => t.pairKey !== updatedThread.pairKey)
-                    : prev.map((t) => (t.pairKey === updatedThread.pairKey ? updatedThread : t))
-            )
+            setThreads((prev) => prev.map((t) => (t.pairKey === updatedThread.pairKey ? updatedThread : t)))
+            setRawMessages((prev) => markSendDeleted(prev, m, currentUserId))
+            setDeletedContent((prev) => new Map(prev).set(m.message_id, m.message))
         } catch (err) {
             console.error('DELETE MESSAGE ERROR:', err)
             notifyError(err.message || 'Failed to delete message.')
@@ -488,6 +486,13 @@ function Messages() {
     const nameForSender = (senderId) =>
         senderId === currentUserId ? 'HCDC-Registrar' : (senderNames[senderId] || 'Unknown')
 
+    // "You deleted a message" / "Yul deleted a message", or null.
+    const deletedLabel = (m) => {
+        if (!m?.deleted_at) return null
+        const by = m.deleted_by || m.sender_user_id
+        return by === currentUserId ? 'You deleted a message' : `${nameForSender(by)} deleted a message`
+    }
+
     if (activeThread) {
         const mine = isMyThread(activeThread)
 
@@ -533,9 +538,8 @@ function Messages() {
                                     text={m.message}
                                     time={formatTime(m.created_at)}
                                     edited={!!m.edited_at}
-                                    deletedNote={m.deletedBy?.length
-                                        ? `${m.deletedBy.map(nameForSender).join(' and ')} deleted this message`
-                                        : null}
+                                    deletedNote={deletedLabel(m)}
+                                    originalText={m.deleted_at ? deletedContent.get(m.message_id) : undefined}
                                     onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                     onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                     disabled={deletingKey !== null}
@@ -619,8 +623,8 @@ function Messages() {
                                 <div>
                                     <h3>{thread.nameA} ↔ {thread.nameB}</h3>
                                     <p>
-                                        {lastMessage?.deletedBy?.length
-                                            ? <em>{lastMessage.deletedBy.map(nameForSender).join(' and ')} deleted a message</em>
+                                        {lastMessage?.deleted_at
+                                            ? <em>{deletedLabel(lastMessage)}</em>
                                             : lastMessage?.message}
                                     </p>
                                 </div>

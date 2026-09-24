@@ -18,10 +18,11 @@ const TrashIcon = () => (
 // pages. Edit and Delete only appear on the viewer's own messages
 // (`isSelf`); editing turns the bubble into an inline editor card.
 //
-// `deletedNote` (admin oversight only), e.g. "Yul deleted this message":
-// someone in the conversation deleted it for themselves. The original text
-// stays one click away.
-function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, disabled }) {
+// `deletedNote`, e.g. "You deleted a message" / "Yul deleted a message":
+// the message was unsent, so the placeholder replaces the text and there
+// are no actions. `originalText` is only passed on the admin oversight
+// view, where the head can reveal what was deleted.
+function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, originalText, onEdit, onDelete, disabled }) {
     const [editing, setEditing] = useState(false)
     const [revealed, setRevealed] = useState(false)
     const [draft, setDraft] = useState(text)
@@ -70,7 +71,7 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
         }
     }
 
-    const showActions = isSelf && !editing && (onEdit || onDelete)
+    const showActions = isSelf && !editing && !deletedNote && (onEdit || onDelete)
     const unchanged = draft.trim() === text
 
     return (
@@ -120,15 +121,18 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
                         <div className="msg-deleted-note">
                             <TrashIcon />
                             <span>{deletedNote}</span>
-                            <button type="button" onClick={() => setRevealed((v) => !v)} aria-expanded={revealed}>
-                                {revealed ? 'Hide' : 'Show message'}
-                            </button>
+                            {originalText && (
+                                <button type="button" onClick={() => setRevealed((v) => !v)} aria-expanded={revealed}>
+                                    {revealed ? 'Hide' : 'Show message'}
+                                </button>
+                            )}
                         </div>
                     )}
-                    {(!deletedNote || revealed) && <p className="msg-text">{text}</p>}
+                    {!deletedNote && <p className="msg-text">{text}</p>}
+                    {deletedNote && revealed && originalText && <p className="msg-text">{originalText}</p>}
                     <span className="msg-time">
                         {time}
-                        {edited && <span className="msg-edited"> · edited</span>}
+                        {edited && !deletedNote && <span className="msg-edited"> · edited</span>}
                     </span>
                 </div>
             )}

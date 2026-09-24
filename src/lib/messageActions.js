@@ -2,9 +2,10 @@ import { supabase } from './supabase'
 
 // Shared by the student, employee, and admin Messages pages.
 //
-// Delete is "delete for me": it records the hide in message_hidden and the
-// other people in the conversation keep their copy. Edit goes through the
-// edit_my_message() RPC, which only lets the sender change their own text.
+// Deleting a message unsends it for everyone (delete_my_message RPC);
+// "delete conversation" on the admin page only hides it for the head
+// (message_hidden). Edit goes through edit_my_message(). Both RPCs only let
+// the sender act on their own messages.
 
 // Message ids the user has deleted for themselves. If the message_hidden
 // table isn't there yet, show everything rather than failing the page.
@@ -55,33 +56,34 @@ export function siblingMessageIds(msgs, allRows) {
     return [...ids]
 }
 
-// For the admin oversight view: which *other* people deleted each message
-// for themselves. Returns a Map from "sender|created_at" (so all copies of
-// one message count together) to the user ids who deleted it. Only the
-// registrar head can read other people's message_hidden rows; for anyone
-// else, or if the table isn't there yet, this is just empty.
-export async function loadDeletionsByOthers(currentUserId, allRows) {
+// Unsend for everyone: only the sender can do it (checked in the RPC).
+// Every participant then sees a "<name> deleted a message" placeholder.
+export async function deleteOwnMessage(messageId) {
+    const { error } = await supabase.rpc('delete_my_message', { p_message_id: String(messageId) })
+    if (error) throw new Error(error.message)
+}
+
+// Admin oversight: the original text of deleted messages, by message_id.
+// Only the registrar head can read message_deleted_content; for anyone
+// else (or before the migration) this is just empty.
+export async function loadDeletedMessageContent() {
     const { data, error } = await supabase
-        .from('message_hidden')
-        .select('user_id, message_id')
-        .neq('user_id', currentUserId)
+        .from('message_deleted_content')
+        .select('message_id, original_message')
 
     if (error) {
-        console.warn('LOAD MESSAGE DELETIONS ERROR:', error)
+        console.warn('LOAD DELETED MESSAGE CONTENT ERROR:', error)
         return new Map()
     }
 
-    const keyById = new Map(allRows.map((r) => [r.message_id, `${r.sender_user_id}|${r.created_at}`]))
-    const deleters = new Map()
+    return new Map((data || []).map((r) => [r.message_id, r.original_message.replace(/^\[\[ref=[0-9a-f-]+\]\]/, '')]))
+}
 
-    for (const h of data || []) {
-        const key = keyById.get(h.message_id)
-        if (!key) continue
-        if (!deleters.has(key)) deleters.set(key, new Set())
-        deleters.get(key).add(h.user_id)
-    }
-
-    return deleters
+// Applies an unsend to page state: every copy of the message is marked
+// deleted by `userId`.
+export function markSendDeleted(list, deletedMsg, userId) {
+    const deleted_at = new Date().toISOString()
+    return list.map((x) => (isSameSend(x, deletedMsg) ? { ...x, deleted_at, deleted_by: userId } : x))
 }
 
 // True when `m` is one of the rows edited in place with the same
