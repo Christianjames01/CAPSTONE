@@ -6,7 +6,7 @@ import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessag
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import MessageBubble from '../../components/MessageBubble'
-import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, loadDeletionsByOthers, hideMessagesForMe, editOwnMessage, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
 
 // Same contact block already shown to students on the Help & Support page
@@ -73,7 +73,12 @@ function Messages() {
             // content, so drop the tagged copy here rather than showing
             // the same message twice.
             setRawMessages(visible)
-            const rows = visible.filter((m) => !m.message.startsWith('[[ref='))
+            // Oversight: flag messages a participant deleted for themselves
+            // ("Yul deleted this message"). They stay visible here.
+            const deletions = await loadDeletionsByOthers(user.id, data || [])
+            const rows = visible
+                .filter((m) => !m.message.startsWith('[[ref='))
+                .map((m) => ({ ...m, deletedBy: [...(deletions.get(`${m.sender_user_id}|${m.created_at}`) || [])] }))
 
             const userIds = [
                 ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
@@ -528,6 +533,9 @@ function Messages() {
                                     text={m.message}
                                     time={formatTime(m.created_at)}
                                     edited={!!m.edited_at}
+                                    deletedNote={m.deletedBy?.length
+                                        ? `${m.deletedBy.map(nameForSender).join(' and ')} deleted this message`
+                                        : null}
                                     onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                     onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                     disabled={deletingKey !== null}
@@ -610,7 +618,11 @@ function Messages() {
                             <div className="admin-list-card-header">
                                 <div>
                                     <h3>{thread.nameA} ↔ {thread.nameB}</h3>
-                                    <p>{lastMessage?.message}</p>
+                                    <p>
+                                        {lastMessage?.deletedBy?.length
+                                            ? <em>{lastMessage.deletedBy.map(nameForSender).join(' and ')} deleted a message</em>
+                                            : lastMessage?.message}
+                                    </p>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>

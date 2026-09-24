@@ -55,6 +55,35 @@ export function siblingMessageIds(msgs, allRows) {
     return [...ids]
 }
 
+// For the admin oversight view: which *other* people deleted each message
+// for themselves. Returns a Map from "sender|created_at" (so all copies of
+// one message count together) to the user ids who deleted it. Only the
+// registrar head can read other people's message_hidden rows; for anyone
+// else, or if the table isn't there yet, this is just empty.
+export async function loadDeletionsByOthers(currentUserId, allRows) {
+    const { data, error } = await supabase
+        .from('message_hidden')
+        .select('user_id, message_id')
+        .neq('user_id', currentUserId)
+
+    if (error) {
+        console.warn('LOAD MESSAGE DELETIONS ERROR:', error)
+        return new Map()
+    }
+
+    const keyById = new Map(allRows.map((r) => [r.message_id, `${r.sender_user_id}|${r.created_at}`]))
+    const deleters = new Map()
+
+    for (const h of data || []) {
+        const key = keyById.get(h.message_id)
+        if (!key) continue
+        if (!deleters.has(key)) deleters.set(key, new Set())
+        deleters.get(key).add(h.user_id)
+    }
+
+    return deleters
+}
+
 // True when `m` is one of the rows edited in place with the same
 // sender + created_at as `edited`.
 export function isSameSend(m, edited) {
