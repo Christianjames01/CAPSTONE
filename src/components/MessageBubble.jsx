@@ -20,11 +20,9 @@ const TrashIcon = () => (
 //
 // `deletedNote`, e.g. "You deleted a message" / "Yul deleted a message":
 // the message was unsent, so the placeholder replaces the text and there
-// are no actions. `originalText` is only passed on the admin oversight
-// view, where the head can reveal what was deleted.
-function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, originalText, onEdit, onDelete, disabled }) {
+// are no actions.
+function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, disabled }) {
     const [editing, setEditing] = useState(false)
-    const [revealed, setRevealed] = useState(false)
     const [draft, setDraft] = useState(text)
     const [saving, setSaving] = useState(false)
     const inputRef = useRef(null)
@@ -121,15 +119,9 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
                         <div className="msg-deleted-note">
                             <TrashIcon />
                             <span>{deletedNote}</span>
-                            {originalText && (
-                                <button type="button" onClick={() => setRevealed((v) => !v)} aria-expanded={revealed}>
-                                    {revealed ? 'Hide' : 'Show message'}
-                                </button>
-                            )}
                         </div>
                     )}
                     {!deletedNote && <p className="msg-text">{text}</p>}
-                    {deletedNote && revealed && originalText && <p className="msg-text">{originalText}</p>}
                     <span className="msg-time">
                         {time}
                         {edited && !deletedNote && <span className="msg-edited"> · edited</span>}

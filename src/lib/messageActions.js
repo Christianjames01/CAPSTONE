@@ -63,22 +63,6 @@ export async function deleteOwnMessage(messageId) {
     if (error) throw new Error(error.message)
 }
 
-// Admin oversight: the original text of deleted messages, by message_id.
-// Only the registrar head can read message_deleted_content; for anyone
-// else (or before the migration) this is just empty.
-export async function loadDeletedMessageContent() {
-    const { data, error } = await supabase
-        .from('message_deleted_content')
-        .select('message_id, original_message')
-
-    if (error) {
-        console.warn('LOAD DELETED MESSAGE CONTENT ERROR:', error)
-        return new Map()
-    }
-
-    return new Map((data || []).map((r) => [r.message_id, r.original_message.replace(/^\[\[ref=[0-9a-f-]+\]\]/, '')]))
-}
-
 // Applies an unsend to page state: every copy of the message is marked
 // deleted by `userId`.
 export function markSendDeleted(list, deletedMsg, userId) {

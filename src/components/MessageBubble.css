@@ -286,28 +286,6 @@
     flex-shrink: 0;
 }
 
-.msg-deleted-note button {
-    margin: 0 0 0 4px;
-    padding: 0;
-    background: none;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    color: var(--blue-accent, var(--blue));
-    cursor: pointer;
-}
-
-.msg-deleted-note button:hover {
-    text-decoration: underline;
-}
-
-.msg .msg-bubble.is-deleted .msg-text {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed var(--line);
-    color: var(--slate);
-}
-
 .msg.is-self .msg-bubble.is-deleted .msg-time {
     color: var(--slate);
 }

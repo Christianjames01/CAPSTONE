@@ -6,7 +6,7 @@ import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessag
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import MessageBubble from '../../components/MessageBubble'
-import { loadHiddenMessageIds, loadDeletedMessageContent, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
 
 // Same contact block already shown to students on the Help & Support page
@@ -22,8 +22,6 @@ function Messages() {
     // delete can also hide those siblings (see hideRows).
     const [rawMessages, setRawMessages] = useState([])
     const [deletingKey, setDeletingKey] = useState(null)
-    // Original text of unsent messages (head-only archive), by message_id.
-    const [deletedContent, setDeletedContent] = useState(() => new Map())
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [activeThread, setActiveThread] = useState(null)
@@ -76,9 +74,6 @@ function Messages() {
             // the same message twice.
             setRawMessages(visible)
             const rows = visible.filter((m) => !m.message.startsWith('[[ref='))
-
-            // Oversight: the head can reveal what an unsent message said.
-            setDeletedContent(await loadDeletedMessageContent())
 
             const userIds = [
                 ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
@@ -413,7 +408,6 @@ function Messages() {
             setActiveThread(updatedThread)
             setThreads((prev) => prev.map((t) => (t.pairKey === updatedThread.pairKey ? updatedThread : t)))
             setRawMessages((prev) => markSendDeleted(prev, m, currentUserId))
-            setDeletedContent((prev) => new Map(prev).set(m.message_id, m.message))
         } catch (err) {
             console.error('DELETE MESSAGE ERROR:', err)
             notifyError(err.message || 'Failed to delete message.')
@@ -539,7 +533,6 @@ function Messages() {
                                     time={formatTime(m.created_at)}
                                     edited={!!m.edited_at}
                                     deletedNote={deletedLabel(m)}
-                                    originalText={m.deleted_at ? deletedContent.get(m.message_id) : undefined}
                                     onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                     onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                     disabled={deletingKey !== null}
