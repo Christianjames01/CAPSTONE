@@ -313,7 +313,7 @@ function RequestDetails() {
                 error: scheduleError
             } = await supabase
                 .from('claim_schedules')
-                .select('claim_schedule_id, claim_date, claim_time, scheduled_date, scheduled_time, status, remarks, claimed_at, reschedule_requested_at')
+                .select('*')
                 .eq('request_id', requestId)
                 .neq('status', 'cancelled')
                 .order('claim_date', { ascending: false })
@@ -828,6 +828,12 @@ function RequestDetails() {
                                 </>
                             )}
                         </p>
+
+                        {claimSchedule.claiming_counter && claimSchedule.status !== 'claimed' && claimSchedule.status !== 'missed' && (
+                            <p style={{ marginBottom: 8 }}>
+                                Claim at <strong>{claimSchedule.claiming_counter}</strong>
+                            </p>
+                        )}
 
                         {claimSchedule.status === 'missed' ? (
                             <p style={{ color: 'var(--slate)', fontSize: 13.5 }}>

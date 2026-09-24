@@ -44,19 +44,7 @@ function ClaimSchedule() {
 
             const { data: scheduleRows, error: scheduleError } = await supabase
                 .from('claim_schedules')
-                .select(`
-                    claim_schedule_id,
-                    request_id,
-                    scheduled_date,
-                    scheduled_time,
-                    status,
-                    claim_date,
-                    claim_time,
-                    remarks,
-                    reschedule_requested_at,
-                    claimed_at,
-                    created_at
-                `)
+                .select('*')
                 .eq('student_id', student.student_id)
                 .order('created_at', { ascending: false })
 
@@ -292,6 +280,13 @@ function ClaimSchedule() {
                                             {formatArriveByTime(schedule.claim_time || schedule.scheduled_time) || 'N/A'}
                                         </strong>
                                     </div>
+
+                                    {schedule.claiming_counter && (
+                                        <div className="student-info-field">
+                                            <span>Claiming Counter</span>
+                                            <strong>{schedule.claiming_counter}</strong>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

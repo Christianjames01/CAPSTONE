@@ -7,6 +7,7 @@ import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, co
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
+import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claimCounter'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -22,7 +23,7 @@ function AdminClaimSchedule() {
 
     const [scheduledDate, setScheduledDate] = useState('')
     const [scheduledTime, setScheduledTime] = useState('')
-    const [estimatedDuration, setEstimatedDuration] = useState(60)
+    const [claimingCounter, setClaimingCounter] = useState('')
     const [remarks, setRemarks] = useState('')
 
     const [loading, setLoading] = useState(true)
@@ -75,12 +76,7 @@ function AdminClaimSchedule() {
 
             const { data: scheduleData, error: scheduleError } = await supabase
                 .from('claim_schedules')
-                .select(`
-                    claim_schedule_id, request_id, student_id, scheduled_date, scheduled_time,
-                    estimated_duration_minutes, status, scheduled_by, scheduled_at, claimed_at,
-                    claimed_by, remarks, claim_date, claim_time, reschedule_requested_at,
-                    reschedule_reason, created_at, updated_at
-                `)
+                .select('*')
                 .eq('request_id', requestId)
                 .order('created_at', { ascending: false })
                 .limit(1)
@@ -94,7 +90,7 @@ function AdminClaimSchedule() {
                 setExistingSchedule(scheduleData)
                 setScheduledDate(scheduleData.claim_date || scheduleData.scheduled_date || '')
                 setScheduledTime(scheduleData.claim_time || scheduleData.scheduled_time || '')
-                setEstimatedDuration(scheduleData.estimated_duration_minutes || 60)
+                setClaimingCounter(scheduleData.claiming_counter || '')
                 setRemarks(scheduleData.remarks || '')
             } else {
                 setRemarks(DEFAULT_REMARKS)
@@ -146,11 +142,6 @@ function AdminClaimSchedule() {
             return false
         }
 
-        if (!estimatedDuration || Number(estimatedDuration) <= 0) {
-            notifyWarning('Please enter a valid estimated duration.')
-            return false
-        }
-
         if (scheduledDate < getToday()) {
             notifyWarning('The claiming date cannot be in the past.')
             return false
@@ -178,12 +169,10 @@ function AdminClaimSchedule() {
             const now = new Date().toISOString()
 
             if (existingSchedule) {
-                const { data: updatedSchedule, error: updateError } = await supabase
-                    .from('claim_schedules')
-                    .update({
+                const { data: updatedSchedule, error: updateError } = await saveWithClaimCounter({
                         scheduled_date: scheduledDate,
                         scheduled_time: scheduledTime,
-                        estimated_duration_minutes: Number(estimatedDuration),
+                        claiming_counter: claimingCounter.trim() || null,
                         claim_date: scheduledDate,
                         claim_time: scheduledTime,
                         remarks: remarks.trim() || null,
@@ -191,10 +180,12 @@ function AdminClaimSchedule() {
                         reschedule_requested_at: null,
                         reschedule_reason: null,
                         updated_at: now,
-                    })
-                    .eq('claim_schedule_id', existingSchedule.claim_schedule_id)
-                    .select()
-                    .single()
+                    }, (payload) => supabase
+                        .from('claim_schedules')
+                        .update(payload)
+                        .eq('claim_schedule_id', existingSchedule.claim_schedule_id)
+                        .select()
+                        .single())
 
                 if (updateError) {
                     throw new Error('Failed to update claim schedule: ' + updateError.message)
@@ -240,23 +231,25 @@ function AdminClaimSchedule() {
                 notifySuccess('Claiming schedule updated successfully.')
 
             } else {
-                const { data: newSchedule, error: insertError } = await supabase
-                    .from('claim_schedules')
-                    .insert({
+                const { data: newSchedule, error: insertError } = await saveWithClaimCounter({
                         request_id: request.request_id,
                         student_id: request.student_id,
                         scheduled_date: scheduledDate,
                         scheduled_time: scheduledTime,
-                        estimated_duration_minutes: Number(estimatedDuration),
+                        // Legacy column, no longer shown; kept at its old default.
+                        estimated_duration_minutes: 60,
+                        claiming_counter: claimingCounter.trim() || null,
                         status: 'scheduled',
                         scheduled_by: admin.employeeId,
                         scheduled_at: now,
                         claim_date: scheduledDate,
                         claim_time: scheduledTime,
                         remarks: remarks.trim() || null,
-                    })
-                    .select()
-                    .single()
+                    }, (payload) => supabase
+                        .from('claim_schedules')
+                        .insert(payload)
+                        .select()
+                        .single())
 
                 if (insertError) {
                     throw new Error('Failed to create claim schedule: ' + insertError.message)
@@ -368,7 +361,7 @@ function AdminClaimSchedule() {
             setExistingSchedule(null)
             setScheduledDate('')
             setScheduledTime('')
-            setEstimatedDuration(60)
+            setClaimingCounter('')
             setRemarks('')
 
             await loadData()
@@ -517,18 +510,20 @@ function AdminClaimSchedule() {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Estimated Duration</label>
-                        <select
-                            value={estimatedDuration}
-                            onChange={(event) => setEstimatedDuration(Number(event.target.value))}
+                        <label className="form-label" htmlFor="claiming-counter">Claiming Counter / Window</label>
+                        <input
+                            id="claiming-counter"
+                            type="text"
+                            list="claiming-counter-options"
+                            value={claimingCounter}
+                            onChange={(event) => setClaimingCounter(event.target.value)}
+                            placeholder="e.g. Registrar Window 2"
                             className="form-input"
                             disabled={saving}
-                        >
-                            <option value={30}>30 minutes</option>
-                            <option value={60}>1 hour</option>
-                            <option value={90}>1 hour 30 minutes</option>
-                            <option value={120}>2 hours</option>
-                        </select>
+                        />
+                        <datalist id="claiming-counter-options">
+                            {CLAIM_COUNTER_SUGGESTIONS.map((c) => <option key={c} value={c} />)}
+                        </datalist>
                     </div>
                 </div>
 

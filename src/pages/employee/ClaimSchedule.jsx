@@ -7,6 +7,7 @@ import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, co
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './EmployeePages.css'
+import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claimCounter'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -22,7 +23,7 @@ function ClaimSchedule() {
 
     const [scheduledDate, setScheduledDate] = useState('')
     const [scheduledTime, setScheduledTime] = useState('')
-    const [estimatedDuration, setEstimatedDuration] = useState(60)
+    const [claimingCounter, setClaimingCounter] = useState('')
     const [remarks, setRemarks] = useState('')
 
     const [loading, setLoading] = useState(true)
@@ -160,26 +161,7 @@ function ClaimSchedule() {
                 error: scheduleError
             } = await supabase
                 .from('claim_schedules')
-                .select(`
-                    claim_schedule_id,
-                    request_id,
-                    student_id,
-                    scheduled_date,
-                    scheduled_time,
-                    estimated_duration_minutes,
-                    status,
-                    scheduled_by,
-                    scheduled_at,
-                    claimed_at,
-                    claimed_by,
-                    remarks,
-                    claim_date,
-                    claim_time,
-                    reschedule_requested_at,
-                    reschedule_reason,
-                    created_at,
-                    updated_at
-                `)
+                .select('*')
                 .eq(
                     'request_id',
                     requestId
@@ -215,10 +197,7 @@ function ClaimSchedule() {
                     ''
                 )
 
-                setEstimatedDuration(
-                    scheduleData.estimated_duration_minutes ||
-                    60
-                )
+                setClaimingCounter(scheduleData.claiming_counter || '')
 
                 setRemarks(
                     scheduleData.remarks || ''
@@ -304,22 +283,6 @@ function ClaimSchedule() {
             return false
         }
 
-        if (!estimatedDuration) {
-            notifyWarning(
-                'Please enter the estimated duration.'
-            )
-            return false
-        }
-
-        if (
-            Number(estimatedDuration) <= 0
-        ) {
-            notifyWarning(
-                'Estimated duration must be greater than 0 minutes.'
-            )
-            return false
-        }
-
         const today = getToday()
 
         if (
@@ -367,19 +330,15 @@ function ClaimSchedule() {
                 const {
                     data: updatedSchedule,
                     error: updateError
-                } = await supabase
-                    .from('claim_schedules')
-                    .update({
+                } = await saveWithClaimCounter({
                         scheduled_date:
                             scheduledDate,
 
                         scheduled_time:
                             scheduledTime,
 
-                        estimated_duration_minutes:
-                            Number(
-                                estimatedDuration
-                            ),
+                        claiming_counter:
+                            claimingCounter.trim() || null,
 
                         claim_date:
                             scheduledDate,
@@ -402,13 +361,12 @@ function ClaimSchedule() {
 
                         updated_at:
                             now
-                    })
-                    .eq(
-                        'claim_schedule_id',
-                        existingSchedule.claim_schedule_id
-                    )
-                    .select()
-                    .single()
+                    }, (payload) => supabase
+                        .from('claim_schedules')
+                        .update(payload)
+                        .eq('claim_schedule_id', existingSchedule.claim_schedule_id)
+                        .select()
+                        .single())
 
                 if (updateError) {
                     throw new Error(
@@ -486,9 +444,7 @@ function ClaimSchedule() {
                 const {
                     data: newSchedule,
                     error: insertError
-                } = await supabase
-                    .from('claim_schedules')
-                    .insert({
+                } = await saveWithClaimCounter({
                         request_id:
                             request.request_id,
 
@@ -501,10 +457,11 @@ function ClaimSchedule() {
                         scheduled_time:
                             scheduledTime,
 
-                        estimated_duration_minutes:
-                            Number(
-                                estimatedDuration
-                            ),
+                        // Legacy column, no longer shown; kept at its old default.
+                        estimated_duration_minutes: 60,
+
+                        claiming_counter:
+                            claimingCounter.trim() || null,
 
                         status:
                             'scheduled',
@@ -524,9 +481,11 @@ function ClaimSchedule() {
                         remarks:
                             remarks.trim() ||
                             null
-                    })
-                    .select()
-                    .single()
+                    }, (payload) => supabase
+                        .from('claim_schedules')
+                        .insert(payload)
+                        .select()
+                        .single())
 
                 if (insertError) {
                     throw new Error(
@@ -733,7 +692,7 @@ function ClaimSchedule() {
             setExistingSchedule(null)
             setScheduledDate('')
             setScheduledTime('')
-            setEstimatedDuration(60)
+            setClaimingCounter('')
             setRemarks('')
 
             await loadData()
@@ -899,8 +858,8 @@ function ClaimSchedule() {
                                 </div>
 
                                 <div className="employee-info-field">
-                                    <span>Duration</span>
-                                    <strong>{existingSchedule.estimated_duration_minutes || 60} minutes</strong>
+                                    <span>Claiming Counter</span>
+                                    <strong>{existingSchedule.claiming_counter || 'Not set'}</strong>
                                 </div>
 
                                 <div className="employee-info-field">
@@ -969,23 +928,23 @@ function ClaimSchedule() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">
-                                Estimated Duration<span className="employee-required">*</span>
-                            </label>
+                            <label className="form-label" htmlFor="claiming-counter">Claiming Counter / Window</label>
 
-                            <select
-                                value={estimatedDuration}
-                                onChange={(event) => setEstimatedDuration(Number(event.target.value))}
+                            <input
+                                id="claiming-counter"
+                                type="text"
+                                list="claiming-counter-options"
+                                value={claimingCounter}
+                                onChange={(event) => setClaimingCounter(event.target.value)}
+                                placeholder="e.g. Registrar Window 2"
                                 className="form-input"
                                 disabled={saving}
-                            >
-                                <option value={30}>30 minutes</option>
-                                <option value={60}>1 hour</option>
-                                <option value={90}>1 hour 30 minutes</option>
-                                <option value={120}>2 hours</option>
-                            </select>
+                            />
+                            <datalist id="claiming-counter-options">
+                                {CLAIM_COUNTER_SUGGESTIONS.map((c) => <option key={c} value={c} />)}
+                            </datalist>
 
-                            <small className="employee-help-text">Default claiming allocation is 60 minutes.</small>
+                            <small className="employee-help-text">Where the student should go to claim the document.</small>
                         </div>
                     </div>
 
