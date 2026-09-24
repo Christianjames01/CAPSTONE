@@ -391,14 +391,8 @@
     height: 20px;
 }
 
-/* A detail card switched into in-place edit mode (e.g. Student Details'
-   Personal / Student Information): highlight it and lay the inputs out on
-   the same grid as the read-only fields. */
-.admin-card.is-editing {
-    border-color: var(--blue-accent, var(--blue));
-    box-shadow: 0 0 0 3px var(--blue-tint);
-}
-
+/* Edit forms for a single Student Details section (Personal / Student
+   Information), laid out on the same grid as the read-only fields. */
 .admin-edit-grid {
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     align-items: end;
