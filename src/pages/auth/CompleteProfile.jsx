@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
-import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError } from '../../lib/studentNumberCheck'
+import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError, isPhoneNumberTaken, phoneNumberTakenMessage } from '../../lib/studentNumberCheck'
 import AuthLayout from './AuthLayout'
 
 function CompleteProfile() {
@@ -17,6 +17,8 @@ function CompleteProfile() {
     const [noMiddleName, setNoMiddleName] = useState(false)
     const [suffix, setSuffix] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
+    // Set when the typed phone number is already registered to another account.
+    const [phoneTaken, setPhoneTaken] = useState(false)
 
     const [studentNumber, setStudentNumber] = useState('')
     // Set when the typed student ID is already registered (checked on blur and on submit).
@@ -46,6 +48,12 @@ function CompleteProfile() {
     const handleStudentNumberInput = (e) => {
         setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
         setStudentNumberTaken(false)
+    }
+
+    const checkPhoneNumber = async () => {
+        if (!phoneNumber.trim()) return
+        const taken = await isPhoneNumberTaken(phoneNumber)
+        setPhoneTaken(taken === true)
     }
 
     const checkStudentNumber = async () => {
@@ -141,6 +149,13 @@ function CompleteProfile() {
         }
 
         // Before saving anything: is this student ID already registered?
+        if (await isPhoneNumberTaken(phoneNumber)) {
+            setPhoneTaken(true)
+            setStatus('error')
+            setMessage(phoneNumberTakenMessage(phoneNumber))
+            return
+        }
+
         if (await isStudentNumberTaken(studentNumber)) {
             setStudentNumberTaken(true)
             setStatus('error')
@@ -303,11 +318,18 @@ function CompleteProfile() {
                             maxLength={11}
                             className="form-input"
                             value={phoneNumber}
-                            onChange={handlePhoneInput(setPhoneNumber)}
+                            onChange={(e) => { handlePhoneInput(setPhoneNumber)(e); setPhoneTaken(false) }}
+                            onBlur={checkPhoneNumber}
                             placeholder="09XXXXXXXXX"
                             autoComplete="off"
+                            aria-invalid={phoneTaken || undefined}
                             required
                         />
+                        {phoneTaken && (
+                            <p className="form-message error" style={{ marginTop: 6 }}>
+                                {phoneNumberTakenMessage(phoneNumber)}
+                            </p>
+                        )}
                     </div>
 
                     <div className="form-group">

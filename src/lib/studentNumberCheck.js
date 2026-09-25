@@ -23,6 +23,27 @@ export function studentNumberTakenMessage(studentNumber) {
         "If you didn't register it, contact the Registrar's Office."
 }
 
+// Same idea for the phone number (digits-only match, ignores the caller's
+// own profile). true/false, or null if the check isn't available.
+export async function isPhoneNumberTaken(phoneNumber) {
+    const value = (phoneNumber || '').trim()
+    if (!value) return false
+
+    const { data, error } = await supabase.rpc('is_phone_number_taken', { p_phone_number: value })
+
+    if (error) {
+        console.warn('PHONE NUMBER CHECK ERROR:', error)
+        return null
+    }
+
+    return data === true
+}
+
+export function phoneNumberTakenMessage(phoneNumber) {
+    return `The phone number ${phoneNumber} is already registered to another account. ` +
+        "Please use your own number, or contact the Registrar's Office if you think this is a mistake."
+}
+
 // Friendly text for a unique-violation from the students insert.
 export function isDuplicateStudentNumberError(error) {
     return error?.code === '23505' || /student_number/i.test(error?.message || '')

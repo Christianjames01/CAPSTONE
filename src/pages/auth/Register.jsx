@@ -8,7 +8,7 @@ import PasswordRequirements from '../../components/PasswordRequirements'
 import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
-import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError } from '../../lib/studentNumberCheck'
+import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError, isPhoneNumberTaken, phoneNumberTakenMessage } from '../../lib/studentNumberCheck'
 
 const LEGAL_TABS = {
     terms: { title: 'Terms of Service', src: '/terms?embed=1' },
@@ -30,6 +30,8 @@ function Register() {
     const [lastName, setLastName] = useState('')
     const [suffix, setSuffix] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
+    // Set when the typed phone number is already registered to another account.
+    const [phoneTaken, setPhoneTaken] = useState(false)
     const [birthDate, setBirthDate] = useState('')
 
     const [studentNumber, setStudentNumber] = useState('')
@@ -65,6 +67,12 @@ function Register() {
     const handleStudentNumberInput = (e) => {
         setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
         setStudentNumberTaken(false)
+    }
+
+    const checkPhoneNumber = async () => {
+        if (!phoneNumber.trim()) return
+        const taken = await isPhoneNumberTaken(phoneNumber)
+        setPhoneTaken(taken === true)
     }
 
     const checkStudentNumber = async () => {
@@ -160,6 +168,13 @@ function Register() {
         }
 
         // Before anything is created: is this student ID already registered?
+        if (await isPhoneNumberTaken(phoneNumber)) {
+            setPhoneTaken(true)
+            setStatus('error')
+            setMessage(phoneNumberTakenMessage(phoneNumber))
+            return
+        }
+
         if (await isStudentNumberTaken(studentNumber)) {
             setStudentNumberTaken(true)
             setStatus('error')
@@ -380,11 +395,18 @@ function Register() {
                             maxLength={11}
                             className="form-input"
                             value={phoneNumber}
-                            onChange={handlePhoneInput(setPhoneNumber)}
+                            onChange={(e) => { handlePhoneInput(setPhoneNumber)(e); setPhoneTaken(false) }}
+                            onBlur={checkPhoneNumber}
                             placeholder="09XXXXXXXXX"
                             autoComplete="off"
+                            aria-invalid={phoneTaken || undefined}
                             required
                         />
+                        {phoneTaken && (
+                            <p className="form-message error" style={{ marginTop: 6 }}>
+                                {phoneNumberTakenMessage(phoneNumber)}
+                            </p>
+                        )}
                     </div>
 
                     <div className="form-group">
