@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
 import dpoRegisteredBadge from '../../assets/dpo-registered-badge.png'
 import dataPrivacyBadge from '../../assets/data-privacy-badge.png'
+import { REGISTRAR_CONTACT } from '../../lib/registrarContact'
 import './StudentPages.css'
 
 const IconFacebook = () => (
@@ -25,15 +26,6 @@ const IconTiktok = () => (
     </svg>
 )
 
-const REGISTRAR_CONTACT = {
-    office: "Office of Registration and Records Management (ORRM)",
-    address: 'Sta. Ana Avenue corner C. De Guzman Street, Brgy. 14-B, Davao City, Philippines',
-    email: 'registrar@hcdc.edu.ph',
-    telephone: '(082) 221-9071 to 79 loc. 116 or 167',
-    telefax: '(082) 221-3008',
-    mobile: 'Smart (+63) 946 810 8617 · Globe (+63) 906 150 9582',
-    website: 'www.hcdc.edu.ph',
-}
 
 const FAQS = [
     {

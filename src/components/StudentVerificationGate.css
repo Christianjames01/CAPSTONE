@@ -179,3 +179,18 @@
     border-color: var(--red);
     color: var(--red);
 }
+
+/* Office name and address around the registrar contact links. */
+.verify-gate-contact-office {
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.verify-gate-contact-address {
+    margin-top: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--slate);
+}

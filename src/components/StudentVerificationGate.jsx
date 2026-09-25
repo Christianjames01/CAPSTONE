@@ -4,10 +4,8 @@ import { supabase } from '../lib/supabase'
 import { SkeletonAppShell } from './Skeleton'
 import { IconClock, IconAlertCircle, IconMail, IconPhone } from '../pages/student/icons'
 import hcdcLogo from '../assets/hcdc-logo.png'
+import { REGISTRAR_CONTACT } from '../lib/registrarContact'
 import './StudentVerificationGate.css'
-
-const REGISTRAR_EMAIL = 'registrar@hcdc.edu.ph'
-const REGISTRAR_PHONE = '0912345677'
 
 function StudentVerificationGate({ children }) {
     const navigate = useNavigate()
@@ -85,14 +83,21 @@ function StudentVerificationGate({ children }) {
 
                     <div className="verify-gate-contact">
                         <div className="verify-gate-contact-label">Need help? Contact the Registrar's Office</div>
+                        <div className="verify-gate-contact-office">{REGISTRAR_CONTACT.office}</div>
                         <div className="verify-gate-contact-links">
-                            <a className="verify-gate-contact-link" href={`mailto:${REGISTRAR_EMAIL}`}>
-                                <IconMail /> {REGISTRAR_EMAIL}
+                            <a className="verify-gate-contact-link" href={`mailto:${REGISTRAR_CONTACT.email}`}>
+                                <IconMail /> {REGISTRAR_CONTACT.email}
                             </a>
-                            <a className="verify-gate-contact-link" href={`tel:${REGISTRAR_PHONE}`}>
-                                <IconPhone /> {REGISTRAR_PHONE}
+                            <a className="verify-gate-contact-link" href={REGISTRAR_CONTACT.telephoneHref}>
+                                <IconPhone /> {REGISTRAR_CONTACT.telephone}
                             </a>
+                            {REGISTRAR_CONTACT.mobileNumbers.map((m) => (
+                                <a key={m.href} className="verify-gate-contact-link" href={m.href}>
+                                    <IconPhone /> {m.label} {m.display}
+                                </a>
+                            ))}
                         </div>
+                        <div className="verify-gate-contact-address">{REGISTRAR_CONTACT.address}</div>
                     </div>
 
                     <button className="verify-gate-logout" onClick={handleLogout}>
