@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { formatDisplayDate } from '../../lib/formatDate'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 import { formatNeededBy } from '../../lib/requestPriority'
@@ -278,7 +278,7 @@ function MyRequest() {
                                 <span>Requested</span>
                                 <strong>
                                     {request.requested_at
-                                        ? formatDisplayDate(request.requested_at)
+                                        ? formatDisplayDateTime(request.requested_at)
                                         : '-'}
                                 </strong>
                             </div>

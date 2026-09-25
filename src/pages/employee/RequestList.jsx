@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { formatDisplayDate } from '../../lib/formatDate'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
@@ -234,7 +234,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                                 <span>Requested</span>
                                 <strong>
                                     {request.requested_at
-                                        ? formatDisplayDate(request.requested_at)
+                                        ? formatDisplayDateTime(request.requested_at)
                                         : '-'}
                                 </strong>
                             </div>

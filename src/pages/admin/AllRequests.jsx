@@ -9,14 +9,7 @@ import './AdminPages.css'
 import '../../components/PriorityPanel.css'
 import { sortByUrgency, dueInfo, formatNeededBy } from '../../lib/requestPriority'
 
-function formatDate(value) {
-    if (!value) return ''
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    })
-}
+import { formatDisplayDateTime } from '../../lib/formatDate'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -371,7 +364,7 @@ function AllRequests() {
                             <div className="admin-info-field">
                                 <span>Requested</span>
                                 <strong>
-                                    {formatDate(request.requested_at) || '-'}
+                                    {formatDisplayDateTime(request.requested_at) || '-'}
                                 </strong>
                             </div>
                         </div>
