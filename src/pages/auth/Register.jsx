@@ -8,6 +8,7 @@ import PasswordRequirements from '../../components/PasswordRequirements'
 import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
+import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError } from '../../lib/studentNumberCheck'
 
 const LEGAL_TABS = {
     terms: { title: 'Terms of Service', src: '/terms?embed=1' },
@@ -32,6 +33,8 @@ function Register() {
     const [birthDate, setBirthDate] = useState('')
 
     const [studentNumber, setStudentNumber] = useState('')
+    // Set when the typed student ID is already registered (checked on blur and on submit).
+    const [studentNumberTaken, setStudentNumberTaken] = useState(false)
     const [collegeId, setCollegeId] = useState('')
     const [programId, setProgramId] = useState('')
     const [yearLevel, setYearLevel] = useState('')
@@ -61,6 +64,13 @@ function Register() {
 
     const handleStudentNumberInput = (e) => {
         setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
+        setStudentNumberTaken(false)
+    }
+
+    const checkStudentNumber = async () => {
+        if (!studentNumber.trim()) return
+        const taken = await isStudentNumberTaken(studentNumber)
+        setStudentNumberTaken(taken === true)
     }
 
     useEffect(() => {
@@ -128,7 +138,7 @@ function Register() {
         }
     }
 
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = async (e) => {
         e.preventDefault()
 
         if (!passwordMeetsRequirements(password)) {
@@ -146,6 +156,14 @@ function Register() {
         if (problem) {
             setStatus('error')
             setMessage(problem)
+            return
+        }
+
+        // Before anything is created: is this student ID already registered?
+        if (await isStudentNumberTaken(studentNumber)) {
+            setStudentNumberTaken(true)
+            setStatus('error')
+            setMessage(studentNumberTakenMessage(studentNumber))
             return
         }
 
@@ -219,8 +237,9 @@ function Register() {
             console.error('STUDENT INSERT ERROR:', studentError)
             setStatus('error')
             setMessage(
-                'Your account was created, but your student details could not be saved: ' +
-                studentError.message
+                isDuplicateStudentNumberError(studentError)
+                    ? studentNumberTakenMessage(studentNumber)
+                    : 'Your account was created, but your student details could not be saved: ' + studentError.message
             )
             setLoading(false)
             return
@@ -399,10 +418,17 @@ function Register() {
                             className="form-input"
                             value={studentNumber}
                             onChange={handleStudentNumberInput}
+                            onBlur={checkStudentNumber}
                             placeholder="XXXXXXXX"
                             autoComplete="off"
+                            aria-invalid={studentNumberTaken || undefined}
                             required
                         />
+                        {studentNumberTaken && (
+                            <p className="form-message error" style={{ marginTop: 6 }}>
+                                {studentNumberTakenMessage(studentNumber)}
+                            </p>
+                        )}
                     </div>
 
                     <div className="form-group">

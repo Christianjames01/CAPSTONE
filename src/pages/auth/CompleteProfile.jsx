@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
+import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError } from '../../lib/studentNumberCheck'
 import AuthLayout from './AuthLayout'
 
 function CompleteProfile() {
@@ -18,6 +19,8 @@ function CompleteProfile() {
     const [phoneNumber, setPhoneNumber] = useState('')
 
     const [studentNumber, setStudentNumber] = useState('')
+    // Set when the typed student ID is already registered (checked on blur and on submit).
+    const [studentNumberTaken, setStudentNumberTaken] = useState(false)
     const [collegeId, setCollegeId] = useState('')
     const [programId, setProgramId] = useState('')
     const [yearLevel, setYearLevel] = useState('')
@@ -42,6 +45,13 @@ function CompleteProfile() {
 
     const handleStudentNumberInput = (e) => {
         setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
+        setStudentNumberTaken(false)
+    }
+
+    const checkStudentNumber = async () => {
+        if (!studentNumber.trim()) return
+        const taken = await isStudentNumberTaken(studentNumber)
+        setStudentNumberTaken(taken === true)
     }
 
     useEffect(() => {
@@ -130,6 +140,14 @@ function CompleteProfile() {
             return
         }
 
+        // Before saving anything: is this student ID already registered?
+        if (await isStudentNumberTaken(studentNumber)) {
+            setStudentNumberTaken(true)
+            setStatus('error')
+            setMessage(studentNumberTakenMessage(studentNumber))
+            return
+        }
+
         setLoading(true)
         setMessage('')
         setStatus('idle')
@@ -180,7 +198,9 @@ function CompleteProfile() {
 
         if (studentError) {
             setStatus('error')
-            setMessage('Failed to save your student details: ' + studentError.message)
+            setMessage(isDuplicateStudentNumberError(studentError)
+                ? studentNumberTakenMessage(studentNumber)
+                : 'Failed to save your student details: ' + studentError.message)
             setLoading(false)
             return
         }
@@ -321,10 +341,17 @@ function CompleteProfile() {
                             className="form-input"
                             value={studentNumber}
                             onChange={handleStudentNumberInput}
+                            onBlur={checkStudentNumber}
                             placeholder="XXXXXXXX"
                             autoComplete="off"
+                            aria-invalid={studentNumberTaken || undefined}
                             required
                         />
+                        {studentNumberTaken && (
+                            <p className="form-message error" style={{ marginTop: 6 }}>
+                                {studentNumberTakenMessage(studentNumber)}
+                            </p>
+                        )}
                     </div>
 
                     <div className="form-group">
