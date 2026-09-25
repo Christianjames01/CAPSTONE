@@ -670,7 +670,7 @@ h2 span {
     text-align: center;
 }
 
-.document-item span:not(.document-code):not(.document-check) {
+.document-item > span:not(.document-code):not(.document-check):not(.document-preview) {
     font-size: 13.5px;
     flex: 1;
 }
@@ -1254,4 +1254,172 @@ h2 span {
         transition: none !important;
         animation: none !important;
     }
+}
+
+/* ===================================================
+   DOCUMENT PREVIEW (hover / focus / tap a catalog item)
+=================================================== */
+.document-item {
+    position: relative;
+}
+
+.document-item.has-preview {
+    cursor: pointer;
+}
+
+.document-item.has-preview:focus-visible {
+    outline: 2px solid var(--blue-accent, var(--blue));
+    outline-offset: 2px;
+}
+
+.document-preview {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    z-index: 30;
+    width: 240px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--white);
+    box-shadow: 0 18px 40px rgba(16, 24, 39, 0.22);
+    transform: translateX(-50%);
+    pointer-events: none;
+    animation: document-preview-in 0.15s ease-out;
+}
+
+.document-preview::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    border: 8px solid transparent;
+    border-top-color: var(--white);
+    transform: translateX(-50%);
+}
+
+.document-preview img {
+    display: block;
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: var(--paper, #f5f6f8);
+}
+
+.document-preview-caption {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 4px 2px;
+}
+
+.document-item .document-preview-caption strong {
+    font-size: 12.5px;
+    line-height: 1.35;
+}
+
+.document-item .document-preview-caption em {
+    font-size: 11px;
+    font-style: normal;
+    color: var(--slate);
+}
+
+@keyframes document-preview-in {
+    from { opacity: 0; transform: translate(-50%, 4px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .document-preview {
+        animation: none;
+    }
+}
+
+@media (max-width: 620px) {
+    .document-preview {
+        width: min(240px, 80vw);
+    }
+}
+
+/* Generic sample sheet, shown when no preview image was uploaded */
+.document-paper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    aspect-ratio: 8.5 / 11;
+    padding: 18px 20px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fffdf8;
+    color: #1f2937;
+}
+
+.document-paper-seal {
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--blue);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 3px #fffdf8, inset 0 0 0 5px var(--blue-tint, #dbe6f7);
+}
+
+.document-item .document-paper-school {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--blue);
+    text-align: center;
+}
+
+.document-item .document-paper-office {
+    margin-top: -5px;
+    font-size: 8.5px;
+    color: #6b7280;
+}
+
+.document-item .document-paper-title {
+    margin: 8px 0 6px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    color: #111827;
+}
+
+.document-paper-line {
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: #e5e7eb;
+}
+
+.document-paper-line.short {
+    width: 70%;
+    align-self: flex-start;
+}
+
+.document-paper-sign {
+    width: 45%;
+    margin-top: auto;
+    align-self: flex-end;
+    border-top: 1px solid #9ca3af;
+}
+
+.document-item .document-paper-stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    padding: 2px 10px;
+    border: 2px solid rgba(185, 28, 28, 0.35);
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: rgba(185, 28, 28, 0.35);
+    transform: translate(-50%, -50%) rotate(-18deg);
 }

@@ -153,7 +153,7 @@ function useDocumentCatalog() {
 
         supabase
             .from("document_types")
-            .select("document_code, document_name")
+            .select("document_code, document_name, preview_image_url")
             .eq("is_available", true)
             .order("document_name")
             .then(({ data, error }) => {
@@ -163,7 +163,7 @@ function useDocumentCatalog() {
                     return;
                 }
                 if (data && data.length > 0) {
-                    setDocuments(data.map((d) => ({ name: d.document_name, code: d.document_code })));
+                    setDocuments(data.map((d) => ({ name: d.document_name, code: d.document_code, preview: d.preview_image_url || null })));
                 }
             });
 
@@ -175,6 +175,10 @@ function useDocumentCatalog() {
 
 const LandingPage = () => {
     const DOCUMENTS = useDocumentCatalog();
+    // Preview shown for the hovered/focused document; `pinnedPreview` is the
+    // tapped one on touch screens (no hover there).
+    const [hoverPreview, setHoverPreview] = useState(null);
+    const [pinnedPreview, setPinnedPreview] = useState(null);
     const [verifyCode, setVerifyCode] = useState("");
 
     const scrollToSection = (id) => {
@@ -436,13 +440,56 @@ const LandingPage = () => {
                             </div>
 
                             <div className="document-list">
-                                {DOCUMENTS.map((doc) => (
-                                    <div className="document-item" key={`${doc.code}-${doc.name}`}>
-                                        <span className="document-code">{doc.code}</span>
-                                        <span>{doc.name}</span>
-                                        <span className="document-check"><IconCheck /></span>
-                                    </div>
-                                ))}
+                                {DOCUMENTS.map((doc) => {
+                                    const key = `${doc.code}-${doc.name}`;
+                                    const showPreview = hoverPreview === key || pinnedPreview === key;
+
+                                    return (
+                                        <div
+                                            className="document-item has-preview"
+                                            key={key}
+                                            tabIndex={0}
+                                            onMouseEnter={() => setHoverPreview(key)}
+                                            onMouseLeave={() => setHoverPreview((k) => (k === key ? null : k))}
+                                            onFocus={() => setHoverPreview(key)}
+                                            onBlur={() => setHoverPreview((k) => (k === key ? null : k))}
+                                            onClick={() => setPinnedPreview((k) => (k === key ? null : key))}
+                                            aria-describedby={showPreview ? `preview-${doc.code}` : undefined}
+                                        >
+                                            <span className="document-code">{doc.code}</span>
+                                            <span>{doc.name}</span>
+                                            <span className="document-check"><IconCheck /></span>
+
+                                            {showPreview && (
+                                                <span className="document-preview" id={`preview-${doc.code}`} role="tooltip">
+                                                    {doc.preview ? (
+                                                        <img src={doc.preview} alt={`Sample of ${doc.name}`} loading="lazy" />
+                                                    ) : (
+                                                        // No image uploaded by the registrar yet: a generic
+                                                        // sample sheet so every document still has a preview.
+                                                        <span className="document-paper" aria-hidden="true">
+                                                            <span className="document-paper-seal" />
+                                                            <span className="document-paper-school">Holy Cross of Davao College</span>
+                                                            <span className="document-paper-office">Office of the Registrar</span>
+                                                            <span className="document-paper-title">{doc.name}</span>
+                                                            <span className="document-paper-line" />
+                                                            <span className="document-paper-line" />
+                                                            <span className="document-paper-line short" />
+                                                            <span className="document-paper-line" />
+                                                            <span className="document-paper-line short" />
+                                                            <span className="document-paper-sign" />
+                                                            <span className="document-paper-stamp">SAMPLE</span>
+                                                        </span>
+                                                    )}
+                                                    <span className="document-preview-caption">
+                                                        <strong>{doc.name}</strong>
+                                                        <em>Sample preview</em>
+                                                    </span>
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                         </div>
