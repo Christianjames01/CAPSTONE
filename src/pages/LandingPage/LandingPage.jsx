@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase";
 import { DocumentSample } from "../../components/DocumentSample";
+import { useScrollLock } from "../../lib/useScrollLock";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
 import dpoRegisteredBadge from "../../assets/dpo-registered-badge.png";
@@ -174,12 +175,67 @@ function useDocumentCatalog() {
     return documents;
 }
 
+// The head's uploaded sample image if there is one, otherwise the same
+// layout mock-up students see on New Request.
+const DocumentPreviewContent = ({ doc }) => (
+    <>
+        <div className="document-preview-media">
+            {doc.preview ? (
+                <img src={doc.preview} alt={`Sample of ${doc.name}`} />
+            ) : (
+                <DocumentSample name={doc.name} documentCode={doc.code} />
+            )}
+        </div>
+        <div className="document-preview-caption">
+            <strong>{doc.name}</strong>
+            <span>
+                {doc.preview
+                    ? "A real sample of this document, posted by the Registrar."
+                    : "Reference layout only — not an official document."}
+            </span>
+        </div>
+    </>
+);
+
 const LandingPage = () => {
     const DOCUMENTS = useDocumentCatalog();
-    // Preview shown for the hovered/focused document; `pinnedPreview` is the
-    // tapped one on touch screens (no hover there).
+    // Large floating preview while hovering a document (mouse only), and the
+    // full-size preview modal opened by clicking/tapping one.
     const [hoverPreview, setHoverPreview] = useState(null);
-    const [pinnedPreview, setPinnedPreview] = useState(null);
+    const [zoomedDoc, setZoomedDoc] = useState(null);
+    useScrollLock(Boolean(zoomedDoc));
+
+    // Place the hover preview beside the hovered item -- to its left (over
+    // the section's text column) when there's room, else to its right --
+    // vertically centered in the viewport so it can be large.
+    const showHoverPreview = (doc, item) => {
+        if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+
+        const rect = item.getBoundingClientRect();
+        const gap = 20;
+        const width = Math.min(520, window.innerWidth - 32);
+        let left = rect.left - width - gap;
+        if (left < 16) left = rect.right + gap;
+        if (left + width > window.innerWidth - 16) return; // no room: click opens it instead
+
+        setHoverPreview({ doc, style: { left, width } });
+    };
+
+    // The hover preview is positioned for where the item was; drop it when
+    // the page scrolls, and let Escape close the full-size preview.
+    useEffect(() => {
+        if (!hoverPreview) return undefined;
+        const hide = () => setHoverPreview(null);
+        window.addEventListener("scroll", hide, { passive: true });
+        return () => window.removeEventListener("scroll", hide);
+    }, [hoverPreview]);
+
+    useEffect(() => {
+        if (!zoomedDoc) return undefined;
+        const onKey = (e) => e.key === "Escape" && setZoomedDoc(null);
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [zoomedDoc]);
     const [verifyCode, setVerifyCode] = useState("");
 
     const scrollToSection = (id) => {
@@ -443,49 +499,38 @@ const LandingPage = () => {
                             <div className="document-list">
                                 {DOCUMENTS.map((doc) => {
                                     const key = `${doc.code}-${doc.name}`;
-                                    const showPreview = hoverPreview === key || pinnedPreview === key;
 
                                     return (
                                         <div
                                             className="document-item has-preview"
                                             key={key}
+                                            role="button"
                                             tabIndex={0}
-                                            onMouseEnter={() => setHoverPreview(key)}
-                                            onMouseLeave={() => setHoverPreview((k) => (k === key ? null : k))}
-                                            onFocus={() => setHoverPreview(key)}
-                                            onBlur={() => setHoverPreview((k) => (k === key ? null : k))}
-                                            onClick={() => setPinnedPreview((k) => (k === key ? null : key))}
-                                            aria-describedby={showPreview ? `preview-${doc.code}` : undefined}
+                                            aria-label={`Preview ${doc.name}`}
+                                            onMouseEnter={(e) => showHoverPreview(doc, e.currentTarget)}
+                                            onMouseLeave={() => setHoverPreview(null)}
+                                            onClick={() => { setHoverPreview(null); setZoomedDoc(doc); }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" || e.key === " ") {
+                                                    e.preventDefault();
+                                                    setZoomedDoc(doc);
+                                                }
+                                            }}
                                         >
                                             <span className="document-code">{doc.code}</span>
                                             <span>{doc.name}</span>
                                             <span className="document-check"><IconCheck /></span>
-
-                                            {showPreview && (
-                                                <span className="document-preview" id={`preview-${doc.code}`} role="tooltip">
-                                                    {doc.preview ? (
-                                                        <img src={doc.preview} alt={`Sample of ${doc.name}`} loading="lazy" />
-                                                    ) : (
-                                                        // No image uploaded by the registrar yet: the same
-                                                        // layout mock-up students see on New Request.
-                                                        <span className="document-preview-sample">
-                                                            <DocumentSample name={doc.name} documentCode={doc.code} />
-                                                        </span>
-                                                    )}
-                                                    <span className="document-preview-caption">
-                                                        <strong>{doc.name}</strong>
-                                                        <em>
-                                                            {doc.preview
-                                                                ? "A real sample of this document, posted by the Registrar."
-                                                                : "Reference layout only — not an official document."}
-                                                        </em>
-                                                    </span>
-                                                </span>
-                                            )}
                                         </div>
                                     );
                                 })}
                             </div>
+
+                            {hoverPreview && (
+                                <div className="document-preview" style={hoverPreview.style} aria-hidden="true">
+                                    <DocumentPreviewContent doc={hoverPreview.doc} />
+                                    <span className="document-preview-hint">Click to view full size</span>
+                                </div>
+                            )}
 
                         </div>
                     </div>
@@ -724,6 +769,29 @@ const LandingPage = () => {
 
                 </div>
             </footer>
+
+            {zoomedDoc && (
+                <div className="document-zoom-overlay" onClick={() => setZoomedDoc(null)}>
+                    <div
+                        className="document-zoom"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={`${zoomedDoc.name} preview`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            className="document-zoom-close"
+                            onClick={() => setZoomedDoc(null)}
+                            aria-label="Close preview"
+                            autoFocus
+                        >
+                            ×
+                        </button>
+                        <DocumentPreviewContent doc={zoomedDoc} />
+                    </div>
+                </div>
+            )}
 
         </div>
     );

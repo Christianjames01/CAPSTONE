@@ -1257,14 +1257,11 @@ h2 span {
 }
 
 /* ===================================================
-   DOCUMENT PREVIEW (hover / focus / tap a catalog item)
+   DOCUMENT PREVIEW (hover = large floating card,
+   click / tap = full-size modal)
 =================================================== */
-.document-item {
-    position: relative;
-}
-
 .document-item.has-preview {
-    cursor: pointer;
+    cursor: zoom-in;
 }
 
 .document-item.has-preview:focus-visible {
@@ -1273,83 +1270,142 @@ h2 span {
 }
 
 .document-preview {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    z-index: 30;
-    width: 320px;
-    padding: 8px;
+    position: fixed;
+    top: 50%;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+    padding: 12px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 14px;
     background: var(--white);
-    box-shadow: 0 18px 40px rgba(16, 24, 39, 0.22);
-    transform: translateX(-50%);
+    box-shadow: 0 24px 60px rgba(16, 24, 39, 0.28);
+    transform: translateY(-50%);
     pointer-events: none;
     animation: document-preview-in 0.15s ease-out;
 }
 
-.document-preview::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    border: 8px solid transparent;
-    border-top-color: var(--white);
-    transform: translateX(-50%);
+.document-preview-media {
+    display: flex;
+    justify-content: center;
+    min-height: 0;
+    border-radius: 8px;
+    background: #f3f4f6;
+    overflow: hidden;
 }
 
-.document-preview img {
+.document-preview-media img,
+.document-preview-media svg {
     display: block;
     width: 100%;
-    max-height: 300px;
+    max-height: calc(100vh - 150px);
     object-fit: contain;
-    border-radius: 6px;
-    background: var(--paper, #f5f6f8);
 }
 
 .document-preview-caption {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 8px 4px 2px;
+    gap: 3px;
+    padding: 10px 4px 0;
 }
 
-.document-item .document-preview-caption strong {
-    font-size: 12.5px;
+.document-preview-caption strong {
+    font-size: 15px;
     line-height: 1.35;
+    color: var(--ink);
 }
 
-.document-item .document-preview-caption em {
-    font-size: 11px;
-    font-style: normal;
+.document-preview-caption span {
+    font-size: 12.5px;
     color: var(--slate);
 }
 
+.document-preview-hint {
+    padding: 6px 4px 0;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+}
+
 @keyframes document-preview-in {
-    from { opacity: 0; transform: translate(-50%, 4px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+    from { opacity: 0; transform: translateY(calc(-50% + 6px)); }
+    to { opacity: 1; transform: translateY(-50%); }
+}
+
+/* Full-size preview */
+.document-zoom-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(10, 15, 30, 0.75);
+    animation: document-zoom-fade 0.15s ease-out;
+}
+
+.document-zoom {
+    position: relative;
+    width: 100%;
+    max-width: 820px;
+    margin: auto 0;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--white);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+}
+
+.document-zoom .document-preview-media img,
+.document-zoom .document-preview-media svg {
+    max-height: none;
+}
+
+.document-zoom .document-preview-caption strong {
+    font-size: 17px;
+}
+
+.document-zoom-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.document-zoom-close:hover,
+.document-zoom-close:focus-visible {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes document-zoom-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .document-preview {
+    .document-preview,
+    .document-zoom-overlay {
         animation: none;
     }
 }
 
 @media (max-width: 620px) {
-    .document-preview {
-        width: min(300px, 86vw);
+    .document-zoom-overlay {
+        padding: 52px 10px 24px;
     }
-}
 
-/* Mock-up of the document (no real sample uploaded yet) */
-.document-preview-sample {
-    display: block;
-    max-height: 340px;
-    overflow: hidden;
-    border-radius: 6px;
-}
-
-.document-preview-sample svg {
-    display: block;
+    .document-zoom {
+        padding: 10px;
+    }
 }
