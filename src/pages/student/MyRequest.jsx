@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
@@ -62,9 +63,9 @@ function MyRequest() {
         }
     }, [])
 
-    const loadRequests = async () => {
+    const loadRequests = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setErrorMessage('')
 
             const {
@@ -144,6 +145,9 @@ function MyRequest() {
             setLoading(false)
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['document_requests'], loadRequests)
 
     const visibleRequests = requests
         .filter((r) => !activeStatuses || activeStatuses.includes(r.status))

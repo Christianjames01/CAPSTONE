@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
@@ -9,9 +10,7 @@ import './AdminPages.css'
 
 function formatDate(value) {
     if (!value) return ''
-    const date = new Date(value)
-    const month = date.toLocaleDateString('en-PH', { month: 'short' })
-    return `${month},${date.getDate()} ${date.getFullYear()}`
+    return new Date(value).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 const CHIPS = [
@@ -37,9 +36,9 @@ function OfficialReceipts() {
         loadReceipts()
     }, [])
 
-    const loadReceipts = async () => {
+    const loadReceipts = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: rows, error: receiptError } = await supabase
@@ -96,6 +95,9 @@ function OfficialReceipts() {
             setLoading(false)
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['official_receipts'], loadReceipts)
 
     const verifyReceipt = async (receipt) => {
         const confirmed = await confirmModal(`Verify the receipt for ${receipt.requestNumber}?`)

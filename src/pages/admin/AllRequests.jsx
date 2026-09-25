@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
@@ -58,9 +59,9 @@ function AllRequests() {
         loadRequests()
     }, [])
 
-    const loadRequests = async () => {
+    const loadRequests = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: rows, error: requestError } = await supabase
@@ -127,6 +128,9 @@ function AllRequests() {
             setLoading(false)
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['document_requests'], loadRequests)
 
     // Urgent first, then the nearest "needed by" date.
     const visibleRequests = sortByUrgency(requests

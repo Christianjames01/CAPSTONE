@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import { SkeletonDashboard } from '../../components/Skeleton'
 import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers, IconSwap, IconBarChart } from './icons'
@@ -65,9 +66,9 @@ function AdminDashboard() {
         loadDashboard()
     }, [])
 
-    const loadDashboard = async () => {
+    const loadDashboard = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: { user } } = await supabase.auth.getUser()
@@ -239,6 +240,9 @@ function AdminDashboard() {
             setLoadedAt(new Date())
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['document_requests', 'claim_schedules'], loadDashboard)
 
     const countByStatus = (statuses) =>
         requests.filter((r) => statuses.includes(r.status)).length

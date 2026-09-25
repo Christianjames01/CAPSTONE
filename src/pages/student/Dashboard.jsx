@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
@@ -57,6 +58,9 @@ function Dashboard() {
         window.addEventListener('notifications-updated', loadDashboard)
         return () => window.removeEventListener('notifications-updated', loadDashboard)
     }, [])
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['document_requests', 'claim_schedules'], loadDashboard)
 
     async function loadDashboard() {
         try {

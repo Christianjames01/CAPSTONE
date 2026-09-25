@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
@@ -54,9 +55,9 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
         loadRequests()
     }, [])
 
-    const loadRequests = async () => {
+    const loadRequests = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {
@@ -135,6 +136,9 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             setLoading(false)
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['document_requests'], loadRequests)
 
     // Urgent first, then the nearest "needed by" date.
     const visibleRequests = sortByUrgency(requests

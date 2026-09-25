@@ -693,7 +693,7 @@ function StudentDetails() {
                                     <td>{r.document_requirements?.requirement_name || 'Requirement'}</td>
                                     <td>{r.requestNumber}</td>
                                     <td style={{ textTransform: 'capitalize' }}>{r.status}</td>
-                                    <td>{formatDate(r.uploaded_at)}</td>
+                                    <td>{formatDisplayDateTime(r.uploaded_at) || '-'}</td>
                                 </tr>
                             ))}
                         </tbody>

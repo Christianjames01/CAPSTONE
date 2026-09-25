@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
@@ -22,9 +23,9 @@ function ClaimScheduleList() {
         loadData()
     }, [])
 
-    const loadData = async () => {
+    const loadData = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {
@@ -200,6 +201,9 @@ function ClaimScheduleList() {
             setLoading(false)
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['claim_schedules', 'document_requests'], loadData)
 
     const markAsClaimed = async (appointment) => {
         const confirmed = await confirmModal(

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
@@ -42,9 +43,9 @@ function EmployeeDashboard() {
         loadDashboard()
     }, [])
 
-    const loadDashboard = async () => {
+    const loadDashboard = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setErrorMessage('')
 
             const {
@@ -206,6 +207,9 @@ function EmployeeDashboard() {
             setLoading(false)
         }
     }
+
+    // Update in place when requests change -- no manual refresh needed.
+    useLiveRefresh(['document_requests', 'claim_schedules'], loadDashboard)
 
     const isReleasingOnly = employee?.access_scope === 'releasing'
     const recentRequests = requests.slice(0, 6)
