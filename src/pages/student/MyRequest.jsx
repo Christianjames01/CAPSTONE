@@ -45,6 +45,7 @@ function MyRequest() {
     const [search, setSearch] = useState('')
     const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'all')
     const justSubmitted = location.state?.justSubmitted || ''
+    const waitingForAssignment = !!location.state?.waitingForAssignment
 
     const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
 
@@ -114,6 +115,7 @@ function MyRequest() {
                     priority,
                     purpose,
                     status,
+                    assigned_employee_id,
                     student_remarks,
                     employee_remarks,
                     rejection_reason,
@@ -191,6 +193,12 @@ function MyRequest() {
             {justSubmitted && (
                 <div className="student-success-box">
                     Request {justSubmitted} submitted successfully.
+                    {waitingForAssignment && (
+                        <>
+                            {' '}No registrar staff is assigned to your college and program yet — the
+                            Registrar's Office will assign one shortly, and you'll be notified when they do.
+                        </>
+                    )}
                 </div>
             )}
 
@@ -248,6 +256,11 @@ function MyRequest() {
                             <div>
                                 <h3>{request.documentName}</h3>
                                 <p>Request {request.request_number}</p>
+                                {!request.assigned_employee_id && !['completed', 'cancelled', 'rejected'].includes(request.status) && (
+                                    <p style={{ marginTop: 4, fontSize: 12.5, fontWeight: 600, color: 'var(--warning-text, #B45309)' }}>
+                                        Waiting for the Registrar to assign staff for your college and program
+                                    </p>
+                                )}
                             </div>
 
                             <span className={`student-status-pill status-${request.status}`}>

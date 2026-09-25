@@ -628,10 +628,20 @@ function RequestDetails() {
                         <strong>
                             {assignedEmployee
                                 ? `${assignedEmployee.name}${assignedEmployee.positionTitle ? ` · ${assignedEmployee.positionTitle}` : ''}`
-                                : 'Not yet assigned'}
+                                : 'Waiting for assignment'}
                         </strong>
                     </div>
                 </div>
+
+                {!request.assigned_employee_id && !['completed', 'cancelled', 'rejected'].includes(request.status) && (
+                    <div className="student-notice tone-warning" style={{ marginTop: 16 }}>
+                        <strong>Waiting for registrar staff</strong>
+                        <p style={{ margin: 0 }}>
+                            No registrar staff is assigned to your college and program yet. Your request is saved —
+                            the Registrar's Office will assign someone to handle it, and you'll be notified when they do.
+                        </p>
+                    </div>
+                )}
 
                 {assignedEmployee && (
                     <button

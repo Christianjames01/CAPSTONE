@@ -319,13 +319,10 @@ function NewRequest() {
                 )
             }
 
+            // May be null when no employee covers this college/program yet --
+            // the request is still saved and waits on the head's Request
+            // Assignments page (the database notifies the registrar head).
             const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
-
-            if (!assignedEmployeeId) {
-                throw new Error(
-                    'No registrar employee is assigned to your college and program.'
-                )
-            }
 
             const document = documents.find(
                 (item) =>
@@ -384,11 +381,13 @@ function NewRequest() {
                 }
             }
 
-            const { data: assignedEmployeeRow } = await supabase
-                .from('employees')
-                .select('user_id')
-                .eq('employee_id', assignedEmployeeId)
-                .single()
+            const { data: assignedEmployeeRow } = assignedEmployeeId
+                ? await supabase
+                    .from('employees')
+                    .select('user_id')
+                    .eq('employee_id', assignedEmployeeId)
+                    .single()
+                : { data: null }
 
             if (assignedEmployeeRow) {
                 await notify({
@@ -401,7 +400,10 @@ function NewRequest() {
             }
 
             navigate('/student/my-requests', {
-                state: { justSubmitted: request.request_number }
+                state: {
+                    justSubmitted: request.request_number,
+                    waitingForAssignment: !assignedEmployeeId,
+                }
             })
 
         } catch (err) {

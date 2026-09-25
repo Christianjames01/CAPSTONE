@@ -22,6 +22,12 @@ function Assignments() {
     const [bulkEmployeeId, setBulkEmployeeId] = useState('')
     const [applyingBulk, setApplyingBulk] = useState(false)
 
+    // College/program combos that have waiting requests but no employee
+    // covering them, and the employee picked for each.
+    const [uncoveredPrograms, setUncoveredPrograms] = useState([])
+    const [coverPick, setCoverPick] = useState({})
+    const [covering, setCovering] = useState(null)
+
     useEffect(() => {
         loadData()
     }, [])
@@ -81,29 +87,140 @@ function Assignments() {
 
             const [{ data: students }, { data: documentTypes }] = await Promise.all([
                 studentIds.length
-                    ? supabase.from('students').select('student_id, student_number').in('student_id', studentIds)
+                    ? supabase.from('students').select('student_id, student_number, college_id, program_id').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
                 documentTypeIds.length
                     ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
                     : Promise.resolve({ data: [] }),
             ])
 
-            const studentNumberById = Object.fromEntries((students || []).map((s) => [s.student_id, s.student_number]))
+            const studentById = Object.fromEntries((students || []).map((st) => [st.student_id, st]))
             const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
 
-            setUnassigned(
-                unassignedRequests.map((r) => ({
+            const collegeIds = [...new Set((students || []).map((st) => st.college_id).filter(Boolean))]
+            const programIds = [...new Set((students || []).map((st) => st.program_id).filter(Boolean))]
+
+            const [{ data: colleges }, { data: programs }, { data: coverRows }] = await Promise.all([
+                collegeIds.length
+                    ? supabase.from('colleges').select('college_id, college_name').in('college_id', collegeIds)
+                    : Promise.resolve({ data: [] }),
+                programIds.length
+                    ? supabase.from('programs').select('program_id, program_name').in('program_id', programIds)
+                    : Promise.resolve({ data: [] }),
+                programIds.length
+                    ? supabase.from('employee_assignments').select('college_id, program_id').eq('is_primary', true).eq('status', 'active').in('program_id', programIds)
+                    : Promise.resolve({ data: [] }),
+            ])
+
+            const collegeName = Object.fromEntries((colleges || []).map((c) => [c.college_id, c.college_name]))
+            const programName = Object.fromEntries((programs || []).map((p) => [p.program_id, p.program_name]))
+            const covered = new Set((coverRows || []).map((a) => `${a.college_id}:${a.program_id}`))
+
+            const unassignedList = unassignedRequests.map((r) => {
+                const st = studentById[r.student_id]
+                return {
                     ...r,
-                    studentNumber: studentNumberById[r.student_id] || 'N/A',
+                    studentNumber: st?.student_number || 'N/A',
                     documentName: documentNameById[r.document_type_id] || 'Document',
-                }))
-            )
+                    collegeId: st?.college_id || null,
+                    programId: st?.program_id || null,
+                    programLabel: [programName[st?.program_id], collegeName[st?.college_id]].filter(Boolean).join(' · ') || 'No program on file',
+                    programCovered: !!(st && covered.has(`${st.college_id}:${st.program_id}`)),
+                }
+            })
+
+            setUnassigned(unassignedList)
+
+            // Group waiting requests whose college/program has no employee yet.
+            const groups = {}
+            for (const r of unassignedList) {
+                if (r.programCovered || !r.collegeId || !r.programId) continue
+                const key = `${r.collegeId}:${r.programId}`
+                if (!groups[key]) {
+                    groups[key] = {
+                        key,
+                        collegeId: r.collegeId,
+                        programId: r.programId,
+                        programName: programName[r.programId] || 'Program',
+                        collegeName: collegeName[r.collegeId] || 'College',
+                        requestIds: [],
+                    }
+                }
+                groups[key].requestIds.push(r.request_id)
+            }
+            setUncoveredPrograms(Object.values(groups).sort((a, b) => b.requestIds.length - a.requestIds.length))
 
         } catch (err) {
             console.error('ASSIGNMENTS ERROR:', err)
             setError(err.message || 'Failed to load assignment data.')
         } finally {
             setLoading(false)
+        }
+    }
+
+    // Makes the picked employee the primary for this college/program (so
+    // future requests route to them automatically) and assigns every request
+    // that was waiting for it.
+    const coverProgram = async (group) => {
+        const employeeId = coverPick[group.key]
+
+        if (!employeeId) {
+            notifyWarning('Please select an employee first.')
+            return
+        }
+
+        const employee = employees.find((e) => e.employee_id === employeeId)
+
+        const confirmed = await confirmModal(
+            `Assign ${employee?.name || 'this employee'} to ${group.programName} (${group.collegeName})? They'll handle future requests from this program, and the ${group.requestIds.length} waiting request${group.requestIds.length === 1 ? '' : 's'} will be assigned to them now.`,
+            { title: 'Assign employee to program?', confirmButtonText: 'Assign', icon: 'question' }
+        )
+        if (!confirmed) return
+
+        try {
+            setCovering(group.key)
+
+            const { data: { user } } = await supabase.auth.getUser()
+
+            const { error: assignmentError } = await supabase
+                .from('employee_assignments')
+                .insert({
+                    employee_id: employeeId,
+                    college_id: group.collegeId,
+                    program_id: group.programId,
+                    is_primary: true,
+                    status: 'active',
+                })
+
+            if (assignmentError) {
+                throw new Error('Failed to assign the program: ' + assignmentError.message)
+            }
+
+            const { error: requestError } = await supabase
+                .from('document_requests')
+                .update({ assigned_employee_id: employeeId, updated_at: new Date().toISOString() })
+                .in('request_id', group.requestIds)
+                .is('assigned_employee_id', null)
+
+            if (requestError) {
+                throw new Error('The program was assigned, but its waiting requests could not be: ' + requestError.message)
+            }
+
+            await logActivity({
+                userId: user?.id,
+                action: 'assign_program_to_employee',
+                tableName: 'employee_assignments',
+                recordId: null,
+                description: `Assigned "${employee?.name || employeeId}" to ${group.programName} (${group.collegeName}) and gave them ${group.requestIds.length} waiting request(s).`,
+            })
+
+            notifySuccess(`${employee?.name || 'The employee'} now handles ${group.programName}.`)
+            await loadData()
+        } catch (err) {
+            console.error('COVER PROGRAM ERROR:', err)
+            notifyError(err.message || 'Failed to assign the program.')
+        } finally {
+            setCovering(null)
         }
     }
 
@@ -279,6 +396,54 @@ function Assignments() {
                 </div>
             )}
 
+            {!loading && uncoveredPrograms.length > 0 && (
+                <>
+                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Programs Without an Employee</h2>
+                    <p style={{ fontSize: 13, marginBottom: 14 }}>
+                        Students from these programs submitted requests, but no employee is assigned to their college and
+                        program. Pick an employee to cover the program — they'll get its waiting requests now and future
+                        ones automatically.
+                    </p>
+
+                    {uncoveredPrograms.map((group) => (
+                        <div className="admin-list-card" key={group.key} style={{ borderLeft: '4px solid var(--warning-text, #B45309)' }}>
+                            <div className="admin-list-card-header">
+                                <div>
+                                    <h3>{group.programName}</h3>
+                                    <p>{group.collegeName}</p>
+                                </div>
+                                <span className="admin-status-pill status-pending">
+                                    {group.requestIds.length} waiting
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                                <select
+                                    className="admin-search-input"
+                                    style={{ maxWidth: 260 }}
+                                    value={coverPick[group.key] || ''}
+                                    onChange={(e) => setCoverPick((prev) => ({ ...prev, [group.key]: e.target.value }))}
+                                    disabled={covering === group.key}
+                                >
+                                    <option value="">-- Select employee --</option>
+                                    {employees.map((e) => (
+                                        <option key={e.employee_id} value={e.employee_id}>
+                                            {e.name} ({e.openCount ?? 0} open)
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <button className="admin-primary-button" onClick={() => coverProgram(group)} disabled={covering === group.key}>
+                                    {covering === group.key ? 'Assigning...' : 'Assign to program'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+
+                    <div style={{ marginBottom: 28 }} />
+                </>
+            )}
+
             <h2 style={{ fontSize: 17, marginBottom: 14 }}>Unassigned Requests</h2>
 
             {!loading && unassigned.length > 0 && (
@@ -304,6 +469,14 @@ function Assignments() {
                                 <div>
                                     <h3>{request.documentName}</h3>
                                     <p>{request.request_number} · Student {request.studentNumber}</p>
+                                    <p style={{ marginTop: 2 }}>
+                                        {request.programLabel}
+                                        {!request.programCovered && (
+                                            <span style={{ marginLeft: 8, fontWeight: 600, color: 'var(--warning-text, #B45309)' }}>
+                                                · No employee for this program
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
                             </div>
 
