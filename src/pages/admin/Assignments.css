@@ -1,578 +1,62 @@
-/* ===================================================
-   Request Assignments — workload & rebalancing
-=================================================== */
+/* Request Assignments: small additions on top of the shared dashboard
+   components (DashboardStats.css), which this page reuses. */
 
-/* Summary strip */
-.rb-summary {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.rb-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 14px 16px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-}
-
-.rb-stat span {
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--slate);
-}
-
-.rb-stat strong {
-    font-family: var(--font-display);
-    font-size: 26px;
-    line-height: 1.1;
-    color: var(--ink);
-}
-
-.rb-stat.is-warn strong {
-    color: var(--warning-text, #B45309);
-}
-
-.rb-stat.is-danger strong {
-    color: var(--danger-text, var(--red, #C8102E));
-}
-
-/* Sections */
-.rb-section {
-    margin-bottom: 28px;
-}
-
-.rb-section-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 14px;
-}
-
-.rb-section-head h2 {
-    font-size: 17px;
-    margin-bottom: 4px;
-}
-
-.rb-section-head p {
-    max-width: 640px;
-    font-size: 13px;
-}
-
-/* Employee cards */
-.rb-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 14px;
-}
-
-.rb-card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 18px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.rb-card.is-heavy {
-    border-color: color-mix(in srgb, var(--red, #C8102E) 35%, var(--line));
-}
-
-.rb-card.is-open {
-    border-color: var(--blue-accent, var(--blue));
-    box-shadow: 0 0 0 3px var(--blue-tint);
-}
-
-.rb-card-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.rb-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: var(--blue-tint);
-    color: var(--blue-accent, var(--blue));
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.rb-avatar.is-small {
-    width: 28px;
-    height: 28px;
-    font-size: 11px;
-}
-
-.rb-card-title {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    flex: 1;
-}
-
-.rb-card-title strong {
-    overflow: hidden;
-    font-size: 14.5px;
-    color: var(--ink);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.rb-card-title span {
-    overflow: hidden;
-    font-size: 12px;
-    color: var(--slate);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.rb-badge {
-    flex-shrink: 0;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: var(--paper);
-    color: var(--slate);
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.rb-badge.is-danger {
-    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
-    color: var(--danger-text, var(--red, #C8102E));
-}
-
-.rb-badge.is-light {
-    background: var(--success-bg, rgba(30, 138, 95, 0.12));
-    color: var(--success-text, #1e8a5f);
-}
-
-.rb-load {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.rb-load strong {
-    font-family: var(--font-display);
-    font-size: 30px;
-    line-height: 1;
-    color: var(--ink);
-}
-
-.rb-load span {
-    font-size: 13px;
-    color: var(--slate);
-}
-
-.rb-bar {
-    position: relative;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--paper);
-}
-
-.rb-bar span {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--blue-accent, var(--blue));
-    transition: width 0.3s ease;
-}
-
-.rb-card.is-heavy .rb-bar span {
-    background: var(--danger-text, var(--red, #C8102E));
-}
-
-/* Team-average marker */
-.rb-bar i {
-    position: absolute;
-    top: -4px;
-    width: 2px;
-    height: 16px;
-    border-radius: 2px;
-    background: var(--ink);
-    opacity: 0.45;
-    transform: translateX(-1px);
-}
-
-.rb-breakdown {
-    font-size: 12.5px;
-}
-
-.rb-card-action {
-    margin-top: auto;
-    padding: 9px 12px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--blue-accent, var(--blue));
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.12s ease, border-color 0.12s ease;
-}
-
-.rb-card-action:hover:not(:disabled) {
-    background: var(--blue-tint);
-    border-color: var(--blue-accent, var(--blue));
-}
-
-.rb-card.is-open .rb-card-action {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: var(--white);
-}
-
-.rb-card-action:disabled {
-    color: var(--slate);
+/* Summary tiles here are informational, not links. */
+.admin-layout div.dash-stat-tile {
     cursor: default;
 }
 
-/* Manage panel */
-.rb-panel {
-    margin-top: 14px;
-    padding: 20px;
-    background: var(--surface);
-    border: 1px solid var(--blue-accent, var(--blue));
-    border-radius: 14px;
-}
-
-.rb-panel-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.rb-panel-head h3 {
-    font-size: 15.5px;
-    margin-bottom: 2px;
-}
-
-.rb-panel-head p {
-    font-size: 12.5px;
-}
-
-.rb-close {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 50%;
-    background: var(--paper);
-    color: var(--slate);
-    font-size: 20px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.rb-close:hover {
+/* The employee whose requests are open for moving. */
+.dash-workload button.is-selected {
     background: var(--blue-tint);
-    color: var(--ink);
 }
 
-.rb-select-tools {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.rb-select-tools button {
-    padding: 5px 12px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--slate);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.rb-select-tools button:hover:not(:disabled) {
-    border-color: var(--blue-accent, var(--blue));
-    color: var(--blue-accent, var(--blue));
-}
-
-.rb-select-tools button:disabled {
-    opacity: 0.5;
+.dash-workload button:disabled {
     cursor: default;
 }
 
-.rb-requests {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin: 0 0 16px;
-    padding: 0;
-    list-style: none;
+.dash-workload button:disabled:hover {
+    background: transparent;
 }
 
-.rb-request {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.12s ease, border-color 0.12s ease;
+/* Suggested-move rows aren't clickable. */
+.dash-row.asg-static-row {
+    cursor: default;
 }
 
-.rb-request:hover {
-    background: var(--paper);
+.dash-row.asg-static-row:hover {
+    background: transparent;
 }
 
-.rb-request.is-checked {
-    background: var(--blue-tint);
-    border-color: var(--blue-accent, var(--blue));
+.asg-route {
+    flex-shrink: 0;
+    font-size: 12.5px;
+    color: var(--slate);
+    white-space: nowrap;
 }
 
-.rb-request input {
+.asg-route strong {
+    color: var(--blue-accent, var(--blue));
+}
+
+/* Request rows with a checkbox (moving an employee's requests). */
+.dash-row input[type="checkbox"] {
     flex-shrink: 0;
     width: 16px;
     height: 16px;
     accent-color: var(--blue);
 }
 
-.rb-request-main {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
+.admin-list-card .dash-row-list {
+    margin-bottom: 2px;
 }
 
-.rb-request-main strong {
-    font-size: 13.5px;
-    color: var(--ink);
-}
-
-.rb-request-main span {
-    font-size: 12px;
-    color: var(--slate);
-}
-
-.rb-request-main em {
-    font-style: normal;
-    font-weight: 600;
-    color: var(--warning-text, #B45309);
-}
-
-.rb-movebar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 12px 14px;
-    border-radius: 10px;
-    background: var(--paper);
-}
-
-.rb-movebar-count {
-    font-size: 13px;
-    color: var(--slate);
-}
-
-.rb-movebar-count strong {
-    color: var(--ink);
-}
-
-.rb-movebar-arrow {
-    color: var(--slate);
-}
-
-.rb-movebar .admin-search-input {
-    flex: 1;
-    min-width: 180px;
-    max-width: 280px;
-    padding: 9px 12px;
-    font-size: 13.5px;
-}
-
-.rb-movebar .admin-primary-button {
-    padding: 9px 18px;
-    font-size: 13.5px;
-}
-
-.rb-note,
-.rb-muted {
-    font-size: 12.5px;
-}
-
-/* Suggested rebalance */
-.rb-suggest {
-    padding: 20px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-}
-
-.rb-state {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border-radius: 10px;
-    background: var(--paper);
-}
-
-.rb-state-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--blue-tint);
-    color: var(--blue-accent, var(--blue));
-    font-weight: 700;
-}
-
-.rb-state.is-good .rb-state-icon {
-    background: var(--success-bg, rgba(30, 138, 95, 0.12));
-    color: var(--success-text, #1e8a5f);
-}
-
-.rb-state strong {
-    display: block;
-    font-size: 14px;
-    color: var(--ink);
-}
-
-.rb-state p {
-    font-size: 12.5px;
-}
-
-.rb-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 14px;
-}
-
-.rb-preview-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px 6px 6px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    font-size: 13px;
-}
-
-.rb-preview-name {
-    font-weight: 600;
-    color: var(--ink);
-}
-
-.rb-preview-counts {
-    color: var(--slate);
-}
-
-.rb-preview-counts .is-down {
-    color: var(--success-text, #1e8a5f);
-}
-
-.rb-preview-counts .is-up {
-    color: var(--blue-accent, var(--blue));
-}
-
-.rb-moves {
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.rb-move {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 12px 0;
-    border-top: 1px solid var(--line);
-}
-
-.rb-move-main {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.rb-move-main strong {
-    font-size: 13.5px;
-    color: var(--ink);
-}
-
-.rb-move-main span {
-    font-size: 12px;
-    color: var(--slate);
-}
-
-.rb-move-route {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.rb-chip {
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: var(--paper);
-    color: var(--slate);
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.rb-chip.is-to {
-    background: var(--blue-tint);
-    color: var(--blue-accent, var(--blue));
-}
-
-.rb-move-arrow {
-    color: var(--slate);
-}
-
-@media (max-width: 760px) {
-    .rb-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 620px) {
+    .asg-route {
+        white-space: normal;
     }
 
-    .rb-suggest,
-    .rb-panel {
-        padding: 16px;
-    }
-
-    .rb-movebar .admin-search-input {
-        max-width: none;
-    }
-
-    .rb-movebar .admin-primary-button {
-        width: 100%;
-        justify-content: center;
+    .dash-row.asg-static-row {
+        flex-wrap: wrap;
     }
 }

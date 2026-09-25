@@ -6,9 +6,11 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import { IconBarChart, IconFileStack, IconHourglass, IconUsers } from './icons'
 import { loadStudentsById } from '../../lib/studentNames'
 import { MOVABLE_STATUSES, averageLoad, isOverloaded, suggestRebalance } from '../../lib/workloadBalance'
 import './AdminPages.css'
+import '../../components/DashboardStats.css'
 import './Assignments.css'
 
 const initialsOf = (name) =>
@@ -543,6 +545,18 @@ function Assignments() {
         afterLoad[m.toId] += 1
     }
 
+    const summaryStats = [
+        { label: 'Open requests', value: assignedOpen.length + unassigned.length, note: 'Not yet completed', Icon: IconFileStack },
+        { label: 'Unassigned', value: unassigned.length, note: unassigned.length ? 'Waiting for an employee' : 'Everything is assigned', Icon: IconHourglass, warn: unassigned.length > 0 },
+        { label: 'Team average', value: average.toFixed(1), note: `Open requests across ${workload.length} employee${workload.length === 1 ? '' : 's'}`, Icon: IconBarChart },
+        { label: 'Overloaded', value: overloadedCount, note: overloadedCount ? 'Well above the team average' : 'Nobody is overloaded', Icon: IconUsers, warn: overloadedCount > 0 },
+    ]
+
+    const previewChanges = workload
+        .filter((e) => afterLoad[e.employee_id] !== e.openCount)
+        .map((e) => `${e.name} ${e.openCount} → ${afterLoad[e.employee_id]}`)
+        .join(' · ')
+
     const selectNotStarted = () => {
         setMoveSelected(new Set(expandedRequests.filter((r) => MOVABLE_STATUSES.includes(r.status)).map((r) => r.request_id)))
     }
@@ -557,259 +571,197 @@ function Assignments() {
             {error && <div className="admin-error-box">{error}</div>}
 
             {!loading && (
-                <div className="rb-summary">
-                    <div className="rb-stat">
-                        <span>Open requests</span>
-                        <strong>{assignedOpen.length + unassigned.length}</strong>
-                    </div>
-                    <div className={`rb-stat${unassigned.length > 0 ? ' is-warn' : ''}`}>
-                        <span>Unassigned</span>
-                        <strong>{unassigned.length}</strong>
-                    </div>
-                    <div className="rb-stat">
-                        <span>Team average</span>
-                        <strong>{average.toFixed(1)}</strong>
-                    </div>
-                    <div className={`rb-stat${overloadedCount > 0 ? ' is-danger' : ''}`}>
-                        <span>Overloaded</span>
-                        <strong>{overloadedCount}</strong>
-                    </div>
+                <div className="dash-overview-grid">
+                    {summaryStats.map((stat) => (
+                        <div key={stat.label} className={`dash-stat-tile dash-overview-tile${stat.warn ? ' is-warn' : ''}`}>
+                            <div className="dash-stat-top">
+                                <span className="dash-stat-label">{stat.label}</span>
+                                <span className="dash-stat-icon dash-stat-icon-brand" aria-hidden="true"><stat.Icon /></span>
+                            </div>
+                            <span className="dash-stat-value dash-stat-value-lg">{stat.value}</span>
+                            <span className="dash-stat-note">{stat.note}</span>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            <section className="rb-section">
-                <div className="rb-section-head">
-                    <div>
-                        <h2>Employee workload</h2>
-                        <p>Open requests per active employee. Open an employee to move some of their requests to someone else.</p>
-                    </div>
-                </div>
-
-                {loading ? (
-                    <SkeletonList count={2} />
-                ) : workload.length === 0 ? (
-                    <div className="admin-empty">No active employees yet.</div>
-                ) : (
-                    <div className="rb-grid">
-                        {workload.map((e) => {
-                            const heavy = isOverloaded(e.openCount, average, workload.length)
-                            const light = workload.length > 1 && e.openCount < average - 1
-                            const breakdown = breakdownByEmployee[e.employee_id] || { notStarted: 0, inProgress: 0 }
-                            const open = expandedEmployeeId === e.employee_id
-
-                            return (
-                                <article key={e.employee_id} className={`rb-card${open ? ' is-open' : ''}${heavy ? ' is-heavy' : ''}`}>
-                                    <header className="rb-card-head">
-                                        <span className="rb-avatar" aria-hidden="true">{initialsOf(e.name)}</span>
-                                        <div className="rb-card-title">
-                                            <strong>{e.name}</strong>
-                                            <span>{e.position_title || 'Employee'}</span>
-                                        </div>
-                                        {heavy ? (
-                                            <span className="rb-badge is-danger">Overloaded</span>
-                                        ) : light ? (
-                                            <span className="rb-badge is-light">Has capacity</span>
-                                        ) : workload.length > 1 ? (
-                                            <span className="rb-badge">Balanced</span>
-                                        ) : null}
-                                    </header>
-
-                                    <div className="rb-load">
-                                        <strong>{e.openCount}</strong>
-                                        <span>open request{e.openCount === 1 ? '' : 's'}</span>
-                                    </div>
-
-                                    <div className="rb-bar" aria-hidden="true">
-                                        <span style={{ width: `${(e.openCount / maxLoad) * 100}%` }} />
-                                        {workload.length > 1 && average > 0 && (
-                                            <i style={{ left: `${Math.min(100, (average / maxLoad) * 100)}%` }} title="Team average" />
-                                        )}
-                                    </div>
-
-                                    <p className="rb-breakdown">
-                                        {breakdown.notStarted} not started · {breakdown.inProgress} in progress
-                                    </p>
-
-                                    <button
-                                        type="button"
-                                        className="rb-card-action"
-                                        onClick={() => toggleExpanded(e.employee_id)}
-                                        disabled={e.openCount === 0}
-                                        aria-expanded={open}
-                                    >
-                                        {e.openCount === 0 ? 'No open requests' : open ? 'Close' : 'Manage requests'}
-                                    </button>
-                                </article>
-                            )
-                        })}
-                    </div>
-                )}
-
-                {!loading && expandedEmployeeId && (
-                    <div className="rb-panel">
-                        <div className="rb-panel-head">
-                            <div>
-                                <h3>{nameOfEmployee(expandedEmployeeId)}’s open requests</h3>
-                                <p>Select the requests to move, then choose who takes them.</p>
-                            </div>
-                            <button type="button" className="rb-close" onClick={() => toggleExpanded(expandedEmployeeId)} aria-label="Close">
-                                ×
-                            </button>
+            <div className="dash-two-col" style={{ marginBottom: 24 }}>
+                <section className="dash-panel">
+                    <div className="dash-panel-head">
+                        <div>
+                            <h2>Team workload</h2>
+                            <span>Open requests per employee{workload.length > 0 && ` · average ${average.toFixed(1)}`} · select one to move requests</span>
                         </div>
-
-                        {expandedRequests.length === 0 ? (
-                            <p className="rb-muted">No open requests.</p>
-                        ) : (
-                            <>
-                                <div className="rb-select-tools">
-                                    <button type="button" onClick={selectNotStarted} disabled={moving}>Select not started</button>
-                                    <button type="button" onClick={() => setMoveSelected(new Set())} disabled={moving || moveSelected.size === 0}>Clear</button>
-                                </div>
-
-                                <ul className="rb-requests">
-                                    {expandedRequests.map((r) => {
-                                        const checked = moveSelected.has(r.request_id)
-                                        const started = !MOVABLE_STATUSES.includes(r.status)
-                                        return (
-                                            <li key={r.request_id}>
-                                                <label className={`rb-request${checked ? ' is-checked' : ''}`}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={checked}
-                                                        onChange={() => toggleMoveSelected(r.request_id)}
-                                                        disabled={moving}
-                                                    />
-                                                    <span className="rb-request-main">
-                                                        <strong>{r.documentName}</strong>
-                                                        <span>
-                                                            {r.request_number} · {r.studentName} ({r.studentNumber})
-                                                        </span>
-                                                        <span>
-                                                            {r.requested_at && `Requested ${formatDisplayDateTime(r.requested_at)}`}
-                                                            {started && <em> · already in progress</em>}
-                                                        </span>
-                                                    </span>
-                                                    <span className={`admin-status-pill status-${r.status}`}>
-                                                        {r.status.replace(/_/g, ' ')}
-                                                    </span>
-                                                </label>
-                                            </li>
-                                        )
-                                    })}
-                                </ul>
-                            </>
-                        )}
-
-                        {workload.length < 2 ? (
-                            <p className="rb-note">There’s no other active employee to move requests to yet.</p>
-                        ) : (
-                            <div className="rb-movebar">
-                                <span className="rb-movebar-count">
-                                    <strong>{moveSelected.size}</strong> selected
-                                </span>
-                                <span className="rb-movebar-arrow" aria-hidden="true">→</span>
-                                <select
-                                    className="admin-search-input"
-                                    value={moveTargetId}
-                                    onChange={(e) => setMoveTargetId(e.target.value)}
-                                    disabled={moving}
-                                    aria-label="Move to employee"
-                                >
-                                    <option value="">Move to…</option>
-                                    {workload
-                                        .filter((e) => e.employee_id !== expandedEmployeeId)
-                                        .map((e) => (
-                                            <option key={e.employee_id} value={e.employee_id}>
-                                                {e.name} ({e.openCount} open)
-                                            </option>
-                                        ))}
-                                </select>
-                                <button
-                                    className="admin-primary-button"
-                                    onClick={moveSelectedRequests}
-                                    disabled={moving || moveSelected.size === 0 || !moveTargetId}
-                                >
-                                    {moving ? 'Moving...' : 'Move requests'}
-                                </button>
-                            </div>
-                        )}
                     </div>
-                )}
-            </section>
 
-            {!loading && (
-                <section className="rb-section rb-suggest">
-                    <div className="rb-section-head">
+                    {loading ? (
+                        <SkeletonList count={2} />
+                    ) : workload.length === 0 ? (
+                        <p className="dash-panel-empty">No active employees yet.</p>
+                    ) : (
+                        <ul className="dash-workload">
+                            {workload.map((e) => {
+                                const heavy = isOverloaded(e.openCount, average, workload.length)
+                                const breakdown = breakdownByEmployee[e.employee_id] || { notStarted: 0, inProgress: 0 }
+                                const open = expandedEmployeeId === e.employee_id
+
+                                return (
+                                    <li key={e.employee_id}>
+                                        <button
+                                            onClick={() => toggleExpanded(e.employee_id)}
+                                            disabled={e.openCount === 0}
+                                            aria-expanded={open}
+                                            className={open ? 'is-selected' : ''}
+                                        >
+                                            <span className="dash-avatar" aria-hidden="true">{initialsOf(e.name)}</span>
+                                            <span className="dash-workload-main">
+                                                <span className="dash-workload-top">
+                                                    <strong>{e.name}</strong>
+                                                    <span className={heavy ? 'is-heavy' : ''}>
+                                                        {heavy && 'Overloaded · '}{e.openCount} active
+                                                    </span>
+                                                </span>
+                                                <span className="dash-workload-track" aria-hidden="true">
+                                                    <span
+                                                        className={heavy ? 'is-heavy' : ''}
+                                                        style={{ width: `${(e.openCount / maxLoad) * 100}%` }}
+                                                    />
+                                                </span>
+                                                <span className="dash-workload-time">
+                                                    <strong>{breakdown.notStarted}</strong> not started · <strong>{breakdown.inProgress}</strong> in progress
+                                                    {e.openCount > 0 && <> · {open ? 'Close' : 'Manage'} →</>}
+                                                </span>
+                                            </span>
+                                        </button>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    )}
+                </section>
+
+                <section className="dash-panel">
+                    <div className="dash-panel-head">
                         <div>
                             <h2>Suggested rebalance</h2>
-                            <p>
-                                Moves the newest not-yet-started requests from the busiest employees to the least busy,
-                                until everyone is within one request of each other. Requests already in progress stay put.
-                            </p>
+                            <span>
+                                {suggestedMoves.length > 0
+                                    ? previewChanges
+                                    : 'Moves not-yet-started requests from the busiest to the least busy employee'}
+                            </span>
                         </div>
                         {workload.length > 1 && suggestedMoves.length > 0 && (
-                            <button className="admin-primary-button" onClick={applySuggestedMoves} disabled={moving}>
-                                {moving ? 'Moving...' : `Apply ${suggestedMoves.length} move${suggestedMoves.length === 1 ? '' : 's'}`}
+                            <button className="admin-link-button" onClick={applySuggestedMoves} disabled={moving}>
+                                {moving ? 'Moving...' : `Apply ${suggestedMoves.length} →`}
                             </button>
                         )}
                     </div>
 
-                    {workload.length < 2 ? (
-                        <div className="rb-state">
-                            <span className="rb-state-icon" aria-hidden="true">i</span>
-                            <div>
-                                <strong>Only one active employee</strong>
-                                <p>Add another employee to share the workload — suggestions will appear here.</p>
-                            </div>
-                        </div>
+                    {loading ? (
+                        <SkeletonList count={2} />
+                    ) : workload.length < 2 ? (
+                        <p className="dash-panel-empty">Only one active employee — add another to share the workload.</p>
                     ) : suggestedMoves.length === 0 ? (
-                        <div className="rb-state is-good">
-                            <span className="rb-state-icon" aria-hidden="true">✓</span>
-                            <div>
-                                <strong>The workload is balanced</strong>
-                                <p>Nobody has more than one request above anyone else that could be moved.</p>
-                            </div>
-                        </div>
+                        <p className="dash-panel-empty">The workload is balanced. Nothing to move.</p>
                     ) : (
-                        <>
-                            <div className="rb-preview">
-                                {workload
-                                    .filter((e) => (afterLoad[e.employee_id] ?? e.openCount) !== e.openCount)
-                                    .map((e) => {
-                                        const after = afterLoad[e.employee_id] ?? e.openCount
-                                        return (
-                                            <div key={e.employee_id} className="rb-preview-item">
-                                                <span className="rb-avatar is-small" aria-hidden="true">{initialsOf(e.name)}</span>
-                                                <span className="rb-preview-name">{e.name}</span>
-                                                <span className="rb-preview-counts">
-                                                    {e.openCount} <span aria-hidden="true">→</span> <strong className={after < e.openCount ? 'is-down' : 'is-up'}>{after}</strong>
-                                                </span>
-                                            </div>
-                                        )
-                                    })}
-                            </div>
-
-                            <ul className="rb-moves">
-                                {suggestedMoves.map((m) => (
-                                    <li key={m.request.request_id} className="rb-move">
-                                        <div className="rb-move-main">
+                        <ul className="dash-row-list">
+                            {suggestedMoves.map((m) => (
+                                <li key={m.request.request_id}>
+                                    <div className="dash-row asg-static-row">
+                                        <span className="dash-row-main">
                                             <strong>{m.request.documentName}</strong>
                                             <span>
                                                 {m.request.request_number} · {m.request.studentName}
                                                 {m.request.requested_at && ` · ${formatDisplayDateTime(m.request.requested_at)}`}
                                             </span>
-                                        </div>
-                                        <div className="rb-move-route">
-                                            <span className="rb-chip">{m.fromName}</span>
-                                            <span className="rb-move-arrow" aria-hidden="true">→</span>
-                                            <span className="rb-chip is-to">{m.toName}</span>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </>
+                                        </span>
+                                        <span className="asg-route">
+                                            {m.fromName} → <strong>{m.toName}</strong>
+                                        </span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </section>
+            </div>
+
+            {!loading && expandedEmployeeId && (
+                <div className="admin-list-card" style={{ marginBottom: 28 }}>
+                    <div className="admin-list-card-header">
+                        <div>
+                            <h3>{nameOfEmployee(expandedEmployeeId)}’s open requests</h3>
+                            <p>Select the requests to move, then choose who takes them.</p>
+                        </div>
+                        <button className="admin-link-button" onClick={() => toggleExpanded(expandedEmployeeId)}>Close</button>
+                    </div>
+
+                    {expandedRequests.length === 0 ? (
+                        <p style={{ fontSize: 13 }}>No open requests.</p>
+                    ) : (
+                        <ul className="dash-row-list">
+                            {expandedRequests.map((r) => (
+                                <li key={r.request_id}>
+                                    <label className="dash-row">
+                                        <input
+                                            type="checkbox"
+                                            checked={moveSelected.has(r.request_id)}
+                                            onChange={() => toggleMoveSelected(r.request_id)}
+                                            disabled={moving}
+                                        />
+                                        <span className="dash-row-main">
+                                            <strong>{r.documentName}</strong>
+                                            <span>
+                                                {r.request_number} · {r.studentName} ({r.studentNumber})
+                                                {r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}
+                                                {!MOVABLE_STATUSES.includes(r.status) && ' · already in progress'}
+                                            </span>
+                                        </span>
+                                        <span className={`admin-status-pill status-${r.status}`}>
+                                            {r.status.replace(/_/g, ' ')}
+                                        </span>
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    {workload.length < 2 ? (
+                        <p style={{ fontSize: 12.5 }}>There’s no other active employee to move requests to yet.</p>
+                    ) : (
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <select
+                                className="admin-search-input"
+                                style={{ maxWidth: 260 }}
+                                value={moveTargetId}
+                                onChange={(e) => setMoveTargetId(e.target.value)}
+                                disabled={moving}
+                                aria-label="Move to employee"
+                            >
+                                <option value="">-- Move to employee --</option>
+                                {workload
+                                    .filter((e) => e.employee_id !== expandedEmployeeId)
+                                    .map((e) => (
+                                        <option key={e.employee_id} value={e.employee_id}>
+                                            {e.name} ({e.openCount} open)
+                                        </option>
+                                    ))}
+                            </select>
+
+                            <button
+                                className="admin-primary-button"
+                                onClick={moveSelectedRequests}
+                                disabled={moving || moveSelected.size === 0 || !moveTargetId}
+                            >
+                                {moving ? 'Moving...' : moveSelected.size ? `Move ${moveSelected.size} selected` : 'Move selected'}
+                            </button>
+
+                            <button className="admin-secondary-button" onClick={selectNotStarted} disabled={moving}>
+                                Select not started
+                            </button>
+                        </div>
+                    )}
+                </div>
             )}
 
             {!loading && uncoveredPrograms.length > 0 && (
