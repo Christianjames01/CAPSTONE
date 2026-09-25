@@ -47,7 +47,7 @@ function StudentVerificationGate({ children }) {
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
-        navigate('/login')
+        navigate('/', { replace: true })
     }
 
     if (loading) {

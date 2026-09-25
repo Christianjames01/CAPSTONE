@@ -109,7 +109,7 @@ function EmployeeLayout() {
     const handleLogout = async () => {
         setLoggingOut(true)
         await supabase.auth.signOut()
-        navigate('/login')
+        navigate('/', { replace: true })
     }
 
     const badgeValue = (key) => {
