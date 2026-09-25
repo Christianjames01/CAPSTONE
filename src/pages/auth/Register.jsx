@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useScrollLock } from '../../lib/useScrollLock'
+import { useDraftState, clearDraft } from '../../lib/useDraftState'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordRequirements from '../../components/PasswordRequirements'
@@ -20,32 +21,32 @@ const LEGAL_TABS = {
 function Register() {
     const navigate = useNavigate()
 
-    const [email, setEmail] = useState('')
+    const [email, setEmail] = useDraftState('register', 'email', '')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
 
-    const [firstName, setFirstName] = useState('')
-    const [middleName, setMiddleName] = useState('')
-    const [noMiddleName, setNoMiddleName] = useState(false)
-    const [lastName, setLastName] = useState('')
-    const [suffix, setSuffix] = useState('')
-    const [phoneNumber, setPhoneNumber] = useState('')
+    const [firstName, setFirstName] = useDraftState('register', 'firstName', '')
+    const [middleName, setMiddleName] = useDraftState('register', 'middleName', '')
+    const [noMiddleName, setNoMiddleName] = useDraftState('register', 'noMiddleName', false)
+    const [lastName, setLastName] = useDraftState('register', 'lastName', '')
+    const [suffix, setSuffix] = useDraftState('register', 'suffix', '')
+    const [phoneNumber, setPhoneNumber] = useDraftState('register', 'phoneNumber', '')
     // Set when the typed phone number is already registered to another account.
     const [phoneTaken, setPhoneTaken] = useState(false)
-    const [birthDate, setBirthDate] = useState('')
+    const [birthDate, setBirthDate] = useDraftState('register', 'birthDate', '')
 
-    const [studentNumber, setStudentNumber] = useState('')
+    const [studentNumber, setStudentNumber] = useDraftState('register', 'studentNumber', '')
     // Set when the typed student ID is already registered (checked on blur and on submit).
     const [studentNumberTaken, setStudentNumberTaken] = useState(false)
-    const [collegeId, setCollegeId] = useState('')
-    const [programId, setProgramId] = useState('')
-    const [yearLevel, setYearLevel] = useState('')
+    const [collegeId, setCollegeId] = useDraftState('register', 'collegeId', '')
+    const [programId, setProgramId] = useDraftState('register', 'programId', '')
+    const [yearLevel, setYearLevel] = useDraftState('register', 'yearLevel', '')
 
-    const [address, setAddress] = useState('')
-    const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
-    const [alternateEmail, setAlternateEmail] = useState('')
-    const [emergencyContactName, setEmergencyContactName] = useState('')
-    const [emergencyContactNumber, setEmergencyContactNumber] = useState('')
+    const [address, setAddress] = useDraftState('register', 'address', '')
+    const [alternatePhoneNumber, setAlternatePhoneNumber] = useDraftState('register', 'alternatePhoneNumber', '')
+    const [alternateEmail, setAlternateEmail] = useDraftState('register', 'alternateEmail', '')
+    const [emergencyContactName, setEmergencyContactName] = useDraftState('register', 'emergencyContactName', '')
+    const [emergencyContactNumber, setEmergencyContactNumber] = useDraftState('register', 'emergencyContactNumber', '')
 
     const [colleges, setColleges] = useState([])
     const [programs, setPrograms] = useState([])
@@ -85,8 +86,13 @@ function Register() {
         loadColleges()
     }, [])
 
+    const previousCollegeId = useRef(collegeId)
+
     useEffect(() => {
-        setProgramId('')
+        if (previousCollegeId.current !== collegeId) {
+            setProgramId('')
+            previousCollegeId.current = collegeId
+        }
 
         if (collegeId) {
             loadPrograms(collegeId)
@@ -261,10 +267,12 @@ function Register() {
         }
 
         if (data.session) {
+            clearDraft('register')
             navigate('/student/dashboard', { replace: true })
             return
         }
 
+        clearDraft('register')
         setStatus('success')
         setMessage(
             'Registration successful! The Registrar\'s Office will need to verify your enrollment before you can use CertiChain — check back later to see if your account has been approved.'
