@@ -11,12 +11,19 @@
 -- On a fresh environment this creates a random signing secret automatically.
 -- Existing credentials are backfilled with a signature computed from their
 -- current field values at migration time.
+--
+-- Safe to re-run. Pinned to UTC: generated_at is part of the signed text,
+-- and a timestamptz renders differently per session timezone, so signing
+-- and verifying must always use the same one.
+
+set search_path = public, extensions;
+set timezone = 'UTC';
 
 do $$
 begin
     if not exists (select 1 from vault.secrets where name = 'credential_signing_secret') then
         perform vault.create_secret(
-            encode(gen_random_bytes(32), 'hex'),
+            encode(extensions.gen_random_bytes(32), 'hex'),
             'credential_signing_secret',
             'HMAC key used to sign issued credentials so tampering with a row after issuance can be detected. Only ever read inside SECURITY DEFINER functions -- never exposed to Edge Functions or clients.'
         );
@@ -31,6 +38,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public, extensions, vault, pg_temp
+set timezone = 'UTC'
 as $function$
 declare
     v_secret text;
@@ -60,6 +68,8 @@ $function$;
 
 -- Runs after trg_set_credential_number (alphabetically ordered: 'set' < 'sign'),
 -- so new.credential_number is already assigned by the time this fires.
+drop trigger if exists trg_sign_credential on credentials;
+
 create trigger trg_sign_credential
 before insert on credentials
 for each row
@@ -75,6 +85,7 @@ returns boolean
 language plpgsql
 security definer
 set search_path = public, extensions, vault, pg_temp
+set timezone = 'UTC'
 as $function$
 declare
     v_secret text;
