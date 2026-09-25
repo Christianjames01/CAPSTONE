@@ -1,6 +1,9 @@
 import { PASSWORD_REQUIREMENTS } from '../lib/passwordStrength'
 
+// Hidden until the user starts typing, then shows each rule ticking off live.
 function PasswordRequirements({ password }) {
+    if (!password) return null
+
     return (
         <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0', fontSize: 12 }}>
             {PASSWORD_REQUIREMENTS.map((req) => {
