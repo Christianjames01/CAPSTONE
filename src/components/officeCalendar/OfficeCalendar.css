@@ -931,3 +931,16 @@
         width: 100%;
     }
 }
+
+/* ---------- Upcoming Claiming (sidebar, below Coming up) ---------- */
+
+.ocal-sidebar-head.ocal-sidebar-head-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.ocal-upcoming-item.is-claim {
+    --item-accent: var(--ocal-claim);
+    --item-bg: var(--ocal-claim-bg);
+}

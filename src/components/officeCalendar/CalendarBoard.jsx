@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SkeletonList } from '../Skeleton'
+import { loadStudentsById } from '../../lib/studentNames'
 import {
     buildMonthGrid,
+    claimTime,
     formatDate,
+    formatTime,
     getToday,
     groupConsecutiveEvents,
     relativeDayLabel,
@@ -17,6 +20,14 @@ const MAX_CELL_CHIPS = 2
 
 // How many "Coming up" entries to show before the "Show all" toggle.
 const UPCOMING_PREVIEW = 6
+
+// "Upcoming Claiming": how many days to list before "Show all", and how
+// many students to name per day before "+N more".
+const CLAIM_DAYS_PREVIEW = 5
+const CLAIM_NAMES_PER_DAY = 3
+
+// Claim appointments still ahead (not claimed, missed, or cancelled).
+const INACTIVE_CLAIM_STATUSES = ['claimed', 'missed', 'cancelled', 'completed']
 
 const ChevronLeft = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
@@ -114,6 +125,40 @@ function CalendarBoard({
     }, [upcomingEvents, upcomingOpenDays])
 
     const visibleUpcoming = showAllUpcoming ? upcoming : upcoming.slice(0, UPCOMING_PREVIEW)
+
+    // Upcoming claiming days, soonest first, each with its appointments by time.
+    const upcomingClaimDays = useMemo(() => Object.entries(claimSchedulesByDate)
+        .filter(([date]) => date >= today)
+        .map(([date, list]) => ({
+            date,
+            claims: list
+                .filter((cs) => !INACTIVE_CLAIM_STATUSES.includes(cs.status))
+                .sort((a, b) => (claimTime(a) || '').localeCompare(claimTime(b) || '')),
+        }))
+        .filter((d) => d.claims.length > 0)
+        .sort((a, b) => a.date.localeCompare(b.date)), [claimSchedulesByDate, today])
+
+    const [showAllClaimDays, setShowAllClaimDays] = useState(false)
+    const [studentsById, setStudentsById] = useState({})
+
+    // Names for the students on upcoming claim days.
+    useEffect(() => {
+        const ids = upcomingClaimDays.flatMap((d) => d.claims.map((cs) => cs.student_id)).filter(Boolean)
+        if (ids.length === 0) return undefined
+        let cancelled = false
+        loadStudentsById(ids).then((map) => { if (!cancelled) setStudentsById(map) })
+        return () => { cancelled = true }
+    }, [upcomingClaimDays])
+
+    const visibleClaimDays = showAllClaimDays ? upcomingClaimDays : upcomingClaimDays.slice(0, CLAIM_DAYS_PREVIEW)
+    const totalUpcomingClaims = upcomingClaimDays.reduce((sum, d) => sum + d.claims.length, 0)
+
+    const claimLabel = (cs) => {
+        const name = studentsById[cs.student_id]?.name
+        const number = cs.document_requests?.request_number
+        if (name && number) return name + ' (' + number + ')'
+        return name || number || 'Student'
+    }
 
     const renderUpcomingItem = (item) => {
         const { month, day } = monthDay(item.date)
@@ -246,6 +291,57 @@ function CalendarBoard({
                         {upcoming.length > UPCOMING_PREVIEW && (
                             <button type="button" className="ocal-text-button" onClick={() => setShowAllUpcoming((v) => !v)}>
                                 {showAllUpcoming ? 'Show less' : `Show all ${upcoming.length}`}
+                            </button>
+                        )}
+                    </>
+                )}
+
+                <div className="ocal-sidebar-head ocal-sidebar-head-section">
+                    <h2>Upcoming Claiming</h2>
+                    {!loading && totalUpcomingClaims > 0 && <span className="ocal-count">{totalUpcomingClaims}</span>}
+                </div>
+
+                {loading ? (
+                    <SkeletonList count={2} />
+                ) : upcomingClaimDays.length === 0 ? (
+                    <div className="ocal-sidebar-empty">No upcoming claiming appointments.</div>
+                ) : (
+                    <>
+                        <ul className="ocal-upcoming-list">
+                            {visibleClaimDays.map(({ date, claims }) => {
+                                const { month, day, weekday } = monthDay(date)
+                                const relative = relativeDayLabel(date, today)
+                                const shown = claims.slice(0, CLAIM_NAMES_PER_DAY)
+                                const more = claims.length - shown.length
+
+                                return (
+                                    <li key={date} className="ocal-upcoming-item is-claim">
+                                        <button type="button" className="ocal-upcoming-main" onClick={() => onDayClick(date)}>
+                                            <span className="ocal-date-badge" aria-hidden="true">
+                                                <span>{month}</span>
+                                                <strong>{day}</strong>
+                                            </span>
+                                            <span className="ocal-upcoming-text">
+                                                <span className="ocal-upcoming-title">{plural(claims.length, 'student')} claiming</span>
+                                                <span className="ocal-upcoming-meta">
+                                                    {relative && <span className="ocal-upcoming-relative">{relative}</span>}
+                                                    {weekday}
+                                                </span>
+                                                {shown.map((cs) => (
+                                                    <span key={cs.claim_schedule_id} className="ocal-upcoming-note">
+                                                        {formatTime(claimTime(cs)) || 'No time'} · {claimLabel(cs)}
+                                                    </span>
+                                                ))}
+                                                {more > 0 && <span className="ocal-upcoming-note">+{more} more</span>}
+                                            </span>
+                                        </button>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                        {upcomingClaimDays.length > CLAIM_DAYS_PREVIEW && (
+                            <button type="button" className="ocal-text-button" onClick={() => setShowAllClaimDays((v) => !v)}>
+                                {showAllClaimDays ? 'Show less' : `Show all ${upcomingClaimDays.length} days`}
                             </button>
                         )}
                     </>

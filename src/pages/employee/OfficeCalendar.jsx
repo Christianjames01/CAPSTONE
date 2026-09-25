@@ -69,7 +69,7 @@ function OfficeCalendar() {
                     .order('event_date', { ascending: true }),
                 supabase
                     .from('claim_schedules')
-                    .select('claim_schedule_id, request_id, status, scheduled_by, scheduled_date, scheduled_time, claim_date, claim_time, document_requests(request_number, assigned_employee_id)')
+                    .select('claim_schedule_id, request_id, student_id, status, scheduled_by, scheduled_date, scheduled_time, claim_date, claim_time, document_requests(request_number, assigned_employee_id)')
                     .neq('status', 'cancelled'),
                 supabase
                     .from('employees')
