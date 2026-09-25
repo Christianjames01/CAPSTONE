@@ -1,16 +1,14 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import AuthLayout from './AuthLayout'
 
 function ForceChangePassword() {
-    const navigate = useNavigate()
-
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
+    const [done, setDone] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -54,7 +52,11 @@ function ForceChangePassword() {
                 throw new Error(profileError.message)
             }
 
-            navigate(dashboardPathForRole(profile.role) || '/', { replace: true })
+            // Full page load straight into the dashboard (not a client-side
+            // navigate), so every route guard re-reads the profile and sees
+            // must_change_password = false instead of any state from before.
+            setDone(true)
+            window.location.replace(dashboardPathForRole(profile.role) || '/')
 
         } catch (err) {
             setError(err.message || 'Failed to update password.')
@@ -80,7 +82,7 @@ function ForceChangePassword() {
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="At least 6 characters"
                         required
-                        disabled={saving}
+                        disabled={saving || done}
                     />
                 </div>
 
@@ -94,14 +96,15 @@ function ForceChangePassword() {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Re-enter your new password"
                         required
-                        disabled={saving}
+                        disabled={saving || done}
                     />
                 </div>
 
                 {error && <p className="form-message error">{error}</p>}
+                {done && <p className="form-message success">Password updated — taking you to your dashboard…</p>}
 
-                <button type="submit" className="auth-submit" disabled={saving}>
-                    {saving ? 'Saving...' : 'Set password & continue'}
+                <button type="submit" className="auth-submit" disabled={saving || done}>
+                    {done ? 'Opening dashboard...' : saving ? 'Saving...' : 'Set password & continue'}
                 </button>
 
             </form>

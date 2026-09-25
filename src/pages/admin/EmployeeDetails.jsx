@@ -165,7 +165,7 @@ function EmployeeDetails() {
             allowOutsideClick: false,
             inputValidator: (value) => {
                 if (!value || value.trim().length < 8) return 'Use at least 8 characters.'
-                if (/s/.test(value)) return 'The password cannot contain spaces.'
+                if (/\s/.test(value)) return 'The password cannot contain spaces.'
                 return null
             },
         })
