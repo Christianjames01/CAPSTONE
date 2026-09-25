@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
-import { formatDisplayDate } from '../../lib/formatDate'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
@@ -636,7 +636,7 @@ function EmployeeDetails() {
 
                                 <div className="admin-info-field">
                                     <span>Requested</span>
-                                    <strong>{r.requested_at ? formatDisplayDate(r.requested_at) : 'N/A'}</strong>
+                                    <strong>{r.requested_at ? formatDisplayDateTime(r.requested_at) : 'N/A'}</strong>
                                 </div>
                             </div>
 

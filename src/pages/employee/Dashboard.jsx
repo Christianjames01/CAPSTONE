@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
 import { SkeletonDashboard } from '../../components/Skeleton'
@@ -416,7 +417,7 @@ function EmployeeDashboard() {
                                             <span>
                                                 {studentNames[request.student_id] && <>{studentNames[request.student_id]} · </>}
                                                 {request.request_number}
-                                                {request.requested_at && ` · ${new Date(request.requested_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}`}
+                                                {request.requested_at && ` · ${formatDisplayDateTime(request.requested_at)}`}
                                             </span>
                                         </span>
                                         {!DONE_STATUSES.includes(request.status) && (

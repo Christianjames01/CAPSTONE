@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -83,7 +84,8 @@ function UploadReceipt() {
                     quantity,
                     unit_fee,
                     total_amount,
-                    status
+                    status,
+                    requested_at
                 `)
                 .eq(
                     'request_id',
@@ -447,6 +449,11 @@ function UploadReceipt() {
                     <div className="student-info-field">
                         <span>Request Number</span>
                         <strong>{request.request_number}</strong>
+                    </div>
+
+                    <div className="student-info-field">
+                        <span>Requested</span>
+                        <strong>{request.requested_at ? formatDisplayDateTime(request.requested_at) : 'N/A'}</strong>
                     </div>
 
                     <div className="student-info-field">

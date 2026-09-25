@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
@@ -650,7 +651,7 @@ function StudentDetails() {
                         <div className="admin-list-card-header">
                             <div>
                                 <h3>{request.documentName}</h3>
-                                <p>{request.request_number}</p>
+                                <p>{request.request_number}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
                                 {request.claimSchedule && (
                                     <p>
                                         Claiming: {formatDate(request.claimSchedule.claim_date || request.claimSchedule.scheduled_date)}

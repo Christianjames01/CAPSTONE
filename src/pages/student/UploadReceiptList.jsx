@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
 
@@ -128,6 +129,7 @@ function UploadReceiptList() {
                             <div>
                                 <h3>{request.documentName}</h3>
                                 <p>Request {request.request_number}</p>
+                                {request.requested_at && <p>Requested {formatDisplayDateTime(request.requested_at)}</p>}
                             </div>
 
                             <span className={`student-status-pill status-${request.receipt?.status || 'not_uploaded'}`}>

@@ -705,6 +705,16 @@ html[data-theme="dark"] .employee-layout {
     background: var(--danger-text, #B42318);
 }
 
+.dash-workload-time {
+    font-size: 11.5px;
+    color: var(--slate);
+}
+
+.dash-workload-time strong {
+    font-weight: 600;
+    color: var(--ink);
+}
+
 .dash-workload-top span.is-heavy {
     color: var(--danger-text, #B42318);
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
@@ -812,6 +813,11 @@ function ClaimSchedule() {
                     <div>
                         <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
                         <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
+                        {request.requested_at && (
+                            <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 4 }}>
+                                Requested {formatDisplayDateTime(request.requested_at)}
+                            </p>
+                        )}
                     </div>
 
                     <span className={`employee-status-pill status-${request.status}`}>{request.status.replace(/_/g, ' ')}</span>

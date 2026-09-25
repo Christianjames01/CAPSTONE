@@ -31,6 +31,16 @@ const relativeTime = (value, now) => {
     return then.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
 }
 
+// "45 min", "5 hrs", "3 days" -- how long a request has been waiting.
+const formatAge = (ms) => {
+    const minutes = Math.floor(ms / 60000)
+    if (minutes < 60) return `${Math.max(1, minutes)} min`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours} hr${hours === 1 ? '' : 's'}`
+    const days = Math.floor(hours / 24)
+    return `${days} day${days === 1 ? '' : 's'}`
+}
+
 const initialsOf = (name) =>
     (name || '?').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 
@@ -244,14 +254,30 @@ function AdminDashboard() {
     // requests are included (as 0) so the average reflects the whole team.
     const workload = useMemo(() => {
         const counts = Object.fromEntries(activeEmployeeIds.map((id) => [id, 0]))
+        // How long each employee's active requests have been waiting (ms since requested).
+        const ages = {}
+        const now = loadedAt.getTime()
         for (const r of requests) {
             if (!ACTIVE_STATUSES.includes(r.status) || !r.assigned_employee_id) continue
             counts[r.assigned_employee_id] = (counts[r.assigned_employee_id] || 0) + 1
+            if (r.requested_at) {
+                if (!ages[r.assigned_employee_id]) ages[r.assigned_employee_id] = []
+                ages[r.assigned_employee_id].push(Math.max(0, now - new Date(r.requested_at).getTime()))
+            }
         }
         return Object.entries(counts)
-            .map(([employeeId, count]) => ({ employeeId, count, name: employeeNames[employeeId] || 'Employee' }))
+            .map(([employeeId, count]) => {
+                const list = ages[employeeId] || []
+                return {
+                    employeeId,
+                    count,
+                    name: employeeNames[employeeId] || 'Employee',
+                    oldestAge: list.length ? Math.max(...list) : null,
+                    averageAge: list.length ? list.reduce((sum, a) => sum + a, 0) / list.length : null,
+                }
+            })
             .sort((a, b) => b.count - a.count)
-    }, [requests, employeeNames, activeEmployeeIds])
+    }, [requests, employeeNames, activeEmployeeIds, loadedAt])
     const workloadMax = Math.max(1, ...workload.map((w) => w.count))
     const averageLoad = averageOf(workload.map((w) => w.count))
     const hasActiveWorkload = workload.some((w) => w.count > 0)
@@ -417,6 +443,12 @@ function AdminDashboard() {
                                                         style={{ width: `${(w.count / workloadMax) * 100}%` }}
                                                     />
                                                 </span>
+                                                {w.oldestAge !== null && (
+                                                    <span className="dash-workload-time">
+                                                        Oldest waiting <strong>{formatAge(w.oldestAge)}</strong>
+                                                        {w.count > 1 && <> · average <strong>{formatAge(w.averageAge)}</strong></>}
+                                                    </span>
+                                                )}
                                             </span>
                                         </button>
                                     </li>

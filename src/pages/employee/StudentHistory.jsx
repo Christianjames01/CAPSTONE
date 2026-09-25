@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
-import { formatDisplayDate } from '../../lib/formatDate'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
@@ -657,7 +657,7 @@ function StudentHistory() {
                             <div className="employee-info-field">
                                 <span>Requested</span>
                                 <strong>
-                                    {request.requested_at ? formatDisplayDate(request.requested_at) : '-'}
+                                    {request.requested_at ? formatDisplayDateTime(request.requested_at) : '-'}
                                 </strong>
                             </div>
                         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
@@ -600,6 +601,7 @@ function Assignments() {
                                             <strong style={{ display: 'block', fontSize: 13.5 }}>{r.documentName}</strong>
                                             <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>
                                                 {r.request_number} · {r.studentName} ({r.studentNumber})
+                                                {r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}
                                                 {!MOVABLE_STATUSES.includes(r.status) && ' · already in progress'}
                                             </span>
                                         </span>
@@ -673,7 +675,10 @@ function Assignments() {
                                         style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: '9px 0', borderTop: '1px solid var(--line)', fontSize: 13 }}
                                     >
                                         <strong>{m.request.request_number}</strong>
-                                        <span style={{ color: 'var(--slate)' }}>{m.request.documentName} · {m.request.studentName}</span>
+                                        <span style={{ color: 'var(--slate)' }}>
+                                            {m.request.documentName} · {m.request.studentName}
+                                            {m.request.requested_at && ` · ${formatDisplayDateTime(m.request.requested_at)}`}
+                                        </span>
                                         <span style={{ marginLeft: 'auto' }}>
                                             {m.fromName} → <strong>{m.toName}</strong>
                                         </span>
@@ -761,7 +766,7 @@ function Assignments() {
                                 />
                                 <div>
                                     <h3>{request.documentName}</h3>
-                                    <p>{request.request_number} · Student {request.studentNumber}</p>
+                                    <p>{request.request_number} · Student {request.studentNumber}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
                                     <p style={{ marginTop: 2 }}>
                                         {request.programLabel}
                                         {!request.programCovered && (

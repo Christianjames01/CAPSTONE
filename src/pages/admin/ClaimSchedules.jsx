@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
@@ -69,7 +70,7 @@ function ClaimSchedules() {
 
             const [{ data: requests }, { data: students }] = await Promise.all([
                 requestIds.length
-                    ? supabase.from('document_requests').select('request_id, request_number, document_type_id').in('request_id', requestIds)
+                    ? supabase.from('document_requests').select('request_id, request_number, document_type_id, requested_at').in('request_id', requestIds)
                     : Promise.resolve({ data: [] }),
                 studentIds.length
                     ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
@@ -102,6 +103,7 @@ function ClaimSchedules() {
                     return {
                         ...s,
                         requestNumber: request?.request_number || 'N/A',
+                        requestedAt: request?.requested_at || null,
                         documentName: documentNameById[request?.document_type_id] || 'Document',
                         studentNumber: student?.student_number || 'N/A',
                         studentName: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
@@ -111,7 +113,7 @@ function ClaimSchedules() {
 
             const { data: unclaimedRequests, error: unclaimedError } = await supabase
                 .from('document_requests')
-                .select('request_id, request_number, student_id, document_type_id')
+                .select('request_id, request_number, student_id, document_type_id, requested_at')
                 .eq('status', 'ready_for_claiming')
 
             if (unclaimedError) {
@@ -314,7 +316,7 @@ function ClaimSchedules() {
                                         {r.studentName || `Student ${r.studentNumber}`}
                                     </p>
                                     <h3>{r.documentName}</h3>
-                                    <p>{r.request_number} · Student {r.studentNumber}</p>
+                                    <p>{r.request_number} · Student {r.studentNumber}{r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}</p>
                                 </div>
                                 <span className="admin-status-pill status-ready_for_claiming">Not scheduled</span>
                             </div>
@@ -354,7 +356,7 @@ function ClaimSchedules() {
                                     {s.studentName || `Student ${s.studentNumber}`}
                                 </p>
                                 <h3>{s.documentName}</h3>
-                                <p>{s.requestNumber} · Student {s.studentNumber}</p>
+                                <p>{s.requestNumber} · Student {s.studentNumber}{s.requestedAt && ` · Requested ${formatDisplayDateTime(s.requestedAt)}`}</p>
                             </div>
                             <span className={`admin-status-pill status-${s.status}`}>{s.status}</span>
                         </div>

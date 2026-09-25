@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
@@ -57,7 +58,8 @@ function ClaimScheduleList() {
                     student_id,
                     document_type_id,
                     status,
-                    completed_at
+                    completed_at,
+                    requested_at
                 `)
                 .eq('status', 'ready_for_claiming')
                 .order('processed_at', { ascending: false })
@@ -154,7 +156,7 @@ function ClaimScheduleList() {
             const { data: todayRequests } = todayRequestIds.length
                 ? await supabase
                     .from('document_requests')
-                    .select('request_id, request_number, student_id, document_type_id')
+                    .select('request_id, request_number, student_id, document_type_id, requested_at')
                     .in('request_id', todayRequestIds)
                 : { data: [] }
 
@@ -183,6 +185,7 @@ function ClaimScheduleList() {
                     return {
                         ...s,
                         requestNumber: request?.request_number || 'N/A',
+                        requestedAt: request?.requested_at || null,
                         documentName: todayDocNameById[request?.document_type_id] || 'Document',
                         studentNumber: todayStudents[s.student_id]?.number || 'N/A',
                         studentName: todayStudents[s.student_id]?.name || 'Unknown student',
@@ -306,6 +309,7 @@ function ClaimScheduleList() {
                                     <h3>{appt.documentName}</h3>
                                     <p>
                                         {appt.requestNumber} · Student {appt.studentNumber}
+                                        {appt.requestedAt && ` · Requested ${formatDisplayDateTime(appt.requestedAt)}`}
                                     </p>
                                 </div>
 
@@ -344,7 +348,7 @@ function ClaimScheduleList() {
                             <div>
                                 <p className="request-student-name">{request.studentName}</p>
                                 <h3>{request.documentName}</h3>
-                                <p>{request.request_number} · Student {request.studentNumber}</p>
+                                <p>{request.request_number} · Student {request.studentNumber}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
                             </div>
 
                             <span className={`employee-status-pill status-${request.schedule ? request.schedule.status : 'ready_for_claiming'}`}>
