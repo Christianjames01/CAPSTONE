@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDate } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { generateTempPassword } from '../../lib/resetStudentPassword'
+import { resetEmployeePassword } from '../../lib/resetEmployeePassword'
 import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
@@ -36,6 +39,7 @@ function EmployeeDetails() {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
+    const [resettingPassword, setResettingPassword] = useState(false)
 
     useEffect(() => {
         loadEmployee()
@@ -58,7 +62,7 @@ function EmployeeDetails() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name, email, phone_number')
+                .select('first_name, last_name, email, phone_number, must_change_password')
                 .eq('user_id', employeeData.user_id)
                 .single()
 
@@ -138,6 +142,75 @@ function EmployeeDetails() {
             setError(err.message || 'Failed to load employee.')
         } finally {
             setLoading(false)
+        }
+    }
+
+    // Registrar head sets a temporary password; the employee is signed out
+    // and must create their own password on next login (ProtectedRoute ->
+    // /force-change-password).
+    const handleSetTempPassword = async () => {
+        const name = `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || employee.employee_number
+
+        const { value: tempPassword, isConfirmed } = await Swal.fire({
+            icon: 'warning',
+            title: 'Set a temporary password',
+            html: `<p style="margin:0 0 4px;">${name} will be signed out and asked to create a new password the next time they log in.</p>`,
+            input: 'text',
+            inputLabel: 'Temporary password (you can edit it)',
+            inputValue: generateTempPassword(),
+            inputAttributes: { autocomplete: 'off', spellcheck: 'false' },
+            showCancelButton: true,
+            confirmButtonText: 'Set temporary password',
+            confirmButtonColor: '#123B78',
+            allowOutsideClick: false,
+            inputValidator: (value) => {
+                if (!value || value.trim().length < 8) return 'Use at least 8 characters.'
+                if (/s/.test(value)) return 'The password cannot contain spaces.'
+                return null
+            },
+        })
+
+        if (!isConfirmed || !tempPassword) return
+
+        try {
+            setResettingPassword(true)
+
+            await resetEmployeePassword({ employeeUserId: employee.user_id, tempPassword: tempPassword.trim() })
+
+            const { data: { user } } = await supabase.auth.getUser()
+            await logActivity({
+                userId: user?.id,
+                action: 'reset_employee_password',
+                tableName: 'employees',
+                recordId: employee.employee_id,
+                description: `Set a temporary password for employee "${name}" (${employee.employee_number}).`,
+            })
+
+            await notify({
+                userId: employee.user_id,
+                title: 'Your password was reset',
+                message: 'The Registrar Head set a temporary password for your account. You will be asked to create a new password when you log in.',
+                notificationType: 'account',
+            })
+
+            setEmployee((prev) => ({ ...prev, must_change_password: true }))
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Temporary password set',
+                html: `
+                    <p style="margin-bottom:12px;">Share this with ${name} directly (in person or by phone). It won't be shown again.</p>
+                    <code style="display:block;padding:10px 14px;background:#F3F4F6;color:#111;border-radius:8px;font-size:16px;font-weight:700;letter-spacing:1px;">${tempPassword.trim().replace(/[<>&"]/g, '')}</code>
+                    <p style="margin-top:12px;font-size:13px;color:#555;">When they log in with it, they'll be asked to create their own password before continuing.</p>
+                `,
+                confirmButtonText: 'Done',
+                confirmButtonColor: '#123B78',
+            })
+        } catch (err) {
+            console.error('RESET EMPLOYEE PASSWORD ERROR:', err)
+            notifyError(err.message || 'Failed to set a temporary password.')
+        } finally {
+            setResettingPassword(false)
         }
     }
 
@@ -435,6 +508,29 @@ function EmployeeDetails() {
                     </div>
                 </Modal>
             )}
+
+            <div className="admin-card">
+                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Account</h2>
+                <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
+                    Set a temporary password if this employee forgot theirs or needs a reset. They'll be signed out
+                    and asked to create a new password the next time they log in.
+                </p>
+
+                {employee.must_change_password && (
+                    <div className="admin-notice tone-warning" style={{ marginBottom: 14 }}>
+                        <strong>Waiting for a new password</strong>
+                        <p>This employee still needs to log in with their temporary password and create a new one.</p>
+                    </div>
+                )}
+
+                <button
+                    className="admin-primary-button"
+                    onClick={handleSetTempPassword}
+                    disabled={resettingPassword}
+                >
+                    {resettingPassword ? 'Setting password...' : 'Set Temporary Password'}
+                </button>
+            </div>
 
             <div className="admin-card">
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>College/Program Assignments</h2>
