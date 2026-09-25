@@ -10,6 +10,7 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './EmployeePages.css'
+import PriorityPanel from '../../components/PriorityPanel'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
 import { loadStudentsById } from '../../lib/studentNames'
@@ -114,27 +115,7 @@ function EmployeeRequestDetails() {
 
             let requestQuery = supabase
                 .from('document_requests')
-                .select(`
-                    request_id,
-                    request_number,
-                    student_id,
-                    document_type_id,
-                    assigned_employee_id,
-                    quantity,
-                    unit_fee,
-                    total_amount,
-                    priority,
-                    purpose,
-                    status,
-                    student_remarks,
-                    employee_remarks,
-                    rejection_reason,
-                    cancellation_reason,
-                    cancelled_at,
-                    requested_at,
-                    processed_at,
-                    completed_at
-                `)
+                .select('*')
                 .eq('request_id', requestId)
 
             if (isReleasingOnly) {
@@ -1343,6 +1324,8 @@ function EmployeeRequestDetails() {
                     Review the student's document request, payment, and requirements.
                 </p>
             </div>
+
+            <PriorityPanel request={request} onChange={setRequest} />
 
             {isOverdue && (
                 <div className="employee-notice tone-warning" style={{ marginBottom: 20 }}>

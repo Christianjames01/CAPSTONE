@@ -10,6 +10,7 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
+import PriorityPanel from '../../components/PriorityPanel'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
 
@@ -95,13 +96,7 @@ function AdminRequestDetails() {
 
             const { data: requestData, error: requestError } = await supabase
                 .from('document_requests')
-                .select(`
-                    request_id, request_number, student_id, document_type_id,
-                    assigned_employee_id, quantity, unit_fee, total_amount, priority,
-                    purpose, status, student_remarks, employee_remarks, rejection_reason,
-                    cancellation_reason, cancelled_at,
-                    requested_at, processed_at, completed_at
-                `)
+                .select('*')
                 .eq('request_id', requestId)
                 .single()
 
@@ -1010,6 +1005,10 @@ function AdminRequestDetails() {
                 <span className={`admin-status-pill status-${request.status}`}>
                     {request.status.replace(/_/g, ' ')}
                 </span>
+            </div>
+
+            <div style={{ marginTop: 16 }}>
+                <PriorityPanel request={request} onChange={setRequest} />
             </div>
 
             {isOverdue && (

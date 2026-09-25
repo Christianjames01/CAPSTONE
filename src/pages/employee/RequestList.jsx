@@ -5,6 +5,8 @@ import { formatDisplayDate } from '../../lib/formatDate'
 import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
+import '../../components/PriorityPanel.css'
+import { sortByUrgency, dueInfo, formatNeededBy, isUrgent } from '../../lib/requestPriority'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -81,16 +83,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
 
             let query = supabase
                 .from('document_requests')
-                .select(`
-                    request_id,
-                    request_number,
-                    student_id,
-                    document_type_id,
-                    total_amount,
-                    priority,
-                    status,
-                    requested_at
-                `)
+                .select('*')
                 .order('requested_at', { ascending: false })
 
             if (isReleasingOnly) {
@@ -143,7 +136,8 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
         }
     }
 
-    const visibleRequests = requests
+    // Urgent first, then the nearest "needed by" date.
+    const visibleRequests = sortByUrgency(requests
         .filter((r) => !(showFilterChips && activeStatuses) || activeStatuses.includes(r.status))
         .filter((r) => {
             if (!search.trim()) return true
@@ -154,7 +148,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                 r.studentName.toLowerCase().includes(term) ||
                 r.documentName.toLowerCase().includes(term)
             )
-        })
+        }))
 
     return (
         <div>
@@ -196,7 +190,11 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                 </div>
             ) : (
                 visibleRequests.map((request) => (
-                    <div className="employee-list-card" key={request.request_id}>
+                    <div
+                        className="employee-list-card"
+                        key={request.request_id}
+                        style={isUrgent(request) ? { borderLeft: '4px solid var(--danger-text, var(--red))' } : undefined}
+                    >
                         <div className="employee-list-card-header">
                             <div>
                                 <p className="request-student-name">{request.studentName}</p>
@@ -219,7 +217,17 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
 
                             <div className="employee-info-field">
                                 <span>Priority</span>
-                                <strong style={{ textTransform: 'capitalize' }}>{request.priority}</strong>
+                                <strong style={{ textTransform: 'capitalize', color: isUrgent(request) ? 'var(--danger-text, var(--red))' : undefined }}>
+                                    {isUrgent(request) ? '🔴 Urgent' : request.priority}
+                                </strong>
+                                {request.needed_by && (() => {
+                                    const due = dueInfo(request)
+                                    return (
+                                        <small className={`prio-due${due ? ` is-${due.tone}` : ''}`}>
+                                            Needed by {formatNeededBy(request.needed_by)}{due ? ` · ${due.label}` : ''}
+                                        </small>
+                                    )
+                                })()}
                             </div>
 
                             <div className="employee-info-field">

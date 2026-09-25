@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { formatDisplayDate } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
+import { formatNeededBy } from '../../lib/requestPriority'
 
 const STATUS_LABELS = {
     pending: 'Pending',
@@ -104,25 +105,7 @@ function MyRequest() {
                 error
             } = await supabase
                 .from('document_requests')
-                .select(`
-                    request_id,
-                    request_number,
-                    student_id,
-                    document_type_id,
-                    quantity,
-                    unit_fee,
-                    total_amount,
-                    priority,
-                    purpose,
-                    status,
-                    assigned_employee_id,
-                    student_remarks,
-                    employee_remarks,
-                    rejection_reason,
-                    requested_at,
-                    processed_at,
-                    completed_at
-                `)
+                .select('*')
                 .eq('student_id', student.student_id)
                 .order('requested_at', { ascending: false })
 
@@ -281,7 +264,14 @@ function MyRequest() {
 
                             <div className="student-info-field">
                                 <span>Priority</span>
-                                <strong style={{ textTransform: 'capitalize' }}>{request.priority}</strong>
+                                <strong style={{ textTransform: 'capitalize', color: request.priority === 'urgent' ? 'var(--danger-text, var(--red))' : undefined }}>
+                                    {request.priority === 'urgent' ? '🔴 Urgent' : request.priority}
+                                </strong>
+                                {request.needed_by && (
+                                    <small style={{ display: 'block', marginTop: 2, fontSize: 12, color: 'var(--slate)' }}>
+                                        Needed by {formatNeededBy(request.needed_by)}
+                                    </small>
+                                )}
                             </div>
 
                             <div className="student-info-field">

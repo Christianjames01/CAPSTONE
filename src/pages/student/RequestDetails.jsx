@@ -7,6 +7,7 @@ import { SkeletonPage } from '../../components/Skeleton'
 import CredentialQr from '../../components/CredentialQr'
 import '../auth/Auth.css'
 import './StudentPages.css'
+import { formatNeededBy } from '../../lib/requestPriority'
 
 const STATUS_META = {
     pending: {
@@ -210,27 +211,7 @@ function RequestDetails() {
                 error: requestError
             } = await supabase
                 .from('document_requests')
-                .select(`
-                    request_id,
-                    request_number,
-                    student_id,
-                    document_type_id,
-                    assigned_employee_id,
-                    quantity,
-                    unit_fee,
-                    total_amount,
-                    priority,
-                    purpose,
-                    status,
-                    student_remarks,
-                    employee_remarks,
-                    rejection_reason,
-                    cancellation_reason,
-                    cancelled_at,
-                    requested_at,
-                    processed_at,
-                    completed_at
-                `)
+                .select('*')
                 .eq('request_id', requestId)
                 .eq('student_id', student.student_id)
                 .maybeSingle()
@@ -620,8 +601,20 @@ function RequestDetails() {
 
                     <div className="student-info-field">
                         <span>Priority</span>
-                        <strong style={{ textTransform: 'capitalize' }}>{request.priority}</strong>
+                        <strong style={{ textTransform: 'capitalize', color: request.priority === 'urgent' ? 'var(--danger-text, var(--red))' : undefined }}>
+                            {request.priority === 'urgent' ? '🔴 Urgent' : request.priority}
+                        </strong>
                     </div>
+
+                    {request.needed_by && (
+                        <div className="student-info-field">
+                            <span>Needed By</span>
+                            <strong>
+                                {formatNeededBy(request.needed_by)}
+                                {request.needed_by_reason ? ` — ${request.needed_by_reason}` : ''}
+                            </strong>
+                        </div>
+                    )}
 
                     <div className="student-info-field">
                         <span>Handled By</span>

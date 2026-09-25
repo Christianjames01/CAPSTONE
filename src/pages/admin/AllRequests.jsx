@@ -6,6 +6,8 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
+import '../../components/PriorityPanel.css'
+import { sortByUrgency, dueInfo, formatNeededBy } from '../../lib/requestPriority'
 
 function formatDate(value) {
     if (!value) return ''
@@ -70,17 +72,7 @@ function AllRequests() {
 
             const { data: rows, error: requestError } = await supabase
                 .from('document_requests')
-                .select(`
-                    request_id,
-                    request_number,
-                    student_id,
-                    document_type_id,
-                    assigned_employee_id,
-                    total_amount,
-                    priority,
-                    status,
-                    requested_at
-                `)
+                .select('*')
                 .order('requested_at', { ascending: false })
 
             if (requestError) {
@@ -143,7 +135,8 @@ function AllRequests() {
         }
     }
 
-    const visibleRequests = requests
+    // Urgent first, then the nearest "needed by" date.
+    const visibleRequests = sortByUrgency(requests
         .filter((r) => !activeStatuses || activeStatuses.includes(r.status))
         .filter((r) => {
             if (!search.trim()) return true
@@ -154,7 +147,7 @@ function AllRequests() {
                 r.studentName.toLowerCase().includes(term) ||
                 r.documentName.toLowerCase().includes(term)
             )
-        })
+        }))
 
     const allVisibleSelected = visibleRequests.length > 0 && visibleRequests.every((r) => selectedIds.has(r.request_id))
 
@@ -365,6 +358,14 @@ function AllRequests() {
                                     {request.priority === 'urgent' ? '🔴 ' : '🔵 '}
                                     {request.priority}
                                 </strong>
+                                {request.needed_by && (() => {
+                                    const due = dueInfo(request)
+                                    return (
+                                        <small className={`prio-due${due ? ` is-${due.tone}` : ''}`}>
+                                            Needed by {formatNeededBy(request.needed_by)}{due ? ` · ${due.label}` : ''}
+                                        </small>
+                                    )
+                                })()}
                             </div>
 
                             <div className="admin-info-field">

@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import hcdcLogo from '../../assets/hcdc-logo.png'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
+import { insertRequestWithNeededBy } from '../../lib/requestPriority'
 import { notify, notifyWarning } from '../../lib/notify'
 import { IconX } from './icons'
 import { Skeleton } from '../../components/Skeleton'
@@ -68,6 +69,8 @@ function NewRequest() {
     const [selectedDocument, setSelectedDocument] = useState('')
     const [quantity, setQuantity] = useState(1)
     const [purpose, setPurpose] = useState('')
+    const [neededBy, setNeededBy] = useState('')
+    const [neededByReason, setNeededByReason] = useState('')
     const [loading, setLoading] = useState(false)
     const [loadingDocuments, setLoadingDocuments] = useState(true)
     const [error, setError] = useState('')
@@ -262,6 +265,11 @@ function NewRequest() {
             return
         }
 
+        if (neededBy && neededBy < new Date().toLocaleDateString('en-CA')) {
+            notifyWarning('The "needed by" date can\'t be in the past.')
+            return
+        }
+
         if (selectedDocumentDetails?.requires_purpose && !purpose.trim()) {
             notifyWarning('Please state the purpose of this request — it is required for this document.')
             return
@@ -336,20 +344,23 @@ function NewRequest() {
             const unitFee = Number(document.fee || 0)
 
             const { data: request, error: requestError } =
-                await supabase
+                await insertRequestWithNeededBy({
+                    student_id: student.student_id,
+                    document_type_id: document.document_type_id,
+                    assigned_employee_id: assignedEmployeeId,
+                    quantity: Number(quantity),
+                    unit_fee: unitFee,
+                    // Staff set urgent; the student's "needed by" date helps them decide.
+                    priority: 'normal',
+                    purpose: purpose || null,
+                    needed_by: neededBy || null,
+                    needed_by_reason: neededBy ? (neededByReason.trim() || null) : null,
+                    status: 'pending'
+                }, (payload) => supabase
                     .from('document_requests')
-                    .insert({
-                        student_id: student.student_id,
-                        document_type_id: document.document_type_id,
-                        assigned_employee_id: assignedEmployeeId,
-                        quantity: Number(quantity),
-                        unit_fee: unitFee,
-                        priority: 'normal',
-                        purpose: purpose || null,
-                        status: 'pending'
-                    })
+                    .insert(payload)
                     .select()
-                    .single()
+                    .single())
 
             if (requestError) {
                 throw new Error(
@@ -588,6 +599,41 @@ function NewRequest() {
                             </small>
                         )}
                     </div>
+
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="needed-by">
+                            Needed by <span style={{ color: 'var(--slate)', fontWeight: 400 }}>(optional)</span>
+                        </label>
+                        <input
+                            id="needed-by"
+                            type="date"
+                            className="form-input"
+                            value={neededBy}
+                            min={new Date().toLocaleDateString('en-CA')}
+                            onChange={(e) => setNeededBy(e.target.value)}
+                            disabled={loading}
+                        />
+                        <small style={{ color: 'var(--slate)', fontSize: 12 }}>
+                            If you have a deadline (e.g. a scholarship or job application), tell us when you need it.
+                            The Registrar may prioritize requests with close deadlines.
+                        </small>
+                    </div>
+
+                    {neededBy && (
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="needed-by-reason">Why do you need it by then?</label>
+                            <input
+                                id="needed-by-reason"
+                                type="text"
+                                className="form-input"
+                                value={neededByReason}
+                                onChange={(e) => setNeededByReason(e.target.value)}
+                                placeholder="e.g. Scholarship application deadline"
+                                maxLength={200}
+                                disabled={loading}
+                            />
+                        </div>
+                    )}
 
                     <button
                         type="submit"
