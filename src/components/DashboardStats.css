@@ -702,7 +702,11 @@ html[data-theme="dark"] .employee-layout {
 }
 
 .dash-workload-track span.is-heavy {
-    background: var(--status-ready);
+    background: var(--danger-text, #B42318);
+}
+
+.dash-workload-top span.is-heavy {
+    color: var(--danger-text, #B42318);
 }
 
 /* Recent activity feed */

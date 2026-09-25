@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import { loadStudentsById } from '../../lib/studentNames'
+import { MOVABLE_STATUSES, averageLoad, isOverloaded, suggestRebalance } from '../../lib/workloadBalance'
 import './AdminPages.css'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
@@ -27,6 +29,14 @@ function Assignments() {
     const [uncoveredPrograms, setUncoveredPrograms] = useState([])
     const [coverPick, setCoverPick] = useState({})
     const [covering, setCovering] = useState(null)
+
+    // Rebalancing: open requests that already have an employee, the
+    // employee whose requests are expanded, and what's picked to move.
+    const [assignedOpen, setAssignedOpen] = useState([])
+    const [expandedEmployeeId, setExpandedEmployeeId] = useState(null)
+    const [moveSelected, setMoveSelected] = useState(new Set())
+    const [moveTargetId, setMoveTargetId] = useState('')
+    const [moving, setMoving] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -82,8 +92,8 @@ function Assignments() {
 
             const unassignedRequests = openRequests.filter((r) => !r.assigned_employee_id)
 
-            const studentIds = [...new Set(unassignedRequests.map((r) => r.student_id).filter(Boolean))]
-            const documentTypeIds = [...new Set(unassignedRequests.map((r) => r.document_type_id).filter(Boolean))]
+            const studentIds = [...new Set(openRequests.map((r) => r.student_id).filter(Boolean))]
+            const documentTypeIds = [...new Set(openRequests.map((r) => r.document_type_id).filter(Boolean))]
 
             const [{ data: students }, { data: documentTypes }] = await Promise.all([
                 studentIds.length
@@ -130,6 +140,20 @@ function Assignments() {
             })
 
             setUnassigned(unassignedList)
+
+            const assignedRequests = openRequests.filter((r) => r.assigned_employee_id)
+            const studentInfo = await loadStudentsById(assignedRequests.map((r) => r.student_id))
+
+            setAssignedOpen(
+                assignedRequests
+                    .map((r) => ({
+                        ...r,
+                        studentName: studentInfo[r.student_id]?.name || 'Student',
+                        studentNumber: studentInfo[r.student_id]?.number || 'N/A',
+                        documentName: documentNameById[r.document_type_id] || 'Document',
+                    }))
+                    .sort((a, b) => new Date(a.requested_at) - new Date(b.requested_at))
+            )
 
             // Group waiting requests whose college/program has no employee yet.
             const groups = {}
@@ -360,6 +384,138 @@ function Assignments() {
         }
     }
 
+    // ---- Rebalancing -------------------------------------------------------
+
+    const average = averageLoad(workload.map((e) => e.openCount))
+    const suggestedMoves = useMemo(() => suggestRebalance(employees, assignedOpen), [employees, assignedOpen])
+    const nameOfEmployee = (id) => employees.find((e) => e.employee_id === id)?.name || 'Employee'
+
+    const toggleExpanded = (employeeId) => {
+        setExpandedEmployeeId((prev) => (prev === employeeId ? null : employeeId))
+        setMoveSelected(new Set())
+        setMoveTargetId('')
+    }
+
+    const toggleMoveSelected = (requestId) => {
+        setMoveSelected((prev) => {
+            const next = new Set(prev)
+            if (next.has(requestId)) next.delete(requestId)
+            else next.add(requestId)
+            return next
+        })
+    }
+
+    // Moves requests to other employees. `moves` is [{ request, toId }].
+    // Each update only matches rows still assigned to the employee we saw,
+    // so a request someone else reassigned meanwhile is left alone.
+    const moveRequests = async (moves) => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('You are not logged in.')
+
+        const groups = {}
+        for (const m of moves) {
+            const key = `${m.request.assigned_employee_id}>${m.toId}`
+            if (!groups[key]) groups[key] = { fromId: m.request.assigned_employee_id, toId: m.toId, requests: [] }
+            groups[key].requests.push(m.request)
+        }
+
+        let movedCount = 0
+
+        for (const g of Object.values(groups)) {
+            const { data: updatedRows, error: updateError } = await supabase
+                .from('document_requests')
+                .update({ assigned_employee_id: g.toId, updated_at: new Date().toISOString() })
+                .in('request_id', g.requests.map((r) => r.request_id))
+                .eq('assigned_employee_id', g.fromId)
+                .select('request_id')
+
+            if (updateError) throw new Error('Failed to move requests: ' + updateError.message)
+
+            const movedIds = new Set((updatedRows || []).map((r) => r.request_id))
+            movedCount += movedIds.size
+
+            await Promise.all(
+                g.requests
+                    .filter((r) => movedIds.has(r.request_id))
+                    .map((r) =>
+                        logActivity({
+                            userId: user.id,
+                            action: 'reassign_request',
+                            tableName: 'document_requests',
+                            recordId: r.request_id,
+                            description: `Reassigned request "${r.request_number}" from "${nameOfEmployee(g.fromId)}" to "${nameOfEmployee(g.toId)}" (workload rebalance).`,
+                        })
+                    )
+            )
+        }
+
+        return movedCount
+    }
+
+    const reportMoved = (movedCount, expected) => {
+        if (movedCount === 0) {
+            notifyError('No requests were moved. They may have changed in the meantime, or your account may not have permission to reassign them.')
+        } else if (movedCount < expected) {
+            notifyWarning(`${movedCount} of ${expected} request(s) moved. The rest changed in the meantime.`)
+        } else {
+            notifySuccess(`${movedCount} request(s) moved.`)
+        }
+    }
+
+    const moveSelectedRequests = async () => {
+        if (!moveTargetId) {
+            notifyWarning('Please select the employee to move them to.')
+            return
+        }
+
+        const targets = assignedOpen.filter((r) => moveSelected.has(r.request_id))
+        if (targets.length === 0) return
+
+        const confirmed = await confirmModal(
+            `Move ${targets.length} request(s) from ${nameOfEmployee(expandedEmployeeId)} to ${nameOfEmployee(moveTargetId)}?`,
+            { title: 'Move requests?', confirmButtonText: 'Move', icon: 'question' }
+        )
+        if (!confirmed) return
+
+        try {
+            setMoving(true)
+            const movedCount = await moveRequests(targets.map((request) => ({ request, toId: moveTargetId })))
+            reportMoved(movedCount, targets.length)
+            setMoveSelected(new Set())
+            setMoveTargetId('')
+            await loadData()
+        } catch (err) {
+            console.error('MOVE REQUESTS ERROR:', err)
+            notifyError(err.message || 'Failed to move requests.')
+        } finally {
+            setMoving(false)
+        }
+    }
+
+    const applySuggestedMoves = async () => {
+        if (suggestedMoves.length === 0) return
+
+        const confirmed = await confirmModal(
+            `Apply ${suggestedMoves.length} suggested move(s) to even out the workload?`,
+            { title: 'Rebalance workload?', confirmButtonText: 'Apply', icon: 'question' }
+        )
+        if (!confirmed) return
+
+        try {
+            setMoving(true)
+            const movedCount = await moveRequests(suggestedMoves.map((m) => ({ request: m.request, toId: m.toId })))
+            reportMoved(movedCount, suggestedMoves.length)
+            await loadData()
+        } catch (err) {
+            console.error('REBALANCE ERROR:', err)
+            notifyError(err.message || 'Failed to rebalance the workload.')
+        } finally {
+            setMoving(false)
+        }
+    }
+
+    const expandedRequests = assignedOpen.filter((r) => r.assigned_employee_id === expandedEmployeeId)
+
     return (
         <div>
             <div className="admin-page-header">
@@ -369,30 +525,167 @@ function Assignments() {
 
             {error && <div className="admin-error-box">{error}</div>}
 
-            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Employee Workload</h2>
+            <h2 style={{ fontSize: 17, marginBottom: 4 }}>Employee Workload</h2>
+            <p style={{ fontSize: 13, marginBottom: 14 }}>
+                Open requests per employee{workload.length > 0 && ` · team average ${average.toFixed(1)}`}. Use
+                “View requests” to move some of an employee’s requests to someone else.
+            </p>
 
             {loading ? (
                 <SkeletonList count={3} />
             ) : (
-                <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
+                <div className="admin-table-wrapper" style={{ marginBottom: 20 }}>
                     <table className="admin-table">
                         <thead>
                             <tr>
                                 <th>Employee</th>
                                 <th>Position</th>
                                 <th>Open Requests</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {workload.map((e) => (
-                                <tr key={e.employee_id}>
-                                    <td>{e.name}</td>
-                                    <td>{e.position_title}</td>
-                                    <td>{e.openCount}</td>
-                                </tr>
-                            ))}
+                            {workload.map((e) => {
+                                const heavy = isOverloaded(e.openCount, average, workload.length)
+                                return (
+                                    <tr key={e.employee_id}>
+                                        <td>{e.name}</td>
+                                        <td>{e.position_title}</td>
+                                        <td>
+                                            {e.openCount}
+                                            {heavy && (
+                                                <span className="admin-status-pill status-rejected" style={{ marginLeft: 8 }}>
+                                                    Overloaded
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            {e.openCount > 0 && (
+                                                <button className="admin-link-button" onClick={() => toggleExpanded(e.employee_id)}>
+                                                    {expandedEmployeeId === e.employee_id ? 'Hide requests' : 'View requests'}
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {!loading && expandedEmployeeId && (
+                <div className="admin-list-card" style={{ marginBottom: 20 }}>
+                    <div className="admin-list-card-header">
+                        <div>
+                            <h3>{nameOfEmployee(expandedEmployeeId)}’s open requests</h3>
+                            <p>Tick the ones to move, then choose who takes them.</p>
+                        </div>
+                    </div>
+
+                    {expandedRequests.length === 0 ? (
+                        <p style={{ fontSize: 13 }}>No open requests.</p>
+                    ) : (
+                        <ul style={{ listStyle: 'none', margin: '0 0 14px', padding: 0 }}>
+                            {expandedRequests.map((r) => (
+                                <li key={r.request_id} style={{ borderTop: '1px solid var(--line)' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={moveSelected.has(r.request_id)}
+                                            onChange={() => toggleMoveSelected(r.request_id)}
+                                            disabled={moving}
+                                        />
+                                        <span style={{ flex: 1, minWidth: 0 }}>
+                                            <strong style={{ display: 'block', fontSize: 13.5 }}>{r.documentName}</strong>
+                                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>
+                                                {r.request_number} · {r.studentName} ({r.studentNumber})
+                                                {!MOVABLE_STATUSES.includes(r.status) && ' · already in progress'}
+                                            </span>
+                                        </span>
+                                        <span className={`admin-status-pill status-${r.status}`}>
+                                            {r.status.replace(/_/g, ' ')}
+                                        </span>
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <select
+                            className="admin-search-input"
+                            style={{ maxWidth: 260 }}
+                            value={moveTargetId}
+                            onChange={(e) => setMoveTargetId(e.target.value)}
+                            disabled={moving}
+                        >
+                            <option value="">-- Move to employee --</option>
+                            {workload
+                                .filter((e) => e.employee_id !== expandedEmployeeId)
+                                .map((e) => (
+                                    <option key={e.employee_id} value={e.employee_id}>
+                                        {e.name} ({e.openCount} open)
+                                    </option>
+                                ))}
+                        </select>
+
+                        <button
+                            className="admin-primary-button"
+                            onClick={moveSelectedRequests}
+                            disabled={moving || moveSelected.size === 0}
+                        >
+                            {moving ? 'Moving...' : moveSelected.size ? `Move ${moveSelected.size} selected` : 'Move selected'}
+                        </button>
+                    </div>
+
+                    {workload.length < 2 && (
+                        <p style={{ fontSize: 12.5, marginTop: 10 }}>
+                            There’s no other active employee to move requests to yet.
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {!loading && (
+                <div className="admin-list-card" style={{ marginBottom: 28 }}>
+                    <div className="admin-list-card-header">
+                        <div>
+                            <h3>Suggested rebalance</h3>
+                            <p>
+                                Moves not-yet-started requests (pending, awaiting payment, receipt uploaded or verified)
+                                from the busiest employees to the least busy, until everyone is within one request of
+                                each other. Requests already being processed stay put.
+                            </p>
+                        </div>
+                    </div>
+
+                    {workload.length < 2 ? (
+                        <p style={{ fontSize: 13 }}>Add another active employee to share the workload.</p>
+                    ) : suggestedMoves.length === 0 ? (
+                        <p style={{ fontSize: 13 }}>The workload is already balanced — nothing to move.</p>
+                    ) : (
+                        <>
+                            <ul style={{ listStyle: 'none', margin: '0 0 14px', padding: 0 }}>
+                                {suggestedMoves.map((m) => (
+                                    <li
+                                        key={m.request.request_id}
+                                        style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: '9px 0', borderTop: '1px solid var(--line)', fontSize: 13 }}
+                                    >
+                                        <strong>{m.request.request_number}</strong>
+                                        <span style={{ color: 'var(--slate)' }}>{m.request.documentName} · {m.request.studentName}</span>
+                                        <span style={{ marginLeft: 'auto' }}>
+                                            {m.fromName} → <strong>{m.toName}</strong>
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <button className="admin-primary-button" onClick={applySuggestedMoves} disabled={moving}>
+                                {moving ? 'Moving...' : `Apply ${suggestedMoves.length} move(s)`}
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
 

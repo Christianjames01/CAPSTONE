@@ -5,6 +5,7 @@ import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import { SkeletonDashboard } from '../../components/Skeleton'
 import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers, IconSwap, IconBarChart } from './icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
+import { averageLoad as averageOf, isOverloaded } from '../../lib/workloadBalance'
 import '../../components/DashboardStats.css'
 import './AdminPages.css'
 
@@ -44,6 +45,7 @@ function AdminDashboard() {
     const [studentCount, setStudentCount] = useState(0)
     const [recentStudents, setRecentStudents] = useState([])
     const [employeeNames, setEmployeeNames] = useState({})
+    const [activeEmployeeIds, setActiveEmployeeIds] = useState([])
     const [loadedAt, setLoadedAt] = useState(() => new Date())
     const [headName, setHeadName] = useState('')
     const [loading, setLoading] = useState(true)
@@ -86,6 +88,8 @@ function AdminDashboard() {
             const { data: employeeProfiles } = employeeUserIds.length
                 ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', employeeUserIds)
                 : { data: [] }
+
+            setActiveEmployeeIds((employeeRows || []).filter((e) => e.status === 'active').map((e) => e.employee_id))
 
             const employeeProfileByUserId = Object.fromEntries((employeeProfiles || []).map((p) => [p.user_id, p]))
             setEmployeeNames(Object.fromEntries((employeeRows || []).map((e) => {
@@ -236,9 +240,10 @@ function AdminDashboard() {
     const activeRequests = requests.filter((r) => ACTIVE_STATUSES.includes(r.status))
     const unassignedCount = activeRequests.filter((r) => !r.assigned_employee_id).length
 
-    // Active requests per employee, busiest first.
+    // Active requests per employee, busiest first. Active employees with no
+    // requests are included (as 0) so the average reflects the whole team.
     const workload = useMemo(() => {
-        const counts = {}
+        const counts = Object.fromEntries(activeEmployeeIds.map((id) => [id, 0]))
         for (const r of requests) {
             if (!ACTIVE_STATUSES.includes(r.status) || !r.assigned_employee_id) continue
             counts[r.assigned_employee_id] = (counts[r.assigned_employee_id] || 0) + 1
@@ -246,9 +251,10 @@ function AdminDashboard() {
         return Object.entries(counts)
             .map(([employeeId, count]) => ({ employeeId, count, name: employeeNames[employeeId] || 'Employee' }))
             .sort((a, b) => b.count - a.count)
-    }, [requests, employeeNames])
+    }, [requests, employeeNames, activeEmployeeIds])
     const workloadMax = Math.max(1, ...workload.map((w) => w.count))
-    const averageLoad = workload.length ? (workload.reduce((sum, w) => sum + w.count, 0) / workload.length) : 0
+    const averageLoad = averageOf(workload.map((w) => w.count))
+    const hasActiveWorkload = workload.some((w) => w.count > 0)
 
     const overviewStats = [
         { label: 'Total Students', value: studentCount, to: '/admin/students', Icon: IconUsers, note: 'Registered student accounts' },
@@ -388,29 +394,34 @@ function AdminDashboard() {
                         <button className="admin-link-button" onClick={() => navigate('/admin/assignments')}>Rebalance →</button>
                     </div>
 
-                    {workload.length === 0 ? (
+                    {!hasActiveWorkload ? (
                         <p className="dash-panel-empty">No active requests are assigned right now.</p>
                     ) : (
                         <ul className="dash-workload">
-                            {workload.map((w) => (
-                                <li key={w.employeeId}>
-                                    <button onClick={() => navigate(`/admin/employees/${w.employeeId}`)}>
-                                        <span className="dash-avatar" aria-hidden="true">{initialsOf(w.name)}</span>
-                                        <span className="dash-workload-main">
-                                            <span className="dash-workload-top">
-                                                <strong>{w.name}</strong>
-                                                <span>{w.count} active</span>
+                            {workload.map((w) => {
+                                const heavy = isOverloaded(w.count, averageLoad, workload.length)
+                                return (
+                                    <li key={w.employeeId}>
+                                        <button onClick={() => navigate(`/admin/employees/${w.employeeId}`)}>
+                                            <span className="dash-avatar" aria-hidden="true">{initialsOf(w.name)}</span>
+                                            <span className="dash-workload-main">
+                                                <span className="dash-workload-top">
+                                                    <strong>{w.name}</strong>
+                                                    <span className={heavy ? 'is-heavy' : ''}>
+                                                        {heavy && 'Overloaded · '}{w.count} active
+                                                    </span>
+                                                </span>
+                                                <span className="dash-workload-track" aria-hidden="true">
+                                                    <span
+                                                        className={heavy ? 'is-heavy' : ''}
+                                                        style={{ width: `${(w.count / workloadMax) * 100}%` }}
+                                                    />
+                                                </span>
                                             </span>
-                                            <span className="dash-workload-track" aria-hidden="true">
-                                                <span
-                                                    className={w.count > averageLoad * 1.5 && workload.length > 1 ? 'is-heavy' : ''}
-                                                    style={{ width: `${(w.count / workloadMax) * 100}%` }}
-                                                />
-                                            </span>
-                                        </span>
-                                    </button>
-                                </li>
-                            ))}
+                                        </button>
+                                    </li>
+                                )
+                            })}
                         </ul>
                     )}
                 </section>
