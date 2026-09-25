@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import { supabase } from "../../lib/supabase";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
 import dpoRegisteredBadge from "../../assets/dpo-registered-badge.png";
 import dataPrivacyBadge from "../../assets/data-privacy-badge.png";
 
-const DOCUMENTS = [
+// Fallback only: the catalog is loaded live from document_types (so the
+// registrar head's edits show here). Used if that load fails or is empty.
+const FALLBACK_DOCUMENTS = [
     { name: "Transcript of Records", code: "TOR" },
     { name: "Certification of Grades", code: "COG" },
     { name: "Certificate of Enrollment", code: "COE" },
@@ -140,7 +143,38 @@ const LANDING_FAQ = [
     ["What do I bring when claiming my document?", "Your official receipt and a valid ID. You'll get a claiming date and time in your account once your document is ready."],
 ];
 
+
+// Available document types, alphabetical, straight from the database.
+function useDocumentCatalog() {
+    const [documents, setDocuments] = useState(FALLBACK_DOCUMENTS);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        supabase
+            .from("document_types")
+            .select("document_code, document_name")
+            .eq("is_available", true)
+            .order("document_name")
+            .then(({ data, error }) => {
+                if (cancelled) return;
+                if (error) {
+                    console.warn("LOAD DOCUMENT CATALOG ERROR:", error);
+                    return;
+                }
+                if (data && data.length > 0) {
+                    setDocuments(data.map((d) => ({ name: d.document_name, code: d.document_code })));
+                }
+            });
+
+        return () => { cancelled = true; };
+    }, []);
+
+    return documents;
+}
+
 const LandingPage = () => {
+    const DOCUMENTS = useDocumentCatalog();
     const [verifyCode, setVerifyCode] = useState("");
 
     const scrollToSection = (id) => {
@@ -403,7 +437,7 @@ const LandingPage = () => {
 
                             <div className="document-list">
                                 {DOCUMENTS.map((doc) => (
-                                    <div className="document-item" key={doc.code}>
+                                    <div className="document-item" key={`${doc.code}-${doc.name}`}>
                                         <span className="document-code">{doc.code}</span>
                                         <span>{doc.name}</span>
                                         <span className="document-check"><IconCheck /></span>
