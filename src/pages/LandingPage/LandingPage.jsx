@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase";
+import { DocumentSample } from "../../components/DocumentSample";
 import "./Landing.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
 import dpoRegisteredBadge from "../../assets/dpo-registered-badge.png";
@@ -465,25 +466,19 @@ const LandingPage = () => {
                                                     {doc.preview ? (
                                                         <img src={doc.preview} alt={`Sample of ${doc.name}`} loading="lazy" />
                                                     ) : (
-                                                        // No image uploaded by the registrar yet: a generic
-                                                        // sample sheet so every document still has a preview.
-                                                        <span className="document-paper" aria-hidden="true">
-                                                            <span className="document-paper-seal" />
-                                                            <span className="document-paper-school">Holy Cross of Davao College</span>
-                                                            <span className="document-paper-office">Office of the Registrar</span>
-                                                            <span className="document-paper-title">{doc.name}</span>
-                                                            <span className="document-paper-line" />
-                                                            <span className="document-paper-line" />
-                                                            <span className="document-paper-line short" />
-                                                            <span className="document-paper-line" />
-                                                            <span className="document-paper-line short" />
-                                                            <span className="document-paper-sign" />
-                                                            <span className="document-paper-stamp">SAMPLE</span>
+                                                        // No image uploaded by the registrar yet: the same
+                                                        // layout mock-up students see on New Request.
+                                                        <span className="document-preview-sample">
+                                                            <DocumentSample name={doc.name} documentCode={doc.code} />
                                                         </span>
                                                     )}
                                                     <span className="document-preview-caption">
                                                         <strong>{doc.name}</strong>
-                                                        <em>Sample preview</em>
+                                                        <em>
+                                                            {doc.preview
+                                                                ? "A real sample of this document, posted by the Registrar."
+                                                                : "Reference layout only — not an official document."}
+                                                        </em>
                                                     </span>
                                                 </span>
                                             )}
