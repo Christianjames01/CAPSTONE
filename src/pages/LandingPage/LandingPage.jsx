@@ -73,12 +73,88 @@ const IconSearch = () => (
     </svg>
 );
 
-const IconShield = () => (
+const IconReceipt = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3.5 19 6.3v5.4c0 4.6-3 8.2-7 9.8-4-1.6-7-5.2-7-9.8V6.3Z" />
-        <path d="m9 12.2 2.1 2.1L15.5 10" />
+        <path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z" />
+        <path d="M9 8h6M9 11.5h6M9 15h3" />
     </svg>
 );
+
+const IconBell = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z" />
+        <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </svg>
+);
+
+const IconUsers = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="9" cy="8.5" r="3.5" />
+        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        <path d="M16 5.2a3.5 3.5 0 0 1 0 6.6M17.5 14.3c2.1.7 3.5 2.9 3.5 5.7" />
+    </svg>
+);
+
+const IconQr = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1" />
+        <rect x="14" y="3.5" width="6.5" height="6.5" rx="1" />
+        <rect x="3.5" y="14" width="6.5" height="6.5" rx="1" />
+        <path d="M14 14h2.5v2.5H14ZM18 18h2.5v2.5H18ZM14 18.5v2M18.5 14h2" />
+    </svg>
+);
+
+// Landing page "Registrar Services" cards.
+const SERVICES = [
+    {
+        Icon: IconDocument,
+        tag: "Online",
+        title: "Document requests",
+        text: (count) => `Request any of ${count} registrar documents — transcripts, certifications, diplomas and more — without visiting the office.`,
+        link: "Browse documents",
+        href: "#documents",
+    },
+    {
+        Icon: IconReceipt,
+        tag: "Payments",
+        title: "Pay & upload receipts",
+        text: () => "Pay the fee, upload your official receipt, and the Registrar verifies it online — no extra trip to the counter.",
+        link: "See how it works",
+        href: "#process",
+    },
+    {
+        Icon: IconBell,
+        tag: "Real time",
+        title: "Live request tracking",
+        text: () => "Follow every step from verification to processing. Status changes appear instantly, with a notification each time.",
+        link: "Track your requests",
+        href: "/login",
+    },
+    {
+        Icon: IconCalendar,
+        tag: "Claiming",
+        title: "Claim scheduling",
+        text: () => "Get a set claiming date, time and window when your document is ready — and request a new schedule if you can’t make it.",
+        link: "Learn more",
+        href: "#process",
+    },
+    {
+        Icon: IconUsers,
+        tag: "New",
+        title: "Authorized representatives",
+        text: () => "Can’t claim in person? Name someone to claim for you with a signed letter and valid ID, approved online first.",
+        link: "Common questions",
+        href: "#faq",
+    },
+    {
+        Icon: IconQr,
+        tag: "Verified",
+        title: "QR-verified credentials",
+        text: () => "Every released document carries a signed credential and QR code, so schools and employers can confirm it’s genuine.",
+        link: "Verify a document",
+        href: "#verify",
+    },
+];
 
 const IconUser = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -143,6 +219,7 @@ const LANDING_FAQ = [
     ["How long does processing take?", "It varies by document type and current volume. You'll see real-time status updates in your account at every step, with no need to keep calling to check."],
     ["How do I know a document is genuine?", "Every document CertiChain issues carries a unique verification code and QR code. Anyone — an employer, another school — can confirm it's authentic in seconds, no account required."],
     ["What do I bring when claiming my document?", "Your official receipt and a valid ID. You'll get a claiming date and time in your account once your document is ready."],
+    ["Can someone else claim my document for me?", "Yes. Open your request and add an authorized representative: enter their name and relationship, and upload a letter you signed plus their valid ID. Once the Registrar approves it, they bring the original signed letter and their valid ID when claiming."],
 ];
 
 
@@ -433,46 +510,48 @@ const LandingPage = () => {
                             <span className="section-label">Registrar Services</span>
                             <h2>Everything you need, <br /><span>without the counter line.</span></h2>
                             <p>
-                                CertiChain centralizes academic document requests so
-                                students and alumni can submit, pay for, and track
-                                registrar transactions from one account.
+                                Request, pay for, track and claim registrar documents from
+                                one account — and let anyone confirm they’re genuine with a
+                                quick QR scan.
                             </p>
                         </div>
 
                         <div className="services-grid">
+                            {SERVICES.map((service, index) => (
+                                <article className="service-card" key={service.title}>
+                                    <div className="service-card-top">
+                                        <div className="service-icon"><service.Icon /></div>
+                                        <span className="service-tag">{service.tag}</span>
+                                    </div>
+                                    <span className="service-number">{String(index + 1).padStart(2, "0")}</span>
+                                    <h3>{service.title}</h3>
+                                    <p>{service.text(DOCUMENTS.length)}</p>
+                                    <a
+                                        href={service.href}
+                                        onClick={service.href.startsWith("#") ? (e) => { e.preventDefault(); scrollToSection(service.href.slice(1)); } : undefined}
+                                    >
+                                        {service.link} <span aria-hidden="true">→</span>
+                                    </a>
+                                </article>
+                            ))}
+                        </div>
 
-                            <div className="service-card">
-                                <div className="service-icon"><IconDocument /></div>
-                                <h3>Document requests</h3>
-                                <p>Request transcripts, certificates, and other registrar
-                                    documents online instead of visiting the office in person.</p>
-                                <a href="#documents">View documents →</a>
+                        <div className="services-highlights">
+                            <div>
+                                <strong>{DOCUMENTS.length}+</strong>
+                                <span>documents you can request online</span>
                             </div>
-
-                            <div className="service-card">
-                                <div className="service-icon"><IconCalendar /></div>
-                                <h3>Claim scheduling</h3>
-                                <p>Get an estimated processing date and a scheduled
-                                    claiming window through your CertiChain account.</p>
-                                <a href="#process">Learn more →</a>
+                            <div>
+                                <strong>Live</strong>
+                                <span>status updates and notifications</span>
                             </div>
-
-                            <div className="service-card">
-                                <div className="service-icon"><IconSearch /></div>
-                                <h3>Request tracking</h3>
-                                <p>Follow your request from submission and verification
-                                    through processing and claiming, in real time.</p>
-                                <a href="#process">Track requests →</a>
+                            <div>
+                                <strong>QR</strong>
+                                <span>verification on every credential</span>
                             </div>
-
-                            <div className="service-card">
-                                <div className="service-icon"><IconShield /></div>
-                                <h3>Secure accounts</h3>
-                                <p>Every account is protected by authenticated login and
-                                    role-based access, keeping your request history private.</p>
-                                <a href="/register">Create an account →</a>
-                            </div>
-
+                            <a className="services-highlights-cta" href="/register">
+                                Create your account <span aria-hidden="true">→</span>
+                            </a>
                         </div>
 
                     </div>

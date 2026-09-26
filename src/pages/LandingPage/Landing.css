@@ -564,55 +564,209 @@ h2 span {
 =================================================== */
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 22px;
 }
 
 .service-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     background: var(--white);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 30px 24px;
+    border-radius: 14px;
+    padding: 28px 26px 24px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* Accent line that slides in on hover */
+.service-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--blue));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
 }
 
 .service-card:hover {
     transform: translateY(-4px);
-    border-color: var(--red);
-    box-shadow: 0 20px 40px -28px rgba(10, 36, 80, 0.4);
+    border-color: color-mix(in srgb, var(--red) 40%, var(--line));
+    box-shadow: 0 24px 44px -30px rgba(10, 36, 80, 0.45);
+}
+
+.service-card:hover::before {
+    transform: scaleX(1);
+}
+
+.service-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .service-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
     background: var(--blue-tint);
     color: var(--blue-accent, var(--blue));
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 18px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.service-card:hover .service-icon {
+    background: var(--blue);
+    color: var(--white);
 }
 
 .service-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 23px;
+    height: 23px;
+}
+
+.service-tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--slate);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.service-number {
+    position: absolute;
+    top: 74px;
+    right: 22px;
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 54px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+    opacity: 0.05;
+    pointer-events: none;
 }
 
 .service-card h3 {
-    font-size: 17px;
+    font-size: 18px;
     margin-bottom: 10px;
 }
 
 .service-card p {
+    flex: 1;
     font-size: 14px;
-    margin-bottom: 16px;
+    line-height: 1.6;
+    margin-bottom: 18px;
 }
 
 .service-card a {
-    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--blue-accent, var(--blue));
+}
+
+.service-card a span {
+    transition: transform 0.2s ease;
+}
+
+.service-card a:hover span {
+    transform: translateX(3px);
+}
+
+/* Highlights strip under the cards */
+.services-highlights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) auto;
+    align-items: center;
+    gap: 24px;
+    margin-top: 28px;
+    padding: 22px 28px;
+    border-radius: 14px;
+    background: var(--blue);
+    color: var(--white);
+}
+
+.services-highlights div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.services-highlights strong {
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--white);
+}
+
+.services-highlights span {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.services-highlights-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--red);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.services-highlights-cta:hover {
+    background: var(--red-dark);
+    color: #fff;
+}
+
+.services-highlights-cta span {
+    color: inherit;
+}
+
+@media (max-width: 960px) {
+    .services-highlights {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .services-highlights-cta {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 620px) {
+    .services-highlights {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .service-card,
+    .service-card::before,
+    .service-card a span {
+        transition: none;
+    }
 }
 
 /* ===================================================
