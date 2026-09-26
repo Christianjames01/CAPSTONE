@@ -165,7 +165,8 @@ function RequestNotes({ request, cardClassName, canDeleteAny = false }) {
                 <div>
                     <h2 style={{ fontSize: 16, marginBottom: 4 }}>Staff Notes</h2>
                     <p className="rn-sub">
-                        Visible to employees and the Registrar Head only — never to the student.
+                        Visible to employees and the Registrar Head only — never to the student. The assigned
+                        employee is notified of new notes.
                     </p>
                 </div>
                 {notes.length > 0 && <span className="rn-count">{notes.length}</span>}
