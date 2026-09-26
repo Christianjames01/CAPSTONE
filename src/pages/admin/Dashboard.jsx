@@ -7,6 +7,7 @@ import { SkeletonDashboard } from '../../components/Skeleton'
 import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers, IconSwap, IconBarChart } from './icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
 import { averageLoad as averageOf, isOverloaded } from '../../lib/workloadBalance'
+import { readableLogText } from '../../lib/logText'
 import '../../components/DashboardStats.css'
 import './AdminPages.css'
 
@@ -483,7 +484,7 @@ function AdminDashboard() {
                                             <strong>{log.actorName}</strong>
                                             <span className="dash-feed-action">{log.action.replace(/_/g, ' ')}</span>
                                         </span>
-                                        <span className="dash-feed-desc">{log.description}</span>
+                                        <span className="dash-feed-desc">{readableLogText(log.description)}</span>
                                     </span>
                                     <time className="dash-feed-time" dateTime={log.created_at} title={new Date(log.created_at).toLocaleString('en-PH')}>
                                         {relativeTime(log.created_at, loadedAt)}

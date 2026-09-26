@@ -546,7 +546,7 @@ function ClaimSchedule() {
                     action: 'create_claim_schedule',
                     tableName: 'claim_schedules',
                     recordId: newSchedule.claim_schedule_id,
-                    description: `Created claiming schedule for request "${request?.request_number || requestId}" on "${scheduledDate}" at "${scheduledTime}".`,
+                    description: `Created claiming schedule for request "${request?.request_number || requestId}" on ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}.`,
                 })
 
                 await notifyStudentByStudentId({

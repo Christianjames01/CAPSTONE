@@ -1,3 +1,4 @@
+import { readableLogText } from '../lib/logText'
 import './HighlightedText.css'
 
 const FROM_TO_PATTERN = /from\s+"([^"]+)"\s+to\s+"([^"]+)"/gi
@@ -21,8 +22,9 @@ function highlightSegments(text, keyPrefix) {
     })
 }
 
-function HighlightedText({ text }) {
-    if (!text) return null
+function HighlightedText({ text: rawText }) {
+    if (!rawText) return null
+    const text = readableLogText(rawText)
 
     const regex = new RegExp(FROM_TO_PATTERN)
     const parts = []
