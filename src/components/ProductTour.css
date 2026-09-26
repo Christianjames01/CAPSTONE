@@ -23,7 +23,21 @@
     pointer-events: none;
 }
 
+/* The card is always light. Portal layouts color text with theme tokens
+   (e.g. .admin-layout p { color: var(--slate) }), which are light colors in
+   dark mode -- pin the light palette here so text stays dark on white. */
 .tour-card {
+    --ink: #101827;
+    --slate: #57616F;
+    --line: rgba(16, 24, 39, 0.12);
+    --paper: #F1F4FA;
+    --surface: #FFFFFF;
+    --white: #FFFFFF;
+    --blue: #123B78;
+    --blue-dark: #0A2450;
+    --blue-tint: #EAF1FB;
+    --blue-accent: #123B78;
+    color-scheme: light;
     position: fixed;
     display: flex;
     flex-direction: column;
