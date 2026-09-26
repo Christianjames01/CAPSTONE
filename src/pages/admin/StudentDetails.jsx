@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconIdCard } from './icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -473,21 +474,8 @@ function StudentDetails() {
                 ← Back to Students
             </button>
 
-            <div className="admin-page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    background: 'var(--red)',
-                    color: 'var(--white)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 20,
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                }}>
+            <div className="admin-detail-hero">
+                <div className="admin-detail-avatar">
                     {student.photoUrl ? (
                         <img
                             src={student.photoUrl}
@@ -498,9 +486,14 @@ function StudentDetails() {
                         student.initials || 'ST'
                     )}
                 </div>
-                <div>
-                    <h1 style={{ marginBottom: 2 }}>{student.fullName}</h1>
+                <div className="admin-detail-main">
+                    <span className="admin-detail-eyebrow">Student</span>
+                    <h1>{student.fullName}</h1>
                     <p>{student.student_number} · {student.email}</p>
+                    <div className="admin-detail-tags">
+                        {student.programName && <span>{student.programName}</span>}
+                        {student.year_level && <span>Year {student.year_level}</span>}
+                    </div>
                 </div>
             </div>
 
@@ -548,6 +541,8 @@ function StudentDetails() {
             {editingSection && form && (
                 <Modal
                     title={editingSection === 'personal' ? 'Edit Personal Information' : 'Edit Student Information'}
+                    subtitle="Changes are recorded in the activity log."
+                    icon={IconIdCard}
                     maxWidth={editingSection === 'personal' ? 640 : 760}
                     onClose={cancelEditing}
                 >

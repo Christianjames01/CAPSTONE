@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { IconPhone, IconMail } from '../student/icons'
+import { IconLock } from '../../components/UiIcons'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
@@ -308,6 +310,8 @@ function Profile() {
             {editing && (
                 <Modal
                     title="Edit Contact Information"
+                    subtitle="Your phone number and other contact details."
+                    icon={IconPhone}
                     onClose={() => {
                         if (saving) return
                         setPhoneNumber(profile?.phone_number || '')
@@ -362,6 +366,8 @@ function Profile() {
             {changingEmail && (
                 <Modal
                     title="Change Login Email"
+                    subtitle="You will confirm the new address from your inbox."
+                    icon={IconMail}
                     onClose={() => {
                         if (emailSaving) return
                         setEmailCurrentPassword('')
@@ -440,6 +446,8 @@ function Profile() {
             {changingPassword && (
                 <Modal
                     title="Change Password"
+                    subtitle="Use a strong password you do not use elsewhere."
+                    icon={IconLock}
                     onClose={() => {
                         if (passwordSaving) return
                         setCurrentPassword('')

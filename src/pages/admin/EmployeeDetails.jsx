@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconUsers } from './icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -418,9 +419,20 @@ function EmployeeDetails() {
                 ← Back to Employees
             </button>
 
-            <div className="admin-page-header">
-                <h1>{employee.first_name} {employee.last_name}</h1>
-                <p>{employee.email} · {employee.phone_number || 'No phone on file'}</p>
+            <div className="admin-detail-hero">
+                <span className="admin-detail-avatar" aria-hidden="true">
+                    {`${(employee.first_name || '?')[0]}${(employee.last_name || '')[0] || ''}`.toUpperCase()}
+                </span>
+                <div className="admin-detail-main">
+                    <span className="admin-detail-eyebrow">Registrar staff</span>
+                    <h1>{employee.first_name} {employee.last_name}</h1>
+                    <p>{employee.email} · {employee.phone_number || 'No phone on file'}</p>
+                    <div className="admin-detail-tags">
+                        {employeeNumber && <span>{employeeNumber}</span>}
+                        {positionTitle && <span>{positionTitle}</span>}
+                        {displayName && <span>Shown to students as “{displayName}”</span>}
+                    </div>
+                </div>
             </div>
 
             {error && <div className="admin-error-box">{error}</div>}
@@ -443,7 +455,7 @@ function EmployeeDetails() {
             </div>
 
             {editing && form && (
-                <Modal title="Edit Employment Information" onClose={() => !saving && setEditing(false)}>
+                <Modal title="Edit Employment Information" subtitle="Employee number, position and nickname." icon={IconUsers} onClose={() => !saving && setEditing(false)}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div className="form-group">
                             <label className="form-label">Employee Number</label>

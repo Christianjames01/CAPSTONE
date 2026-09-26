@@ -6,6 +6,8 @@ import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
 import { HCDC_COLLEGES, HCDC_PROGRAMS } from '../../lib/hcdcCatalog'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
+import PageStats from '../../components/PageStats'
+import { IconBuilding, IconLayers, IconBan } from './icons'
 import '../auth/Auth.css'
 import './AdminPages.css'
 
@@ -471,13 +473,23 @@ function CollegesPrograms() {
                 <button className="admin-primary-button" onClick={openAddModal}>+ Add Academic Divisions & Programs</button>
             </div>
 
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Colleges', value: colleges.filter((c) => c.status === 'active').length, note: `${colleges.length} in total`, Icon: IconBuilding, onClick: () => { setTab('colleges'); setSearch('') } },
+                        { label: 'Programs', value: programs.filter((p) => p.status === 'active').length, note: `${programs.length} in total`, Icon: IconLayers, onClick: () => { setTab('programs'); setSearch('') } },
+                        { label: 'Inactive', value: colleges.filter((c) => c.status !== 'active').length + programs.filter((p) => p.status !== 'active').length, note: 'Hidden from registration', Icon: IconBan },
+                    ]}
+                />
+            )}
+
             <div className="admin-filter-row">
-                <button className={`admin-filter-chip${tab === 'colleges' ? ' active' : ''}`} onClick={() => { setTab('colleges'); setSearch('') }}>Colleges</button>
-                <button className={`admin-filter-chip${tab === 'programs' ? ' active' : ''}`} onClick={() => { setTab('programs'); setSearch('') }}>Programs</button>
+                <button className={`admin-filter-chip${tab === 'colleges' ? ' active' : ''}`} onClick={() => { setTab('colleges'); setSearch('') }}>Colleges<span className="admin-chip-count">{colleges.length}</span></button>
+                <button className={`admin-filter-chip${tab === 'programs' ? ' active' : ''}`} onClick={() => { setTab('programs'); setSearch('') }}>Programs<span className="admin-chip-count">{programs.length}</span></button>
             </div>
 
             <input
-                className="admin-search-input"
+                className="admin-search-input admin-search-field"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -490,11 +502,13 @@ function CollegesPrograms() {
 
             {tab === 'colleges' ? (
                 <>
-                    <h2 style={{ fontSize: 17, marginBottom: 16 }}>Colleges</h2>
+                    <h2 className="admin-section-title" style={{ marginTop: 8 }}>Colleges <span className="admin-chip-count">{visibleColleges.length}</span></h2>
 
                     {showCollegeForm && collegeForm && (
                         <Modal
                             title="Edit College"
+                            subtitle="Name, code and description."
+                            icon={IconBuilding}
                             maxWidth={640}
                             onClose={() => { if (saving) return; setShowCollegeForm(false) }}
                         >
@@ -515,7 +529,7 @@ function CollegesPrograms() {
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <button className="admin-primary-button" onClick={saveCollege} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                                <button className="admin-danger-button" onClick={() => setShowCollegeForm(false)}>Cancel</button>
+                                <button className="admin-secondary-button" onClick={() => setShowCollegeForm(false)}>Cancel</button>
                             </div>
                         </Modal>
                     )}
@@ -530,20 +544,23 @@ function CollegesPrograms() {
                         visibleColleges.map((c) => (
                             <div className="admin-list-card" key={c.college_id}>
                                 <div className="admin-list-card-header">
-                                    <div>
-                                        <h3>{c.college_name}</h3>
-                                        <p>{c.college_code}</p>
+                                    <div className="admin-card-title">
+                                        <span className={`admin-avatar is-square${c.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true"><IconBuilding /></span>
+                                        <div>
+                                            <h3>{c.college_name}</h3>
+                                            <p>{c.college_code} · {programs.filter((p) => p.college_id === c.college_id).length} program{programs.filter((p) => p.college_id === c.college_id).length === 1 ? '' : 's'}</p>
+                                        </div>
                                     </div>
                                     <span className={`admin-status-pill status-${c.status}`}>{c.status}</span>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: 16 }}>
+                                <div className="admin-card-actions">
                                     <button className="admin-link-button" onClick={() => openEditCollege(c)}>Edit</button>
-                                    <button className="admin-link-button" onClick={() => toggleCollegeStatus(c)}>
+                                    <button className={`admin-link-button${c.status === 'active' ? ' is-danger' : ' is-success'}`} onClick={() => toggleCollegeStatus(c)}>
                                         {c.status === 'active' ? 'Deactivate' : 'Activate'}
                                     </button>
                                     {currentRole === 'registrar_head' && (
-                                        <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => deleteCollege(c)}>
+                                        <button className="admin-link-button is-danger" onClick={() => deleteCollege(c)}>
                                             Delete
                                         </button>
                                     )}
@@ -554,11 +571,13 @@ function CollegesPrograms() {
                 </>
             ) : (
                 <>
-                    <h2 style={{ fontSize: 17, marginBottom: 16 }}>Programs</h2>
+                    <h2 className="admin-section-title" style={{ marginTop: 8 }}>Programs <span className="admin-chip-count">{visiblePrograms.length}</span></h2>
 
                     {showProgramForm && programForm && (
                         <Modal
                             title="Edit Program"
+                            subtitle="Name, code, college, degree level and duration."
+                            icon={IconLayers}
                             maxWidth={640}
                             onClose={() => { if (saving) return; setShowProgramForm(false) }}
                         >
@@ -622,7 +641,7 @@ function CollegesPrograms() {
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <button className="admin-primary-button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                                <button className="admin-danger-button" onClick={() => setShowProgramForm(false)}>Cancel</button>
+                                <button className="admin-secondary-button" onClick={() => setShowProgramForm(false)}>Cancel</button>
                             </div>
                         </Modal>
                     )}
@@ -637,20 +656,23 @@ function CollegesPrograms() {
                         visiblePrograms.map((p) => (
                             <div className="admin-list-card" key={p.program_id}>
                                 <div className="admin-list-card-header">
-                                    <div>
-                                        <h3>{p.program_name}</h3>
-                                        <p>{p.program_code} · {collegeName(p.college_id)} · {p.degree_level || 'N/A'}</p>
+                                    <div className="admin-card-title">
+                                        <span className={`admin-avatar is-square${p.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true"><IconLayers /></span>
+                                        <div>
+                                            <h3>{p.program_name}</h3>
+                                            <p>{p.program_code} · {collegeName(p.college_id)} · {p.degree_level || 'N/A'}</p>
+                                        </div>
                                     </div>
                                     <span className={`admin-status-pill status-${p.status}`}>{p.status}</span>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: 16 }}>
+                                <div className="admin-card-actions">
                                     <button className="admin-link-button" onClick={() => openEditProgram(p)}>Edit</button>
-                                    <button className="admin-link-button" onClick={() => toggleProgramStatus(p)}>
+                                    <button className={`admin-link-button${p.status === 'active' ? ' is-danger' : ' is-success'}`} onClick={() => toggleProgramStatus(p)}>
                                         {p.status === 'active' ? 'Deactivate' : 'Activate'}
                                     </button>
                                     {currentRole === 'registrar_head' && (
-                                        <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => deleteProgram(p)}>
+                                        <button className="admin-link-button is-danger" onClick={() => deleteProgram(p)}>
                                             Delete
                                         </button>
                                     )}
@@ -664,6 +686,8 @@ function CollegesPrograms() {
             {showAddModal && (
                 <Modal
                     title="Add Academic Divisions & Programs"
+                    subtitle="Pick from the HCDC catalog."
+                    icon={IconBuilding}
                     maxWidth={640}
                     onClose={() => { if (addingBulk) return; setShowAddModal(false) }}
                 >
@@ -803,7 +827,7 @@ function CollegesPrograms() {
                         <button className="admin-primary-button" onClick={saveBulkAdd} disabled={addingBulk}>
                             {addingBulk ? 'Adding...' : `Add Selected (${totalSelectedCount})`}
                         </button>
-                        <button className="admin-danger-button" onClick={() => setShowAddModal(false)} disabled={addingBulk}>Cancel</button>
+                        <button className="admin-secondary-button" onClick={() => setShowAddModal(false)} disabled={addingBulk}>Cancel</button>
                     </div>
                 </Modal>
             )}

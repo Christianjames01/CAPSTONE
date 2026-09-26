@@ -4,6 +4,8 @@ import { logActivity } from '../../lib/activityLog'
 import { createQueueTicket, createQueueTicketBatch, formatQueueNumber, todayStr } from '../../lib/queue'
 import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconTicket, IconHourglass, IconCheckCircle, IconXCircle } from './icons'
 import './AdminPages.css'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
@@ -246,18 +248,33 @@ function AdminQueue() {
 
             {error && <div className="admin-error-box" style={{ marginTop: 16 }}>{error}</div>}
 
+            {!loading && (
+                <div style={{ marginTop: 20 }}>
+                    <PageStats
+                        stats={[
+                            { label: 'Now serving', value: active.length ? formatQueueNumber(active[0].queue_number) : '—', note: active.length > 1 ? `+${active.length - 1} more at the counter` : active.length ? 'At the counter' : 'No one called yet', Icon: IconTicket },
+                            { label: 'Waiting', value: waiting.length, note: waiting.length ? `Next: ${formatQueueNumber(waiting[0].queue_number)}` : 'No one in line', Icon: IconHourglass, warn: waiting.length > 5 },
+                            { label: 'Served today', value: tickets.filter((t) => t.status === 'completed').length, note: 'Completed', Icon: IconCheckCircle },
+                            { label: 'No-shows', value: tickets.filter((t) => t.status === 'no_show').length, note: 'Called but not present', Icon: IconXCircle },
+                        ]}
+                    />
+                </div>
+            )}
+
             {loading ? (
                 <SkeletonList count={3} />
             ) : (
                 <>
                     {active.length > 0 && (
                         <div style={{ marginTop: 20 }}>
-                            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Now Serving</h2>
+                            <h2 className="admin-section-title" style={{ marginTop: 0 }}>Now Serving <span className="admin-chip-count">{active.length}</span></h2>
                             {active.map((t) => (
                                 <div className="admin-list-card" key={t.queue_id}>
                                     <div className="admin-list-card-header">
+                                        <div className="admin-card-title">
+                                        <span className={`queue-number-badge status-${t.status}`}>{formatQueueNumber(t.queue_number)}</span>
                                         <div>
-                                            <h3>{formatQueueNumber(t.queue_number)}{t.displayName ? ` — ${t.displayName}` : ''}</h3>
+                                            <h3>{t.displayName || (t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in')}</h3>
                                             <p>
                                                 {t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in'}
                                                 {t.requestNumber ? ` · ${t.requestNumber}` : ''}
@@ -265,19 +282,20 @@ function AdminQueue() {
                                                 {t.called_at ? ` · Called ${formatTime(t.called_at)}` : ''}
                                             </p>
                                         </div>
+                                        </div>
                                         <span className={`admin-status-pill status-${t.status}`}>{t.status}</span>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                    <div className="admin-card-actions">
                                         {t.status === 'called' && (
                                             <button className="admin-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id}>
                                                 Recall (announce again)
                                             </button>
                                         )}
-                                        <button className="admin-link-button" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
+                                        <button className="admin-link-button is-success" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
                                             Mark completed
                                         </button>
-                                        <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => markNoShow(t)} disabled={acting === t.queue_id}>
+                                        <button className="admin-link-button is-danger" onClick={() => markNoShow(t)} disabled={acting === t.queue_id}>
                                             No-show
                                         </button>
                                     </div>
@@ -287,29 +305,32 @@ function AdminQueue() {
                     )}
 
                     <div style={{ marginTop: 20 }}>
-                        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Waiting ({waiting.length})</h2>
+                        <h2 className="admin-section-title" style={{ marginTop: 0 }}>Waiting <span className="admin-chip-count">{waiting.length}</span></h2>
                         {waiting.length === 0 ? (
                             <div className="admin-empty">No one is currently waiting.</div>
                         ) : (
                             waiting.map((t) => (
                                 <div className="admin-list-card" key={t.queue_id}>
                                     <div className="admin-list-card-header">
+                                        <div className="admin-card-title">
+                                        <span className={`queue-number-badge status-${t.status}`}>{formatQueueNumber(t.queue_number)}</span>
                                         <div>
-                                            <h3>{formatQueueNumber(t.queue_number)}{t.displayName ? ` — ${t.displayName}` : ''}</h3>
+                                            <h3>{t.displayName || (t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in')}</h3>
                                             <p>
                                                 {t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in'}
                                                 {t.requestNumber ? ` · ${t.requestNumber}` : ''}
                                                 {t.purpose ? ` · ${t.purpose}` : ''}
                                             </p>
                                         </div>
+                                        </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: 16 }}>
+                                    <div className="admin-card-actions">
                                         <button className="admin-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id}>
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
                                         <button
-                                            className="admin-danger-button"
+                                            className="admin-link-button is-danger"
                                             onClick={() => cancelTicket(t)}
                                             disabled={acting === t.queue_id}
                                         >
@@ -323,13 +344,16 @@ function AdminQueue() {
 
                     {history.length > 0 && (
                         <div style={{ marginTop: 20 }}>
-                            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Earlier Today ({history.length})</h2>
+                            <h2 className="admin-section-title" style={{ marginTop: 0 }}>Earlier Today <span className="admin-chip-count">{history.length}</span></h2>
                             {history.map((t) => (
                                 <div className="admin-list-card" key={t.queue_id} style={{ opacity: 0.7 }}>
                                     <div className="admin-list-card-header">
+                                        <div className="admin-card-title">
+                                        <span className={`queue-number-badge status-${t.status}`}>{formatQueueNumber(t.queue_number)}</span>
                                         <div>
-                                            <h3>{formatQueueNumber(t.queue_number)}{t.displayName ? ` — ${t.displayName}` : ''}</h3>
+                                            <h3>{t.displayName || (t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in')}</h3>
                                             {t.studentNumber && <p>Student {t.studentNumber}</p>}
+                                        </div>
                                         </div>
                                         <span className={`admin-status-pill status-${t.status}`}>{t.status.replace('_', ' ')}</span>
                                     </div>

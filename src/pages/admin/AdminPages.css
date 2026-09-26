@@ -727,3 +727,183 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Walk-in queue number badge (e.g. Q-024). */
+.queue-number-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 64px;
+    height: 44px;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: var(--blue-tint);
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+.queue-number-badge.status-called,
+.queue-number-badge.status-serving {
+    background: var(--blue);
+    color: var(--white);
+}
+
+.queue-number-badge.status-completed {
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+    color: var(--success-text, #1e8a5f);
+}
+
+.queue-number-badge.status-no_show,
+.queue-number-badge.status-cancelled {
+    background: var(--paper);
+    color: var(--slate);
+}
+
+/* Activity log table: actor with avatar, action as a pill. */
+.log-actor {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.log-actor .admin-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 11.5px;
+}
+
+.log-actor strong {
+    display: block;
+    font-size: 13.5px;
+}
+
+.log-actor small {
+    display: block;
+    font-size: 11px;
+    color: var(--slate);
+    text-transform: capitalize;
+}
+
+.log-action {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+/* Header card on detail pages (employee, student, request). */
+.admin-detail-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding: 22px 24px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.admin-detail-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--red));
+}
+
+.admin-detail-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.admin-detail-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.admin-detail-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--blue-accent, var(--blue));
+}
+
+.admin-detail-main h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.admin-detail-main p {
+    font-size: 13.5px;
+    overflow-wrap: anywhere;
+}
+
+.admin-detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.admin-detail-tags span {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+}
+
+.admin-detail-tags span:empty {
+    display: none;
+}
+
+@media (max-width: 560px) {
+    .admin-detail-hero {
+        align-items: flex-start;
+        padding: 18px;
+    }
+
+    .admin-detail-avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+    }
+}
+
+.admin-detail-avatar svg {
+    width: 28px;
+    height: 28px;
+}

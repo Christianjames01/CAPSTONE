@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconXCircle, IconDocument } from './icons'
 import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from '../../components/UiIcons'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -998,13 +999,19 @@ function AdminRequestDetails() {
                 ← Back to All Requests
             </button>
 
-            <div className="admin-page-header-row">
-                <div>
-                    <h1 style={{ fontSize: 26, marginBottom: 6 }}>{documentName}</h1>
-                    <p>{request.request_number} · {student?.name || 'Unknown Student'} ({student?.student_number || 'N/A'})</p>
+            <div className="admin-detail-hero">
+                <span className="admin-detail-avatar" aria-hidden="true" style={{ borderRadius: 14 }}><IconDocument /></span>
+                <div className="admin-detail-main" style={{ flex: 1 }}>
+                    <span className="admin-detail-eyebrow">Document request · {request.request_number}</span>
+                    <h1>{documentName}</h1>
+                    <p>{student?.name || 'Unknown Student'} ({student?.student_number || 'N/A'})</p>
+                    <div className="admin-detail-tags">
+                        <span>₱{Number(request.total_amount || 0).toFixed(2)}</span>
+                        {request.requested_at && <span>Requested {new Date(request.requested_at).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                    </div>
                 </div>
 
-                <span className={`admin-status-pill status-${request.status}`}>
+                <span className={`admin-status-pill status-${request.status}`} style={{ alignSelf: 'flex-start' }}>
                     {request.status.replace(/_/g, ' ')}
                 </span>
             </div>
@@ -1315,6 +1322,8 @@ function AdminRequestDetails() {
             {showReject && (
                 <Modal
                     title={selectedRequirement ? 'Reject Requirement' : 'Reject Payment'}
+                    subtitle="The student sees your reason and can upload a replacement."
+                    icon={IconXCircle}
                     onClose={() => {
                         setShowReject(false)
                         setSelectedRequirement(null)

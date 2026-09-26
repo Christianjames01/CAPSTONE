@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
 import HighlightedText from '../../components/HighlightedText'
+import PageStats from '../../components/PageStats'
+import { IconHistory } from '../employee/icons'
+import { IconCalendarCheck, IconUsers, IconBarChart } from './icons'
+
+const initialsOf = (name) =>
+    (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
 import './AdminPages.css'
 
 function ActivityLogs() {
@@ -113,6 +119,12 @@ function ActivityLogs() {
     const formatDate = (value) =>
         new Date(value).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
+    const todayCount = logs.filter((l) => new Date(l.created_at).toDateString() === new Date().toDateString()).length
+    const actorCount = new Set(logs.map((l) => l.actorName).filter(Boolean)).size
+    const actionCounts = {}
+    for (const l of logs) actionCounts[l.action] = (actionCounts[l.action] || 0) + 1
+    const topAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0]
+
     return (
         <div>
             <div className="admin-page-header">
@@ -124,9 +136,20 @@ function ActivityLogs() {
                 </p>
             </div>
 
+            {!loading && logs.length > 0 && (
+                <PageStats
+                    stats={[
+                        { label: filterDate ? 'Actions that day' : 'Recent actions', value: logs.length, note: filterDate ? 'Every recorded action' : 'Latest 200', Icon: IconHistory },
+                        { label: 'Today', value: todayCount, note: 'Actions recorded today', Icon: IconCalendarCheck },
+                        { label: 'Staff involved', value: actorCount, note: 'Employees and registrar heads', Icon: IconUsers },
+                        { label: 'Most common', value: topAction ? topAction[1] : 0, note: topAction ? topAction[0].replace(/_/g, ' ') : '—', Icon: IconBarChart },
+                    ]}
+                />
+            )}
+
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                 <input
-                    className="admin-search-input"
+                    className="admin-search-input admin-search-field"
                     style={{ flex: 1, minWidth: 220 }}
                     type="text"
                     value={search}
@@ -174,8 +197,16 @@ function ActivityLogs() {
                         <tbody>
                             {visibleLogs.map((log) => (
                                 <tr key={log.activity_log_id}>
-                                    <td>{log.actorName} {log.actorRole && <span style={{ color: 'var(--slate)', fontSize: 11 }}>({log.actorRole})</span>}</td>
-                                    <td style={{ textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</td>
+                                    <td>
+                                        <span className="log-actor">
+                                            <span className="admin-avatar" aria-hidden="true">{initialsOf(log.actorName)}</span>
+                                            <span>
+                                                <strong>{log.actorName}</strong>
+                                                {log.actorRole && <small>{log.actorRole}</small>}
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td><span className="log-action">{log.action.replace(/_/g, ' ')}</span></td>
                                     <td><HighlightedText text={log.description} /></td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(log.created_at)}</td>
                                 </tr>

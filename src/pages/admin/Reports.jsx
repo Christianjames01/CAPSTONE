@@ -5,6 +5,7 @@ import { downloadExcelReport } from '../../lib/reportExport'
 import { notifyError } from '../../lib/notify'
 import { SkeletonPageHeader, SkeletonStatGrid } from '../../components/Skeleton'
 import './AdminPages.css'
+import '../../components/DashboardStats.css'
 import './Reports.css'
 
 const turnaroundDays = (r) => {
@@ -344,10 +345,11 @@ function Reports() {
         return <div className="admin-error-box">{error}</div>
     }
 
+    // Same tile style as the dashboard and the other head pages.
     const stat = (value, label) => (
-        <div className="admin-card report-stat" style={{ margin: 0 }}>
-            <span className="report-stat-value">{value}</span>
-            <span className="report-stat-label">{label}</span>
+        <div className="dash-stat-tile dash-overview-tile report-tile">
+            <span className="dash-stat-label">{label}</span>
+            <span className="dash-stat-value dash-stat-value-lg">{value}</span>
         </div>
     )
 

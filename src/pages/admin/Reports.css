@@ -129,3 +129,21 @@
         margin-top: 18px;
     }
 }
+
+/* Stat tiles use the dashboard tile style; they are not links. */
+.report-tile {
+    cursor: default;
+}
+
+.report-tile:hover {
+    border-color: var(--line);
+    box-shadow: none;
+    transform: none;
+}
+
+@media print {
+    .reports-page .report-tile {
+        border: 1px solid #d0d5dd !important;
+        background: #fff !important;
+    }
+}

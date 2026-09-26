@@ -9,7 +9,8 @@ import RichTextEditor from '../../components/RichTextEditor'
 import AnnouncementNotice from '../../components/AnnouncementNotice'
 import AnnouncementToneIcon from '../../components/AnnouncementToneIcon'
 import { announcementTone, formatAnnouncementDate } from '../../lib/announcements'
-import { IconMegaphone } from './icons'
+import { IconMegaphone, IconCheckCircle, IconCalendarCheck, IconBan } from './icons'
+import PageStats from '../../components/PageStats'
 import './AdminPages.css'
 import './Announcements.css'
 
@@ -362,6 +363,8 @@ function Announcements() {
             {showForm && (
                 <Modal
                     title={form.announcement_id ? 'Edit Announcement' : 'New Announcement'}
+                    subtitle="Students see active announcements on their dashboard."
+                    icon={IconMegaphone}
                     maxWidth={680}
                     closeOnBackdropClick={false}
                     onClose={closeForm}
@@ -504,6 +507,19 @@ function Announcements() {
             )}
 
             {error && <div className="admin-error-box" style={{ marginTop: 20 }}>{error}</div>}
+
+            {!loading && (
+                <div style={{ marginTop: 20 }}>
+                    <PageStats
+                        stats={[
+                            { label: 'Announcements', value: announcements.length, note: 'Posted so far', Icon: IconMegaphone, onClick: () => setFilter('all') },
+                            { label: 'Active', value: counts.active ?? 0, note: 'Shown to students now', Icon: IconCheckCircle, onClick: () => setFilter('active') },
+                            { label: 'Office dates', value: counts.dated ?? 0, note: 'Tied to a specific day', Icon: IconCalendarCheck, onClick: () => setFilter('dated') },
+                            { label: 'Hidden', value: counts.inactive ?? 0, note: 'Not shown to students', Icon: IconBan, onClick: () => setFilter('inactive') },
+                        ]}
+                    />
+                </div>
+            )}
 
             {!loading && announcements.length > 0 && (
                 <div className="ann-toolbar">

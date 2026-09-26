@@ -6,6 +6,8 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconDocument } from './icons'
 import './AdminPages.css'
 
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -262,6 +264,11 @@ function AllRequests() {
         }
     }
 
+    const IN_PROGRESS = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements']
+    const countStatus = (statuses) => requests.filter((r) => statuses.includes(r.status)).length
+    const chipCount = (key) => (key === 'all' ? requests.length : countStatus(key.split(',')))
+    const unassignedCount = requests.filter((r) => r.employeeName === 'Unassigned' && ![...['completed', 'rejected', 'cancelled']].includes(r.status)).length
+
     return (
         <div>
             <div className="admin-page-header">
@@ -269,8 +276,20 @@ function AllRequests() {
                 <p>Every document request in the system, across all employees.</p>
             </div>
 
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'All requests', value: requests.length, note: 'Across all employees', Icon: IconFileStack, onClick: () => setChip('all') },
+                        { label: 'In progress', value: countStatus(IN_PROGRESS), note: 'Not yet ready to claim', Icon: IconHourglass, onClick: () => setChip(IN_PROGRESS.join(',')) },
+                        { label: 'Ready for claiming', value: countStatus(['ready_for_claiming']), note: 'Waiting for the student', Icon: IconPackage, onClick: () => setChip('ready_for_claiming') },
+                        { label: 'Completed', value: countStatus(['completed']), note: 'Released to students', Icon: IconCheckCircle, onClick: () => setChip('completed') },
+                        { label: 'Unassigned', value: unassignedCount, note: unassignedCount ? 'Need an employee' : 'Every open request has an employee', Icon: IconHourglass, warn: unassignedCount > 0 },
+                    ]}
+                />
+            )}
+
             <input
-                className="admin-search-input"
+                className="admin-search-input admin-search-field"
                 style={{ marginBottom: 16 }}
                 type="text"
                 value={search}
@@ -286,7 +305,7 @@ function AllRequests() {
                         className={`admin-filter-chip${activeChip === chip.key ? ' active' : ''}`}
                         onClick={() => setChip(chip.key)}
                     >
-                        {chip.label}
+                        {chip.label}<span className="admin-chip-count">{chipCount(chip.key)}</span>
                     </button>
                 ))}
             </div>
@@ -309,7 +328,6 @@ function AllRequests() {
                     <div
                         className="admin-list-card"
                         key={request.request_id}
-                        style={{ borderLeft: '4px solid var(--blue-accent, var(--blue))' }}
                     >
                         <div className="admin-list-card-header">
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -317,15 +335,16 @@ function AllRequests() {
                                     type="checkbox"
                                     checked={selectedIds.has(request.request_id)}
                                     onChange={() => toggleSelected(request.request_id)}
-                                    style={{ marginTop: 4 }}
+                                    style={{ marginTop: 14 }}
                                 />
+                                <span className="admin-avatar is-square" aria-hidden="true"><IconDocument /></span>
                                 <div>
                                     <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
                                         {request.studentName || `Student ${request.studentNumber}`}
                                     </p>
                                     <h3>{request.documentName}</h3>
                                     <p>
-                                        {request.request_number} · Student {request.studentNumber} · Assigned to {request.employeeName}
+                                        {request.request_number} · Student {request.studentNumber} · {request.employeeName === 'Unassigned' ? <strong style={{ color: 'var(--warning-text, #B45309)' }}>Unassigned</strong> : <>Assigned to {request.employeeName}</>}
                                     </p>
                                 </div>
                             </div>
@@ -349,12 +368,14 @@ function AllRequests() {
                             </div>
                         </div>
 
-                        <button
-                            className="admin-link-button"
-                            onClick={() => navigate(`/admin/requests/${request.request_id}`)}
-                        >
-                            Open request →
-                        </button>
+                        <div className="admin-card-actions">
+                            <button
+                                className="admin-link-button"
+                                onClick={() => navigate(`/admin/requests/${request.request_id}`)}
+                            >
+                                Open request →
+                            </button>
+                        </div>
                     </div>
                 ))
             )}
