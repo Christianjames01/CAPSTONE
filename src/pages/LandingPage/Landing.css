@@ -1300,7 +1300,8 @@ h2 span {
     color: #14583d;
 }
 
-.verify-sample-banner span {
+.verify-sample-banner div span {
+    display: block;
     font-size: 12px;
     color: #3f6f5a;
 }
@@ -1337,10 +1338,11 @@ h2 span {
     color: #1e8a5f;
 }
 
-.verify-sample-note {
-    font-size: 13px;
-    line-height: 1.55;
-    color: rgba(255, 255, 255, 0.8);
+.verify-sample .verify-sample-note {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #FFFFFF;
 }
 
 .visually-hidden {
