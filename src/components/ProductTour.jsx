@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { START_TOUR_EVENT } from '../lib/tourSteps'
 import TourPreview from './TourPreview'
+import { useScrollLock } from '../lib/useScrollLock'
 import './ProductTour.css'
 
 // Guided demo tour: highlights parts of the portal one step at a time.
@@ -44,6 +45,9 @@ function ProductTour({ role, steps: allSteps }) {
 
     const open = index >= 0 && index < steps.length
     const step = open ? steps[index] : null
+
+    // The page behind the demo stays put while it is open.
+    useScrollLock(open)
 
     const start = useCallback(() => {
         // Drop optional steps whose target isn't in this portal (e.g. links
