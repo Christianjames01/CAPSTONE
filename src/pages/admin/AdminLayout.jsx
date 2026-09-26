@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
-import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX } from '../student/icons'
+import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconHelp } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone, IconTicket } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
@@ -25,6 +25,7 @@ const NAV_ITEMS = [
     { to: '/admin/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/admin/activity-logs', label: 'Activity Logs', icon: <IconHistory /> },
     { to: '/admin/reports', label: 'Reports', icon: <IconBarChart /> },
+    { to: '/admin/guide', label: 'User Guide', icon: <IconHelp /> },
     { to: '/admin/profile', label: 'Profile', icon: <IconUserCircle /> },
 ]
 

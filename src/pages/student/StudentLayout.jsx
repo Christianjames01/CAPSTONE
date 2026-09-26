@@ -15,6 +15,7 @@ import {
     IconBell,
     IconUserCircle,
     IconHelp,
+    IconNewspaper,
     IconLogout,
     IconMenu,
     IconX,
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
     { to: '/student/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/student/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/student/profile', label: 'Profile', icon: <IconUserCircle /> },
+    { to: '/student/guide', label: 'User Guide', icon: <IconNewspaper /> },
     { to: '/student/help', label: 'Help / Support', icon: <IconHelp /> },
 ]
 

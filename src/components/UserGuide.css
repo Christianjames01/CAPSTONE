@@ -1,0 +1,203 @@
+/* In-app user manual (UserGuide.jsx). Uses each portal's theme tokens. */
+
+.ug-header {
+    margin-bottom: 20px;
+}
+
+.ug-header h1 {
+    font-size: 26px;
+    margin-bottom: 6px;
+}
+
+.ug-header p {
+    font-size: 14.5px;
+    color: var(--slate);
+}
+
+.ug-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ug-search {
+    width: 100%;
+    max-width: 420px;
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.ug-search:focus {
+    border-color: var(--blue-accent, var(--blue));
+    box-shadow: 0 0 0 3px var(--blue-tint);
+}
+
+.ug-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ug-toc-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ug-toc-item:hover {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.ug-toc-item span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+    font-size: 11px;
+}
+
+.ug-toolbar-actions {
+    display: flex;
+    gap: 16px;
+}
+
+.ug-link {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue-accent, var(--blue));
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ug-section {
+    padding: 0 !important;
+    overflow: hidden;
+    scroll-margin-top: 16px;
+}
+
+.ug-section-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+}
+
+.ug-section-head:hover {
+    background: var(--paper);
+}
+
+.ug-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.ug-section-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ug-section-title strong {
+    font-size: 15px;
+}
+
+.ug-section-title span {
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.ug-chevron {
+    flex-shrink: 0;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--slate);
+    transition: transform 0.15s ease;
+}
+
+.ug-chevron.is-open {
+    transform: rotate(90deg);
+}
+
+.ug-body {
+    padding: 0 20px 18px 64px;
+}
+
+.ug-steps {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink);
+}
+
+.ug-steps li + li {
+    margin-top: 6px;
+}
+
+.ug-tip {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--blue-tint);
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.ug-empty {
+    padding: 24px;
+    font-size: 14px;
+    color: var(--slate);
+    text-align: center;
+}
+
+@media (max-width: 620px) {
+    .ug-body {
+        padding: 0 16px 16px 20px;
+    }
+
+    .ug-section-head {
+        padding: 14px 16px;
+    }
+}

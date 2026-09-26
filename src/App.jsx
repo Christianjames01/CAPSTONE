@@ -35,6 +35,9 @@ import StudentMessages from './pages/student/Messages'
 import Notifications from './pages/student/Notifications'
 import Profile from './pages/student/Profile'
 import HelpSupport from './pages/student/HelpSupport'
+import StudentUserGuide from './pages/student/UserGuidePage'
+import EmployeeUserGuide from './pages/employee/UserGuidePage'
+import AdminUserGuide from './pages/admin/UserGuidePage'
 
 import EmployeeLayout from './pages/employee/EmployeeLayout'
 import EmployeeDashboard from './pages/employee/Dashboard'
@@ -241,6 +244,11 @@ function App() {
             element={<HelpSupport />}
           />
 
+          <Route
+            path="/student/guide"
+            element={<StudentUserGuide />}
+          />
+
         </Route>
 
         <Route
@@ -324,6 +332,11 @@ function App() {
           <Route
             path="/employee/profile"
             element={<EmployeeProfile />}
+          />
+
+          <Route
+            path="/employee/guide"
+            element={<EmployeeUserGuide />}
           />
 
         </Route>
@@ -434,6 +447,11 @@ function App() {
           <Route
             path="/admin/reports"
             element={<Reports />}
+          />
+
+          <Route
+            path="/admin/guide"
+            element={<AdminUserGuide />}
           />
 
           <Route

@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { notify, notifyError, notifySuccess } from '../../lib/notify'
 import { SkeletonPage } from '../../components/Skeleton'
 import CredentialQr from '../../components/CredentialQr'
+import RepresentativeStudentCard from '../../components/RepresentativeStudentCard'
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { formatNeededBy } from '../../lib/requestPriority'
@@ -959,6 +960,8 @@ function RequestDetails() {
                     </div>
                 )}
             </div>
+
+            <RepresentativeStudentCard request={request} />
         </div>
     )
 }

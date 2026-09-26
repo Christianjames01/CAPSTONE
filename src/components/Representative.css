@@ -1,0 +1,227 @@
+/* Authorized representative cards (student + staff) and release-window badge. */
+
+.rep-card {
+    margin-top: 16px;
+}
+
+.rep-card.is-approved {
+    border-color: var(--success-text, #1e8a5f);
+}
+
+.rep-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.rep-sub {
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.rep-status {
+    flex-shrink: 0;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.rep-status.is-pending {
+    background: var(--warning-bg, #fff3cd);
+    color: var(--warning-text, #856404);
+}
+
+.rep-status.is-approved {
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+    color: var(--success-text, #1e8a5f);
+}
+
+.rep-status.is-rejected {
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+    color: var(--danger-text, var(--red, #C8102E));
+}
+
+.rep-steps {
+    margin: 0 0 14px;
+    padding-left: 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.rep-button {
+    width: auto !important;
+    padding: 10px 18px !important;
+}
+
+.rep-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.rep-details span {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.rep-details strong {
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.rep-callout {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--paper);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.rep-callout.is-approved {
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+}
+
+.rep-callout.is-rejected {
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+}
+
+.rep-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.rep-file {
+    margin: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--blue-accent, var(--blue));
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rep-file:hover {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.rep-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.rep-approve {
+    margin: 0;
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--success-text, #1e8a5f);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rep-approve:disabled {
+    opacity: 0.6;
+}
+
+.rep-link {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue-accent, var(--blue));
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rep-link.is-danger {
+    color: var(--danger-text, var(--red, #C8102E));
+}
+
+.rep-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.rep-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rep-field span {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.rep-field input,
+.rep-field select {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+}
+
+.rep-field input[type="file"] {
+    padding: 8px;
+    font-size: 13px;
+}
+
+/* Badge on release-window / claiming lists */
+.rep-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.rep-badge.is-approved {
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+    color: var(--success-text, #1e8a5f);
+}
+
+.rep-badge.is-pending {
+    background: var(--warning-bg, #fff3cd);
+    color: var(--warning-text, #856404);
+}
+
+.rep-badge.is-rejected {
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+    color: var(--danger-text, var(--red, #C8102E));
+}

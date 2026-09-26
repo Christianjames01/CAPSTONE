@@ -12,6 +12,7 @@ import Modal from '../../components/Modal'
 import './AdminPages.css'
 import PriorityPanel from '../../components/PriorityPanel'
 import RequestNotes from '../../components/RequestNotes'
+import RepresentativeStaffCard from '../../components/RepresentativeStaffCard'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
 
@@ -1090,6 +1091,8 @@ function AdminRequestDetails() {
             </div>
 
             <RequestNotes request={request} cardClassName="admin-card" canDeleteAny />
+
+            <RepresentativeStaffCard request={request} cardClassName="admin-card" />
 
             {rating && (
                 <div className="admin-card">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import RepresentativeBadge from '../../components/RepresentativeBadge'
+import { loadRepresentativesByRequestIds } from '../../lib/claimRepresentatives'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
@@ -42,10 +44,19 @@ function ClaimSchedules() {
 
     const [schedules, setSchedules] = useState([])
     const [unclaimed, setUnclaimed] = useState([])
+    // request_id -> authorized representative, for the release window.
+    const [representatives, setRepresentatives] = useState({})
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'upcoming')
     const [marking, setMarking] = useState(null)
+
+    const listedRequestIds = [...schedules.map((s) => s.request_id), ...unclaimed.map((r) => r.request_id)].sort().join(',')
+
+    useEffect(() => {
+        if (!listedRequestIds) return
+        loadRepresentativesByRequestIds(listedRequestIds.split(',')).then(setRepresentatives)
+    }, [listedRequestIds])
 
     useEffect(() => {
         loadData()
@@ -321,6 +332,7 @@ function ClaimSchedules() {
                                     </p>
                                     <h3>{r.documentName}</h3>
                                     <p>{r.request_number} · Student {r.studentNumber}{r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}</p>
+                                    <RepresentativeBadge representative={representatives[r.request_id]} />
                                 </div>
                                 <span className="admin-status-pill status-ready_for_claiming">Not scheduled</span>
                             </div>
@@ -361,6 +373,7 @@ function ClaimSchedules() {
                                 </p>
                                 <h3>{s.documentName}</h3>
                                 <p>{s.requestNumber} · Student {s.studentNumber}{s.requestedAt && ` · Requested ${formatDisplayDateTime(s.requestedAt)}`}</p>
+                                <RepresentativeBadge representative={representatives[s.request_id]} />
                             </div>
                             <span className={`admin-status-pill status-${s.status}`}>{s.status}</span>
                         </div>

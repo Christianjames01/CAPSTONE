@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import RepresentativeBadge from '../../components/RepresentativeBadge'
+import { loadRepresentativesByRequestIds } from '../../lib/claimRepresentatives'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
@@ -18,6 +20,15 @@ function ClaimScheduleList() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [marking, setMarking] = useState(null)
+    // request_id -> authorized representative, for the release window.
+    const [representatives, setRepresentatives] = useState({})
+
+    const listedRequestIds = [...needsScheduling.map((r) => r.request_id), ...todayAppointments.map((a) => a.request_id)].sort().join(',')
+
+    useEffect(() => {
+        if (!listedRequestIds) return
+        loadRepresentativesByRequestIds(listedRequestIds.split(',')).then(setRepresentatives)
+    }, [listedRequestIds])
 
     useEffect(() => {
         loadData()
@@ -315,6 +326,7 @@ function ClaimScheduleList() {
                                         {appt.requestNumber} · Student {appt.studentNumber}
                                         {appt.requestedAt && ` · Requested ${formatDisplayDateTime(appt.requestedAt)}`}
                                     </p>
+                                    <RepresentativeBadge representative={representatives[appt.request_id]} />
                                 </div>
 
                                 <span className={`employee-status-pill status-${appt.status}`}>{appt.status}</span>
@@ -353,6 +365,7 @@ function ClaimScheduleList() {
                                 <p className="request-student-name">{request.studentName}</p>
                                 <h3>{request.documentName}</h3>
                                 <p>{request.request_number} · Student {request.studentNumber}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
+                                <RepresentativeBadge representative={representatives[request.request_id]} />
                             </div>
 
                             <span className={`employee-status-pill status-${request.schedule ? request.schedule.status : 'ready_for_claiming'}`}>
