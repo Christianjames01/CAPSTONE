@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
@@ -15,6 +16,11 @@ const DEFAULT_MESSAGE =
     "from me — I'll check back here for your reply. Thank you!"
 
 function Messages() {
+    // ?employee=<employee_id> from a request page: message the employee
+    // actually handling that request.
+    const [searchParams] = useSearchParams()
+    const requestedEmployeeId = searchParams.get('employee')
+
     const [userId, setUserId] = useState(null)
     const [employee, setEmployee] = useState(null)
     const [messages, setMessages] = useState([])
@@ -28,7 +34,7 @@ function Messages() {
 
     useEffect(() => {
         loadMessages()
-    }, [])
+    }, [requestedEmployeeId])
 
     const loadMessages = async () => {
         try {
@@ -56,7 +62,25 @@ function Messages() {
                 throw new Error('Student record could not be found.')
             }
 
-            const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
+            // Who to message: the employee handling one of the student's
+            // requests -- the one asked for (from a request page) if it is
+            // really assigned to them, else the one on their most recent
+            // active request -- falling back to the default employee for
+            // their college/program.
+            const { data: ownRequests } = await supabase
+                .from('document_requests')
+                .select('assigned_employee_id, status, requested_at')
+                .eq('student_id', student.student_id)
+                .not('assigned_employee_id', 'is', null)
+                .order('requested_at', { ascending: false })
+
+            const handlingIds = new Set((ownRequests || []).map((r) => r.assigned_employee_id))
+            const activeRequest = (ownRequests || []).find((r) => !['completed', 'cancelled', 'rejected'].includes(r.status))
+
+            const assignedEmployeeId =
+                (requestedEmployeeId && handlingIds.has(requestedEmployeeId) ? requestedEmployeeId : null)
+                || activeRequest?.assigned_employee_id
+                || await findAssignedEmployee(student.college_id, student.program_id)
 
             if (!assignedEmployeeId) {
                 setEmployee(null)

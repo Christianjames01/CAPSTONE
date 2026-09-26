@@ -623,7 +623,7 @@ function RequestDetails() {
                     <button
                         className="student-link-button"
                         style={{ marginTop: 12 }}
-                        onClick={() => navigate('/student/messages')}
+                        onClick={() => navigate(`/student/messages?employee=${request.assigned_employee_id}`)}
                     >
                         Message {assignedEmployee.name} →
                     </button>
