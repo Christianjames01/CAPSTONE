@@ -2037,3 +2037,151 @@ h2 span {
         padding: 10px;
     }
 }
+
+/* ===================================================
+   HELP CENTER / CONTACT POP-UPS (SweetAlert, rendered at body level)
+=================================================== */
+.swal2-popup.lp-modal {
+    text-align: left;
+}
+
+.lp-modal .swal2-html-container {
+    margin: 12px 20px 0;
+    text-align: left;
+}
+
+.lp-modal-intro {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #57616F;
+}
+
+.lp-modal-steps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-modal-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(16, 24, 39, 0.1);
+    border-radius: 10px;
+}
+
+.lp-modal-steps li.is-highlight {
+    border-color: rgba(200, 16, 46, 0.35);
+    background: #FCEBED;
+}
+
+.lp-modal-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #123B78;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.lp-modal-steps li.is-highlight .lp-modal-num {
+    background: #C8102E;
+}
+
+.lp-modal-steps strong {
+    font-size: 14px;
+    color: #101827;
+}
+
+.lp-modal-steps em {
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #C8102E;
+    color: #fff;
+    font-size: 10.5px;
+    font-style: normal;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.lp-modal-steps p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #57616F;
+}
+
+.lp-modal-note {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-left: 3px solid #C8102E;
+    border-radius: 8px;
+    background: #FCEBED;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #101827;
+}
+
+.lp-modal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.lp-modal-links a {
+    padding: 7px 14px;
+    border: 1px solid rgba(18, 59, 120, 0.25);
+    border-radius: 999px;
+    color: #123B78;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.lp-modal-links a:hover {
+    background: #EAF1FB;
+}
+
+.lp-modal-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #F1F4FA;
+    font-size: 13px;
+    color: #57616F;
+}
+
+.lp-modal-contact strong {
+    font-size: 13.5px;
+    color: #101827;
+}
+
+.lp-modal-contact a {
+    color: #123B78;
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.lp-modal-contact a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .lp-modal-steps {
+        grid-template-columns: 1fr;
+    }
+}

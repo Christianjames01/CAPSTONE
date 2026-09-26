@@ -331,49 +331,81 @@ const LandingPage = () => {
         window.location.href = `/verify/${encodeURIComponent(code)}`;
     };
 
+    // Contact details as HTML for the Help Center / Contact pop-ups.
+    const contactHtml = () => `
+        <div class="lp-modal-contact">
+            <strong>${REGISTRAR_CONTACT.office}</strong>
+            <span>${REGISTRAR_CONTACT.address}</span>
+            <a href="mailto:${REGISTRAR_CONTACT.email}">${REGISTRAR_CONTACT.email}</a>
+            <a href="${REGISTRAR_CONTACT.telephoneHref}">${REGISTRAR_CONTACT.telephone}</a>
+            ${REGISTRAR_CONTACT.mobileNumbers.map((m) => `<a href="${m.href}">${m.label}: ${m.display}</a>`).join("")}
+        </div>`;
+
     const openHelpModal = () => {
+        let scrollTarget = null;
+
         const steps = PROCESS_STEPS.map(
-            ({ title, body: description }) =>
-                `<li style="margin-bottom:10px;"><strong>${title}</strong><br/><span style="color:#57616F;font-size:13.5px;">${description}</span></li>`
+            ({ title, body, badge }, index) => `
+                <li class="${badge ? "is-highlight" : ""}">
+                    <span class="lp-modal-num">${index + 1}</span>
+                    <div><strong>${title}</strong>${badge ? ` <em>${badge}</em>` : ""}<p>${body}</p></div>
+                </li>`
         ).join("");
 
         Swal.fire({
             title: "Help Center",
+            customClass: { popup: "lp-modal" },
             html: `
-                <p style="text-align:left;color:#57616F;margin-bottom:14px;">
-                    Here's how requesting a document works, start to finish:
-                </p>
-                <ol style="text-align:left;padding-left:20px;margin:0;">${steps}</ol>
-                <p style="text-align:left;color:#57616F;margin-top:14px;">
-                    Already have a request in progress? Log in and use the Messages
-                    page to reach your assigned registrar staff directly.
-                </p>
+                <p class="lp-modal-intro">How requesting a document works, start to finish:</p>
+                <ol class="lp-modal-steps">${steps}</ol>
+                <div class="lp-modal-note">
+                    <strong>Payment is in person.</strong> Pay at the HCDC Finance Office, then upload a photo of your official receipt in your account.
+                </div>
+                <div class="lp-modal-links">
+                    <a href="#faq" data-section="faq">Read the FAQ</a>
+                    <a href="#verify" data-section="verify">Verify a document</a>
+                    <a href="/register">Create an account</a>
+                </div>
+                <p class="lp-modal-intro" style="margin-top:16px;">Already have a request? Log in and use <strong>Messages</strong> to reach the Registrar, or contact the office:</p>
+                ${contactHtml()}
             `,
             confirmButtonText: "Got it",
             confirmButtonColor: "#123B78",
-            width: 560,
+            width: 720,
+            didOpen: (popup) => {
+                // In-page links close the pop-up, then scroll to their section
+                // (after closing, since SweetAlert restores the scroll position).
+                popup.querySelectorAll("[data-section]").forEach((link) => {
+                    link.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        scrollTarget = link.dataset.section;
+                        Swal.close();
+                    });
+                });
+            },
+            didClose: () => {
+                if (scrollTarget) scrollToSection(scrollTarget);
+            },
         });
     };
 
     const openContactModal = () => {
         Swal.fire({
-            title: "Contact",
+            title: "Contact the Registrar",
+            customClass: { popup: "lp-modal" },
             html: `
-                <p style="text-align:left;color:#57616F;">
-                    For questions about a specific request, log in and message your
-                    assigned registrar staff directly from your CertiChain account.
+                <p class="lp-modal-intro">
+                    For questions about a specific request, log in and message the Registrar from your
+                    CertiChain account. For anything else, reach the office directly:
                 </p>
-                <p style="text-align:left;color:#57616F;">
-                    For anything else, please reach out to the Office of Registration
-                    &amp; Records Management at Holy Cross of Davao College directly:
-                </p>
-                <p style="text-align:left;color:#57616F;margin-top:8px;">
-                    Sta. Ana Avenue corner C. De Guzman Street, Barangay 14-B, Davao City<br/>
-                    (082) 221-9071 to 79 &middot; info@hcdc.edu.ph
-                </p>
+                ${contactHtml()}
+                <div class="lp-modal-note">
+                    <strong>Payments</strong> are made in person at the HCDC Finance Office.
+                </div>
             `,
             confirmButtonText: "Got it",
             confirmButtonColor: "#123B78",
+            width: 520,
         });
     };
 
