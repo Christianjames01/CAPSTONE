@@ -127,3 +127,12 @@ export const IconPhone = () => (
         <path d="M6.6 10.8a15.9 15.9 0 0 0 6.6 6.6l2.2-2.2a1.2 1.2 0 0 1 1.2-.3c1.3.4 2.7.6 4.1.6.7 0 1.3.6 1.3 1.3V20.7c0 .7-.6 1.3-1.3 1.3C10.6 22 2 13.4 2 2.8 2 2.1 2.6 1.5 3.3 1.5H6.7c.7 0 1.3.6 1.3 1.3 0 1.4.2 2.8.6 4.1.1.4 0 .9-.3 1.2L6.6 10.8Z" />
     </svg>
 )
+
+// User Guide (all portals).
+export const IconBook = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z" />
+        <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z" />
+        <path d="M6.5 8h2M6.5 11h2M15.5 8h2M15.5 11h2" />
+    </svg>
+)

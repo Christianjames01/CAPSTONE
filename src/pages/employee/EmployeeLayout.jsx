@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
-import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconHelp } from '../student/icons'
-import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory, IconTicket } from './icons'
+import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
+import { IconClipboardList, IconShieldCheck, IconGear, IconMessage, IconHistory } from './icons'
+// Same icons as the Registrar Head's sidebar for the same pages.
+import { IconIdCard, IconTicket } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
 import { EMPLOYEE_TOUR } from '../../lib/tourSteps'
@@ -17,11 +19,11 @@ const NAV_ITEMS = [
     { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
     { to: '/employee/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/employee/queue', label: 'Walk-in Queue', icon: <IconTicket />, fullAccessOnly: true },
-    { to: '/employee/students', label: 'Students', icon: <IconUsers />, fullAccessOnly: true },
+    { to: '/employee/students', label: 'Students', icon: <IconIdCard />, fullAccessOnly: true },
     { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/employee/activity-logs', label: 'Activity Logs', icon: <IconHistory />, fullAccessOnly: true },
-    { to: '/employee/guide', label: 'User Guide', icon: <IconHelp /> },
+    { to: '/employee/guide', label: 'User Guide', icon: <IconBook /> },
     { to: '/employee/profile', label: 'Profile', icon: <IconUserCircle /> },
 ]
 
