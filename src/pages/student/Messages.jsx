@@ -35,6 +35,10 @@ function Messages() {
     const [contacts, setContacts] = useState([])
     const [selectedUserId, setSelectedUserId] = useState(null)
     const [messages, setMessages] = useState([])
+    // message_id -> the staff member whose conversation it belongs in, and
+    // sender labels for staff other than that person (e.g. the Registrar Head).
+    const [threadOf, setThreadOf] = useState({})
+    const [labels, setLabels] = useState({})
     const [reply, setReply] = useState('')
 
     const [loading, setLoading] = useState(true)
@@ -105,8 +109,30 @@ function Messages() {
             const otherUserIds = [...new Set([...employeeUserIds, ...rows.map((m) => otherParty(m, user.id))])].filter(Boolean)
             const labels = await buildSenderLabels(otherUserIds)
 
+            // Which conversation each message belongs in. Messages with an
+            // employee go in that employee's conversation. Messages from
+            // other registrar staff (the Registrar Head replying while
+            // viewing a student-employee conversation) go in the
+            // conversation that was active when they were sent -- the one
+            // holding the latest earlier message -- so they read as part
+            // of the same chat.
+            const employeeUserSet = new Set(employeeUserIds)
+            const assigned = {}
+            let lastThread = null
+            for (const m of rows) {
+                const other = otherParty(m, user.id)
+                if (employeeUserSet.has(other)) {
+                    assigned[m.message_id] = other
+                    lastThread = other
+                } else if (employeeUserSet.size > 0) {
+                    assigned[m.message_id] = lastThread // null = not placed yet (see below)
+                } else {
+                    assigned[m.message_id] = other
+                }
+            }
+
             const lastAt = (uid) => {
-                const thread = rows.filter((m) => otherParty(m, user.id) === uid)
+                const thread = rows.filter((m) => assigned[m.message_id] === uid)
                 return thread.length ? new Date(thread[thread.length - 1].created_at).getTime() : 0
             }
 
@@ -125,9 +151,10 @@ function Messages() {
                 }
             })
 
-            // Other registrar staff (e.g. the Registrar Head) who messaged the student.
+            // With no employee to talk to, other registrar staff who messaged
+            // the student (e.g. the Registrar Head) get their own conversation.
             for (const uid of new Set(rows.map((m) => otherParty(m, user.id)))) {
-                if (!uid || list.some((c) => c.userId === uid)) continue
+                if (!uid || employeeUserSet.size > 0 || list.some((c) => c.userId === uid)) continue
                 list.push({
                     userId: uid,
                     employeeId: null,
@@ -143,8 +170,16 @@ function Messages() {
             // Active handlers first, then most recent conversation.
             list.sort((a, b) => Number(b.handlesActive) - Number(a.handlesActive) || b.lastAt - a.lastAt || b.latestRequestAt - a.latestRequestAt)
 
+            // Staff messages sent before any employee conversation existed go
+            // in the top conversation.
+            for (const id of Object.keys(assigned)) {
+                if (!assigned[id]) assigned[id] = list[0]?.userId || null
+            }
+
             setContacts(list)
             setMessages(rows)
+            setThreadOf(assigned)
+            setLabels(labels)
 
             setSelectedUserId((current) => {
                 if (current && list.some((c) => c.userId === current)) return current
@@ -160,7 +195,10 @@ function Messages() {
     }
 
     const selected = contacts.find((c) => c.userId === selectedUserId) || null
-    const thread = selected ? messages.filter((m) => otherParty(m, userId) === selected.userId) : []
+    // Messages sent from this page before a reload aren't in threadOf yet;
+    // they belong with the person they were sent to.
+    const threadFor = (m) => threadOf[m.message_id] || otherParty(m, userId)
+    const thread = selected ? messages.filter((m) => threadFor(m) === selected.userId) : []
     const unreadInThread = unreadReceived(thread, userId)
 
     const selectContact = (contact) => {
@@ -276,7 +314,7 @@ function Messages() {
                         <span className="sm-contacts-label">Conversations</span>
                         <ul>
                             {contacts.map((c) => {
-                                const convo = messages.filter((m) => otherParty(m, userId) === c.userId)
+                                const convo = messages.filter((m) => threadFor(m) === c.userId)
                                 const last = convo[convo.length - 1]
                                 const unread = unreadReceived(convo, userId).length
                                 const active = c.userId === selectedUserId
@@ -337,7 +375,11 @@ function Messages() {
                                 ) : (
                                     thread.map((m) => {
                                         const isSelf = m.sender_user_id === userId
-                                        const senderLabel = isSelf ? null : selected.name
+                                        const senderLabel = isSelf
+                                            ? null
+                                            : m.sender_user_id === selected.userId
+                                                ? selected.name
+                                                : labels[m.sender_user_id] || REGISTRAR_LABEL
 
                                         return (
                                             <MessageBubble
