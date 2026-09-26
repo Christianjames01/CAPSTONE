@@ -27,9 +27,8 @@ const formatTurnaround = (days) => {
 
 const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-// Requests whose payment has been verified (or that went on past it) --
-// what the office has actually collected.
-const PAID_STATUSES = ['receipt_verified', 'processing', 'ready_for_claiming', 'completed']
+// Fees are counted only once the request is completed (document released).
+const PAID_STATUSES = ['completed']
 
 const monthKey = (iso) => {
     const d = new Date(iso)
@@ -239,7 +238,7 @@ function Reports() {
                         { label: 'Total requests', value: report.total },
                         { label: 'Completed', value: report.completedCount },
                         { label: 'Rejected', value: report.rejectedCount },
-                        { label: 'Fees collected (paid requests)', value: peso(report.feesCollected) },
+                        { label: 'Fees collected (completed requests)', value: peso(report.feesCollected) },
                         { label: 'Average turnaround (completed)', value: formatTurnaround(report.avgTurnaround) },
                         { label: 'Average satisfaction', value: report.avgRating === null ? 'N/A' : `${report.avgRating.toFixed(1)} / 5 (${report.ratingCount} rated)` },
                         { label: 'Claiming: scheduled', value: report.scheduleCounts.scheduled },
@@ -417,7 +416,7 @@ function Reports() {
             </div>
 
             <h2 className="report-h2">Monthly Summary</h2>
-            <p className="report-note">Fees collected counts requests whose payment was verified.</p>
+            <p className="report-note">Fees collected counts completed requests only.</p>
 
             <div className="admin-table-wrapper" style={{ marginBottom: 28 }}>
                 <table className="admin-table">
