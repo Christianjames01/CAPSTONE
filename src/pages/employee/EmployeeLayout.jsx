@@ -5,6 +5,8 @@ import hcdcLogo from '../../assets/hcdc-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconHelp } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconUsers, IconMessage, IconHistory, IconTicket } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
+import ProductTour from '../../components/ProductTour'
+import { EMPLOYEE_TOUR } from '../../lib/tourSteps'
 import './EmployeeLayout.css'
 
 const NAV_ITEMS = [
@@ -215,6 +217,8 @@ function EmployeeLayout() {
             <main className="employee-content">
                 <Outlet />
             </main>
+
+            <ProductTour role="employee" steps={EMPLOYEE_TOUR} />
 
         </div>
     )

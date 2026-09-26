@@ -21,6 +21,8 @@ import {
     IconX,
 } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
+import ProductTour from '../../components/ProductTour'
+import { STUDENT_TOUR } from '../../lib/tourSteps'
 import './StudentLayout.css'
 
 const NAV_ITEMS = [
@@ -257,6 +259,8 @@ function StudentLayout() {
             <main className="student-content">
                 <Outlet />
             </main>
+
+            <ProductTour role="student" steps={STUDENT_TOUR} />
 
         </div>
     )

@@ -6,6 +6,8 @@ import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogo
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone, IconTicket } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
+import ProductTour from '../../components/ProductTour'
+import { HEAD_TOUR } from '../../lib/tourSteps'
 import './AdminLayout.css'
 
 const NAV_ITEMS = [
@@ -210,6 +212,8 @@ function AdminLayout() {
             <main className="admin-content">
                 <Outlet />
             </main>
+
+            <ProductTour role="head" steps={HEAD_TOUR} />
 
         </div>
     )

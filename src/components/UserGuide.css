@@ -1,7 +1,37 @@
 /* In-app user manual (UserGuide.jsx). Uses each portal's theme tokens. */
 
 .ug-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
     margin-bottom: 20px;
+}
+
+.ug-demo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--blue);
+    color: var(--white);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ug-demo:hover {
+    background: var(--blue-dark, var(--blue));
+}
+
+.ug-demo span {
+    font-size: 11px;
 }
 
 .ug-header h1 {

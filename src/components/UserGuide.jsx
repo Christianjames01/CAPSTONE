@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { START_TOUR_EVENT } from '../lib/tourSteps'
 import './UserGuide.css'
 
 // In-app user manual: searchable, collapsible sections with numbered steps.
@@ -30,8 +31,13 @@ function UserGuide({ title, intro, sections, cardClassName }) {
     return (
         <div className="ug">
             <div className="ug-header">
-                <h1>{title}</h1>
-                <p>{intro}</p>
+                <div>
+                    <h1>{title}</h1>
+                    <p>{intro}</p>
+                </div>
+                <button type="button" className="ug-demo" onClick={() => window.dispatchEvent(new Event(START_TOUR_EVENT))}>
+                    <span aria-hidden="true">▶</span> Start demo
+                </button>
             </div>
 
             <div className={`${cardClassName} ug-toolbar`}>
