@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconCalendar, IconCheck } from '../../components/UiIcons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -988,7 +989,7 @@ function ClaimSchedule() {
                         )}
 
                         <button className="employee-primary-button" onClick={saveSchedule} disabled={saving}>
-                            {saving ? 'Saving...' : existingSchedule ? '✓ Update Claim Schedule' : '📅 Schedule Claiming'}
+                            {saving ? 'Saving...' : existingSchedule ? <><IconCheck className="is-leading" />Update Claim Schedule</> : <><IconCalendar className="is-leading" />Schedule Claiming</>}
                         </button>
                     </div>
                 </div>

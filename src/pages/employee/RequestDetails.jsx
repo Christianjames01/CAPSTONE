@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from '../../components/UiIcons'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -1433,7 +1434,7 @@ function EmployeeRequestDetails() {
                 <div className="employee-card">
                     <h2 style={{ fontSize: 16, marginBottom: 12 }}>Student Rating</h2>
                     <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue-accent, var(--blue))' }}>
-                        {'★'.repeat(rating.rating)}{'☆'.repeat(5 - rating.rating)}
+                        <StarRating value={rating.rating} />
                     </p>
                     {rating.comment && (
                         <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: 4 }}>"{rating.comment}"</p>
@@ -1626,7 +1627,7 @@ function EmployeeRequestDetails() {
                                                             disabled={requirementProcessing}
                                                             className="employee-primary-button"
                                                         >
-                                                            {requirementProcessing ? 'Processing...' : '✓ Approve'}
+                                                            {requirementProcessing ? 'Processing...' : <><IconCheck className="is-leading" />Approve</>}
                                                         </button>
 
                                                         <button
@@ -1638,7 +1639,7 @@ function EmployeeRequestDetails() {
                                                             disabled={requirementProcessing}
                                                             className="employee-danger-button"
                                                         >
-                                                            ✕ Reject
+                                                            <IconX className="is-leading" />Reject
                                                         </button>
                                                     </>
                                                 )}
@@ -1657,13 +1658,13 @@ function EmployeeRequestDetails() {
                             <strong>Requirement Review</strong>
 
                             {requirementState.allApproved ? (
-                                <p>✓ All required documents have been approved. This request is ready for document processing.</p>
+                                <p><IconCheck className="is-leading" />All required documents have been approved. This request is ready for document processing.</p>
                             ) : requirementState.rejected ? (
-                                <p>✕ One or more required documents have been rejected. The student must submit a replacement.</p>
+                                <p><IconX className="is-leading" />One or more required documents have been rejected. The student must submit a replacement.</p>
                             ) : requirementState.pending ? (
-                                <p>⚠ Some required documents are still waiting for the student to upload them.</p>
+                                <p><IconAlert className="is-leading" />Some required documents are still waiting for the student to upload them.</p>
                             ) : (
-                                <p>⚠ Some uploaded documents still need to be reviewed.</p>
+                                <p><IconAlert className="is-leading" />Some uploaded documents still need to be reviewed.</p>
                             )}
                         </div>
                     )}
@@ -1693,7 +1694,7 @@ function EmployeeRequestDetails() {
 
                         {requirementState.allApproved && (
                             <div className="employee-notice tone-success">
-                                <strong>✓ Ready for Document Processing</strong>
+                                <strong><IconCheck className="is-leading" />Ready for Document Processing</strong>
                                 <p>Payment is verified and all required documents have been approved.</p>
                                 <button onClick={startProcessing} disabled={processing} className="employee-primary-button" style={{ marginTop: 12 }}>
                                     {processing ? 'Starting Processing...' : '▶ Start Document Processing'}
@@ -1715,7 +1716,7 @@ function EmployeeRequestDetails() {
                             )}
 
                             <button onClick={generateDigitalCredential} disabled={processing} className="employee-primary-button" style={{ marginTop: 12 }}>
-                                {processing ? 'Generating Credential...' : '📄 Generate Digital Credential'}
+                                {processing ? 'Generating Credential...' : <><IconFile className="is-leading" />Generate Digital Credential</>}
                             </button>
                         </div>
                     </div>
@@ -1726,7 +1727,7 @@ function EmployeeRequestDetails() {
                         <h2 style={{ fontSize: 16, marginBottom: 16 }}>Digital Credential</h2>
 
                         <div className="employee-notice tone-success" style={{ marginBottom: claimSchedule ? 12 : 0 }}>
-                            <strong>✓ Digital Credential Generated</strong>
+                            <strong><IconCheck className="is-leading" />Digital Credential Generated</strong>
                             <p>The requested academic document has been prepared successfully.</p>
                         </div>
 
@@ -1738,12 +1739,12 @@ function EmployeeRequestDetails() {
                                     className="employee-primary-button"
                                     style={{ marginTop: 12 }}
                                 >
-                                    📅 Schedule Claiming
+                                    <IconCalendar className="is-leading" />Schedule Claiming
                                 </button>
                             </div>
                         ) : claimSchedule.status === 'missed' ? (
                             <div className="employee-notice tone-danger">
-                                <strong>✕ Claiming Appointment Missed</strong>
+                                <strong><IconX className="is-leading" />Claiming Appointment Missed</strong>
                                 <p>
                                     The student did not claim this document on{' '}
                                     {claimSchedule.claim_date || claimSchedule.scheduled_date}.
@@ -1756,12 +1757,12 @@ function EmployeeRequestDetails() {
                                     className="employee-primary-button"
                                     style={{ marginTop: 12 }}
                                 >
-                                    📅 Reschedule Claiming
+                                    <IconCalendar className="is-leading" />Reschedule Claiming
                                 </button>
                             </div>
                         ) : claimSchedule.status === 'claimed' ? (
                             <div className="employee-notice tone-success">
-                                <strong>✓ Document Claimed</strong>
+                                <strong><IconCheck className="is-leading" />Document Claimed</strong>
                                 <p>
                                     Claimed on{' '}
                                     {claimSchedule.claimed_at

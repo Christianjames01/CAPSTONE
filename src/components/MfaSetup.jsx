@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconCheck } from './UiIcons'
 import { supabase } from '../lib/supabase'
 import Modal from './Modal'
 
@@ -161,7 +162,7 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button', dangerButtonCl
 
             {hasVerifiedFactor ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 13.5 }}>✓ Two-factor authentication is enabled.</span>
+                    <span style={{ fontSize: 13.5 }}><IconCheck className="is-leading" />Two-factor authentication is enabled.</span>
                     <button
                         type="button"
                         className={linkButtonClassName}

@@ -1,10 +1,11 @@
 import './TourPreview.css'
+import { IconBox, IconCash, IconCheck, IconFile, IconSearch, IconUpload } from './UiIcons'
 
 // Small illustrated mock-ups of CertiChain screens, shown in the middle of
 // each demo-tour step (components/ProductTour.jsx). Purely visual; the data
 // is sample data.
 
-const Check = () => <span className="tp-check" aria-hidden="true">✓</span>
+const Check = () => <span className="tp-check" aria-hidden="true"><IconCheck /></span>
 
 const Row = ({ title, sub, pill, tone = 'blue' }) => (
     <div className="tp-row">
@@ -19,9 +20,9 @@ const Row = ({ title, sub, pill, tone = 'blue' }) => (
 const PREVIEWS = {
     welcome: () => (
         <div className="tp-flow">
-            {[['📝', 'Request'], ['💵', 'Pay at Finance'], ['📤', 'Upload receipt'], ['📦', 'Claim']].map(([icon, label], i) => (
+            {[[IconFile, 'Request'], [IconCash, 'Pay at Finance'], [IconUpload, 'Upload receipt'], [IconBox, 'Claim']].map(([Icon, label], i) => (
                 <div className="tp-flow-step" key={label} style={{ animationDelay: `${i * 0.15}s` }}>
-                    <span className="tp-flow-icon">{icon}</span>
+                    <span className="tp-flow-icon"><Icon /></span>
                     <span>{label}</span>
                 </div>
             ))}
@@ -60,7 +61,7 @@ const PREVIEWS = {
                 <div className="tp-receipt-line is-total"><span>Paid</span><span>₱60.00</span></div>
             </div>
             <div className="tp-upload">
-                <span className="tp-upload-icon">📤</span>
+                <span className="tp-upload-icon"><IconUpload /></span>
                 <span>receipt-photo.jpg</span>
                 <div className="tp-bar"><span className="tp-bar-fill" /></div>
                 <span className="tp-upload-done"><Check /> Uploaded — waiting for verification</span>
@@ -72,7 +73,7 @@ const PREVIEWS = {
         <ol className="tp-stepper">
             {[['Submitted', 'done'], ['Payment verified', 'done'], ['Processing', 'active'], ['Ready for claiming', ''], ['Claimed', '']].map(([label, state]) => (
                 <li key={label} className={state ? `is-${state}` : ''}>
-                    <span className="tp-dot">{state === 'done' ? '✓' : ''}</span>
+                    <span className="tp-dot">{state === 'done' && <IconCheck />}</span>
                     <span>{label}</span>
                     {state === 'active' && <span className="tp-pill is-blue">Now</span>}
                 </li>
@@ -117,7 +118,7 @@ const PREVIEWS = {
 
     guide: () => (
         <div className="tp-stack">
-            <div className="tp-input">🔎 Search the guide…</div>
+            <div className="tp-input"><IconSearch className="is-leading" />Search the guide…</div>
             {['Requesting a document', 'Paying and uploading your receipt', 'Claiming your document'].map((t, i) => (
                 <div className="tp-guide-row" key={t}><span>{i + 1}</span>{t}</div>
             ))}
@@ -126,7 +127,7 @@ const PREVIEWS = {
 
     done: () => (
         <div className="tp-done">
-            <span className="tp-done-check">✓</span>
+            <span className="tp-done-check"><IconCheck /></span>
             <span className="tp-confetti" aria-hidden="true">{Array.from({ length: 12 }, (_, i) => <i key={i} />)}</span>
         </div>
     ),
@@ -148,7 +149,7 @@ const PREVIEWS = {
                 <div className="tp-receipt-line is-total"><span>Amount</span><span>₱60.00</span></div>
             </div>
             <div className="tp-verify-actions">
-                <div className="tp-button is-green tp-pulse">✓ Verify receipt</div>
+                <div className="tp-button is-green tp-pulse"><IconCheck className="is-leading" />Verify receipt</div>
                 <div className="tp-button is-ghost">Mark invalid…</div>
             </div>
         </div>
@@ -160,7 +161,7 @@ const PREVIEWS = {
             <div className="tp-claim-info">
                 <strong>CERT-000123</strong>
                 <span>Transcript of Records · Juan Dela Cruz</span>
-                <span className="tp-pill is-green">Signed ✓</span>
+                <span className="tp-pill is-green"><IconCheck className="is-leading" />Signed</span>
             </div>
         </div>
     ),

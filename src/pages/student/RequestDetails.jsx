@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconStar, StarRating } from '../../components/UiIcons'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -712,7 +713,7 @@ function RequestDetails() {
                         {rating ? (
                             <>
                                 <p style={{ fontSize: 20, letterSpacing: 2, color: 'var(--blue-accent, var(--blue))' }}>
-                                    {'★'.repeat(rating.rating)}{'☆'.repeat(5 - rating.rating)}
+                                    <StarRating value={rating.rating} />
                                 </p>
                                 {rating.comment && (
                                     <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: 4 }}>
@@ -742,11 +743,11 @@ function RequestDetails() {
                                                 fontSize: 26,
                                                 lineHeight: 1,
                                                 padding: 2,
-                                                color: star <= ratingValue ? 'var(--blue-accent, var(--blue))' : 'var(--line)',
+                                                color: star <= ratingValue ? '#E0A100' : '#C9CED8',
                                             }}
                                             aria-label={`${star} star${star > 1 ? 's' : ''}`}
                                         >
-                                            {star <= ratingValue ? '★' : '☆'}
+                                            <IconStar filled={star <= ratingValue} />
                                         </button>
                                     ))}
                                 </div>

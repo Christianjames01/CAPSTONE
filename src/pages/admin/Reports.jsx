@@ -410,7 +410,7 @@ function Reports() {
                 {stat(peso(report.feesCollected), 'Fees Collected')}
                 {stat(formatTurnaround(report.avgTurnaround), 'Avg Turnaround')}
                 {stat(
-                    report.avgRating === null ? 'N/A' : `${report.avgRating.toFixed(1)} ★`,
+                    report.avgRating === null ? 'N/A' : `${report.avgRating.toFixed(1)} / 5`,
                     `Avg Satisfaction ${report.ratingCount > 0 ? `(${report.ratingCount} rated)` : ''}`
                 )}
             </div>
@@ -494,7 +494,7 @@ function Reports() {
                                 <td>{e.completedCount}</td>
                                 <td>{e.rejectedCount}</td>
                                 <td>{formatTurnaround(e.avgTurnaroundDays)}</td>
-                                <td>{e.avgRating === null ? 'N/A' : `${e.avgRating.toFixed(1)} ★`}</td>
+                                <td>{e.avgRating === null ? 'N/A' : `${e.avgRating.toFixed(1)} / 5`}</td>
                             </tr>
                         ))}
                     </tbody>

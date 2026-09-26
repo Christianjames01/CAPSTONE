@@ -1,0 +1,26 @@
+/* Shared line icons (UiIcons.jsx). */
+
+.ui-icon {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.14em;
+}
+
+/* An icon before a label ("[icon] Schedule Claiming"). */
+.ui-icon.is-leading {
+    margin-right: 0.4em;
+}
+
+.ui-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: #E0A100;
+    vertical-align: middle;
+}
+
+.ui-star:not(.is-filled) {
+    color: #C9CED8;
+}

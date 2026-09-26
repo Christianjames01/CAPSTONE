@@ -1,4 +1,5 @@
 import { useScrollLock } from '../lib/useScrollLock'
+import { IconX } from './UiIcons'
 import './Modal.css'
 
 function Modal({ title, onClose, children, maxWidth, closeOnBackdropClick = false }) {
@@ -10,7 +11,7 @@ function Modal({ title, onClose, children, maxWidth, closeOnBackdropClick = fals
                 <div className="app-modal-header">
                     <span className="app-modal-title">{title}</span>
                     <button className="app-modal-close" onClick={onClose} aria-label="Close">
-                        ✕
+                        <IconX />
                     </button>
                 </div>
 

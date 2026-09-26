@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { IconVolume } from '../components/UiIcons'
 import { supabase } from '../lib/supabase'
 import { formatQueueNumber, todayStr } from '../lib/queue'
 import hcdcLogo from '../assets/hcdc-logo.png'
@@ -183,7 +184,7 @@ function QueueDisplay() {
         <div className="qd-root">
             {!soundReady && (
                 <button className="qd-unlock" onClick={enableSound}>
-                    <span className="qd-unlock-icon">🔊</span>
+                    <span className="qd-unlock-icon"><IconVolume /></span>
                     <span className="qd-unlock-title">Tap to Start Display</span>
                     <span className="qd-unlock-sub">Needed once so number announcements can play sound</span>
                 </button>

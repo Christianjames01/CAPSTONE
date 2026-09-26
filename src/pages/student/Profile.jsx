@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconPencil } from '../../components/UiIcons'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
@@ -504,7 +505,7 @@ function Profile() {
                             cursor: 'pointer',
                         }}
                     >
-                        {uploadingAvatar ? '…' : '✎'}
+                        {uploadingAvatar ? '…' : <IconPencil />}
                     </button>
                 </div>
 

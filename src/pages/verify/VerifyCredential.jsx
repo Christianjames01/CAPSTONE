@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IconAlert, IconCheck, IconQuestion, IconX } from '../../components/UiIcons'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { REGISTRAR_CONTACT } from '../../lib/registrarContact'
@@ -15,7 +16,7 @@ function outcomeFor(result) {
     if (!result) {
         return {
             tone: 'missing',
-            icon: '?',
+            icon: <IconQuestion />,
             title: 'No credential found',
             subtitle: 'This number doesn’t match any credential issued through CertiChain.',
         }
@@ -23,7 +24,7 @@ function outcomeFor(result) {
     if (result.signatureValid === false) {
         return {
             tone: 'tampered',
-            icon: '!',
+            icon: <IconAlert />,
             title: 'Tampered — do not accept',
             subtitle: 'This record no longer matches what the Registrar originally issued.',
         }
@@ -31,14 +32,14 @@ function outcomeFor(result) {
     if (result.status === 'revoked') {
         return {
             tone: 'revoked',
-            icon: '✕',
+            icon: <IconX />,
             title: 'Revoked credential',
             subtitle: 'The Registrar’s Office cancelled this credential. It is no longer valid.',
         }
     }
     return {
         tone: 'verified',
-        icon: '✓',
+        icon: <IconCheck />,
         title: 'Verified credential',
         subtitle: 'Issued by the Holy Cross of Davao College Registrar’s Office and unchanged since.',
     }
@@ -246,7 +247,7 @@ function VerifyCredential() {
                                 </dl>
 
                                 <div className={`verify-signature${result.signatureValid === false ? ' is-bad' : ''}`}>
-                                    <span aria-hidden="true">{result.signatureValid === false ? '✕' : '✓'}</span>
+                                    <span aria-hidden="true">{result.signatureValid === false ? <IconX /> : <IconCheck />}</span>
                                     {result.signatureValid === false
                                         ? 'Digital signature does not match — the record was altered.'
                                         : 'Digital signature valid — the record matches what the Registrar issued.'}

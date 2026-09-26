@@ -12,7 +12,7 @@ const link = (nav, path) => `.${nav} a[href="${path}"]`
 export const STUDENT_TOUR = [
     {
         target: null,
-        title: 'Welcome to CertiChain! 👋',
+        title: 'Welcome to CertiChain',
         body: 'Here’s a one-minute tour of how to request, pay for, track and claim your registrar documents. You can skip it anytime.',
     },
     {
@@ -57,7 +57,7 @@ export const STUDENT_TOUR = [
     },
     {
         target: null,
-        title: 'You’re all set! 🎉',
+        title: 'You’re all set',
         body: 'Start by requesting your first document. Remember: pay at the Finance Office, then upload your receipt.',
         action: { label: 'Request a document', to: '/student/new-request' },
     },
@@ -66,7 +66,7 @@ export const STUDENT_TOUR = [
 export const EMPLOYEE_TOUR = [
     {
         target: null,
-        title: 'Welcome to CertiChain! 👋',
+        title: 'Welcome to CertiChain',
         body: 'A quick tour of how you’ll handle document requests, from verification to release. You can skip it anytime.',
     },
     {
@@ -114,7 +114,7 @@ export const EMPLOYEE_TOUR = [
     },
     {
         target: null,
-        title: 'You’re all set! 🎉',
+        title: 'You’re all set',
         body: 'Head to your assigned requests to get started.',
         action: { label: 'View assigned requests', to: '/employee/requests' },
     },
@@ -123,7 +123,7 @@ export const EMPLOYEE_TOUR = [
 export const HEAD_TOUR = [
     {
         target: null,
-        title: 'Welcome, Registrar Head! 👋',
+        title: 'Welcome, Registrar Head',
         body: 'A quick tour of the tools for running the Registrar’s Office in CertiChain. You can skip it anytime.',
     },
     {
@@ -173,7 +173,7 @@ export const HEAD_TOUR = [
     },
     {
         target: null,
-        title: 'You’re all set! 🎉',
+        title: 'You’re all set',
         body: 'The dashboard is the best place to start each day.',
         action: { label: 'Go to dashboard', to: '/admin/dashboard' },
     },

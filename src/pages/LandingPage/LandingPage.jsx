@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { IconCheck as UiCheck } from '../../components/UiIcons'
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase";
 import { REGISTRAR_CONTACT } from "../../lib/registrarContact";
@@ -795,7 +796,7 @@ const LandingPage = () => {
 
                                 <div className="verify-sample-card">
                                     <div className="verify-sample-banner">
-                                        <span className="verify-sample-check" aria-hidden="true">✓</span>
+                                        <span className="verify-sample-check" aria-hidden="true"><UiCheck /></span>
                                         <div>
                                             <strong>Verified credential</strong>
                                             <span>Issued by the HCDC Registrar’s Office</span>

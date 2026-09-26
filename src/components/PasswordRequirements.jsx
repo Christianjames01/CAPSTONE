@@ -1,4 +1,5 @@
 import { PASSWORD_REQUIREMENTS } from '../lib/passwordStrength'
+import { IconCheck } from './UiIcons'
 
 // Hidden until the user starts typing, then shows each rule ticking off live.
 function PasswordRequirements({ password }) {
@@ -19,7 +20,7 @@ function PasswordRequirements({ password }) {
                             marginTop: 2,
                         }}
                     >
-                        <span>{met ? '✓' : '•'}</span>
+                        <span>{met ? <IconCheck /> : '•'}</span>
                         {req.label}
                     </li>
                 )

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { IconX } from './UiIcons'
 import { useScrollLock } from '../lib/useScrollLock'
 import './DocumentPreviewModal.css'
 
@@ -132,7 +133,7 @@ function DocumentPreviewModal({ url, fileName, onClose }) {
                     )}
 
                     <button className="doc-preview-close" onClick={onClose} aria-label="Close">
-                        ✕
+                        <IconX />
                     </button>
                 </div>
 
