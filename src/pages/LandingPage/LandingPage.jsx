@@ -208,7 +208,7 @@ const IconTiktok = () => (
 
 const PROCESS_STEPS = [
     { Icon: IconUser, title: "Create an account", body: "Register with your student details. The Registrar verifies your record before you can request." },
-    { Icon: IconDocument, title: "Submit a request", body: "Choose the document, number of copies and purpose. Add a “needed by” date if you have a deadline." },
+    { Icon: IconDocument, title: "Submit a request", body: "Choose the document, the number of copies and your purpose, then submit it online." },
     { Icon: IconCash, title: "Pay at the Finance Office", body: "Pay the amount shown on your request in person at the HCDC Finance Office and keep your official receipt.", badge: "In person" },
     { Icon: IconUpload, title: "Upload your receipt", body: "Upload a clear photo of the official receipt, plus any required documents. The Registrar verifies them online." },
     { Icon: IconGear, title: "Processing", body: "Your document is prepared and signed. Every status change shows up live, with a notification." },

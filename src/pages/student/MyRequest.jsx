@@ -5,7 +5,6 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
 import './StudentPages.css'
-import { formatNeededBy } from '../../lib/requestPriority'
 
 const STATUS_LABELS = {
     pending: 'Pending',
@@ -271,11 +270,6 @@ function MyRequest() {
                                 <strong style={{ textTransform: 'capitalize', color: request.priority === 'urgent' ? 'var(--danger-text, var(--red))' : undefined }}>
                                     {request.priority === 'urgent' ? '🔴 Urgent' : request.priority}
                                 </strong>
-                                {request.needed_by && (
-                                    <small style={{ display: 'block', marginTop: 2, fontSize: 12, color: 'var(--slate)' }}>
-                                        Needed by {formatNeededBy(request.needed_by)}
-                                    </small>
-                                )}
                             </div>
 
                             <div className="student-info-field">

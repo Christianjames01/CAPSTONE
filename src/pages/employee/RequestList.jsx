@@ -7,7 +7,7 @@ import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 import '../../components/PriorityPanel.css'
-import { sortByUrgency, dueInfo, formatNeededBy, isUrgent } from '../../lib/requestPriority'
+import { sortByUrgency, isUrgent } from '../../lib/requestPriority'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -140,7 +140,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
     // Update in place when requests change -- no manual refresh needed.
     useLiveRefresh(['document_requests'], loadRequests)
 
-    // Urgent first, then the nearest "needed by" date.
+    // Urgent first.
     const visibleRequests = sortByUrgency(requests
         .filter((r) => !(showFilterChips && activeStatuses) || activeStatuses.includes(r.status))
         .filter((r) => {
@@ -224,14 +224,6 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                                 <strong style={{ textTransform: 'capitalize', color: isUrgent(request) ? 'var(--danger-text, var(--red))' : undefined }}>
                                     {isUrgent(request) ? '🔴 Urgent' : request.priority}
                                 </strong>
-                                {request.needed_by && (() => {
-                                    const due = dueInfo(request)
-                                    return (
-                                        <small className={`prio-due${due ? ` is-${due.tone}` : ''}`}>
-                                            Needed by {formatNeededBy(request.needed_by)}{due ? ` · ${due.label}` : ''}
-                                        </small>
-                                    )
-                                })()}
                             </div>
 
                             <div className="employee-info-field">

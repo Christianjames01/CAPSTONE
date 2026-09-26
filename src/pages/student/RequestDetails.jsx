@@ -8,7 +8,6 @@ import CredentialQr from '../../components/CredentialQr'
 import RepresentativeStudentCard from '../../components/RepresentativeStudentCard'
 import '../auth/Auth.css'
 import './StudentPages.css'
-import { formatNeededBy } from '../../lib/requestPriority'
 
 const STATUS_META = {
     pending: {
@@ -606,16 +605,6 @@ function RequestDetails() {
                             {request.priority === 'urgent' ? '🔴 Urgent' : request.priority}
                         </strong>
                     </div>
-
-                    {request.needed_by && (
-                        <div className="student-info-field">
-                            <span>Needed By</span>
-                            <strong>
-                                {formatNeededBy(request.needed_by)}
-                                {request.needed_by_reason ? ` — ${request.needed_by_reason}` : ''}
-                            </strong>
-                        </div>
-                    )}
 
                     <div className="student-info-field">
                         <span>Handled By</span>

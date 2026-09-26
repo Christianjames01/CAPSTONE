@@ -2,16 +2,14 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logActivity } from '../lib/activityLog'
 import { notify, notifyError, confirmModal } from '../lib/notify'
-import { dueInfo, formatNeededBy, isUrgent, setRequestPriority } from '../lib/requestPriority'
+import { isUrgent, setRequestPriority } from '../lib/requestPriority'
 import './PriorityPanel.css'
 
-// Priority + deadline card on the admin and employee request pages: shows
-// the student's "needed by" date/reason and lets staff mark the request
-// urgent (or back to normal). `onChange` gets the updated request.
+// Priority card on the admin and employee request pages: lets staff mark
+// the request urgent (or back to normal). `onChange` gets the updated request.
 function PriorityPanel({ request, onChange }) {
     const [saving, setSaving] = useState(false)
     const urgent = isUrgent(request)
-    const due = dueInfo(request)
     const closed = ['completed', 'cancelled', 'rejected'].includes(request.status)
 
     const toggle = async () => {
@@ -50,7 +48,7 @@ function PriorityPanel({ request, onChange }) {
                     await notify({
                         userId: employeeRow.user_id,
                         title: 'Request marked urgent',
-                        message: `Request ${request.request_number} was marked urgent${request.needed_by ? ` — needed by ${formatNeededBy(request.needed_by)}` : ''}.`,
+                        message: `Request ${request.request_number} was marked urgent.`,
                         notificationType: 'request_update',
                         relatedRequestId: request.request_id,
                     })
@@ -73,17 +71,13 @@ function PriorityPanel({ request, onChange }) {
                     <span className={`prio-pill ${urgent ? 'is-urgent' : 'is-normal'}`}>
                         {urgent ? '🔴 Urgent' : 'Normal priority'}
                     </span>
-                    {due && <span className={`prio-pill is-${due.tone}`}>{due.label}</span>}
                 </div>
 
-                {request.needed_by ? (
-                    <p className="prio-text">
-                        Student needs it by <strong>{formatNeededBy(request.needed_by)}</strong>
-                        {request.needed_by_reason && <> — “{request.needed_by_reason}”</>}
-                    </p>
-                ) : (
-                    <p className="prio-text is-muted">No "needed by" date given.</p>
-                )}
+                <p className="prio-text is-muted">
+                    {urgent
+                        ? 'Shown first in request lists; the assigned employee was notified.'
+                        : 'Mark urgent to move this request to the top of request lists.'}
+                </p>
             </div>
 
             {!closed && (

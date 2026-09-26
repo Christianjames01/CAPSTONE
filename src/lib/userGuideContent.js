@@ -33,7 +33,6 @@ export const STUDENT_GUIDE = [
         steps: [
             'Go to Request a Document and choose the document. A sample preview on the right shows what it looks like.',
             'Enter the number of copies and your purpose, if asked.',
-            'Optionally set a “needed by” date and reason if you have a deadline — staff see it and can prioritize.',
             'Submit. Your request appears under My Requests with its request number (e.g. REQ-000012).',
         ],
         tips: ['If no employee is assigned to your program yet, your request still goes through — the Registrar Head assigns it.'],
@@ -126,7 +125,7 @@ export const EMPLOYEE_GUIDE = [
         summary: 'Requests routed to you by program.',
         steps: [
             'Assigned Requests lists your requests with the student’s name and the date and time requested.',
-            'Urgent requests and ones with a near “needed by” date are shown first.',
+            'Requests marked urgent are shown first.',
             'Open a request to see its details, receipt, requirements, history and notes.',
         ],
     },

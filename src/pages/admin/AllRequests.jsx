@@ -8,7 +8,7 @@ import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } fr
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 import '../../components/PriorityPanel.css'
-import { sortByUrgency, dueInfo, formatNeededBy } from '../../lib/requestPriority'
+import { sortByUrgency } from '../../lib/requestPriority'
 
 import { formatDisplayDateTime } from '../../lib/formatDate'
 
@@ -132,7 +132,7 @@ function AllRequests() {
     // Update in place when requests change -- no manual refresh needed.
     useLiveRefresh(['document_requests'], loadRequests)
 
-    // Urgent first, then the nearest "needed by" date.
+    // Urgent first.
     const visibleRequests = sortByUrgency(requests
         .filter((r) => !activeStatuses || activeStatuses.includes(r.status))
         .filter((r) => {
@@ -355,14 +355,6 @@ function AllRequests() {
                                     {request.priority === 'urgent' ? '🔴 ' : '🔵 '}
                                     {request.priority}
                                 </strong>
-                                {request.needed_by && (() => {
-                                    const due = dueInfo(request)
-                                    return (
-                                        <small className={`prio-due${due ? ` is-${due.tone}` : ''}`}>
-                                            Needed by {formatNeededBy(request.needed_by)}{due ? ` · ${due.label}` : ''}
-                                        </small>
-                                    )
-                                })()}
                             </div>
 
                             <div className="admin-info-field">
