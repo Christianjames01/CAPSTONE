@@ -241,7 +241,7 @@ export const HEAD_TOUR = [
         target: link('admin-nav', '/admin/colleges-programs'),
         preview: 'programs',
         title: 'Academic divisions & programs',
-        body: 'Manage colleges and programs; each program’s assigned employee receives its requests automatically.',
+        body: 'Manage the colleges and their programs that students choose when they register.',
     },
     {
         target: link('admin-nav', '/admin/claim-schedules'),

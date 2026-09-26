@@ -207,7 +207,7 @@ const PREVIEWS = {
     students: () => (
         <div className="tp-stack">
             <Row title="Juan Dela Cruz · 2021-00123" sub="BS Information Technology" pill="Pending" tone="amber" />
-            <div className="tp-verify-actions">
+            <div className="tp-inline-actions">
                 <div className="tp-button is-green tp-pulse">Approve</div>
                 <div className="tp-button is-ghost">Reject</div>
             </div>
@@ -249,9 +249,9 @@ const PREVIEWS = {
 
     programs: () => (
         <div className="tp-stack">
-            <Row title="College of Engineering and Technology" sub="BS Information Technology · BS Computer Science" pill="Yul" />
-            <Row title="College of Business Education" sub="BS Accountancy · BS Business Administration" pill="sar" />
-            <Row title="College of Education" sub="BEEd · BSEd" pill="No employee" tone="amber" />
+            <Row title="College of Engineering and Technology" sub="BS Information Technology · BS Computer Science" pill="2 programs" />
+            <Row title="College of Business Education" sub="BS Accountancy · BS Business Administration" pill="2 programs" />
+            <Row title="College of Education" sub="BEEd · BSEd" pill="2 programs" />
         </div>
     ),
 
@@ -298,7 +298,7 @@ const PREVIEWS = {
 
     receipts: () => (
         <div className="tp-stack">
-            <Row title="OR No. 0045821 · ₱60.00" sub="Juan Dela Cruz · REQ-000012" pill="Awaiting" tone="amber" />
+            <Row title="OR No. 0045821 · ₱60.00" sub="Juan Dela Cruz · REQ-000012" pill="Uploaded" tone="amber" />
             <Row title="OR No. 0045790 · ₱10.00" sub="Maria Santos · REQ-000011" pill="Verified" tone="green" />
         </div>
     ),

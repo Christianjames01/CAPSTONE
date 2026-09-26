@@ -943,3 +943,10 @@
     color: #fff;
     font-size: 16px;
 }
+
+/* Buttons side by side (e.g. Approve / Reject) */
+.tp-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
