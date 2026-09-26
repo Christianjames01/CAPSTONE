@@ -2185,3 +2185,25 @@ h2 span {
         grid-template-columns: 1fr;
     }
 }
+
+/* Help Center / Contact pop-ups always stay white with dark text, even when
+   the site is in dark mode (index.css darkens every .swal2-popup). */
+.swal2-popup.lp-modal,
+html[data-theme="dark"] .swal2-popup.lp-modal {
+    background: #FFFFFF !important;
+    color: #101827 !important;
+}
+
+.swal2-popup.lp-modal .swal2-title,
+html[data-theme="dark"] .swal2-popup.lp-modal .swal2-title {
+    color: #101827 !important;
+}
+
+.swal2-popup.lp-modal .swal2-html-container,
+html[data-theme="dark"] .swal2-popup.lp-modal .swal2-html-container {
+    color: #57616F !important;
+}
+
+html[data-theme="dark"] .swal2-popup.lp-modal .swal2-close {
+    color: #57616F !important;
+}
