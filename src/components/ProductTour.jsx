@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { START_TOUR_EVENT } from '../lib/tourSteps'
+import TourPreview from './TourPreview'
 import './ProductTour.css'
 
 // Guided demo tour: highlights parts of the portal one step at a time.
@@ -11,8 +12,6 @@ import './ProductTour.css'
 // this browser.
 
 const NEW_ACCOUNT_DAYS = 14
-const CARD_WIDTH = 340
-const GAP = 14
 
 const storageKey = (role, userId) => `certichain_tour_done:${role}:${userId}`
 
@@ -128,21 +127,6 @@ function ProductTour({ role, steps: allSteps }) {
 
     if (!open) return null
 
-    // Card placement: beside the target (right, else below/above), or centered.
-    let cardStyle = null
-    if (rect) {
-        const width = Math.min(CARD_WIDTH, window.innerWidth - 32)
-        if (rect.right + GAP + width <= window.innerWidth - 16) {
-            const top = Math.min(Math.max(16, rect.top + rect.height / 2 - 110), window.innerHeight - 260)
-            cardStyle = { left: rect.right + GAP, top, width }
-        } else {
-            const left = Math.min(Math.max(16, rect.left), window.innerWidth - width - 16)
-            cardStyle = rect.bottom + 240 < window.innerHeight
-                ? { left, top: rect.bottom + GAP, width }
-                : { left, top: Math.max(16, rect.top - 240 - GAP), width }
-        }
-    }
-
     const isLast = index === steps.length - 1
 
     return (
@@ -156,11 +140,13 @@ function ProductTour({ role, steps: allSteps }) {
                 <div className="tour-backdrop" />
             )}
 
-            <div className={`tour-card${cardStyle ? '' : ' is-centered'}`} style={cardStyle || undefined}>
+            <div className="tour-card is-centered">
                 <div className="tour-card-top">
                     <span className="tour-progress">Step {index + 1} of {steps.length}</span>
                     <button type="button" className="tour-skip" onClick={close}>Skip demo</button>
                 </div>
+
+                <TourPreview key={index} name={step.preview} />
 
                 <h3 id="tour-title">{step.title}</h3>
                 <p>{step.body}</p>

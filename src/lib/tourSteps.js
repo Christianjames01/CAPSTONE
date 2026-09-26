@@ -178,3 +178,11 @@ export const HEAD_TOUR = [
         action: { label: 'Go to dashboard', to: '/admin/dashboard' },
     },
 ]
+
+// Mock-up shown in the middle of each step (components/TourPreview.jsx), by
+// step order.
+const attachPreviews = (steps, names) => steps.forEach((step, i) => { step.preview = names[i] })
+
+attachPreviews(STUDENT_TOUR, ['welcome', 'dashboard', 'request', 'payment', 'track', 'claim', 'messages', 'notifications', 'guide', 'done'])
+attachPreviews(EMPLOYEE_TOUR, ['welcome', 'headDashboard', 'assigned', 'verify', 'process', 'staffClaim', 'messages', 'notifications', 'guide', 'done'])
+attachPreviews(HEAD_TOUR, ['welcome', 'headDashboard', 'requests', 'assign', 'employees', 'students', 'documents', 'schedules', 'reports', 'guide', 'done'])
