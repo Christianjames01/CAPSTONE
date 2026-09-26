@@ -268,12 +268,31 @@ const PREVIEWS = {
         </div>
     ),
 
+    // Mirrors the Walk-in Queue page and the Queue Display screen.
     queue: () => (
-        <div className="tp-queue">
-            <span className="tp-queue-label">Now serving</span>
-            <strong className="tp-queue-number">A-024</strong>
-            <span className="tp-queue-window">Window 2</span>
-            <div className="tp-button tp-pulse">Call next number</div>
+        <div className="tp-queue-layout">
+            <div className="tp-queue">
+                <span className="tp-queue-label">Now serving</span>
+                <strong className="tp-queue-number">Q-024</strong>
+                <span className="tp-queue-sub">Please proceed to the counter</span>
+                <span className="tp-queue-next">Up next <b>Q-025</b> <b>Q-026</b></span>
+            </div>
+            <div className="tp-stack">
+                <div className="tp-queue-row">
+                    <div className="tp-row-main">
+                        <strong>Q-025 — Juan Dela Cruz</strong>
+                        <span>Student 2021-00123 · REQ-000012</span>
+                    </div>
+                    <div className="tp-button tp-pulse">Call</div>
+                </div>
+                <div className="tp-queue-row">
+                    <div className="tp-row-main">
+                        <strong>Q-026</strong>
+                        <span>Walk-in</span>
+                    </div>
+                    <div className="tp-button">Call</div>
+                </div>
+            </div>
         </div>
     ),
 

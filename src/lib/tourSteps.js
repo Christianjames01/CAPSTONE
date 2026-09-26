@@ -138,7 +138,7 @@ export const EMPLOYEE_TOUR = [
         optional: true,
         preview: 'queue',
         title: 'Walk-in queue',
-        body: 'Call the next walk-in number; the office Queue Display screen shows and announces it.',
+        body: 'Issue queue numbers to walk-ins, call the next one, then mark them serving or completed. The Queue Display screen shows and announces the number being served.',
     },
     {
         target: link('employee-nav', '/employee/students'),
@@ -259,7 +259,7 @@ export const HEAD_TOUR = [
         target: link('admin-nav', '/admin/queue'),
         preview: 'queue',
         title: 'Walk-in queue',
-        body: 'Manage walk-in numbers; the Queue Display screen shows and announces the number being served.',
+        body: 'Issue queue numbers to walk-ins, call the next one, then mark them serving or completed. The Queue Display screen shows and announces the number being served.',
     },
     {
         target: link('admin-nav', '/admin/receipts'),
