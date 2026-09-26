@@ -6,6 +6,8 @@ import { notifyError, notifySuccess, notifyStudentByStudentId, confirmModal } fr
 import { deleteStudentAccount } from '../../lib/deleteStudentAccount'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconIdCard, IconHourglass, IconLayers, IconBuilding } from './icons'
 import './AdminPages.css'
 
 // Pending registrations are reviewed in their own section and rejected ones
@@ -386,12 +388,18 @@ function Students() {
         ? groupedResults.find((g) => g.key === selectedProgramKey)
         : null
 
+    const initialsOf = (name) =>
+        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
+
     const renderStudentCard = (student) => (
         <div className="admin-list-card" key={student.student_id}>
             <div className="admin-list-card-header">
-                <div>
-                    <h3>{student.fullName}</h3>
-                    <p>{student.student_number} · {student.email}</p>
+                <div className="admin-card-title">
+                    <span className={`admin-avatar${student.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true">{initialsOf(student.fullName)}</span>
+                    <div>
+                        <h3>{student.fullName}</h3>
+                        <p>{student.student_number} · {student.email}</p>
+                    </div>
                 </div>
                 <span className={`admin-status-pill status-${student.status}`}>{student.status}</span>
             </div>
@@ -411,14 +419,13 @@ function Students() {
                 </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 16 }}>
+            <div className="admin-card-actions">
                 <button className="admin-link-button" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
                     View full record →
                 </button>
 
                 <button
-                    className="admin-link-button"
-                    style={{ color: student.status === 'active' ? 'var(--red)' : 'var(--blue-accent, var(--blue))' }}
+                    className={`admin-link-button${student.status === 'active' ? ' is-danger' : ' is-success'}`}
                     onClick={() => toggleStatus(student)}
                     disabled={updating === student.student_id}
                 >
@@ -428,8 +435,7 @@ function Students() {
                 </button>
 
                 <button
-                    className="admin-link-button"
-                    style={{ color: 'var(--red)' }}
+                    className="admin-link-button is-danger"
                     onClick={() => removeStudent(student)}
                     disabled={removing === student.student_id}
                 >
@@ -446,8 +452,19 @@ function Students() {
                 <p>All enrolled students. Search to narrow the list, or view a student's information, request history, and submitted requirements.</p>
             </div>
 
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Students', value: allStudents.length, note: 'Registered and verified', Icon: IconIdCard },
+                        { label: 'Pending verification', value: pendingVerifications.length, note: pendingVerifications.length ? 'Waiting for your approval' : 'Nothing to review', Icon: IconHourglass, warn: pendingVerifications.length > 0 },
+                        { label: 'Setup incomplete', value: pendingProfiles.length, note: 'Signed in, profile not finished', Icon: IconLayers },
+                        { label: 'Programs', value: new Set(allStudents.map((st) => st.program_id).filter(Boolean)).size, note: 'With enrolled students', Icon: IconBuilding },
+                    ]}
+                />
+            )}
+
             <input
-                className="admin-search-input"
+                className="admin-search-input admin-search-field"
                 type="text"
                 value={term}
                 onChange={(e) => onSearchTermChange(e.target.value)}
@@ -469,7 +486,7 @@ function Students() {
                         className={`admin-filter-chip${yearLevelFilter === chip.key ? ' active' : ''}`}
                         onClick={() => { setYearLevelFilter(chip.key); setSelectedProgramKey(null) }}
                     >
-                        {chip.label} ({chip.key === 'all' ? allStudents.length : allStudents.filter((s) => String(s.year_level) === chip.key).length})
+                        {chip.label}<span className="admin-chip-count">{chip.key === 'all' ? allStudents.length : allStudents.filter((s) => String(s.year_level) === chip.key).length}</span>
                     </button>
                 ))}
             </div>
@@ -478,7 +495,7 @@ function Students() {
 
             {pendingVerifications.length > 0 && (
                 <>
-                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Verification</h2>
+                    <h2 className="admin-section-title" style={{ marginBottom: 6 }}>Pending Verification <span className="admin-chip-count">{pendingVerifications.length}</span></h2>
                     <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
                         New registrations waiting to be confirmed against enrollment records.
                     </p>
@@ -486,9 +503,12 @@ function Students() {
                     {pendingVerifications.map((student) => (
                         <div className="admin-list-card" key={student.student_id}>
                             <div className="admin-list-card-header">
-                                <div>
-                                    <h3>{student.fullName}</h3>
-                                    <p>{student.student_number} · {student.email}</p>
+                                <div className="admin-card-title">
+                                    <span className="admin-avatar" aria-hidden="true">{initialsOf(student.fullName)}</span>
+                                    <div>
+                                        <h3>{student.fullName}</h3>
+                                        <p>{student.student_number} · {student.email}</p>
+                                    </div>
                                 </div>
                                 <span className="admin-status-pill status-pending">pending</span>
                             </div>
@@ -508,7 +528,7 @@ function Students() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: 16 }}>
+                            <div className="admin-card-actions">
                                 <button
                                     className="admin-link-button"
                                     onClick={() => navigate(`/admin/students/${student.student_id}`)}
@@ -517,8 +537,7 @@ function Students() {
                                 </button>
 
                                 <button
-                                    className="admin-link-button"
-                                    style={{ color: '#1e8a5f' }}
+                                    className="admin-link-button is-success"
                                     onClick={() => approveStudent(student)}
                                     disabled={reviewingId === student.student_id}
                                 >
@@ -526,8 +545,7 @@ function Students() {
                                 </button>
 
                                 <button
-                                    className="admin-link-button"
-                                    style={{ color: 'var(--red)' }}
+                                    className="admin-link-button is-danger"
                                     onClick={() => rejectStudent(student)}
                                     disabled={reviewingId === student.student_id}
                                 >
@@ -541,7 +559,7 @@ function Students() {
 
             {pendingProfiles.length > 0 && (
                 <>
-                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Setup</h2>
+                    <h2 className="admin-section-title" style={{ marginBottom: 6 }}>Pending Setup <span className="admin-chip-count">{pendingProfiles.length}</span></h2>
                     <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
                         These accounts signed in but haven't finished the "Complete your profile" step yet, so they don't have a student record and can't submit requests.
                         Accounts left incomplete for 3 working days are automatically deactivated.
@@ -550,9 +568,12 @@ function Students() {
                     {pendingProfiles.map((p) => (
                         <div className="admin-list-card" key={p.user_id}>
                             <div className="admin-list-card-header">
-                                <div>
-                                    <h3>{`${p.first_name} ${p.last_name}`.trim() || 'Unknown'}</h3>
-                                    <p>{p.email}</p>
+                                <div className="admin-card-title">
+                                    <span className="admin-avatar is-muted" aria-hidden="true">{initialsOf(`${p.first_name} ${p.last_name}`)}</span>
+                                    <div>
+                                        <h3>{`${p.first_name} ${p.last_name}`.trim() || 'Unknown'}</h3>
+                                        <p>{p.email}</p>
+                                    </div>
                                 </div>
                                 {p.status === 'inactive' ? (
                                     <span className="admin-status-pill status-rejected">Auto-declined</span>

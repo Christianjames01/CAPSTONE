@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react'
+import PageStats from '../../components/PageStats'
+import { IconMessage } from '../employee/icons'
+import { IconBell } from '../student/icons'
+import { IconIdCard, IconUsers } from './icons'
 import { supabase } from '../../lib/supabase'
 import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
@@ -27,6 +31,8 @@ function Messages() {
     const [activeThread, setActiveThread] = useState(null)
 
     const [reply, setReply] = useState('')
+    const [threadSearch, setThreadSearch] = useState('')
+    const [threadFilter, setThreadFilter] = useState('all')
     const [sending, setSending] = useState(false)
 
     const [showNewMessage, setShowNewMessage] = useState(false)
@@ -570,6 +576,20 @@ function Messages() {
         )
     }
 
+    const initialsOf = (name) =>
+        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
+    const roleLabel = (role) => (role === 'student' ? 'Student' : role === 'employee' ? 'Employee' : role ? 'Registrar' : '')
+
+    const unreadThreads = threads.filter((t) => unreadCountFor(t) > 0)
+    const myThreads = threads.filter((t) => isMyThread(t))
+    const studentsChatting = new Set(
+        threads.flatMap((t) => [t.roleA === 'student' ? t.participantA : null, t.roleB === 'student' ? t.participantB : null]).filter(Boolean)
+    ).size
+
+    const threadQuery = threadSearch.trim().toLowerCase()
+    const visibleThreads = (threadFilter === 'unread' ? unreadThreads : threadFilter === 'mine' ? myThreads : threads)
+        .filter((t) => !threadQuery || `${t.nameA} ${t.nameB}`.toLowerCase().includes(threadQuery))
+
     return (
         <div>
             <div className="admin-page-header-row">
@@ -593,12 +613,54 @@ function Messages() {
 
             {error && <div className="admin-error-box">{error}</div>}
 
+            {!loading && (
+                <div style={{ marginTop: 20 }}>
+                    <PageStats
+                        stats={[
+                            { label: 'Conversations', value: threads.length, note: 'Between students and staff', Icon: IconMessage, onClick: () => setThreadFilter('all') },
+                            { label: 'Unread', value: totalUnread, note: totalUnread ? `In ${unreadThreads.length} conversation${unreadThreads.length === 1 ? '' : 's'}` : 'All caught up', Icon: IconBell, warn: totalUnread > 0, onClick: () => setThreadFilter('unread') },
+                            { label: 'Yours', value: myThreads.length, note: 'Conversations you are in', Icon: IconUsers, onClick: () => setThreadFilter('mine') },
+                            { label: 'Students', value: studentsChatting, note: 'With a conversation', Icon: IconIdCard },
+                        ]}
+                    />
+                </div>
+            )}
+
+            {!loading && threads.length > 0 && (
+                <div className="admin-toolbar">
+                    <input
+                        className="admin-search-input admin-search-field"
+                        type="text"
+                        value={threadSearch}
+                        onChange={(e) => setThreadSearch(e.target.value)}
+                        placeholder="Search conversations by name"
+                    />
+                    <div className="admin-filter-row">
+                        {[
+                            { key: 'all', label: 'All', count: threads.length },
+                            { key: 'unread', label: 'Unread', count: unreadThreads.length },
+                            { key: 'mine', label: 'Yours', count: myThreads.length },
+                        ].map((chip) => (
+                            <button
+                                key={chip.key}
+                                className={`admin-filter-chip${threadFilter === chip.key ? ' active' : ''}`}
+                                onClick={() => setThreadFilter(chip.key)}
+                            >
+                                {chip.label}<span className="admin-chip-count">{chip.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {loading ? (
                 <SkeletonList count={3} />
             ) : threads.length === 0 ? (
                 <div className="admin-empty">No conversations yet.</div>
+            ) : visibleThreads.length === 0 ? (
+                <div className="admin-empty">No conversations match.</div>
             ) : (
-                threads.map((thread) => {
+                visibleThreads.map((thread) => {
                     const lastMessage = thread.messages[thread.messages.length - 1]
                     const unread = unreadCountFor(thread)
 
@@ -607,19 +669,29 @@ function Messages() {
                             key={thread.pairKey}
                             role="button"
                             tabIndex={0}
-                            className="admin-list-card"
+                            className={`admin-list-card msg-thread-card${unread > 0 ? ' is-unread' : ''}`}
                             style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
                             onClick={() => openThread(thread)}
                             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openThread(thread))}
                         >
                             <div className="admin-list-card-header">
-                                <div>
-                                    <h3>{thread.nameA} ↔ {thread.nameB}</h3>
-                                    <p>
-                                        {lastMessage?.deleted_at
-                                            ? <em>{deletedLabel(lastMessage)}</em>
-                                            : lastMessage?.message}
-                                    </p>
+                                <div className="admin-card-title">
+                                    <span className="msg-avatars" aria-hidden="true">
+                                        <span className="admin-avatar">{initialsOf(thread.nameA)}</span>
+                                        <span className="admin-avatar is-muted">{initialsOf(thread.nameB)}</span>
+                                    </span>
+                                    <div>
+                                        <h3>
+                                            {thread.nameA} <span className="msg-role">{roleLabel(thread.roleA)}</span>
+                                            <span className="msg-and"> & </span>
+                                            {thread.nameB} <span className="msg-role">{roleLabel(thread.roleB)}</span>
+                                        </h3>
+                                        <p className="msg-preview">
+                                            {lastMessage?.deleted_at
+                                                ? <em>{deletedLabel(lastMessage)}</em>
+                                                : lastMessage?.message}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>

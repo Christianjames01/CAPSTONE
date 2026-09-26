@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import PageStats from '../../components/PageStats'
+import { IconDocument, IconCheckCircle, IconBan, IconLayers } from './icons'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
@@ -605,33 +607,46 @@ function Documents() {
 
             {error && <div className="admin-error-box" style={{ marginTop: 20 }}>{error}</div>}
 
-            <input
-                className="admin-search-input"
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by document name, code, or category"
-                aria-label="Search document types"
-                style={{ margin: '20px 0 16px' }}
-            />
+            {!loading && (
+                <div style={{ marginTop: 20 }}>
+                    <PageStats
+                        stats={[
+                            { label: 'Document types', value: documents.length, note: 'In the catalog', Icon: IconDocument, onClick: () => setAvailabilityFilter('all') },
+                            { label: 'Available', value: documents.filter((d) => d.is_available).length, note: 'Students can request these', Icon: IconCheckCircle, onClick: () => setAvailabilityFilter('available') },
+                            { label: 'Unavailable', value: documents.filter((d) => !d.is_available).length, note: 'Hidden from students', Icon: IconBan, onClick: () => setAvailabilityFilter('unavailable') },
+                            { label: 'With sample image', value: documents.filter((d) => d.preview_image_url).length, note: 'Shown on the landing page', Icon: IconLayers },
+                        ]}
+                    />
+                </div>
+            )}
 
-            <div className="admin-filter-row">
-                {[
-                    { key: 'all', label: 'All' },
-                    { key: 'available', label: 'Available' },
-                    { key: 'unavailable', label: `Unavailable (${documents.filter((d) => !d.is_available).length})` },
-                ].map((chip) => (
-                    <button
-                        key={chip.key}
-                        className={`admin-filter-chip${availabilityFilter === chip.key ? ' active' : ''}`}
-                        onClick={() => setAvailabilityFilter(chip.key)}
-                    >
-                        {chip.label}
-                    </button>
-                ))}
+            <div className="admin-toolbar">
+                <input
+                    className="admin-search-input admin-search-field"
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by document name, code, or category"
+                    aria-label="Search document types"
+                />
+                <div className="admin-filter-row">
+                    {[
+                        { key: 'all', label: 'All', count: documents.length },
+                        { key: 'available', label: 'Available', count: documents.filter((d) => d.is_available).length },
+                        { key: 'unavailable', label: 'Unavailable', count: documents.filter((d) => !d.is_available).length },
+                    ].map((chip) => (
+                        <button
+                            key={chip.key}
+                            className={`admin-filter-chip${availabilityFilter === chip.key ? ' active' : ''}`}
+                            onClick={() => setAvailabilityFilter(chip.key)}
+                        >
+                            {chip.label}<span className="admin-chip-count">{chip.count}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="admin-filter-row" style={{ marginTop: 8 }}>
+            <div className="admin-filter-row">
                 <button
                     className={`admin-filter-chip${categoryFilter === 'all' ? ' active' : ''}`}
                     onClick={() => setCategoryFilter('all')}
@@ -644,7 +659,7 @@ function Documents() {
                         className={`admin-filter-chip${categoryFilter === c.value ? ' active' : ''}`}
                         onClick={() => setCategoryFilter(c.value)}
                     >
-                        {c.label} ({documents.filter((d) => d.category === c.value).length})
+                        {c.label}<span className="admin-chip-count">{documents.filter((d) => d.category === c.value).length}</span>
                     </button>
                 ))}
             </div>
@@ -663,14 +678,16 @@ function Documents() {
                 visibleDocuments.map((doc) => (
                     <div className="admin-list-card" key={doc.document_type_id} style={{ marginTop: 16 }}>
                         <div className="admin-list-card-header">
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                                {doc.preview_image_url && (
+                            <div className="admin-card-title">
+                                {doc.preview_image_url ? (
                                     <img
                                         src={doc.preview_image_url}
                                         alt=""
                                         onClick={() => setPreviewingDoc(doc)}
-                                        style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)', cursor: 'pointer', flexShrink: 0 }}
+                                        style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', cursor: 'pointer', flexShrink: 0 }}
                                     />
+                                ) : (
+                                    <span className={`admin-avatar is-square${doc.is_available ? '' : ' is-muted'}`} aria-hidden="true"><IconDocument /></span>
                                 )}
                                 <div>
                                     <h3>{doc.document_name}</h3>
@@ -709,9 +726,9 @@ function Documents() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 16 }}>
+                        <div className="admin-card-actions">
                             <button className="admin-link-button" onClick={() => openEditForm(doc)}>Edit</button>
-                            <button className="admin-link-button" onClick={() => toggleAvailability(doc)}>
+                            <button className={`admin-link-button${doc.is_available ? '' : ' is-success'}`} onClick={() => toggleAvailability(doc)}>
                                 {doc.is_available ? 'Mark unavailable' : 'Mark available'}
                             </button>
                             <button className="admin-link-button" onClick={() => loadRequirements(doc.document_type_id)}>
@@ -723,7 +740,7 @@ function Documents() {
                                 </button>
                             )}
                             {currentRole === 'registrar_head' && (
-                                <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => deleteDocument(doc)}>
+                                <button className="admin-link-button is-danger" onClick={() => deleteDocument(doc)}>
                                     Delete
                                 </button>
                             )}

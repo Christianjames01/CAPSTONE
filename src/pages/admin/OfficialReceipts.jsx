@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import PageStats from '../../components/PageStats'
+import { IconHourglass, IconCheckCircle, IconXCircle, IconBarChart } from './icons'
+import { IconReceipt } from '../student/icons'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -14,7 +17,7 @@ function formatDate(value) {
 }
 
 const CHIPS = [
-    { key: 'uploaded', label: 'Awaiting Verification' },
+    { key: 'uploaded', label: 'Uploaded' },
     { key: 'verified', label: 'Verified' },
     { key: 'rejected', label: 'Rejected' },
     { key: 'all', label: 'All' },
@@ -218,6 +221,9 @@ function OfficialReceipts() {
     }
 
     const visibleReceipts = activeChip === 'all' ? receipts : receipts.filter((r) => r.status === activeChip)
+    const countFor = (key) => (key === 'all' ? receipts.length : receipts.filter((r) => r.status === key).length)
+    const verifiedTotal = receipts.filter((r) => r.status === 'verified').reduce((sum, r) => sum + Number(r.amount_paid || 0), 0)
+    const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
     return (
         <div>
@@ -226,6 +232,17 @@ function OfficialReceipts() {
                 <p>Every official receipt uploaded by students, across all employees.</p>
             </div>
 
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Uploaded', value: countFor('uploaded'), note: countFor('uploaded') ? 'Waiting to be verified' : 'Nothing to verify', Icon: IconHourglass, warn: countFor('uploaded') > 0, onClick: () => setActiveChip('uploaded') },
+                        { label: 'Verified', value: countFor('verified'), note: 'Payment confirmed', Icon: IconCheckCircle, onClick: () => setActiveChip('verified') },
+                        { label: 'Rejected', value: countFor('rejected'), note: 'Student must re-upload', Icon: IconXCircle, onClick: () => setActiveChip('rejected') },
+                        { label: 'Amount verified', value: peso(verifiedTotal), note: 'Paid at the Finance Office', Icon: IconBarChart },
+                    ]}
+                />
+            )}
+
             <div className="admin-filter-row">
                 {CHIPS.map((chip) => (
                     <button
@@ -233,7 +250,7 @@ function OfficialReceipts() {
                         className={`admin-filter-chip${activeChip === chip.key ? ' active' : ''}`}
                         onClick={() => setActiveChip(chip.key)}
                     >
-                        {chip.label}
+                        {chip.label}<span className="admin-chip-count">{countFor(chip.key)}</span>
                     </button>
                 ))}
             </div>
@@ -248,9 +265,12 @@ function OfficialReceipts() {
                 visibleReceipts.map((r) => (
                     <div className="admin-list-card" key={r.receipt_id}>
                         <div className="admin-list-card-header">
-                            <div>
-                                <h3>{r.requestNumber}</h3>
-                                <p>{r.studentName} ({r.studentNumber})</p>
+                            <div className="admin-card-title">
+                                <span className={`admin-avatar is-square${r.status === 'verified' ? '' : r.status === 'rejected' ? ' is-muted' : ''}`} aria-hidden="true"><IconReceipt /></span>
+                                <div>
+                                    <h3>{r.requestNumber}{r.receipt_number && <span className="admin-card-badge">OR {r.receipt_number}</span>}</h3>
+                                    <p>{r.studentName} ({r.studentNumber})</p>
+                                </div>
                             </div>
                             <span className={`admin-status-pill status-${r.status}`}>{r.status}</span>
                         </div>
@@ -270,17 +290,17 @@ function OfficialReceipts() {
                             <div className="admin-error-box" style={{ marginBottom: 0 }}>Rejected: {r.rejection_reason}</div>
                         )}
 
-                        <div style={{ display: 'flex', gap: 16 }}>
+                        <div className="admin-card-actions">
                             <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>
                                 Open request →
                             </button>
 
                             {r.status === 'uploaded' && (
                                 <>
-                                    <button className="admin-link-button" onClick={() => verifyReceipt(r)} disabled={processing === r.receipt_id}>
+                                    <button className="admin-link-button is-success" onClick={() => verifyReceipt(r)} disabled={processing === r.receipt_id}>
                                         {processing === r.receipt_id ? 'Working...' : 'Verify'}
                                     </button>
-                                    <button className="admin-link-button" style={{ color: 'var(--red)' }} onClick={() => openRejectModal(r)} disabled={processing === r.receipt_id}>
+                                    <button className="admin-link-button is-danger" onClick={() => openRejectModal(r)} disabled={processing === r.receipt_id}>
                                         Reject
                                     </button>
                                 </>
@@ -307,7 +327,7 @@ function OfficialReceipts() {
 
                     <div style={{ display: 'flex', gap: 10 }}>
                         <button
-                            className="admin-danger-button"
+                            className="admin-secondary-button"
                             onClick={closeRejectModal}
                             disabled={processing === rejectTarget.receipt_id}
                         >

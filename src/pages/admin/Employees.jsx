@@ -6,6 +6,8 @@ import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
 import { notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
+import PageStats from '../../components/PageStats'
+import { IconUsers, IconHourglass, IconFileStack, IconBuilding } from './icons'
 import './AdminPages.css'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
@@ -29,6 +31,7 @@ function Employees() {
     const [colleges, setColleges] = useState([])
     const [programs, setPrograms] = useState([])
     const [search, setSearch] = useState('')
+    const [statusFilter, setStatusFilter] = useState('all')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [updating, setUpdating] = useState(null)
@@ -320,7 +323,22 @@ function Employees() {
         }
     }
 
+    const initialsOf = (name) =>
+        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
+
+    const activeCount = employees.filter((e) => e.status === 'active').length
+    const inactiveCount = employees.length - activeCount
+    const openTotal = employees.reduce((sum, e) => sum + e.openCount, 0)
+    const collegesCovered = new Set(employees.filter((e) => e.status === 'active' && e.assigned_college_id).map((e) => e.assigned_college_id)).size
+
+    const STATUS_CHIPS = [
+        { key: 'all', label: 'All', count: employees.length },
+        { key: 'active', label: 'Active', count: activeCount },
+        { key: 'inactive', label: 'Inactive', count: inactiveCount },
+    ]
+
     const visibleEmployees = employees.filter((e) => {
+        if (statusFilter !== 'all' && e.status !== statusFilter) return false
         if (!search.trim()) return true
         const term = search.trim().toLowerCase()
         return (
@@ -443,14 +461,37 @@ function Employees() {
                 </Modal>
             )}
 
-            <input
-                className="admin-search-input"
-                style={{ margin: '20px 0' }}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, employee number, or email"
-            />
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Active staff', value: activeCount, note: `${employees.length} account${employees.length === 1 ? '' : 's'} in total`, Icon: IconUsers, onClick: () => setStatusFilter('active') },
+                        { label: 'Awaiting activation', value: inactiveCount, note: inactiveCount ? 'Inactive — activate to let them log in' : 'Everyone is active', Icon: IconHourglass, warn: inactiveCount > 0, onClick: () => setStatusFilter('inactive') },
+                        { label: 'Open requests', value: openTotal, note: 'Assigned to staff right now', Icon: IconFileStack },
+                        { label: 'Colleges covered', value: collegesCovered, note: 'By an active employee', Icon: IconBuilding },
+                    ]}
+                />
+            )}
+
+            <div className="admin-toolbar">
+                <input
+                    className="admin-search-input admin-search-field"
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name, employee number, or email"
+                />
+                <div className="admin-filter-row">
+                    {STATUS_CHIPS.map((chip) => (
+                        <button
+                            key={chip.key}
+                            className={`admin-filter-chip${statusFilter === chip.key ? ' active' : ''}`}
+                            onClick={() => setStatusFilter(chip.key)}
+                        >
+                            {chip.label}<span className="admin-chip-count">{chip.count}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {error && <div className="admin-error-box">{error}</div>}
 
@@ -462,9 +503,15 @@ function Employees() {
                 visibleEmployees.map((employee) => (
                     <div className="admin-list-card" key={employee.employee_id}>
                         <div className="admin-list-card-header">
-                            <div>
-                                <h3>{employee.name}{employee.displayName && ` (nickname: ${employee.displayName})`}</h3>
-                                <p>{employee.employee_number} · {employee.position_title} · {employee.email}</p>
+                            <div className="admin-card-title">
+                                <span className={`admin-avatar${employee.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true">{initialsOf(employee.name)}</span>
+                                <div>
+                                    <h3>
+                                        {employee.name}
+                                        {employee.displayName && <span className="admin-card-badge">Shown to students as “{employee.displayName}”</span>}
+                                    </h3>
+                                    <p>{employee.employee_number} · {employee.position_title} · {employee.email}</p>
+                                </div>
                             </div>
 
                             <span className={`admin-status-pill status-${employee.status}`}>{employee.status}</span>
@@ -481,7 +528,7 @@ function Employees() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 16 }}>
+                        <div className="admin-card-actions">
                             <button
                                 className="admin-link-button"
                                 onClick={() => navigate(`/admin/employees/${employee.employee_id}`)}
@@ -490,8 +537,7 @@ function Employees() {
                             </button>
 
                             <button
-                                className="admin-link-button"
-                                style={{ color: employee.status === 'active' ? 'var(--red)' : 'var(--blue-accent, var(--blue))' }}
+                                className={`admin-link-button${employee.status === 'active' ? ' is-danger' : ' is-success'}`}
                                 onClick={() => toggleStatus(employee)}
                                 disabled={updating === employee.employee_id}
                             >
@@ -501,8 +547,7 @@ function Employees() {
                             </button>
 
                             <button
-                                className="admin-link-button"
-                                style={{ color: 'var(--red)' }}
+                                className="admin-link-button is-danger"
                                 onClick={() => removeEmployee(employee)}
                                 disabled={removing === employee.employee_id}
                             >

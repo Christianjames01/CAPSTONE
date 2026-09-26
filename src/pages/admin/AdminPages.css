@@ -443,3 +443,287 @@
 .admin-link-button.admin-thread-delete:hover {
     color: var(--danger-text, var(--red));
 }
+
+/* ===================================================
+   List pages (Employees, Students, Documents, Claim Schedules,
+   Official Receipts, Messages): summary tiles, cards, actions.
+=================================================== */
+.page-stats {
+    margin-bottom: 22px;
+}
+
+.page-stats .dash-stat-tile.is-static {
+    cursor: default;
+}
+
+.admin-list-card {
+    border-radius: 14px;
+    padding: 20px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-list-card:hover {
+    border-color: color-mix(in srgb, var(--blue-accent, var(--blue)) 28%, var(--line));
+    box-shadow: 0 16px 34px -28px rgba(10, 36, 80, 0.45);
+}
+
+/* Details inside a list card read as small tiles. */
+.admin-list-card .admin-info-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.admin-list-card .admin-info-field {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--paper);
+}
+
+.admin-list-card .admin-info-field span {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Title row with an avatar or icon. */
+.admin-card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.admin-card-title > div {
+    min-width: 0;
+}
+
+.admin-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-avatar.is-square {
+    border-radius: 10px;
+}
+
+.admin-avatar svg {
+    width: 20px;
+    height: 20px;
+}
+
+.admin-avatar.is-muted {
+    background: var(--paper);
+    color: var(--slate);
+}
+
+.admin-card-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--slate);
+    vertical-align: middle;
+}
+
+/* Action buttons at the bottom of a card. */
+.admin-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.admin-card-actions .admin-link-button {
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.admin-card-actions .admin-link-button:hover:not(:disabled) {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.admin-card-actions .admin-link-button.is-danger {
+    color: var(--danger-text, var(--red));
+}
+
+.admin-card-actions .admin-link-button.is-danger:hover:not(:disabled) {
+    border-color: var(--danger-text, var(--red));
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+}
+
+.admin-card-actions .admin-link-button.is-success {
+    color: var(--success-text, #1e8a5f);
+}
+
+.admin-card-actions .admin-link-button.is-success:hover:not(:disabled) {
+    border-color: var(--success-text, #1e8a5f);
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+}
+
+.admin-card-actions .admin-link-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Search box with a magnifier and the filter chips beside it. */
+.admin-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.admin-toolbar .admin-filter-row {
+    margin-bottom: 0;
+}
+
+.admin-search-field {
+    padding-left: 38px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357616F' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M19.5 19.5 15 15'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 17px;
+}
+
+.admin-filter-chip .admin-chip-count {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 11px;
+    color: var(--slate);
+}
+
+.admin-filter-chip.active .admin-chip-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+}
+
+.admin-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 26px 0 12px;
+    font-size: 17px;
+}
+
+.admin-section-title .admin-chip-count {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+.page-stats .dash-stat-tile.is-static:hover {
+    border-color: var(--line);
+    box-shadow: none;
+    transform: none;
+}
+
+/* Date badge on claiming appointment cards ("SEP / 29"). */
+.claim-date-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 48px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.claim-date-badge span {
+    width: 100%;
+    padding: 2px 0;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: center;
+}
+
+.claim-date-badge strong {
+    padding: 2px 0 4px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    line-height: 1.2;
+    color: var(--ink);
+}
+
+.claim-date-badge.status-missed span,
+.claim-date-badge.status-cancelled span {
+    background: var(--red);
+}
+
+.claim-date-badge.status-claimed span {
+    background: var(--success-text, #1e8a5f);
+}
+
+/* Admin Messages conversation cards. */
+.msg-thread-card.is-unread {
+    border-left: 4px solid var(--blue-accent, var(--blue));
+}
+
+.msg-avatars {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.msg-avatars .admin-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12.5px;
+    border: 2px solid var(--surface);
+}
+
+.msg-avatars .admin-avatar + .admin-avatar {
+    margin-left: -12px;
+}
+
+.msg-role {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--slate);
+    vertical-align: middle;
+}
+
+.msg-and {
+    font-weight: 400;
+    color: var(--slate);
+}
+
+.msg-preview {
+    overflow: hidden;
+    max-width: 560px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import PageStats from '../../components/PageStats'
+import { IconCalendarCheck, IconHourglass, IconSwap, IconXCircle } from './icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import RepresentativeBadge from '../../components/RepresentativeBadge'
@@ -296,17 +298,27 @@ function ClaimSchedules() {
 
     const today = new Date().toISOString().slice(0, 10)
 
-    const visibleSchedules = schedules.filter((s) => {
+    const matchesChip = (s, key) => {
         const date = s.claim_date || s.scheduled_date
-        if (activeChip === 'all') return true
-        if (activeChip === 'today') return date === today && s.status !== 'cancelled'
-        if (activeChip === 'upcoming') return date >= today && s.status === 'scheduled'
-        if (activeChip === 'missed') return s.status === 'missed'
-        if (activeChip === 'reschedule') return !!s.reschedule_requested_at && s.status !== 'cancelled'
-        if (activeChip === 'claimed') return s.status === 'claimed'
-        if (activeChip === 'cancelled') return s.status === 'cancelled'
+        if (key === 'all') return true
+        if (key === 'today') return date === today && s.status !== 'cancelled'
+        if (key === 'upcoming') return date >= today && s.status === 'scheduled'
+        if (key === 'missed') return s.status === 'missed'
+        if (key === 'reschedule') return !!s.reschedule_requested_at && s.status !== 'cancelled'
+        if (key === 'claimed') return s.status === 'claimed'
+        if (key === 'cancelled') return s.status === 'cancelled'
         return true
-    })
+    }
+
+    const countFor = (key) => schedules.filter((s) => matchesChip(s, key)).length
+    const visibleSchedules = schedules.filter((s) => matchesChip(s, activeChip))
+
+    // "SEP" / "29" badge for a schedule's date.
+    const dateBadge = (dateStr) => {
+        if (!dateStr) return { month: '—', day: '' }
+        const d = new Date(`${dateStr}T00:00:00`)
+        return { month: d.toLocaleDateString('en-PH', { month: 'short' }).toUpperCase(), day: d.getDate() }
+    }
 
     return (
         <div>
@@ -317,7 +329,19 @@ function ClaimSchedules() {
 
             {error && <div className="admin-error-box">{error}</div>}
 
-            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Unclaimed Credentials Needing a Schedule</h2>
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Today', value: countFor('today'), note: 'Claiming appointments today', Icon: IconCalendarCheck, onClick: () => setActiveChip('today') },
+                        { label: 'Upcoming', value: countFor('upcoming'), note: 'Scheduled from today on', Icon: IconCalendarCheck, onClick: () => setActiveChip('upcoming') },
+                        { label: 'Needs a schedule', value: unclaimed.length, note: unclaimed.length ? 'Ready, but not scheduled yet' : 'All credentials scheduled', Icon: IconHourglass, warn: unclaimed.length > 0 },
+                        { label: 'Reschedule requests', value: countFor('reschedule'), note: 'Asked by students', Icon: IconSwap, warn: countFor('reschedule') > 0, onClick: () => setActiveChip('reschedule') },
+                        { label: 'Missed', value: countFor('missed'), note: 'Appointments not claimed', Icon: IconXCircle, warn: countFor('missed') > 0, onClick: () => setActiveChip('missed') },
+                    ]}
+                />
+            )}
+
+            <h2 className="admin-section-title">Unclaimed Credentials Needing a Schedule <span className="admin-chip-count">{unclaimed.length}</span></h2>
 
             {!loading && unclaimed.length === 0 ? (
                 <div className="admin-empty" style={{ marginBottom: 28 }}>Every generated credential has a claim schedule.</div>
@@ -326,6 +350,8 @@ function ClaimSchedules() {
                     {unclaimed.map((r) => (
                         <div className="admin-list-card" key={r.request_id}>
                             <div className="admin-list-card-header">
+                                <div className="admin-card-title" style={{ alignItems: 'flex-start' }}>
+                                <span className="admin-avatar is-square" aria-hidden="true"><IconHourglass /></span>
                                 <div>
                                     <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
                                         {r.studentName || `Student ${r.studentNumber}`}
@@ -334,18 +360,21 @@ function ClaimSchedules() {
                                     <p>{r.request_number} · Student {r.studentNumber}{r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}</p>
                                     <RepresentativeBadge representative={representatives[r.request_id]} />
                                 </div>
+                                </div>
                                 <span className="admin-status-pill status-ready_for_claiming">Not scheduled</span>
                             </div>
 
-                            <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>
-                                Open request →
-                            </button>
+                            <div className="admin-card-actions">
+                                <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>
+                                    Open request →
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            <h2 style={{ fontSize: 17, marginBottom: 14 }}>All Schedules</h2>
+            <h2 className="admin-section-title">All Schedules <span className="admin-chip-count">{schedules.length}</span></h2>
 
             <div className="admin-filter-row">
                 {CHIPS.map((chip) => (
@@ -354,7 +383,7 @@ function ClaimSchedules() {
                         className={`admin-filter-chip${activeChip === chip.key ? ' active' : ''}`}
                         onClick={() => setActiveChip(chip.key)}
                     >
-                        {chip.label}
+                        {chip.label}<span className="admin-chip-count">{countFor(chip.key)}</span>
                     </button>
                 ))}
             </div>
@@ -367,6 +396,11 @@ function ClaimSchedules() {
                 visibleSchedules.map((s) => (
                     <div className="admin-list-card" key={s.claim_schedule_id}>
                         <div className="admin-list-card-header">
+                            <div className="admin-card-title" style={{ alignItems: 'flex-start' }}>
+                            <span className={`claim-date-badge status-${s.status}`} aria-hidden="true">
+                                <span>{dateBadge(s.claim_date || s.scheduled_date).month}</span>
+                                <strong>{dateBadge(s.claim_date || s.scheduled_date).day}</strong>
+                            </span>
                             <div>
                                 <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
                                     {s.studentName || `Student ${s.studentNumber}`}
@@ -374,6 +408,7 @@ function ClaimSchedules() {
                                 <h3>{s.documentName}</h3>
                                 <p>{s.requestNumber} · Student {s.studentNumber}{s.requestedAt && ` · Requested ${formatDisplayDateTime(s.requestedAt)}`}</p>
                                 <RepresentativeBadge representative={representatives[s.request_id]} />
+                            </div>
                             </div>
                             <span className={`admin-status-pill status-${s.status}`}>{s.status}</span>
                         </div>
@@ -396,19 +431,19 @@ function ClaimSchedules() {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', gap: 16 }}>
+                        <div className="admin-card-actions">
                             <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${s.request_id}`)}>
                                 Open request →
                             </button>
 
                             {s.status !== 'claimed' && s.status !== 'cancelled' && (
-                                <button className="admin-link-button" onClick={() => markAsClaimed(s)} disabled={marking === s.claim_schedule_id}>
+                                <button className="admin-link-button is-success" onClick={() => markAsClaimed(s)} disabled={marking === s.claim_schedule_id}>
                                     {marking === s.claim_schedule_id ? 'Marking...' : 'Mark as claimed'}
                                 </button>
                             )}
 
                             {s.status === 'missed' && (
-                                <button className="admin-link-button" style={{ color: 'var(--red-dark)' }} onClick={() => dismissSchedule(s)} disabled={marking === s.claim_schedule_id}>
+                                <button className="admin-link-button is-danger" onClick={() => dismissSchedule(s)} disabled={marking === s.claim_schedule_id}>
                                     {marking === s.claim_schedule_id ? 'Dismissing...' : 'Dismiss'}
                                 </button>
                             )}
