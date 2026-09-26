@@ -236,6 +236,103 @@ const PREVIEWS = {
         </div>
     ),
 
+    announcements: () => (
+        <div className="tp-stack">
+            <div className="tp-announce">
+                <span className="tp-pill is-red">Announcement</span>
+                <strong>Office closed on Oct 1 (holiday)</strong>
+                <span>Claiming scheduled that day moves to Oct 2.</span>
+            </div>
+            <div className="tp-button tp-pulse">Publish to students</div>
+        </div>
+    ),
+
+    programs: () => (
+        <div className="tp-stack">
+            <Row title="College of Engineering and Technology" sub="BS Information Technology · BS Computer Science" pill="Yul" />
+            <Row title="College of Business Education" sub="BS Accountancy · BS Business Administration" pill="sar" />
+            <Row title="College of Education" sub="BEEd · BSEd" pill="No employee" tone="amber" />
+        </div>
+    ),
+
+    calendar: () => (
+        <div className="tp-cal" aria-hidden="true">
+            {['M', 'T', 'W', 'T', 'F'].map((d, i) => <span key={`h${i}`} className="tp-cal-head">{d}</span>)}
+            {Array.from({ length: 15 }, (_, i) => {
+                const day = 22 + i
+                const label = day > 30 ? day - 30 : day
+                const cls = day === 29 ? ' is-claim' : day === 31 ? ' is-closed' : ''
+                return <span key={day} className={`tp-cal-day${cls}`}>{label}</span>
+            })}
+            <span className="tp-cal-legend"><i className="is-claim" /> Claiming <i className="is-closed" /> Closed</span>
+        </div>
+    ),
+
+    queue: () => (
+        <div className="tp-queue">
+            <span className="tp-queue-label">Now serving</span>
+            <strong className="tp-queue-number">A-024</strong>
+            <span className="tp-queue-window">Window 2</span>
+            <div className="tp-button tp-pulse">Call next number</div>
+        </div>
+    ),
+
+    receipts: () => (
+        <div className="tp-stack">
+            <Row title="OR No. 0045821 · ₱60.00" sub="Juan Dela Cruz · REQ-000012" pill="Awaiting" tone="amber" />
+            <Row title="OR No. 0045790 · ₱10.00" sub="Maria Santos · REQ-000011" pill="Verified" tone="green" />
+        </div>
+    ),
+
+    staffMessages: () => (
+        <div className="tp-chat">
+            <div className="tp-bubble"><em>Juan Dela Cruz</em>Hi! Is my TOR ready to claim?</div>
+            <div className="tp-bubble is-self">Yes — Sep 29, 1:00 PM at Window 3.</div>
+        </div>
+    ),
+
+    staffNotifications: () => (
+        <div className="tp-stack">
+            <Row title="New request assigned to you" sub="REQ-000016 · Certificate of Enrollment" pill="New" tone="red" />
+            <Row title="Representative to review" sub="REQ-000012 · Maria Dela Cruz (Parent)" />
+            <Row title="New note on REQ-000014" sub="Absence / coverage — covering for Yul" />
+        </div>
+    ),
+
+    activity: () => (
+        <div className="tp-stack">
+            <Row title="Yul verified the receipt for REQ-000012" sub="Sep 26, 10:14 AM" />
+            <Row title="sar created a claiming schedule for REQ-000011" sub="Sep 29, 1:00 PM · Sep 26, 9:52 AM" />
+            <Row title="Registrar Head reassigned REQ-000015" sub="from Yul to sar · Sep 26, 9:30 AM" />
+        </div>
+    ),
+
+    studentList: () => (
+        <div className="tp-stack">
+            <Row title="Juan Dela Cruz · 2021-00123" sub="BS Information Technology · 3 requests" pill="Verified" tone="green" />
+            <Row title="Maria Santos · 2022-00456" sub="BS Accountancy · 1 request" pill="Verified" tone="green" />
+        </div>
+    ),
+
+    profile: () => (
+        <div className="tp-profile">
+            <span className="tp-avatar is-large">JD</span>
+            <div className="tp-stack">
+                <div className="tp-input">Juan Dela Cruz</div>
+                <div className="tp-input is-muted">juan.delacruz@hcdc.edu.ph</div>
+                <div className="tp-button is-ghost">Change password</div>
+            </div>
+        </div>
+    ),
+
+    help: () => (
+        <div className="tp-stack">
+            <div className="tp-guide-row"><span>?</span>How do I pay for my request?</div>
+            <div className="tp-guide-row"><span>?</span>How long does processing take?</div>
+            <Row title="Registrar’s Office (ORRM)" sub="registrar@hcdc.edu.ph · (082) 221-9071" />
+        </div>
+    ),
+
     reports: () => (
         <div className="tp-report">
             <div className="tp-chart" aria-hidden="true">
