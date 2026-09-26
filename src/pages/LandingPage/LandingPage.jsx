@@ -790,26 +790,32 @@ const LandingPage = () => {
                                 </ol>
                             </div>
 
-                            <div className="verify-results">
-                                <span className="verify-results-label">What the result means</span>
-                                <ul>
-                                    <li className="is-verified">
-                                        <span className="verify-result-icon" aria-hidden="true">✓</span>
-                                        <div><strong>Verified</strong><span>Genuine and unchanged since the Registrar issued it.</span></div>
-                                    </li>
-                                    <li className="is-revoked">
-                                        <span className="verify-result-icon" aria-hidden="true">✕</span>
-                                        <div><strong>Revoked</strong><span>Issued, but cancelled by the Registrar — no longer valid.</span></div>
-                                    </li>
-                                    <li className="is-tampered">
-                                        <span className="verify-result-icon" aria-hidden="true">!</span>
-                                        <div><strong>Tampered</strong><span>The record was altered after issuance — do not accept it.</span></div>
-                                    </li>
-                                    <li className="is-missing">
-                                        <span className="verify-result-icon" aria-hidden="true">?</span>
-                                        <div><strong>Not found</strong><span>No credential with that number — check for typos, or treat it as fake.</span></div>
-                                    </li>
-                                </ul>
+                            <div className="verify-sample" aria-label="Example of a verification result">
+                                <span className="verify-sample-label">Sample result</span>
+
+                                <div className="verify-sample-card">
+                                    <div className="verify-sample-banner">
+                                        <span className="verify-sample-check" aria-hidden="true">✓</span>
+                                        <div>
+                                            <strong>Verified credential</strong>
+                                            <span>Issued by the HCDC Registrar’s Office</span>
+                                        </div>
+                                    </div>
+
+                                    <dl className="verify-sample-fields">
+                                        <div><dt>Document</dt><dd>Transcript of Records</dd></div>
+                                        <div><dt>Credential no.</dt><dd className="is-mono">CERT-000123</dd></div>
+                                        <div><dt>Issued to</dt><dd>Juan Dela Cruz</dd></div>
+                                        <div><dt>Program</dt><dd>BS Information Technology</dd></div>
+                                        <div><dt>Date issued</dt><dd>Sep 25, 2026</dd></div>
+                                        <div><dt>Signature</dt><dd className="is-ok">Valid</dd></div>
+                                    </dl>
+                                </div>
+
+                                <p className="verify-sample-note">
+                                    Revoked or altered documents are clearly flagged, and unknown numbers show as not found —
+                                    so a forged copy can’t pass.
+                                </p>
                             </div>
                         </div>
 
