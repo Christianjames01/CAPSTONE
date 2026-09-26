@@ -477,11 +477,6 @@ function AdminClaimSchedule() {
                         <span>Total Amount</span>
                         <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
                     </div>
-
-                    <div className="admin-info-field">
-                        <span>Priority</span>
-                        <strong style={{ textTransform: 'capitalize' }}>{request.priority || 'Normal'}</strong>
-                    </div>
                 </div>
             </div>
 

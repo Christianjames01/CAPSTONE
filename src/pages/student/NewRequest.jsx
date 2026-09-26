@@ -295,7 +295,6 @@ function NewRequest() {
                         assigned_employee_id: assignedEmployeeId,
                         quantity: Number(quantity),
                         unit_fee: unitFee,
-                        // Staff can mark a request urgent from its details page.
                         priority: 'normal',
                         purpose: purpose || null,
                         status: 'pending'

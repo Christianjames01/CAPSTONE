@@ -10,7 +10,6 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './EmployeePages.css'
-import PriorityPanel from '../../components/PriorityPanel'
 import RequestNotes from '../../components/RequestNotes'
 import RepresentativeStaffCard from '../../components/RepresentativeStaffCard'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
@@ -1326,8 +1325,6 @@ function EmployeeRequestDetails() {
                     Review the student's document request, payment, and requirements.
                 </p>
             </div>
-
-            <PriorityPanel request={request} onChange={setRequest} />
 
             {isOverdue && (
                 <div className="employee-notice tone-warning" style={{ marginBottom: 20 }}>

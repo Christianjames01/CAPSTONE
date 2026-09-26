@@ -6,8 +6,6 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
-import '../../components/PriorityPanel.css'
-import { sortByUrgency, isUrgent } from '../../lib/requestPriority'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -140,8 +138,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
     // Update in place when requests change -- no manual refresh needed.
     useLiveRefresh(['document_requests'], loadRequests)
 
-    // Urgent first.
-    const visibleRequests = sortByUrgency(requests
+    const visibleRequests = (requests
         .filter((r) => !(showFilterChips && activeStatuses) || activeStatuses.includes(r.status))
         .filter((r) => {
             if (!search.trim()) return true
@@ -197,7 +194,6 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                     <div
                         className="employee-list-card"
                         key={request.request_id}
-                        style={isUrgent(request) ? { borderLeft: '4px solid var(--danger-text, var(--red))' } : undefined}
                     >
                         <div className="employee-list-card-header">
                             <div>
@@ -217,13 +213,6 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                             <div className="employee-info-field">
                                 <span>Total</span>
                                 <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
-                            </div>
-
-                            <div className="employee-info-field">
-                                <span>Priority</span>
-                                <strong style={{ textTransform: 'capitalize', color: isUrgent(request) ? 'var(--danger-text, var(--red))' : undefined }}>
-                                    {isUrgent(request) ? '🔴 Urgent' : request.priority}
-                                </strong>
                             </div>
 
                             <div className="employee-info-field">

@@ -7,8 +7,6 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
-import '../../components/PriorityPanel.css'
-import { sortByUrgency } from '../../lib/requestPriority'
 
 import { formatDisplayDateTime } from '../../lib/formatDate'
 
@@ -132,8 +130,7 @@ function AllRequests() {
     // Update in place when requests change -- no manual refresh needed.
     useLiveRefresh(['document_requests'], loadRequests)
 
-    // Urgent first.
-    const visibleRequests = sortByUrgency(requests
+    const visibleRequests = (requests
         .filter((r) => !activeStatuses || activeStatuses.includes(r.status))
         .filter((r) => {
             if (!search.trim()) return true
@@ -312,7 +309,7 @@ function AllRequests() {
                     <div
                         className="admin-list-card"
                         key={request.request_id}
-                        style={{ borderLeft: `4px solid ${request.priority === 'urgent' ? 'var(--red)' : 'var(--blue-accent, var(--blue))'}` }}
+                        style={{ borderLeft: '4px solid var(--blue-accent, var(--blue))' }}
                     >
                         <div className="admin-list-card-header">
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -342,19 +339,6 @@ function AllRequests() {
                             <div className="admin-info-field">
                                 <span>Total</span>
                                 <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
-                            </div>
-
-                            <div className="admin-info-field">
-                                <span>Priority</span>
-                                <strong
-                                    style={{
-                                        textTransform: 'capitalize',
-                                        color: request.priority === 'urgent' ? 'var(--red)' : 'var(--blue-accent, var(--blue))',
-                                    }}
-                                >
-                                    {request.priority === 'urgent' ? '🔴 ' : '🔵 '}
-                                    {request.priority}
-                                </strong>
                             </div>
 
                             <div className="admin-info-field">

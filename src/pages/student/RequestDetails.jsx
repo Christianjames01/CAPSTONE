@@ -600,13 +600,6 @@ function RequestDetails() {
                     </div>
 
                     <div className="student-info-field">
-                        <span>Priority</span>
-                        <strong style={{ textTransform: 'capitalize', color: request.priority === 'urgent' ? 'var(--danger-text, var(--red))' : undefined }}>
-                            {request.priority === 'urgent' ? '🔴 Urgent' : request.priority}
-                        </strong>
-                    </div>
-
-                    <div className="student-info-field">
                         <span>Handled By</span>
                         <strong>
                             {assignedEmployee

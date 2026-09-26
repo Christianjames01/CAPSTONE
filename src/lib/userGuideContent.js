@@ -125,7 +125,6 @@ export const EMPLOYEE_GUIDE = [
         summary: 'Requests routed to you by program.',
         steps: [
             'Assigned Requests lists your requests with the student’s name and the date and time requested.',
-            'Requests marked urgent are shown first.',
             'Open a request to see its details, receipt, requirements, history and notes.',
         ],
     },
@@ -257,7 +256,7 @@ export const HEAD_GUIDE = [
         summary: 'Step in when needed.',
         steps: [
             'All Requests lists every request with student, document and date/time requested.',
-            'On a request you can mark it urgent, reassign the employee, override the status, add staff notes, and review a representative.',
+            'On a request you can reassign the employee, override the status, add staff notes, and review a representative.',
         ],
     },
     {

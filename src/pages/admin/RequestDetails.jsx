@@ -10,7 +10,6 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
-import PriorityPanel from '../../components/PriorityPanel'
 import RequestNotes from '../../components/RequestNotes'
 import RepresentativeStaffCard from '../../components/RepresentativeStaffCard'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
@@ -1009,10 +1008,6 @@ function AdminRequestDetails() {
                 </span>
             </div>
 
-            <div style={{ marginTop: 16 }}>
-                <PriorityPanel request={request} onChange={setRequest} />
-            </div>
-
             {isOverdue && (
                 <div className="admin-notice tone-warning" style={{ marginTop: 16 }}>
                     <strong>Pending for {daysSinceRequested} days</strong>
@@ -1047,11 +1042,6 @@ function AdminRequestDetails() {
                     <div className="admin-info-field">
                         <span>Total Amount</span>
                         <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
-                    </div>
-
-                    <div className="admin-info-field">
-                        <span>Priority</span>
-                        <strong style={{ textTransform: 'capitalize' }}>{request.priority}</strong>
                     </div>
 
                     <div className="admin-info-field">
