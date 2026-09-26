@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DocumentThumb from '../../components/DocumentThumb'
 import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from '../../components/UiIcons'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -37,6 +38,7 @@ function EmployeeRequestDetails() {
     const [request, setRequest] = useState(null)
     const [accessScope, setAccessScope] = useState('full')
     const [documentName, setDocumentName] = useState('')
+    const [documentPreview, setDocumentPreview] = useState(null)
     const [receipt, setReceipt] = useState(null)
     const [receiptUrl, setReceiptUrl] = useState('')
     const [student, setStudent] = useState(null)
@@ -148,11 +150,13 @@ function EmployeeRequestDetails() {
             if (requestData.document_type_id) {
                 const { data: doc } = await supabase
                     .from('document_types')
-                    .select('document_name')
+                    .select('document_name, preview_image_url')
                     .eq('document_type_id', requestData.document_type_id)
                     .single()
 
                 setDocumentName(doc?.document_name || 'Document')
+
+                setDocumentPreview(doc?.preview_image_url || null)
             }
 
             const {
@@ -1346,9 +1350,12 @@ function EmployeeRequestDetails() {
 
             <div className="employee-card">
                 <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
-                    <div>
-                        <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
-                        <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                        <DocumentThumb url={documentPreview} name={documentName} size={56} />
+                        <div>
+                            <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
+                            <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
+                        </div>
                     </div>
 
                     <span className={`employee-status-pill status-${request.status}`}>

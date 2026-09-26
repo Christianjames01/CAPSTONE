@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DocumentThumb from '../../components/DocumentThumb'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -110,12 +111,15 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             const [studentsById, { data: documentTypes }] = await Promise.all([
                 loadStudentsById(studentIds),
                 documentTypeIds.length
-                    ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
+                    ? supabase.from('document_types').select('document_type_id, document_name, preview_image_url').in('document_type_id', documentTypeIds)
                     : Promise.resolve({ data: [] }),
             ])
 
             const documentNameById = Object.fromEntries(
                 (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
+            )
+            const documentPreviewById = Object.fromEntries(
+                (documentTypes || []).map((d) => [d.document_type_id, d.preview_image_url || null])
             )
 
             setRequests(
@@ -124,6 +128,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                     studentNumber: studentsById[r.student_id]?.number || 'N/A',
                     studentName: studentsById[r.student_id]?.name || 'Unknown student',
                     documentName: documentNameById[r.document_type_id] || 'Document',
+                    documentPreview: documentPreviewById[r.document_type_id] || null,
                 }))
             )
 
@@ -196,12 +201,15 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                         key={request.request_id}
                     >
                         <div className="employee-list-card-header">
-                            <div>
-                                <p className="request-student-name">{request.studentName}</p>
-                                <h3>{request.documentName}</h3>
-                                <p>
-                                    {request.request_number} · Student {request.studentNumber}
-                                </p>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
+                                <DocumentThumb url={request.documentPreview} name={request.documentName} size={46} />
+                                <div>
+                                    <p className="request-student-name">{request.studentName}</p>
+                                    <h3>{request.documentName}</h3>
+                                    <p>
+                                        {request.request_number} · Student {request.studentNumber}
+                                    </p>
+                                </div>
                             </div>
 
                             <span className={`employee-status-pill status-${request.status}`}>

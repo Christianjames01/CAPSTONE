@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DocumentThumb from '../../components/DocumentThumb'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -122,18 +123,22 @@ function MyRequest() {
             const { data: documentTypes } = documentTypeIds.length
                 ? await supabase
                     .from('document_types')
-                    .select('document_type_id, document_name')
+                    .select('document_type_id, document_name, preview_image_url')
                     .in('document_type_id', documentTypeIds)
                 : { data: [] }
 
             const documentNameById = Object.fromEntries(
                 (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
             )
+            const documentPreviewById = Object.fromEntries(
+                (documentTypes || []).map((d) => [d.document_type_id, d.preview_image_url || null])
+            )
 
             setRequests(
                 requestRows.map((r) => ({
                     ...r,
                     documentName: documentNameById[r.document_type_id] || 'Document',
+                    documentPreview: documentPreviewById[r.document_type_id] || null,
                 }))
             )
 
@@ -239,6 +244,8 @@ function MyRequest() {
                     <div className="student-list-card" key={request.request_id}>
 
                         <div className="student-list-card-header">
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
+                            <DocumentThumb url={request.documentPreview} name={request.documentName} size={46} />
                             <div>
                                 <h3>{request.documentName}</h3>
                                 <p>Request {request.request_number}</p>
@@ -247,6 +254,7 @@ function MyRequest() {
                                         Waiting for the Registrar to assign staff for your college and program
                                     </p>
                                 )}
+                            </div>
                             </div>
 
                             <span className={`student-status-pill status-${request.status}`}>

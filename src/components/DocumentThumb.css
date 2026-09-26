@@ -1,0 +1,42 @@
+/* Document sample thumbnail (DocumentThumb.jsx). */
+
+.doc-thumb {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.12));
+    border-radius: 10px;
+    background: var(--paper, #F1F4FA);
+    cursor: zoom-in;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doc-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.doc-thumb:hover,
+.doc-thumb:focus-visible {
+    border-color: var(--blue-accent, var(--blue, #123B78));
+    box-shadow: 0 0 0 3px var(--blue-tint, #EAF1FB);
+    outline: none;
+}
+
+.doc-thumb.is-empty {
+    border-color: transparent;
+    background: var(--blue-tint, #EAF1FB);
+    color: var(--blue-accent, var(--blue, #123B78));
+    cursor: default;
+}
+
+.doc-thumb.is-empty svg {
+    width: 45%;
+    height: 45%;
+}

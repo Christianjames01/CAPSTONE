@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { IconXCircle, IconDocument } from './icons'
+import DocumentThumb from '../../components/DocumentThumb'
+import { IconXCircle } from './icons'
 import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from '../../components/UiIcons'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -63,6 +64,7 @@ function AdminRequestDetails() {
     const [request, setRequest] = useState(null)
     const [student, setStudent] = useState(null)
     const [documentName, setDocumentName] = useState('')
+    const [documentPreview, setDocumentPreview] = useState(null)
     const [receipt, setReceipt] = useState(null)
     const [receiptUrl, setReceiptUrl] = useState('')
     const [requirements, setRequirements] = useState([])
@@ -135,11 +137,13 @@ function AdminRequestDetails() {
             if (requestData.document_type_id) {
                 const { data: doc } = await supabase
                     .from('document_types')
-                    .select('document_name')
+                    .select('document_name, preview_image_url')
                     .eq('document_type_id', requestData.document_type_id)
                     .single()
 
                 setDocumentName(doc?.document_name || 'Document')
+
+                setDocumentPreview(doc?.preview_image_url || null)
             }
 
             const { data: receiptData } = await supabase
@@ -1000,7 +1004,7 @@ function AdminRequestDetails() {
             </button>
 
             <div className="admin-detail-hero">
-                <span className="admin-detail-avatar" aria-hidden="true" style={{ borderRadius: 14 }}><IconDocument /></span>
+                <DocumentThumb url={documentPreview} name={documentName} size={64} />
                 <div className="admin-detail-main" style={{ flex: 1 }}>
                     <span className="admin-detail-eyebrow">Document request · {request.request_number}</span>
                     <h1>{documentName}</h1>

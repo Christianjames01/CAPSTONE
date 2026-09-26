@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DocumentThumb from '../../components/DocumentThumb'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -7,7 +8,7 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
-import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconDocument } from './icons'
+import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle } from './icons'
 import './AdminPages.css'
 
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -84,7 +85,7 @@ function AllRequests() {
                     ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
                 documentTypeIds.length
-                    ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
+                    ? supabase.from('document_types').select('document_type_id, document_name, preview_image_url').in('document_type_id', documentTypeIds)
                     : Promise.resolve({ data: [] }),
                 employeeIds.length
                     ? supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', employeeIds)
@@ -103,6 +104,7 @@ function AllRequests() {
             const employeeById = Object.fromEntries((employees || []).map((e) => [e.employee_id, e]))
             const studentById = Object.fromEntries((students || []).map((s) => [s.student_id, s]))
             const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
+            const documentPreviewById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.preview_image_url || null]))
 
             setRequests(
                 data.map((r) => {
@@ -116,6 +118,7 @@ function AllRequests() {
                         studentNumber: student?.student_number || 'N/A',
                         studentName: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
                         documentName: documentNameById[r.document_type_id] || 'Document',
+                        documentPreview: documentPreviewById[r.document_type_id] || null,
                         employeeName: employeeProfile ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim() : 'Unassigned',
                     }
                 })
@@ -337,7 +340,7 @@ function AllRequests() {
                                     onChange={() => toggleSelected(request.request_id)}
                                     style={{ marginTop: 14 }}
                                 />
-                                <span className="admin-avatar is-square" aria-hidden="true"><IconDocument /></span>
+                                <DocumentThumb url={request.documentPreview} name={request.documentName} size={46} />
                                 <div>
                                     <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
                                         {request.studentName || `Student ${request.studentNumber}`}
