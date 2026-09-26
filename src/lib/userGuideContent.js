@@ -3,7 +3,7 @@
 
 const STATUS_STEPS = [
     'Pending — your request was received and is waiting for review.',
-    'Payment Pending — pay the fee, then upload your official receipt.',
+    'Payment Pending — pay the fee at the Finance Office, then upload your official receipt.',
     'Receipt Uploaded — the Registrar is checking your receipt.',
     'Receipt Verified — payment confirmed; your document will be processed.',
     'Processing — your document is being prepared.',
@@ -41,9 +41,10 @@ export const STUDENT_GUIDE = [
     {
         id: 'payment',
         title: 'Paying and uploading your receipt',
-        summary: 'Pay the fee and upload the official receipt so processing can start.',
+        summary: 'Pay in person at the Finance Office, then upload the official receipt.',
         steps: [
-            'When the status becomes Payment Pending, pay the amount shown on the request.',
+            'When the status becomes Payment Pending, go to the HCDC Finance Office and pay the amount shown on the request in person. CertiChain does not accept online payments.',
+            'Keep the official receipt (OR) — you’ll bring the original when you claim your document.',
             'Go to Upload Receipt (or open the request) and upload a clear photo or scan of the official receipt.',
             'Wait for verification. If the receipt is marked invalid, the reason is shown — upload a clearer or corrected copy. You don’t pay again.',
         ],

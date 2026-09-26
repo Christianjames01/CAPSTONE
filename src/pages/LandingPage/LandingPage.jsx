@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase";
+import { REGISTRAR_CONTACT } from "../../lib/registrarContact";
 import { DocumentSample } from "../../components/DocumentSample";
 import { useScrollLock } from "../../lib/useScrollLock";
 import "./Landing.css";
@@ -66,13 +67,6 @@ const IconCalendar = () => (
     </svg>
 );
 
-const IconSearch = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="10.5" cy="10.5" r="6.5" />
-        <path d="M19.5 19.5 15 15" />
-    </svg>
-);
-
 const IconReceipt = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z" />
@@ -84,6 +78,14 @@ const IconBell = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z" />
         <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </svg>
+);
+
+const IconCash = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2.5" y="6" width="19" height="12" rx="2" />
+        <circle cx="12" cy="12" r="2.6" />
+        <path d="M6 9.5v5M18 9.5v5" />
     </svg>
 );
 
@@ -116,9 +118,9 @@ const SERVICES = [
     },
     {
         Icon: IconReceipt,
-        tag: "Payments",
-        title: "Pay & upload receipts",
-        text: () => "Pay the fee, upload your official receipt, and the Registrar verifies it online — no extra trip to the counter.",
+        tag: "In person",
+        title: "Finance Office payment",
+        text: () => "Pay the fee in person at the HCDC Finance Office, then upload a photo of your official receipt — the Registrar verifies it online.",
         link: "See how it works",
         href: "#process",
     },
@@ -205,21 +207,24 @@ const IconTiktok = () => (
 );
 
 const PROCESS_STEPS = [
-    ["01", <IconUser />, "Create an account", "Register your CertiChain account and provide your student information."],
-    ["02", <IconDocument />, "Submit a request", "Select the academic document you need and submit your request online."],
-    ["03", <IconUpload />, "Upload requirements", "Provide supporting documents and an official receipt when applicable."],
-    ["04", <IconSearch />, "Verification", "Registrar personnel review your request and verify your student records."],
-    ["05", <IconGear />, "Processing", "Your document is prepared and its verification code is recorded."],
-    ["06", <IconCalendar />, "Claim your document", "Receive your claiming schedule and present a valid ID when claiming."],
+    { Icon: IconUser, title: "Create an account", body: "Register with your student details. The Registrar verifies your record before you can request." },
+    { Icon: IconDocument, title: "Submit a request", body: "Choose the document, number of copies and purpose. Add a “needed by” date if you have a deadline." },
+    { Icon: IconCash, title: "Pay at the Finance Office", body: "Pay the amount shown on your request in person at the HCDC Finance Office and keep your official receipt.", badge: "In person" },
+    { Icon: IconUpload, title: "Upload your receipt", body: "Upload a clear photo of the official receipt, plus any required documents. The Registrar verifies them online." },
+    { Icon: IconGear, title: "Processing", body: "Your document is prepared and signed. Every status change shows up live, with a notification." },
+    { Icon: IconCalendar, title: "Claim & verify", body: "Claim on your scheduled date with a valid ID — or send an approved representative. Its QR code proves it’s genuine." },
 ];
 
 const LANDING_FAQ = [
-    ["Do I need to create an account to request a document?", "Yes. A free CertiChain account lets you submit requests, upload requirements, track status, and message the Registrar directly."],
-    ["How do I pay for my request?", "Submit your request first, then upload your official receipt from your account. Registrar staff verify it before processing begins."],
-    ["How long does processing take?", "It varies by document type and current volume. You'll see real-time status updates in your account at every step, with no need to keep calling to check."],
-    ["How do I know a document is genuine?", "Every document CertiChain issues carries a unique verification code and QR code. Anyone — an employer, another school — can confirm it's authentic in seconds, no account required."],
-    ["What do I bring when claiming my document?", "Your official receipt and a valid ID. You'll get a claiming date and time in your account once your document is ready."],
+    ["Do I need to create an account to request a document?", "Yes. A free CertiChain account lets you submit requests, upload your receipt and requirements, track status, and message the Registrar directly. The Registrar verifies your student record first."],
+    ["Where and how do I pay?", "In person at the HCDC Finance Office. Submit your request first, then pay the amount shown on it at the Finance Office and keep the official receipt (OR). Upload a clear photo of the OR in your account so the Registrar can verify it."],
+    ["Can I pay online?", "No. CertiChain doesn’t accept online payments — all fees are paid at the Finance Office, the same way as other HCDC fees."],
+    ["What if my receipt is rejected?", "You’ll see the reason on your request. Upload a clearer or corrected photo of the same receipt — you don’t need to pay again."],
+    ["How long does processing take?", "It depends on the document and current volume; typical processing days are shown for each document. Your account shows every status change live, and you’re notified at each step."],
+    ["What do I bring when claiming my document?", "A valid ID and your original official receipt from the Finance Office. You’ll get a claiming date, time and window in your account once your document is ready."],
+    ["Can I change my claiming schedule?", "Yes. Open the request and ask for a reschedule with a reason; the Registrar will set a new date."],
     ["Can someone else claim my document for me?", "Yes. Open your request and add an authorized representative: enter their name and relationship, and upload a letter you signed plus their valid ID. Once the Registrar approves it, they bring the original signed letter and their valid ID when claiming."],
+    ["How do I know a document is genuine?", "Every document CertiChain issues carries a unique credential number and QR code. Anyone — an employer, another school — can scan it or enter the number on the Verify page, no account required."],
 ];
 
 
@@ -622,23 +627,36 @@ const LandingPage = () => {
                             <span className="section-label">How It Works</span>
                             <h2>From request <br /><span>to verified credential.</span></h2>
                             <p>
-                                Every step of a document request is logged, so you always
-                                know where it stands — and once issued, every credential
-                                can be checked against its recorded verification code.
+                                Six steps from your first request to a document anyone can
+                                verify. Everything happens in your account — except paying,
+                                which is done at the Finance Office.
                             </p>
                         </div>
 
-                        <div className="process-grid">
-                            <div className="process-line" />
-
-                            {PROCESS_STEPS.map(([num, icon, title, body]) => (
-                                <div className="process-step" key={num}>
-                                    <span className="step-number">{num}</span>
-                                    <div className="step-icon">{icon}</div>
-                                    <h3>{title}</h3>
-                                    <p>{body}</p>
-                                </div>
+                        <ol className="process-grid">
+                            {PROCESS_STEPS.map((step, index) => (
+                                <li className={`process-step${step.badge ? " is-highlight" : ""}`} key={step.title}>
+                                    <div className="process-step-top">
+                                        <span className="step-number">{String(index + 1).padStart(2, "0")}</span>
+                                        {step.badge && <span className="step-badge">{step.badge}</span>}
+                                    </div>
+                                    <div className="step-icon"><step.Icon /></div>
+                                    <h3>{step.title}</h3>
+                                    <p>{step.body}</p>
+                                </li>
                             ))}
+                        </ol>
+
+                        <div className="payment-note">
+                            <div className="payment-note-icon"><IconCash /></div>
+                            <div>
+                                <strong>Payments are made in person at the HCDC Finance Office.</strong>
+                                <p>
+                                    CertiChain doesn’t take online payments. After you submit a request, pay the amount
+                                    shown on it at the Finance Office, keep the official receipt (OR), and upload a clear
+                                    photo of it in your account. Bring the original OR when you claim your document.
+                                </p>
+                            </div>
                         </div>
 
                     </div>
@@ -652,24 +670,40 @@ const LandingPage = () => {
                                 <span className="section-label">About CertiChain</span>
                                 <h2>Modernizing <br /><span>registrar services.</span></h2>
                                 <p>
-                                    CertiChain is a web-based registrar services system
-                                    built for the Holy Cross of Davao College Registrar
-                                    Office, giving students and alumni a single place to
-                                    request academic certificates and credentials.
+                                    CertiChain is the online registrar services system of the Holy Cross of
+                                    Davao College Office of Registration and Records Management. Students and
+                                    alumni request academic documents, follow their progress and schedule
+                                    claiming — all from one account.
                                 </p>
-                                <p>
-                                    Instead of relying entirely on manual transactions,
-                                    CertiChain organizes requests, requirements, processing
-                                    status, claiming schedules, verification, and registrar
-                                    activity records in one system.
-                                </p>
+                                <ul className="about-list">
+                                    <li><IconCheck /> Requests, requirements and receipts in one place</li>
+                                    <li><IconCheck /> Live status updates and claiming schedules</li>
+                                    <li><IconCheck /> Signed credentials anyone can verify by QR</li>
+                                    <li><IconCheck /> Payments stay in person at the Finance Office</li>
+                                </ul>
                             </div>
 
                             <div className="about-highlights">
-                                <div><strong>Online</strong><span>Requesting</span></div>
-                                <div><strong>Digital</strong><span>Tracking</span></div>
-                                <div><strong>Secure</strong><span>Processing</span></div>
-                                <div><strong>Verified</strong><span>Credentials</span></div>
+                                <div>
+                                    <span className="about-highlight-icon"><IconDocument /></span>
+                                    <strong>{DOCUMENTS.length}+</strong>
+                                    <span>documents available online</span>
+                                </div>
+                                <div>
+                                    <span className="about-highlight-icon"><IconCalendar /></span>
+                                    <strong>6 steps</strong>
+                                    <span>from request to claiming</span>
+                                </div>
+                                <div>
+                                    <span className="about-highlight-icon"><IconCash /></span>
+                                    <strong>Finance Office</strong>
+                                    <span>in-person payment</span>
+                                </div>
+                                <div>
+                                    <span className="about-highlight-icon"><IconQr /></span>
+                                    <strong>QR verified</strong>
+                                    <span>every issued credential</span>
+                                </div>
                             </div>
 
                         </div>
@@ -711,15 +745,32 @@ const LandingPage = () => {
                         <div className="section-heading">
                             <span className="section-label">FAQ</span>
                             <h2>Frequently asked <br /><span>questions.</span></h2>
+                            <p>Quick answers about requesting, paying, claiming and verifying documents.</p>
                         </div>
 
-                        <div className="faq-list">
-                            {LANDING_FAQ.map(([question, answer]) => (
-                                <details className="faq-item" key={question}>
-                                    <summary>{question}</summary>
-                                    <p>{answer}</p>
-                                </details>
-                            ))}
+                        <div className="faq-layout">
+                            <div className="faq-list">
+                                {LANDING_FAQ.map(([question, answer]) => (
+                                    <details className="faq-item" key={question}>
+                                        <summary>{question}</summary>
+                                        <p>{answer}</p>
+                                    </details>
+                                ))}
+                            </div>
+
+                            <aside className="faq-contact">
+                                <span className="faq-contact-label">Still have questions?</span>
+                                <h3>Contact the Registrar</h3>
+                                <p>{REGISTRAR_CONTACT.office}</p>
+                                <ul>
+                                    <li><span>Email</span><a href={`mailto:${REGISTRAR_CONTACT.email}`}>{REGISTRAR_CONTACT.email}</a></li>
+                                    <li><span>Phone</span><a href={REGISTRAR_CONTACT.telephoneHref}>{REGISTRAR_CONTACT.telephone}</a></li>
+                                    {REGISTRAR_CONTACT.mobileNumbers.map((m) => (
+                                        <li key={m.label}><span>{m.label}</span><a href={m.href}>{m.display}</a></li>
+                                    ))}
+                                </ul>
+                                <p className="faq-contact-note">Payments: HCDC Finance Office, in person.</p>
+                            </aside>
                         </div>
 
                     </div>

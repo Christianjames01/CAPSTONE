@@ -34,7 +34,7 @@ const stepperStage = (status) => {
 
 const FAQ_ITEMS = [
     ['What do I need to request a document?', "Requirements vary per document type. Once you pick one on the request form, it'll list exactly what's needed for that credential."],
-    ['How do I pay?', "Submit your request first, then upload your official receipt on the request's page. Registrar staff verify it before processing begins."],
+    ['How do I pay?', "In person at the HCDC Finance Office. Pay the amount shown on your request there, then upload a photo of your official receipt on the request's page. Registrar staff verify it before processing begins."],
     ['How long does processing take?', "It varies by document type and current volume. You'll get a notification at every step, so there's no need to keep checking back."],
     ["How will I know when it's ready?", 'You\'ll get a notification and it\'ll show as "Ready for Claiming" on your dashboard and My Requests.'],
 ]
