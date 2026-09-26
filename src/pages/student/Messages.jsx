@@ -10,21 +10,31 @@ import MessageBubble from '../../components/MessageBubble'
 import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
+import './StudentMessages.css'
 
 const DEFAULT_MESSAGE =
     "Hi, I'd like to ask about my document request. Please let me know if you need anything " +
     "from me — I'll check back here for your reply. Thank you!"
 
+const CLOSED_STATUSES = ['completed', 'cancelled', 'rejected']
+
+const initialsOf = (name) =>
+    (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
+
+const otherParty = (m, userId) => (m.sender_user_id === userId ? m.receiver_user_id : m.sender_user_id)
+
+// One conversation per registrar staff member: every employee who handles
+// (or handled) one of the student's requests, plus anyone else from the
+// Registrar who has messaged them. ?employee=<employee_id> (from a request
+// page) opens that employee's conversation.
 function Messages() {
-    // ?employee=<employee_id> from a request page: message the employee
-    // actually handling that request.
-    const [searchParams] = useSearchParams()
+    const [searchParams, setSearchParams] = useSearchParams()
     const requestedEmployeeId = searchParams.get('employee')
 
     const [userId, setUserId] = useState(null)
-    const [employee, setEmployee] = useState(null)
+    const [contacts, setContacts] = useState([])
+    const [selectedUserId, setSelectedUserId] = useState(null)
     const [messages, setMessages] = useState([])
-    const [senderNames, setSenderNames] = useState({})
     const [reply, setReply] = useState('')
 
     const [loading, setLoading] = useState(true)
@@ -34,22 +44,14 @@ function Messages() {
 
     useEffect(() => {
         loadMessages()
-    }, [requestedEmployeeId])
+    }, [])
 
     const loadMessages = async () => {
         try {
-            setLoading(true)
             setError('')
 
-            const {
-                data: { user },
-                error: userError
-            } = await supabase.auth.getUser()
-
-            if (userError || !user) {
-                throw new Error('You are not logged in.')
-            }
-
+            const { data: { user }, error: userError } = await supabase.auth.getUser()
+            if (userError || !user) throw new Error('You are not logged in.')
             setUserId(user.id)
 
             const { data: student, error: studentError } = await supabase
@@ -58,98 +60,97 @@ function Messages() {
                 .eq('user_id', user.id)
                 .single()
 
-            if (studentError || !student) {
-                throw new Error('Student record could not be found.')
-            }
+            if (studentError || !student) throw new Error('Student record could not be found.')
 
-            // Who to message: the employee handling one of the student's
-            // requests -- the one asked for (from a request page) if it is
-            // really assigned to them, else the one on their most recent
-            // active request -- falling back to the default employee for
-            // their college/program.
+            // Employees handling the student's requests, newest request first.
             const { data: ownRequests } = await supabase
                 .from('document_requests')
-                .select('assigned_employee_id, status, requested_at')
+                .select('request_number, assigned_employee_id, status, requested_at')
                 .eq('student_id', student.student_id)
                 .not('assigned_employee_id', 'is', null)
                 .order('requested_at', { ascending: false })
 
-            const handlingIds = new Set((ownRequests || []).map((r) => r.assigned_employee_id))
-            const activeRequest = (ownRequests || []).find((r) => !['completed', 'cancelled', 'rejected'].includes(r.status))
-
-            const assignedEmployeeId =
-                (requestedEmployeeId && handlingIds.has(requestedEmployeeId) ? requestedEmployeeId : null)
-                || activeRequest?.assigned_employee_id
-                || await findAssignedEmployee(student.college_id, student.program_id)
-
-            if (!assignedEmployeeId) {
-                setEmployee(null)
-                setLoading(false)
-                return
+            const requestsByEmployee = {}
+            for (const r of ownRequests || []) {
+                if (!requestsByEmployee[r.assigned_employee_id]) requestsByEmployee[r.assigned_employee_id] = []
+                requestsByEmployee[r.assigned_employee_id].push(r)
             }
 
-            const { data: employeeRow, error: employeeError } = await supabase
-                .from('employees')
-                .select('employee_id, user_id, employee_number, position_title, display_name')
-                .eq('employee_id', assignedEmployeeId)
-                .single()
-
-            if (employeeError || !employeeRow) {
-                throw new Error('Assigned employee could not be found.')
+            let employeeIds = Object.keys(requestsByEmployee)
+            if (employeeIds.length === 0) {
+                const fallback = await findAssignedEmployee(student.college_id, student.program_id)
+                if (fallback) employeeIds = [fallback]
             }
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('first_name, last_name')
-                .eq('user_id', employeeRow.user_id)
-                .single()
+            const { data: employeeRows } = employeeIds.length
+                ? await supabase
+                    .from('employees')
+                    .select('employee_id, user_id, employee_number, position_title, display_name')
+                    .in('employee_id', employeeIds)
+                : { data: [] }
 
-            // Prefer the employee's nickname (set by an admin) over their
-            // real name when showing who the student is messaging.
-            const realName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : employeeRow.employee_number
-
-            setEmployee({
-                ...employeeRow,
-                name: employeeRow.display_name?.trim() || realName,
-            })
-
-            // Every message involving the student, not just the ones with
-            // their assigned employee -- the registrar head can also reply
-            // directly (e.g. from the admin oversight view), and those
-            // need to show up in this same feed instead of being silently
-            // excluded.
             const { data: messageRows, error: messagesError } = await supabase
                 .from('messages')
                 .select('*')
                 .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
                 .order('created_at', { ascending: true })
 
-            if (messagesError) {
-                throw new Error('Failed to load messages: ' + messagesError.message)
-            }
+            if (messagesError) throw new Error('Failed to load messages: ' + messagesError.message)
 
             // Messages this student deleted "for me".
             const hiddenIds = await loadHiddenMessageIds(user.id)
             const rows = (messageRows || []).filter((m) => !hiddenIds.has(m.message_id))
 
-            const otherUserIds = [
-                ...new Set(
-                    rows.map((m) => (m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id))
-                )
-            ]
-
+            const employeeUserIds = (employeeRows || []).map((e) => e.user_id)
+            const otherUserIds = [...new Set([...employeeUserIds, ...rows.map((m) => otherParty(m, user.id))])].filter(Boolean)
             const labels = await buildSenderLabels(otherUserIds)
 
-            setSenderNames(labels)
-            setMessages(rows)
-
-            if (rows.length === 0) {
-                setReply(DEFAULT_MESSAGE)
+            const lastAt = (uid) => {
+                const thread = rows.filter((m) => otherParty(m, user.id) === uid)
+                return thread.length ? new Date(thread[thread.length - 1].created_at).getTime() : 0
             }
 
-            // Unread messages stay unread (and labeled "New") until the
-            // student clicks "Mark as read", so they can see what's new.
+            const list = (employeeRows || []).map((e) => {
+                const handled = requestsByEmployee[e.employee_id] || []
+                const active = handled.filter((r) => !CLOSED_STATUSES.includes(r.status))
+                return {
+                    userId: e.user_id,
+                    employeeId: e.employee_id,
+                    name: e.display_name?.trim() || labels[e.user_id] || e.employee_number,
+                    subtitle: e.position_title || 'Registrar staff',
+                    requests: (active.length ? active : handled).map((r) => r.request_number),
+                    handlesActive: active.length > 0,
+                    latestRequestAt: handled[0] ? new Date(handled[0].requested_at).getTime() : 0,
+                    lastAt: lastAt(e.user_id),
+                }
+            })
 
+            // Other registrar staff (e.g. the Registrar Head) who messaged the student.
+            for (const uid of new Set(rows.map((m) => otherParty(m, user.id)))) {
+                if (!uid || list.some((c) => c.userId === uid)) continue
+                list.push({
+                    userId: uid,
+                    employeeId: null,
+                    name: labels[uid] || REGISTRAR_LABEL,
+                    subtitle: "Registrar's Office",
+                    requests: [],
+                    handlesActive: false,
+                    latestRequestAt: 0,
+                    lastAt: lastAt(uid),
+                })
+            }
+
+            // Active handlers first, then most recent conversation.
+            list.sort((a, b) => Number(b.handlesActive) - Number(a.handlesActive) || b.lastAt - a.lastAt || b.latestRequestAt - a.latestRequestAt)
+
+            setContacts(list)
+            setMessages(rows)
+
+            setSelectedUserId((current) => {
+                if (current && list.some((c) => c.userId === current)) return current
+                const requested = requestedEmployeeId && list.find((c) => c.employeeId === requestedEmployeeId)
+                return (requested || list[0])?.userId || null
+            })
         } catch (err) {
             console.error('STUDENT MESSAGES ERROR:', err)
             setError(err.message || 'Failed to load messages.')
@@ -158,11 +159,19 @@ function Messages() {
         }
     }
 
-    const unreadMessages = unreadReceived(messages, userId)
+    const selected = contacts.find((c) => c.userId === selectedUserId) || null
+    const thread = selected ? messages.filter((m) => otherParty(m, userId) === selected.userId) : []
+    const unreadInThread = unreadReceived(thread, userId)
 
-    const markAllRead = async () => {
-        const ids = unreadMessages.map((m) => m.message_id)
+    const selectContact = (contact) => {
+        setSelectedUserId(contact.userId)
+        setReply('')
+        if (contact.employeeId) setSearchParams({ employee: contact.employeeId }, { replace: true })
+        else setSearchParams({}, { replace: true })
+    }
 
+    const markThreadRead = async () => {
+        const ids = unreadInThread.map((m) => m.message_id)
         try {
             await markMessagesRead(ids)
             setMessages((prev) => withRead(prev, ids))
@@ -172,7 +181,8 @@ function Messages() {
     }
 
     const sendMessage = async () => {
-        if (!reply.trim() || !employee || !userId) return
+        const text = (reply || (thread.length === 0 ? DEFAULT_MESSAGE : '')).trim()
+        if (!text || !selected || !userId) return
 
         try {
             setSending(true)
@@ -181,27 +191,24 @@ function Messages() {
                 .from('messages')
                 .insert({
                     sender_user_id: userId,
-                    receiver_user_id: employee.user_id,
-                    message: reply.trim(),
+                    receiver_user_id: selected.userId,
+                    message: text,
                     is_read: false,
                 })
                 .select()
                 .single()
 
-            if (sendError) {
-                throw new Error('Failed to send message: ' + sendError.message)
-            }
+            if (sendError) throw new Error('Failed to send message: ' + sendError.message)
 
             await notify({
-                userId: employee.user_id,
+                userId: selected.userId,
                 title: 'New message',
-                message: reply.trim(),
+                message: text,
                 notificationType: 'message',
             })
 
             setMessages((prev) => [...prev, data])
             setReply('')
-
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
             notifyError(err.message || 'Failed to send message.')
@@ -245,104 +252,138 @@ function Messages() {
     }
 
     const formatTime = (value) =>
-        new Date(value).toLocaleString('en-PH', {
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-        })
+        new Date(value).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
     return (
         <div>
-            <div className="student-page-header-row">
-                <div className="student-page-header">
-                    <h1>Messages</h1>
-                    <p>Message the registrar employee assigned to your college and program.</p>
-                </div>
-
-                {unreadMessages.length > 0 && (
-                    <button className="student-link-button" onClick={markAllRead}>
-                        Mark as read
-                    </button>
-                )}
+            <div className="student-page-header">
+                <h1>Messages</h1>
+                <p>Chat with the registrar staff handling your requests. Each person has their own conversation.</p>
             </div>
 
             {error && <div className="student-error-box">{error}</div>}
 
             {loading ? (
                 <SkeletonList count={3} />
-            ) : !employee ? (
+            ) : contacts.length === 0 ? (
                 <div className="student-empty">
-                    No registrar employee is assigned to your program yet. Please check back later or visit
+                    No registrar employee is assigned to your requests or program yet. Please check back later or visit
                     the Registrar's Office directly.
                 </div>
             ) : (
-                <>
-                    <div className="student-card" style={{ marginBottom: 16 }}>
-                        <h2 style={{ fontSize: 15, marginBottom: 2 }}>{employee.name}</h2>
-                        <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>{employee.position_title}</p>
-                    </div>
-
-                    <div className="student-card" style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 200 }}>
-                        {messages.length === 0 ? (
-                            <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>
-                                No messages yet. Send a message below to start the conversation.
-                            </p>
-                        ) : (
-                            messages.map((m) => {
-                                const isSelf = m.sender_user_id === userId
-                                // Students only ever receive messages from registrar staff.
-                                // Their access rules can't read the registrar head's profile,
-                                // so any sender we can't resolve is the registrar, never "Unknown".
-                                const senderLabel = isSelf
-                                    ? null
-                                    : senderNames[m.sender_user_id] ||
-                                      (m.sender_user_id === employee?.user_id ? employee.name : REGISTRAR_LABEL)
+                <div className="sm-layout">
+                    <aside className="student-card sm-contacts" aria-label="Conversations">
+                        <span className="sm-contacts-label">Conversations</span>
+                        <ul>
+                            {contacts.map((c) => {
+                                const convo = messages.filter((m) => otherParty(m, userId) === c.userId)
+                                const last = convo[convo.length - 1]
+                                const unread = unreadReceived(convo, userId).length
+                                const active = c.userId === selectedUserId
 
                                 return (
-                                    <MessageBubble
-                                        key={m.message_id}
-                                        isSelf={isSelf}
-                                        senderLabel={senderLabel}
-                                        badge={m.receiver_user_id === userId && !m.is_read && (
-                                            <span className="student-status-pill status-pending">New</span>
-                                        )}
-                                        text={m.message}
-                                        time={formatTime(m.created_at)}
-                                        edited={!!m.edited_at}
-                                        deletedNote={m.deleted_at
-                                            ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
-                                            : null}
-                                        onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
-                                        onDelete={isSelf ? () => deleteMessage(m) : undefined}
-                                        disabled={busy}
-                                    />
+                                    <li key={c.userId}>
+                                        <button
+                                            type="button"
+                                            className={`sm-contact${active ? ' is-active' : ''}`}
+                                            onClick={() => selectContact(c)}
+                                            aria-current={active ? 'true' : undefined}
+                                        >
+                                            <span className="sm-avatar" aria-hidden="true">{initialsOf(c.name)}</span>
+                                            <span className="sm-contact-main">
+                                                <span className="sm-contact-top">
+                                                    <strong>{c.name}</strong>
+                                                    {unread > 0 && <span className="sm-unread">{unread}</span>}
+                                                </span>
+                                                <span className="sm-contact-sub">
+                                                    {c.requests.length ? `Handles ${c.requests.join(', ')}` : c.subtitle}
+                                                </span>
+                                                <span className="sm-contact-preview">
+                                                    {last
+                                                        ? `${last.sender_user_id === userId ? 'You: ' : ''}${last.deleted_at ? 'Message deleted' : last.message}`
+                                                        : 'No messages yet'}
+                                                </span>
+                                            </span>
+                                        </button>
+                                    </li>
                                 )
-                            })
-                        )}
-                    </div>
+                            })}
+                        </ul>
+                    </aside>
 
-                    <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                        <input
-                            className="student-search-input"
-                            style={{ flex: 1, maxWidth: 'none' }}
-                            value={reply}
-                            onChange={(e) => setReply(e.target.value)}
-                            placeholder="Type a message..."
-                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                            disabled={sending}
-                        />
+                    {selected && (
+                        <section className="student-card sm-thread" aria-label={`Conversation with ${selected.name}`}>
+                            <header className="sm-thread-head">
+                                <span className="sm-avatar is-large" aria-hidden="true">{initialsOf(selected.name)}</span>
+                                <div>
+                                    <h2>{selected.name}</h2>
+                                    <p>
+                                        {selected.subtitle}
+                                        {selected.requests.length > 0 && ` · ${selected.handlesActive ? 'Handling' : 'Handled'} ${selected.requests.join(', ')}`}
+                                    </p>
+                                </div>
+                                {unreadInThread.length > 0 && (
+                                    <button className="student-link-button sm-mark-read" onClick={markThreadRead}>
+                                        Mark as read
+                                    </button>
+                                )}
+                            </header>
 
-                        <button
-                            className="auth-submit"
-                            style={{ width: 'auto', padding: '11px 20px' }}
-                            onClick={sendMessage}
-                            disabled={sending}
-                        >
-                            {sending ? 'Sending...' : 'Send'}
-                        </button>
-                    </div>
-                </>
+                            <div className="sm-messages">
+                                {thread.length === 0 ? (
+                                    <p className="sm-empty">
+                                        No messages with {selected.name} yet. Send a message below to start the conversation.
+                                    </p>
+                                ) : (
+                                    thread.map((m) => {
+                                        const isSelf = m.sender_user_id === userId
+                                        const senderLabel = isSelf ? null : selected.name
+
+                                        return (
+                                            <MessageBubble
+                                                key={m.message_id}
+                                                isSelf={isSelf}
+                                                senderLabel={senderLabel}
+                                                badge={m.receiver_user_id === userId && !m.is_read && (
+                                                    <span className="student-status-pill status-pending">New</span>
+                                                )}
+                                                text={m.message}
+                                                time={formatTime(m.created_at)}
+                                                edited={!!m.edited_at}
+                                                deletedNote={m.deleted_at
+                                                    ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
+                                                    : null}
+                                                onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
+                                                onDelete={isSelf ? () => deleteMessage(m) : undefined}
+                                                disabled={busy}
+                                            />
+                                        )
+                                    })
+                                )}
+                            </div>
+
+                            <div className="sm-composer">
+                                <input
+                                    className="student-search-input"
+                                    value={reply}
+                                    onChange={(e) => setReply(e.target.value)}
+                                    placeholder={thread.length === 0 ? DEFAULT_MESSAGE : `Message ${selected.name}…`}
+                                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                                    disabled={sending}
+                                    aria-label={`Message ${selected.name}`}
+                                />
+                                <button
+                                    className="auth-submit"
+                                    style={{ width: 'auto', padding: '11px 20px' }}
+                                    onClick={sendMessage}
+                                    disabled={sending || (!reply.trim() && thread.length > 0)}
+                                >
+                                    {sending ? 'Sending...' : 'Send'}
+                                </button>
+                            </div>
+                        </section>
+                    )}
+                </div>
             )}
         </div>
     )
