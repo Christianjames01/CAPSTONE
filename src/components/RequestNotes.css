@@ -1,0 +1,238 @@
+/* Staff notes on a request (RequestNotes.jsx). Uses the portal's theme
+   tokens, so it matches both the admin and employee layouts. */
+
+.rn-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.rn-sub {
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.rn-count {
+    flex-shrink: 0;
+    min-width: 24px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Composer */
+.rn-composer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+}
+
+.rn-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.rn-chip {
+    margin: 0;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--slate);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.rn-chip:hover:not(:disabled):not(.is-static) {
+    border-color: var(--blue-accent, var(--blue));
+    color: var(--ink);
+}
+
+.rn-chip.is-active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--white);
+}
+
+.rn-chip.is-static {
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: default;
+}
+
+/* Category colors on the saved notes' labels */
+.rn-chip.is-static.rn-cat-absence {
+    background: var(--warning-bg, #fff3cd);
+    border-color: transparent;
+    color: var(--warning-text, #856404);
+}
+
+.rn-chip.is-static.rn-cat-follow_up {
+    background: var(--blue-tint);
+    border-color: transparent;
+    color: var(--blue-accent, var(--blue));
+}
+
+.rn-chip.is-static.rn-cat-issue {
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+    border-color: transparent;
+    color: var(--danger-text, var(--red, #C8102E));
+}
+
+.rn-textarea {
+    width: 100%;
+    min-height: 76px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+}
+
+.rn-textarea:focus {
+    border-color: var(--blue-accent, var(--blue));
+    box-shadow: 0 0 0 3px var(--blue-tint);
+}
+
+.rn-composer-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.rn-hint {
+    font-size: 11.5px;
+    color: var(--slate);
+}
+
+.rn-add {
+    margin: 0;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rn-add:hover:not(:disabled) {
+    background: var(--blue-dark, var(--blue));
+}
+
+.rn-add:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Notes list */
+.rn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rn-note {
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.rn-note.is-pinned {
+    border-color: var(--blue-accent, var(--blue));
+    background: color-mix(in srgb, var(--blue-tint) 45%, var(--surface));
+}
+
+.rn-note-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.rn-pinned {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+.rn-meta {
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.rn-meta strong {
+    color: var(--ink);
+}
+
+.rn-body {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.rn-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rn-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.rn-link {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue-accent, var(--blue));
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rn-link:hover {
+    text-decoration: underline;
+}
+
+.rn-link.is-danger {
+    color: var(--danger-text, var(--red, #C8102E));
+}
+
+.rn-empty {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--slate);
+}

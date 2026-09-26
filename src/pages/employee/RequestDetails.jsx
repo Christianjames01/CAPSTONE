@@ -11,6 +11,7 @@ import HighlightedText from '../../components/HighlightedText'
 import Modal from '../../components/Modal'
 import './EmployeePages.css'
 import PriorityPanel from '../../components/PriorityPanel'
+import RequestNotes from '../../components/RequestNotes'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
 import { loadStudentsById } from '../../lib/studentNames'
@@ -1425,6 +1426,8 @@ function EmployeeRequestDetails() {
                     </div>
                 )}
             </div>
+
+            <RequestNotes request={request} cardClassName="employee-card" />
 
             {rating && (
                 <div className="employee-card">
