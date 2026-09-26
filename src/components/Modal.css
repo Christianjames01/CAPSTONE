@@ -1,85 +1,237 @@
+/* Shared dialog (Modal.jsx). Uses the portal's theme tokens so it matches
+   the page in light and dark mode; the fallbacks cover pages without them. */
+
 .app-modal-backdrop {
     position: fixed;
     inset: 0;
-    overscroll-behavior: contain;
-    background: rgba(16, 24, 39, 0.55);
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px;
-    z-index: 1000;
+    overscroll-behavior: contain;
+    background: rgba(10, 15, 30, 0.55);
+    backdrop-filter: blur(2px);
+    animation: app-modal-fade 0.18s ease-out;
 }
 
 .app-modal-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 460px;
     max-height: 88vh;
-    background: #fff;
-    border-radius: 16px;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 60px rgba(16, 24, 39, 0.25);
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.1));
+    border-radius: 18px;
+    background: var(--surface, #fff);
+    color: var(--ink, #101827);
+    box-shadow: 0 30px 70px -20px rgba(10, 15, 30, 0.45);
+    animation: app-modal-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Brand accent along the top edge. */
+.app-modal-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--blue, #123B78), var(--red, #C8102E));
 }
 
 .app-modal-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 18px 22px;
-    border-bottom: 1px solid rgba(16, 24, 39, 0.1);
+    gap: 14px;
     flex-shrink: 0;
+    padding: 22px 22px 16px;
+    border-bottom: 1px solid var(--line, rgba(16, 24, 39, 0.1));
+}
+
+.app-modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--blue-tint, #EAF1FB);
+    color: var(--blue-accent, var(--blue, #123B78));
+}
+
+.app-modal-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.app-modal-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
 }
 
 .app-modal-title {
-    font-family: 'Fraunces', serif;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 18.5px;
     font-weight: 700;
-    font-size: 17px;
-    color: #101827;
+    line-height: 1.25;
+    color: var(--ink, #101827);
+}
+
+.app-modal-subtitle {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--slate, #57616F);
 }
 
 .app-modal-close {
-    flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(16, 24, 39, 0.06);
-    color: #101827;
-    font-size: 13px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.1));
+    border-radius: 10px;
+    background: var(--surface, #fff);
+    color: var(--slate, #57616F);
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
 .app-modal-close:hover {
-    background: rgba(16, 24, 39, 0.12);
+    border-color: var(--danger-text, #C8102E);
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+    color: var(--danger-text, #C8102E);
+}
+
+.app-modal-close:focus-visible {
+    outline: 2px solid var(--blue-accent, var(--blue, #123B78));
+    outline-offset: 2px;
 }
 
 .app-modal-body {
-    padding: 22px;
+    padding: 20px 22px 22px;
     overflow-y: auto;
     overscroll-behavior: contain;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink, #101827);
+}
+
+/* ---- Content inside dialogs ---------------------------------------- */
+
+.app-modal-body > p:first-child {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--paper, #F1F4FA);
+    color: var(--slate, #57616F);
+}
+
+.app-modal-body .form-group {
+    gap: 6px;
+}
+
+.app-modal-body .form-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink, #101827);
+}
+
+.app-modal-body .form-input,
+.app-modal-body textarea,
+.app-modal-body select,
+.app-modal-body .admin-search-input {
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.14));
+    border-radius: 10px;
+    background: var(--paper, #F7F9FC);
+    color: var(--ink, #101827);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.app-modal-body .form-input:focus,
+.app-modal-body textarea:focus,
+.app-modal-body select:focus,
+.app-modal-body .admin-search-input:focus {
+    border-color: var(--blue-accent, var(--blue, #123B78));
+    background: var(--surface, #fff);
+    box-shadow: 0 0 0 3px var(--blue-tint, #EAF1FB);
+    outline: none;
+}
+
+.app-modal-body small {
+    line-height: 1.45;
+}
+
+/* Main action buttons get rounder corners to match the dialog. */
+.app-modal-body .auth-submit,
+.app-modal-body .admin-primary-button,
+.app-modal-body .admin-secondary-button,
+.app-modal-body .admin-danger-button,
+.app-modal-body .employee-primary-button,
+.app-modal-body .employee-secondary-button {
+    border-radius: 10px;
+}
+
+/* Clickable result rows (e.g. picking a student). */
+.app-modal-body .admin-list-card {
+    border-radius: 12px;
+}
+
+@keyframes app-modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes app-modal-rise {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Phones: a bottom sheet that slides up. */
+@media (max-width: 560px) {
+    .app-modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .app-modal-card {
+        max-width: none !important;
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+        animation: app-modal-sheet 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .app-modal-header {
+        padding: 20px 18px 14px;
+    }
+
+    .app-modal-body {
+        padding: 16px 18px 24px;
+    }
+}
+
+@keyframes app-modal-sheet {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-modal-backdrop,
+    .app-modal-card {
+        animation: none;
+    }
 }
 
 html[data-theme="dark"] .app-modal-card {
-    background: #1a1e28;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-html[data-theme="dark"] .app-modal-header {
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-html[data-theme="dark"] .app-modal-title {
-    color: #E7E9EE;
-}
-
-html[data-theme="dark"] .app-modal-close {
-    background: rgba(255, 255, 255, 0.08);
-    color: #E7E9EE;
-}
-
-html[data-theme="dark"] .app-modal-close:hover {
-    background: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.7);
 }

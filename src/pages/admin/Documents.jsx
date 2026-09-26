@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import PageStats from '../../components/PageStats'
-import { IconDocument, IconCheckCircle, IconBan, IconLayers } from './icons'
+import { IconDocument, IconCheckCircle, IconBan, IconLayers, IconClipboardCheck } from './icons'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
@@ -472,6 +472,8 @@ function Documents() {
             {showForm && (
                 <Modal
                     title={form.document_type_id ? 'Edit Document Type' : 'New Document Type'}
+                    subtitle="Fee, processing time, limits and the sample image students see."
+                    icon={IconDocument}
                     maxWidth={760}
                     onClose={() => { if (saving) return; setShowForm(false); setForm(EMPTY_FORM); setImageFile(null); setImageFilePreview('') }}
                 >
@@ -759,7 +761,9 @@ function Documents() {
 
             {expandedId && (
                 <Modal
-                    title={`Requirements — ${documents.find((d) => d.document_type_id === expandedId)?.document_name || ''}`}
+                    title="Requirements"
+                    subtitle={documents.find((d) => d.document_type_id === expandedId)?.document_name || ''}
+                    icon={IconClipboardCheck}
                     maxWidth={560}
                     onClose={() => setExpandedId(null)}
                 >

@@ -368,6 +368,8 @@ function Employees() {
             {showAddForm && (
                 <Modal
                     title="Add Employee"
+                    subtitle="Create a registrar staff account."
+                    icon={IconUsers}
                     maxWidth={720}
                     onClose={() => { if (creating) return; setShowAddForm(false); setForm(BLANK_FORM); setAddError(''); setAddMessage('') }}
                 >

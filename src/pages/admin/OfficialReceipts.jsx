@@ -311,7 +311,7 @@ function OfficialReceipts() {
             )}
 
             {rejectTarget && (
-                <Modal title="Reject Receipt" maxWidth={480} onClose={closeRejectModal}>
+                <Modal title="Reject Receipt" subtitle="The student sees your reason and uploads a new photo." icon={IconXCircle} maxWidth={480} onClose={closeRejectModal}>
                     <p style={{ fontSize: 13.5, marginBottom: 12 }}>
                         Enter the reason why the receipt for <strong>{rejectTarget.requestNumber}</strong> is being rejected.
                     </p>

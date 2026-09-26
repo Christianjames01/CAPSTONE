@@ -734,7 +734,7 @@ function Messages() {
             )}
 
             {showNewMessage && (
-                <Modal title="New Message" maxWidth={480} onClose={() => setShowNewMessage(false)}>
+                <Modal title="New Message" subtitle="Find a student to start a conversation." icon={IconMessage} maxWidth={480} onClose={() => setShowNewMessage(false)}>
                     <input
                         className="admin-search-input"
                         style={{ width: '100%', marginBottom: 14 }}
