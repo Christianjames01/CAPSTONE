@@ -12,6 +12,7 @@ service_role / secret key -- it can read every bucket, including private ones.
 import json
 import os
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -22,11 +23,8 @@ FILES_DIR = os.path.join(BACKUP_DIR, 'files')
 with open(os.path.join(BACKUP_DIR, '.cloud_service_key')) as f:
     KEY = f.read().strip()
 
-# New-style secret keys (sb_secret_...) go in the apikey header only; legacy
-# service_role JWTs also go in Authorization.
-HEADERS = {'apikey': KEY}
-if not KEY.startswith('sb_secret_'):
-    HEADERS['Authorization'] = f'Bearer {KEY}'
+# Works for both new secret keys (sb_secret_...) and legacy service_role JWTs.
+HEADERS = {'apikey': KEY, 'Authorization': f'Bearer {KEY}'}
 
 
 def request(method, path, body=None):
@@ -95,4 +93,12 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except urllib.error.HTTPError as err:
+        detail = err.read().decode(errors='replace')[:300]
+        print(f'Storage request failed: HTTP {err.code} {detail}', file=sys.stderr)
+        if err.code in (400, 401, 403):
+            print("The key in ~/backups/.cloud_service_key was not accepted. Save the project's "
+                  'secret (sb_secret_...) or service_role key again.', file=sys.stderr)
+        sys.exit(1)
