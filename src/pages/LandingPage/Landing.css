@@ -1091,26 +1091,93 @@ h2 span {
     background: var(--paper);
 }
 
-.verify-cta-form {
-    max-width: 560px;
+.verify-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 24px;
+    max-width: 1000px;
     margin: 0 auto;
+    align-items: stretch;
+}
+
+.verify-card {
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    gap: 20px;
+    padding: 30px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--white);
+    box-shadow: 0 30px 60px -46px rgba(10, 36, 80, 0.5);
+}
+
+.verify-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.verify-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--blue);
+    color: #fff;
+}
+
+.verify-card-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.verify-card-head h3 {
+    margin-bottom: 4px;
+    font-size: 19px;
+}
+
+.verify-card-head p {
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.verify-cta-form {
+    display: flex;
+    gap: 10px;
+}
+
+.verify-cta-field {
+    flex: 1;
+    display: flex;
 }
 
 .verify-cta-input {
     flex: 1;
+    width: 100%;
     padding: 15px 18px;
-    font-size: 14.5px;
-    font-family: var(--font-body);
+    font-size: 15px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--ink);
-    background: var(--white);
+    background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 10px;
     outline: none;
 }
 
+.verify-cta-input::placeholder {
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: var(--font-body);
+    color: var(--slate);
+}
+
 .verify-cta-input:focus {
+    background: var(--white);
     border-color: var(--blue-accent, var(--blue));
     box-shadow: 0 0 0 3px var(--blue-tint);
 }
@@ -1118,19 +1185,169 @@ h2 span {
 .verify-cta-button {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 15px 26px;
-    font-size: 14.5px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--white);
     background: var(--blue);
-    border-radius: 8px;
+    border-radius: 10px;
     white-space: nowrap;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, opacity 0.2s ease;
 }
 
-.verify-cta-button:hover {
+.verify-cta-button:hover:not(:disabled) {
     background: var(--blue-dark);
+}
+
+.verify-cta-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.verify-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 18px 0 0;
+    border-top: 1px dashed var(--line);
+    list-style: none;
+    counter-reset: verify-step;
+}
+
+.verify-steps li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--slate);
+    counter-increment: verify-step;
+}
+
+.verify-steps li::before {
+    content: counter(verify-step);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--blue-tint);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+.verify-steps strong {
+    color: var(--ink);
+}
+
+.verify-results {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 28px;
+    border-radius: 16px;
+    background: var(--blue);
+    color: #fff;
+}
+
+.verify-results-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.verify-results ul {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.verify-results li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.verify-results li div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.verify-results li strong {
+    font-size: 14.5px;
+    color: #fff;
+}
+
+.verify-results li div span {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.verify-result-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.verify-results .is-verified .verify-result-icon {
+    background: #1e8a5f;
+}
+
+.verify-results .is-revoked .verify-result-icon {
+    background: var(--red);
+}
+
+.verify-results .is-tampered .verify-result-icon {
+    background: #b7791f;
+}
+
+.verify-results .is-missing .verify-result-icon {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+    .verify-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .verify-card,
+    .verify-results {
+        padding: 22px 18px;
+    }
 }
 
 /* ===================================================

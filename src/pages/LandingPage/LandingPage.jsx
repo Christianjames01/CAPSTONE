@@ -326,14 +326,14 @@ const LandingPage = () => {
 
     const handleVerifySubmit = (e) => {
         e.preventDefault();
-        const code = verifyCode.trim();
+        const code = verifyCode.trim().toUpperCase();
         if (!code) return;
         window.location.href = `/verify/${encodeURIComponent(code)}`;
     };
 
     const openHelpModal = () => {
         const steps = PROCESS_STEPS.map(
-            ([, , title, description]) =>
+            ({ title, body: description }) =>
                 `<li style="margin-bottom:10px;"><strong>${title}</strong><br/><span style="color:#57616F;font-size:13.5px;">${description}</span></li>`
         ).join("");
 
@@ -717,24 +717,69 @@ const LandingPage = () => {
                             <span className="section-label">Verification</span>
                             <h2>Every credential, <br /><span>verified.</span></h2>
                             <p>
-                                Every document CertiChain issues carries a unique verification
-                                code and QR code. Anyone — an employer, another school —
-                                can confirm it's genuine in seconds, no account required.
+                                Every document CertiChain issues carries a signed credential
+                                number and QR code. Employers and other schools can confirm
+                                it’s genuine in seconds — free, with no account required.
                             </p>
                         </div>
 
-                        <form className="verify-cta-form" onSubmit={handleVerifySubmit}>
-                            <input
-                                type="text"
-                                value={verifyCode}
-                                onChange={(e) => setVerifyCode(e.target.value)}
-                                placeholder="Enter a credential number, e.g. CERT-000123"
-                                className="verify-cta-input"
-                            />
-                            <button type="submit" className="verify-cta-button">
-                                Verify <span>→</span>
-                            </button>
-                        </form>
+                        <div className="verify-layout">
+                            <div className="verify-card">
+                                <div className="verify-card-head">
+                                    <span className="verify-card-icon"><IconQr /></span>
+                                    <div>
+                                        <h3>Check a document</h3>
+                                        <p>Scan the QR code on the document with any phone camera, or type its credential number.</p>
+                                    </div>
+                                </div>
+
+                                <form className="verify-cta-form" onSubmit={handleVerifySubmit}>
+                                    <label className="verify-cta-field">
+                                        <span className="visually-hidden">Credential number</span>
+                                        <input
+                                            type="text"
+                                            value={verifyCode}
+                                            onChange={(e) => setVerifyCode(e.target.value)}
+                                            placeholder="e.g. CERT-000123"
+                                            className="verify-cta-input"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                        />
+                                    </label>
+                                    <button type="submit" className="verify-cta-button" disabled={!verifyCode.trim()}>
+                                        Verify <span aria-hidden="true">→</span>
+                                    </button>
+                                </form>
+
+                                <ol className="verify-steps">
+                                    <li><strong>Scan or enter</strong> the credential number printed on the document.</li>
+                                    <li><strong>We check</strong> it against the Registrar’s signed records.</li>
+                                    <li><strong>See the result</strong> instantly — no account or app needed.</li>
+                                </ol>
+                            </div>
+
+                            <div className="verify-results">
+                                <span className="verify-results-label">What the result means</span>
+                                <ul>
+                                    <li className="is-verified">
+                                        <span className="verify-result-icon" aria-hidden="true">✓</span>
+                                        <div><strong>Verified</strong><span>Genuine and unchanged since the Registrar issued it.</span></div>
+                                    </li>
+                                    <li className="is-revoked">
+                                        <span className="verify-result-icon" aria-hidden="true">✕</span>
+                                        <div><strong>Revoked</strong><span>Issued, but cancelled by the Registrar — no longer valid.</span></div>
+                                    </li>
+                                    <li className="is-tampered">
+                                        <span className="verify-result-icon" aria-hidden="true">!</span>
+                                        <div><strong>Tampered</strong><span>The record was altered after issuance — do not accept it.</span></div>
+                                    </li>
+                                    <li className="is-missing">
+                                        <span className="verify-result-icon" aria-hidden="true">?</span>
+                                        <div><strong>Not found</strong><span>No credential with that number — check for typos, or treat it as fake.</span></div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
 
                     </div>
                 </section>
