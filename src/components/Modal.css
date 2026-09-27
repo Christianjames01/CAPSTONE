@@ -138,8 +138,37 @@
     color: var(--slate, #57616F);
 }
 
+/* Form fields are styled here too, so a dialog looks right on pages that
+   don't load the auth stylesheet (pages/auth/Auth.css) -- e.g. Add
+   Employee on the Employees page. */
 .app-modal-body .form-group {
+    display: flex;
+    flex-direction: column;
     gap: 6px;
+    min-width: 0;
+}
+
+.app-modal-body .form-input {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 14px;
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    font-size: 14.5px;
+    line-height: 1.4;
+    outline: none;
+}
+
+.app-modal-body .form-input::placeholder {
+    color: rgba(87, 97, 111, 0.55);
+}
+
+.app-modal-body select.form-input {
+    cursor: pointer;
+}
+
+.app-modal-body select.form-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .app-modal-body .form-label {
