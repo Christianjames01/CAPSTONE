@@ -568,6 +568,7 @@ html[data-theme="dark"] .chat-app {
 
     .chat-app.is-chat-open .chat-pane {
         position: fixed;
+        overscroll-behavior: contain;
         top: var(--chat-top, 0px);
         left: 0;
         right: 0;

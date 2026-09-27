@@ -58,25 +58,46 @@ export function ChatApp({ chatOpen, children }) {
 
     useScrollLock(fullScreen)
 
-    // iOS keeps the layout viewport when the keyboard opens, so a
-    // full-screen chat would slide under it. Follow the visual viewport.
+    // Full-screen chat on phones, with the keyboard open:
+    //  - pin the page behind it (iOS ignores overflow: hidden and scrolls the
+    //    whole document to reveal the focused box, dragging the chat along);
+    //  - size the chat to the visible area above the keyboard. iOS keeps the
+    //    layout viewport when the keyboard opens, so follow visualViewport.
     useEffect(() => {
-        const vv = window.visualViewport
         const el = ref.current
-        if (!fullScreen || !vv || !el) return undefined
+        if (!fullScreen || !el) return undefined
 
+        const { body } = document
+        const scrollY = window.scrollY
+        const saved = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width }
+        Object.assign(body.style, { position: 'fixed', top: `-${scrollY}px`, left: '0', right: '0', width: '100%' })
+
+        const vv = window.visualViewport
+        let frame = 0
         const sync = () => {
-            el.style.setProperty('--chat-vh', `${vv.height}px`)
-            el.style.setProperty('--chat-top', `${vv.offsetTop}px`)
+            cancelAnimationFrame(frame)
+            frame = requestAnimationFrame(() => {
+                if (!vv) return
+                el.style.setProperty('--chat-vh', `${Math.round(vv.height)}px`)
+                el.style.setProperty('--chat-top', `${Math.round(vv.offsetTop)}px`)
+            })
         }
         sync()
-        vv.addEventListener('resize', sync)
-        vv.addEventListener('scroll', sync)
+        vv?.addEventListener('resize', sync)
+        vv?.addEventListener('scroll', sync)
+        window.addEventListener('focusin', sync)
+        window.addEventListener('focusout', sync)
+
         return () => {
-            vv.removeEventListener('resize', sync)
-            vv.removeEventListener('scroll', sync)
+            cancelAnimationFrame(frame)
+            vv?.removeEventListener('resize', sync)
+            vv?.removeEventListener('scroll', sync)
+            window.removeEventListener('focusin', sync)
+            window.removeEventListener('focusout', sync)
             el.style.removeProperty('--chat-vh')
             el.style.removeProperty('--chat-top')
+            Object.assign(body.style, saved)
+            window.scrollTo(0, scrollY)
         }
     }, [fullScreen])
 
@@ -202,6 +223,18 @@ export function ChatMessages({ messages, threadKey, empty, renderMessage, typing
         lastKey.current = threadKey
     }, [threadKey, messages, isTyping])
 
+    // When the chat area shrinks (the phone keyboard opening, the message
+    // box growing), keep the newest message in view.
+    useEffect(() => {
+        const el = ref.current
+        if (!el || typeof ResizeObserver === 'undefined') return undefined
+        const observer = new ResizeObserver(() => {
+            if (pinned.current) el.scrollTop = el.scrollHeight
+        })
+        observer.observe(el)
+        return () => observer.disconnect()
+    }, [])
+
     const items = []
     messages.forEach((m, i) => {
         const prev = messages[i - 1]
@@ -232,6 +265,10 @@ export function ChatMessages({ messages, threadKey, empty, renderMessage, typing
     )
 }
 
+// On phones and tablets Enter adds a new line and the send button sends,
+// like Messenger; with a keyboard, Enter sends and Shift+Enter adds a line.
+const touchTyping = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
 export function ChatComposer({ value, onChange, onSend, sending, placeholder, canSend, above }) {
     const ref = useRef(null)
 
@@ -255,19 +292,22 @@ export function ChatComposer({ value, onChange, onSend, sending, placeholder, ca
                     rows={1}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
+                    enterKeyHint={touchTyping() ? 'enter' : 'send'}
+                    autoComplete="off"
                     onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                        if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && !touchTyping()) {
                             e.preventDefault()
                             send()
                         }
                     }}
                     placeholder={placeholder}
                     aria-label={placeholder}
-                    disabled={sending}
+                    readOnly={sending}
                 />
                 <button
                     type="button"
                     className="chat-send"
+                    onPointerDown={(e) => e.preventDefault()}
                     onClick={send}
                     disabled={sending || !canSend}
                     aria-label={sending ? 'Sending' : 'Send'}
