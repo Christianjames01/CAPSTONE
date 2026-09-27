@@ -44,6 +44,8 @@ function Messages() {
     // The student's requests, for "Ask about a request".
     const [requests, setRequests] = useState([])
     const [askOpen, setAskOpen] = useState(false)
+    // Staff member "typing" the automatic status reply (their user id).
+    const [autoTyping, setAutoTyping] = useState(null)
     // Phones show the list first; the chat opens full screen when a
     // conversation is picked (or requested via ?employee=).
     const [chatOpen, setChatOpen] = useState(!!requestedEmployeeId)
@@ -286,6 +288,21 @@ function Messages() {
         try {
             setSending(true)
             await sendText(inquiryText(request), contact)
+        } catch (err) {
+            console.error('ASK ABOUT REQUEST ERROR:', err)
+            notifyError(err.message || 'Failed to send your question.')
+            return
+        } finally {
+            setSending(false)
+        }
+
+        // Reply like a person would: a short pause, "… is typing", then the
+        // status. The reply is only written after the pause, so live updates
+        // can't show it early.
+        await new Promise((resolve) => setTimeout(resolve, 700))
+        setAutoTyping(contact.userId)
+        try {
+            await new Promise((resolve) => setTimeout(resolve, 1800 + Math.random() * 900))
 
             const { data: autoReply, error: replyError } = await supabase.rpc('auto_reply_request_status', {
                 p_request_id: request.request_id,
@@ -296,10 +313,9 @@ function Messages() {
             if (replyError) console.warn('AUTO STATUS REPLY UNAVAILABLE:', replyError.message)
             else if (autoReply) addMessage(autoReply)
         } catch (err) {
-            console.error('ASK ABOUT REQUEST ERROR:', err)
-            notifyError(err.message || 'Failed to send your question.')
+            console.warn('AUTO STATUS REPLY ERROR:', err)
         } finally {
-            setSending(false)
+            setAutoTyping(null)
         }
     }
 
@@ -360,7 +376,8 @@ function Messages() {
     // conversation (e.g. the head), typing right now.
     const typersIn = (c) => {
         const senders = new Set([c.userId, ...threadOfContact(c).map((m) => m.sender_user_id)])
-        return typingUserIds.filter((id) => id !== userId && senders.has(id))
+        const typers = typingUserIds.filter((id) => id !== userId && senders.has(id))
+        return autoTyping === c.userId && !typers.includes(autoTyping) ? [autoTyping, ...typers] : typers
     }
     const activeTypers = selected ? typersIn(selected) : []
     const typerName = (id) => (id === selected?.userId ? selected.name : labels[id] || REGISTRAR_LABEL)
