@@ -160,3 +160,66 @@ export const EVENT_PRESETS = [
     'Enrollment Week',
     'System Maintenance',
 ]
+
+const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+// Automatic notices for the student dashboard, shaped like announcements so
+// they render with AnnouncementNotice:
+//   - "closed today" on a Monday/weekend that nobody opened,
+//   - one "office open" notice per Monday/weekend staff opened in the next
+//     two weeks (office_open_days),
+//   - a standing reminder of the regular office days.
+// If office_open_days can't be read (migration not applied yet), the
+// weekday rule alone is used.
+export async function fetchOfficeScheduleNotices() {
+    const today = getToday()
+    const until = addDays(today, 14)
+
+    const { data, error } = await supabase
+        .from('office_open_days')
+        .select('open_date, note')
+        .gte('open_date', today)
+        .lte('open_date', until)
+        .order('open_date')
+
+    const openDays = error ? [] : (data || []).filter((d) => isWeekendDate(d.open_date))
+    const openSet = new Set(openDays.map((d) => d.open_date))
+    const isOpen = (dateStr) => !isWeekendDate(dateStr) || openSet.has(dateStr)
+
+    const notices = []
+
+    if (!isOpen(today)) {
+        let next = addDays(today, 1)
+        while (!isOpen(next)) next = addDays(next, 1)
+
+        notices.push({
+            announcement_id: `office-closed-${today}`,
+            announcement_date: today,
+            is_closed: true,
+            title: `The Registrar's Office is closed today (${weekdayName(today)})`,
+            message: `We're closed on Mondays, Saturdays and Sundays. Claiming and walk-in queuing resume on <strong>${formatDate(next)}</strong>.`,
+        })
+    }
+
+    for (const day of openDays) {
+        notices.push({
+            announcement_id: `office-open-${day.open_date}`,
+            announcement_date: day.open_date,
+            is_closed: false,
+            title: `The Registrar's Office is open on ${weekdayName(day.open_date)}`,
+            message: day.note
+                ? escapeHtml(day.note)
+                : `Although ${weekdayName(day.open_date)}s are normally closed, the office will be open this day for claiming and walk-ins.`,
+        })
+    }
+
+    notices.push({
+        announcement_id: 'office-days',
+        announcement_date: null,
+        is_closed: false,
+        title: 'Office days: Tuesday to Friday',
+        message: "The Registrar's Office is closed every <strong>Monday, Saturday and Sunday</strong> unless it's announced here as open.",
+    })
+
+    return notices
+}

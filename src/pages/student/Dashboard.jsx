@@ -6,6 +6,7 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
+import { fetchOfficeScheduleNotices } from '../../lib/officeCalendar'
 import AnnouncementNotice from '../../components/AnnouncementNotice'
 import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
 import { SkeletonStatGrid, SkeletonPage } from '../../components/Skeleton'
@@ -60,7 +61,7 @@ function Dashboard() {
     }, [])
 
     // Update in place when requests change -- no manual refresh needed.
-    useLiveRefresh(['document_requests', 'claim_schedules', 'announcements'], loadDashboard)
+    useLiveRefresh(['document_requests', 'claim_schedules', 'announcements', 'office_open_days'], loadDashboard)
 
     async function loadDashboard() {
         try {
@@ -73,7 +74,11 @@ function Dashboard() {
                 return
             }
 
-            setAnnouncements(await fetchActiveAnnouncements('show_to_students'))
+            const [posted, officeNotices] = await Promise.all([
+                fetchActiveAnnouncements('show_to_students'),
+                fetchOfficeScheduleNotices(),
+            ])
+            setAnnouncements([...officeNotices.filter((n) => n.announcement_date), ...posted, ...officeNotices.filter((n) => !n.announcement_date)])
 
             const { data: profile } = await supabase
                 .from('profiles')
