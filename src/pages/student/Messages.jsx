@@ -14,6 +14,7 @@ import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
+import { inquiryText, isOpenRequest, requestStatusLabel } from '../../lib/requestStatusMessages'
 
 const DEFAULT_MESSAGE =
     "Hi, I'd like to ask about my document request. Please let me know if you need anything " +
@@ -40,6 +41,9 @@ function Messages() {
     const [threadOf, setThreadOf] = useState({})
     const [labels, setLabels] = useState({})
     const [reply, setReply] = useState('')
+    // The student's requests, for "Ask about a request".
+    const [requests, setRequests] = useState([])
+    const [askOpen, setAskOpen] = useState(false)
     // Phones show the list first; the chat opens full screen when a
     // conversation is picked (or requested via ?employee=).
     const [chatOpen, setChatOpen] = useState(!!requestedEmployeeId)
@@ -176,6 +180,20 @@ function Messages() {
             list.sort((a, b) => Number(b.handlesActive) - Number(a.handlesActive) || b.lastAt - a.lastAt || b.latestRequestAt - a.latestRequestAt)
 
 
+            // Requests the student can ask about (open ones first).
+            const { data: requestRows } = await supabase
+                .from('document_requests')
+                .select('request_id, request_number, status, assigned_employee_id, document_type_id, requested_at')
+                .eq('student_id', student.student_id)
+                .order('requested_at', { ascending: false })
+
+            const typeIds = [...new Set((requestRows || []).map((r) => r.document_type_id).filter(Boolean))]
+            const { data: typeRows } = typeIds.length
+                ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', typeIds)
+                : { data: [] }
+            const docName = Object.fromEntries((typeRows || []).map((t) => [t.document_type_id, t.document_name]))
+
+            setRequests((requestRows || []).map((r) => ({ ...r, documentName: docName[r.document_type_id] || '' })))
             setContacts(list)
             setMessages(rows)
             setThreadOf(assigned)
@@ -229,34 +247,69 @@ function Messages() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [threadVisible, selectedUserId, unreadInThread.length])
 
+    const addMessage = (row) =>
+        setMessages((prev) => (prev.some((m) => m.message_id === row.message_id) ? prev : [...prev, row]))
+
+    const sendText = async (text, contact) => {
+        const { data, error: sendError } = await supabase
+            .from('messages')
+            .insert({
+                sender_user_id: userId,
+                receiver_user_id: contact.userId,
+                message: text,
+                is_read: false,
+            })
+            .select()
+            .single()
+
+        if (sendError) throw new Error('Failed to send message: ' + sendError.message)
+
+        await notify({
+            userId: contact.userId,
+            title: 'New message',
+            message: text,
+            notificationType: 'message',
+        })
+
+        addMessage(data)
+        return data
+    }
+
+    // "Ask about a request": asks the staff member handling it (switching to
+    // their conversation), then posts the automatic status reply.
+    const askAboutRequest = async (request) => {
+        setAskOpen(false)
+        const contact = contacts.find((c) => c.employeeId && c.employeeId === request.assigned_employee_id) || selected
+        if (!contact || !userId) return
+        if (contact.userId !== selectedUserId) selectContact(contact)
+
+        try {
+            setSending(true)
+            await sendText(inquiryText(request), contact)
+
+            const { data: autoReply, error: replyError } = await supabase.rpc('auto_reply_request_status', {
+                p_request_id: request.request_id,
+                p_reply_as: contact.userId,
+            })
+            // Before the migration the staff member still gets the question
+            // and can answer it with one click.
+            if (replyError) console.warn('AUTO STATUS REPLY UNAVAILABLE:', replyError.message)
+            else if (autoReply) addMessage(autoReply)
+        } catch (err) {
+            console.error('ASK ABOUT REQUEST ERROR:', err)
+            notifyError(err.message || 'Failed to send your question.')
+        } finally {
+            setSending(false)
+        }
+    }
+
     const sendMessage = async () => {
         const text = (reply || (thread.length === 0 ? DEFAULT_MESSAGE : '')).trim()
         if (!text || !selected || !userId) return
 
         try {
             setSending(true)
-
-            const { data, error: sendError } = await supabase
-                .from('messages')
-                .insert({
-                    sender_user_id: userId,
-                    receiver_user_id: selected.userId,
-                    message: text,
-                    is_read: false,
-                })
-                .select()
-                .single()
-
-            if (sendError) throw new Error('Failed to send message: ' + sendError.message)
-
-            await notify({
-                userId: selected.userId,
-                title: 'New message',
-                message: text,
-                notificationType: 'message',
-            })
-
-            setMessages((prev) => [...prev, data])
+            await sendText(text, selected)
             setReply('')
             sendTyping([selected.userId], false)
         } catch (err) {
@@ -423,6 +476,37 @@ function Messages() {
                                     sending={sending}
                                     canSend={!!reply.trim() || thread.length === 0}
                                     placeholder={thread.length === 0 ? 'Say hello, or press send for a quick hello' : `Message ${selected.name}…`}
+                                    above={requests.length > 0 && (
+                                        <div className="chat-composer-extra">
+                                            <div className="req-ask">
+                                                <button
+                                                    type="button"
+                                                    className="chat-pill-button"
+                                                    onClick={() => setAskOpen((o) => !o)}
+                                                    aria-expanded={askOpen}
+                                                    aria-haspopup="menu"
+                                                    disabled={sending}
+                                                >
+                                                    Ask about a request
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={askOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>
+                                                </button>
+                                                {askOpen && (
+                                                    <div className="req-ask-menu" role="menu" aria-label="Your requests">
+                                                        <p className="req-ask-hint">Get the current status sent to you right away.</p>
+                                                        {[...requests.filter(isOpenRequest), ...requests.filter((r) => !isOpenRequest(r))].slice(0, 8).map((r) => (
+                                                            <button key={r.request_id} type="button" role="menuitem" className="req-ask-item" onClick={() => askAboutRequest(r)}>
+                                                                <span className="req-ask-main">
+                                                                    <strong>{r.request_number}</strong>
+                                                                    <span>{r.documentName || 'Document request'}</span>
+                                                                </span>
+                                                                <span className={`req-ask-status status-${r.status}`}>{requestStatusLabel(r.status)}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 />
                             </>
                         )}

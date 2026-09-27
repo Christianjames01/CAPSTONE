@@ -13,6 +13,7 @@ import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessa
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
+import { pendingInquiry, statusReplyFor } from '../../lib/requestStatusMessages'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -39,6 +40,7 @@ function Messages() {
     const [threadSearch, setThreadSearch] = useState('')
     const [threadFilter, setThreadFilter] = useState('all')
     const [sending, setSending] = useState(false)
+    const [fillingStatus, setFillingStatus] = useState(false)
 
     const [showNewMessage, setShowNewMessage] = useState(false)
     const [studentQuery, setStudentQuery] = useState('')
@@ -580,6 +582,19 @@ function Messages() {
         [thread.participantA, thread.participantB].filter((id) => id !== currentUserId && typingUserIds.includes(id))
     const activeTypers = activeThread ? typersIn(activeThread) : []
 
+    // A student asked "what's the status of REQ-…?": fill in the answer.
+    const inquiryNumber = activeThread ? pendingInquiry(activeThread.messages, currentUserId) : null
+    const fillStatusReply = async () => {
+        try {
+            setFillingStatus(true)
+            setReply(await statusReplyFor(inquiryNumber))
+        } catch (err) {
+            notifyError(err.message || 'Could not look up that request.')
+        } finally {
+            setFillingStatus(false)
+        }
+    }
+
     const photoOf = (userId) => (activeThread?.participantA === userId ? activeThread.photoA : activeThread?.participantB === userId ? activeThread.photoB : '')
 
     return (
@@ -728,11 +743,18 @@ function Messages() {
                                     sending={sending}
                                     canSend={!!reply.trim()}
                                     placeholder={isMyThread(activeThread) ? `Message ${titleOf(activeThread)}…` : 'Message both of them…'}
-                                    above={!reply && (
+                                    above={(inquiryNumber || !reply) && (
                                         <div className="chat-composer-extra">
-                                            <button type="button" className="chat-pill-button" onClick={() => setReply(TEMPLATE_MESSAGE)}>
-                                                Use registrar contact template
-                                            </button>
+                                            {inquiryNumber && (
+                                                <button type="button" className="chat-pill-button" onClick={fillStatusReply} disabled={fillingStatus}>
+                                                    {fillingStatus ? 'Looking up…' : `Reply with status of ${inquiryNumber}`}
+                                                </button>
+                                            )}
+                                            {!reply && (
+                                                <button type="button" className="chat-pill-button" onClick={() => setReply(TEMPLATE_MESSAGE)}>
+                                                    Use registrar contact template
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 />

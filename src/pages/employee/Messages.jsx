@@ -11,6 +11,7 @@ import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
+import { pendingInquiry, statusReplyFor } from '../../lib/requestStatusMessages'
 
 function Messages() {
     const [userId, setUserId] = useState(null)
@@ -27,6 +28,7 @@ function Messages() {
     const [sending, setSending] = useState(false)
     const [senderNames, setSenderNames] = useState({})
     const [busy, setBusy] = useState(false)
+    const [fillingStatus, setFillingStatus] = useState(false)
 
     useLiveRefresh(['messages'], (options) => loadMessages(options))
     const { typingUserIds, sendTyping } = useTyping(userId)
@@ -329,6 +331,19 @@ function Messages() {
         }
     }
 
+    // A student asked "what's the status of REQ-…?": fill in the answer.
+    const inquiryNumber = activeThread ? pendingInquiry(activeThread.messages, userId) : null
+    const fillStatusReply = async () => {
+        try {
+            setFillingStatus(true)
+            setReply(await statusReplyFor(inquiryNumber))
+        } catch (err) {
+            notifyError(err.message || 'Could not look up that request.')
+        } finally {
+            setFillingStatus(false)
+        }
+    }
+
     const q = search.trim().toLowerCase()
     const visibleThreads = threads
         .filter((t) => filter !== 'unread' || t.unreadCount > 0)
@@ -478,6 +493,13 @@ function Messages() {
                                     sending={sending}
                                     canSend={!!reply.trim()}
                                     placeholder={`Message ${activeThread.name}…`}
+                                    above={inquiryNumber && (
+                                        <div className="chat-composer-extra">
+                                            <button type="button" className="chat-pill-button" onClick={fillStatusReply} disabled={fillingStatus}>
+                                                {fillingStatus ? 'Looking up…' : `Reply with status of ${inquiryNumber}`}
+                                            </button>
+                                        </div>
+                                    )}
                                 />
                             </>
                         )}

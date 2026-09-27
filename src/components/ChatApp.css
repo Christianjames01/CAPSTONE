@@ -650,3 +650,99 @@ html[data-theme="dark"] .chat-app {
         animation: none;
     }
 }
+
+/* ---- "Ask about a request" (student Messages) ------------------------------ */
+.req-ask {
+    position: relative;
+}
+
+.req-ask .chat-pill-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.req-ask .chat-pill-button svg {
+    width: 14px;
+    height: 14px;
+}
+
+.req-ask-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: min(360px, calc(100vw - 32px));
+    max-height: 320px;
+    padding: 6px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 16px 36px -16px rgba(10, 20, 40, 0.45);
+}
+
+.req-ask-hint {
+    padding: 6px 10px 4px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.req-ask-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 9px 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+}
+
+.req-ask-item:hover,
+.req-ask-item:focus-visible {
+    background: var(--paper);
+    outline: none;
+}
+
+.req-ask-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.req-ask-main strong {
+    font-size: 13.5px;
+}
+
+.req-ask-main span {
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--slate);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.req-ask-status {
+    flex-shrink: 0;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.req-ask-status.status-completed { background: rgba(30, 138, 95, 0.12); color: var(--success-text, #1e8a5f); }
+.req-ask-status.status-ready_for_claiming { background: rgba(30, 138, 95, 0.12); color: var(--success-text, #1e8a5f); }
+.req-ask-status.status-rejected,
+.req-ask-status.status-cancelled,
+.req-ask-status.status-lacking_requirements { background: var(--danger-bg-soft, rgba(200, 16, 46, 0.1)); color: var(--danger-text, var(--red)); }
