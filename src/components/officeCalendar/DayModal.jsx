@@ -1,5 +1,5 @@
 import Modal from '../Modal'
-import { EVENT_PRESETS, claimTime, formatDate, formatTime, getToday, isWeekendDate } from '../../lib/officeCalendar'
+import { EVENT_PRESETS, claimTime, formatDate, formatTime, getToday, isWeekendDate, weekdayName } from '../../lib/officeCalendar'
 import './OfficeCalendar.css'
 
 const TrashIcon = () => (
@@ -37,7 +37,7 @@ function DayModal({
     const status = isWeekend
         ? openEntry
             ? { tone: 'open', label: 'Open for claiming' }
-            : { tone: 'closed', label: 'Weekend · closed' }
+            : { tone: 'closed', label: `${weekdayName(date)} · closed` }
         : { tone: 'workday', label: 'Regular office day' }
 
     const submitEvent = (e) => {
@@ -65,7 +65,7 @@ function DayModal({
                                         : 'Backfill this past date as an open day if claiming actually happened.'
                                     : openEntry
                                         ? 'Missed claims can be auto-rescheduled to this date.'
-                                        : 'Missed claims will skip this date unless you mark it open.'}
+                                        : `The office is closed on ${weekdayName(date)}s by default. Mark it open if the office is working this day — claims can then be scheduled and missed claims moved here.`}
                             </p>
                         </div>
                         <button
@@ -74,7 +74,7 @@ function DayModal({
                             onClick={onToggleOpen}
                             disabled={togglingOpen}
                         >
-                            {togglingOpen ? 'Saving...' : openEntry ? 'Remove open status' : 'Mark open'}
+                            {togglingOpen ? 'Saving...' : openEntry ? 'Mark closed again' : 'Mark office open'}
                         </button>
                     </div>
                 )}

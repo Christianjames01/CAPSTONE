@@ -12,6 +12,7 @@ import './AdminPages.css'
 import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claimCounter'
 import { loadStudentsById } from '../../lib/studentNames'
 import RescheduleHistory from '../../components/RescheduleHistory'
+import { isClosedWithoutOpening, weekdayName } from '../../lib/officeCalendar'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -159,6 +160,11 @@ function AdminClaimSchedule() {
     const saveSchedule = async () => {
         if (!request) return
         if (!validateForm()) return
+
+        if (await isClosedWithoutOpening(scheduledDate)) {
+            notifyWarning(`The office is closed on ${weekdayName(scheduledDate)}s unless that day is marked open in the Office Calendar. Pick another date, or mark ${formatDate(scheduledDate)} open first.`)
+            return
+        }
 
         const confirmed = await confirmModal(
             existingSchedule

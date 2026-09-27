@@ -412,8 +412,9 @@ function OfficeCalendar() {
                     <h1 style={{ fontSize: 26, marginBottom: 6 }}>Office Calendar</h1>
                     <p>
                         Tap any day to add an event or note (e.g. "Enrollment Week," "Office Closed —
-                        Holiday"). For Saturdays and Sundays, you can also mark the office open for
-                        claiming, so missed appointments get auto-rescheduled there instead of skipped.
+                        Holiday"). The office is closed on Mondays, Saturdays and Sundays by default — tap
+                        one to mark the office open that day, so claims can be scheduled there and missed
+                        appointments get auto-rescheduled to it.
                     </p>
                 </div>
 

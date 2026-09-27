@@ -1,3 +1,4 @@
+import { isClosedWeekday } from './officeCalendar'
 import { supabase } from './supabase'
 
 export function todayStr() {
@@ -10,14 +11,13 @@ export function formatQueueNumber(n) {
 }
 
 // Whether the registrar office counts as open today for walk-in queuing:
-// weekdays are open by default, weekends need an explicit office_open_days
+// Tuesday-Friday are open by default; Mondays and weekends need an explicit office_open_days
 // entry (same table the Office Calendar already uses), and either can be
 // overridden by an announcement pinned to today and marked closed (e.g. a
 // holiday) -- reusing the same signal the student dashboard banner shows.
 export async function isOfficeOpenToday() {
     const today = todayStr()
-    const dow = new Date().getDay()
-    const isWeekend = dow === 0 || dow === 6
+    const isWeekend = isClosedWeekday(new Date().getDay())
 
     const { data: closedAnnouncement } = await supabase
         .from('announcements')

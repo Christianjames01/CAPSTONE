@@ -11,16 +11,18 @@ function phToday(nowMs: number): string {
     return new Date(nowMs + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
-// Next weekday (Mon-Fri) strictly after the given YYYY-MM-DD date, unless a
-// weekend date is explicitly marked open in office_open_days (e.g. the
-// Registrar Head marks a Saturday open during enrollment), in which case
-// that date is used instead of skipping it.
+// Next office day (Tue-Fri) strictly after the given YYYY-MM-DD date.
+// Mondays and weekends are closed by default and only used when marked open
+// in office_open_days (e.g. staff open a Monday or an enrollment Saturday).
+// Mirrors CLOSED_WEEKDAYS in src/lib/officeCalendar.js.
+const CLOSED_WEEKDAYS = [0, 1, 6]
+
 function nextBusinessDay(fromDateStr: string, openWeekendDates: Set<string>): string {
     let d = new Date(`${fromDateStr}T00:00:00Z`)
     d = new Date(d.getTime() + 24 * 60 * 60 * 1000)
 
     while (true) {
-        const isWeekend = d.getUTCDay() === 0 || d.getUTCDay() === 6
+        const isWeekend = CLOSED_WEEKDAYS.includes(d.getUTCDay())
         const dateStr = d.toISOString().slice(0, 10)
 
         if (!isWeekend || openWeekendDates.has(dateStr)) {

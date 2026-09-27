@@ -37,7 +37,7 @@ function RangeModal({
         <Modal title="Add an event to a range of days" maxWidth={520} onClose={onClose}>
             <form className="ocal-day" onSubmit={submit}>
                 <p className="ocal-day-empty" style={{ marginTop: 0 }}>
-                    Applies the same event to every day in the range, weekends included, so you don't have to add it one day at a time.
+                    Applies the same event to every day in the range, Mondays and weekends included, so you don't have to add it one day at a time.
                 </p>
 
                 <div className="ocal-range-dates">
@@ -76,7 +76,7 @@ function RangeModal({
                     <p className="ocal-range-summary">
                         <strong>{dates.length} {dates.length === 1 ? 'day' : 'days'}</strong>
                         {dates.length > 1 && <> · {formatDateShort(start)} to {formatDateShort(end)}</>}
-                        {weekendCount > 0 && <> · includes {weekendCount} weekend {weekendCount === 1 ? 'day' : 'days'}</>}
+                        {weekendCount > 0 && <> · includes {weekendCount} closed-by-default {weekendCount === 1 ? 'day' : 'days'} (Monday/weekend)</>}
                     </p>
                 )}
 

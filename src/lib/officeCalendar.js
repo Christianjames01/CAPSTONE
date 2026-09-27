@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 // Date helpers shared by the admin and employee Office Calendar pages.
 // Dates are handled as local 'YYYY-MM-DD' strings throughout so they compare
 // cleanly with the office_open_days / office_events / claim_schedules columns.
@@ -39,9 +41,37 @@ export function getToday() {
     return formatLocal(new Date())
 }
 
+// Days of the week the office is closed unless a date is marked open in
+// office_open_days: Sunday, Monday and Saturday. Tuesday-Friday are open by
+// default. Mirrored in supabase/functions/mark-missed-claims.
+export const CLOSED_WEEKDAYS = [0, 1, 6]
+
+export function isClosedWeekday(dow) {
+    return CLOSED_WEEKDAYS.includes(dow)
+}
+
+// True for dates that are closed by default (Mondays and weekends) -- the
+// ones staff can mark open in the Office Calendar.
 export function isWeekendDate(dateStr) {
-    const dow = toDate(dateStr).getDay()
-    return dow === 0 || dow === 6
+    return isClosedWeekday(toDate(dateStr).getDay())
+}
+
+export function weekdayName(dateStr) {
+    return toDate(dateStr).toLocaleDateString('en-PH', { weekday: 'long' })
+}
+
+// For staff scheduling a claim: true when the date is closed by default and
+// nobody has marked it open in the Office Calendar.
+export async function isClosedWithoutOpening(dateStr) {
+    if (!isWeekendDate(dateStr)) return false
+
+    const { data } = await supabase
+        .from('office_open_days')
+        .select('open_day_id')
+        .eq('open_date', dateStr)
+        .maybeSingle()
+
+    return !data
 }
 
 export function addDays(dateStr, delta) {

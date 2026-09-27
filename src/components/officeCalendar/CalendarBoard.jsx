@@ -9,6 +9,7 @@ import {
     getToday,
     groupConsecutiveEvents,
     relativeDayLabel,
+    isClosedWeekday,
 } from '../../lib/officeCalendar'
 import './OfficeCalendar.css'
 
@@ -101,7 +102,7 @@ function CalendarBoard({
     }, [monthGrid, eventsByDate, openDaysByDate, claimSchedulesByDate])
 
     // One "Coming up" timeline: range events collapsed into a single entry,
-    // plus weekend open days, in date order.
+    // plus Monday/weekend open days, in date order.
     const upcoming = useMemo(() => {
         const eventItems = groupConsecutiveEvents(upcomingEvents).map((g) => ({
             type: 'event',
@@ -206,7 +207,7 @@ function CalendarBoard({
 
     const renderCell = ({ date, dateStr, inMonth }) => {
         const dow = date.getDay()
-        const isWeekend = dow === 0 || dow === 6
+        const isWeekend = isClosedWeekday(dow)
         const isPast = dateStr < today
         const isToday = dateStr === today
         const openEntry = isWeekend ? openDaysByDate[dateStr] : null
@@ -229,7 +230,7 @@ function CalendarBoard({
 
         const summary = [
             openEntry && 'open for claiming',
-            isWeekend && !openEntry && 'weekend, office closed',
+            isWeekend && !openEntry && (dow === 1 ? 'Monday, office closed' : 'weekend, office closed'),
             dayEvents.length > 0 && plural(dayEvents.length, 'event'),
             dayClaims.length > 0 && plural(dayClaims.length, 'claim appointment'),
         ].filter(Boolean).join(', ')
@@ -281,7 +282,7 @@ function CalendarBoard({
                     <SkeletonList count={3} />
                 ) : upcoming.length === 0 ? (
                     <div className="ocal-sidebar-empty">
-                        Nothing scheduled yet. Tap a day to add an event, or tap a weekend to open it for claiming.
+                        Nothing scheduled yet. Tap a day to add an event, or tap a Monday or weekend to open it.
                     </div>
                 ) : (
                     <>
@@ -367,7 +368,7 @@ function CalendarBoard({
 
                 <div className="ocal-summary">
                     <span><span className="ocal-dot is-event" aria-hidden="true" />{plural(monthSummary.eventDays, 'day')} with events</span>
-                    <span><span className="ocal-dot is-open" aria-hidden="true" />{plural(monthSummary.openDays, 'open weekend')}</span>
+                    <span><span className="ocal-dot is-open" aria-hidden="true" />{plural(monthSummary.openDays, 'opened day')}</span>
                     <span><span className="ocal-dot is-claim" aria-hidden="true" />{plural(monthSummary.claims, 'claim appointment')}</span>
                 </div>
 
@@ -375,7 +376,7 @@ function CalendarBoard({
 
                 <div className={`ocal-grid${loading ? ' is-loading' : ''}`} aria-busy={loading || undefined}>
                     {WEEKDAY_HEADS.map((h, i) => (
-                        <div className={`ocal-weekday${i === 0 || i === 6 ? ' is-weekend' : ''}`} key={h} aria-hidden="true">{h}</div>
+                        <div className={`ocal-weekday${isClosedWeekday(i) ? ' is-weekend' : ''}`} key={h} aria-hidden="true">{h}</div>
                     ))}
                     {monthGrid.map(renderCell)}
                 </div>

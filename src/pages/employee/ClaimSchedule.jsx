@@ -12,6 +12,7 @@ import './EmployeePages.css'
 import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claimCounter'
 import { loadStudentsById } from '../../lib/studentNames'
 import RescheduleHistory from '../../components/RescheduleHistory'
+import { isClosedWithoutOpening, weekdayName } from '../../lib/officeCalendar'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -274,6 +275,12 @@ function ClaimSchedule() {
         return `${year}-${month}-${day}`
     }
 
+    const closedDayWarning = async () => {
+        if (!(await isClosedWithoutOpening(scheduledDate))) return false
+        notifyWarning(`The office is closed on ${weekdayName(scheduledDate)}s unless that day is marked open in the Office Calendar. Pick another date, or mark ${formatDate(scheduledDate)} open first.`)
+        return true
+    }
+
     const validateForm = () => {
         if (!scheduledDate) {
             notifyWarning(
@@ -308,7 +315,7 @@ function ClaimSchedule() {
             return
         }
 
-        if (!validateForm()) {
+        if (!validateForm() || await closedDayWarning()) {
             return
         }
 
