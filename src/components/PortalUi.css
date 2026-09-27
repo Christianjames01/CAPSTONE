@@ -397,3 +397,29 @@
         overflow-wrap: anywhere;
     }
 }
+
+/* Phones: list card details two per row (an odd last one spans the row)
+   instead of one tall stack per card. */
+@media (max-width: 640px) {
+    .employee-list-card .employee-info-grid,
+    .student-list-card .student-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .employee-list-card .employee-info-grid > :last-child:nth-child(odd),
+    .student-list-card .student-info-grid > :last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+
+    .employee-list-card .employee-info-field,
+    .student-list-card .student-info-field {
+        padding: 8px 10px;
+    }
+
+    .employee-list-card .employee-info-field strong,
+    .student-list-card .student-info-field strong {
+        font-size: 13.5px;
+        overflow-wrap: anywhere;
+    }
+}

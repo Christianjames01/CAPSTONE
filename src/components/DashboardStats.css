@@ -891,3 +891,36 @@ html[data-theme="dark"] .employee-layout {
         width: 150px;
     }
 }
+
+/* Phones: summary tiles two per row and more compact, so they don't fill
+   the whole first screen of a list page. */
+@media (max-width: 640px) {
+    .page-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .page-stats .dash-stat-tile {
+        gap: 2px;
+        padding: 12px 14px;
+    }
+
+    .page-stats .dash-stat-value-lg {
+        margin-top: 2px;
+        font-size: 22px;
+    }
+
+    .page-stats .dash-stat-label {
+        font-size: 12px;
+    }
+
+    .page-stats .dash-stat-note {
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .page-stats .dash-stat-icon {
+        width: 28px;
+        height: 28px;
+    }
+}

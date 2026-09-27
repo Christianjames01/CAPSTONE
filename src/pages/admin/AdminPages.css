@@ -933,3 +933,19 @@
         overflow-wrap: anywhere;
     }
 }
+
+/* Phones: list card details two per row (an odd last one spans the row). */
+@media (max-width: 640px) {
+    .admin-list-card .admin-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .admin-list-card .admin-info-grid > :last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+
+    .admin-list-card .admin-info-field strong {
+        overflow-wrap: anywhere;
+    }
+}
