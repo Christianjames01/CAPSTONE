@@ -531,7 +531,7 @@ function CollegesPrograms() {
                                 <textarea id="college-description" className="form-input" rows={2} value={collegeForm.description || ''} onChange={(e) => setCollegeForm({ ...collegeForm, description: e.target.value })} disabled={saving} />
                             </div>
 
-                            <div style={{ display: 'flex', gap: 10 }}>
+                            <div className="app-modal-actions">
                                 <button className="admin-primary-button" onClick={saveCollege} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                                 <button className="admin-secondary-button" onClick={() => setShowCollegeForm(false)}>Cancel</button>
                             </div>
@@ -644,7 +644,7 @@ function CollegesPrograms() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: 10 }}>
+                            <div className="app-modal-actions">
                                 <button className="admin-primary-button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                                 <button className="admin-secondary-button" onClick={() => setShowProgramForm(false)}>Cancel</button>
                             </div>
@@ -829,7 +829,7 @@ function CollegesPrograms() {
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <div className="app-modal-actions">
                         <button className="admin-primary-button" onClick={saveBulkAdd} disabled={addingBulk}>
                             {addingBulk ? 'Adding...' : `Add Selected (${totalSelectedCount})`}
                         </button>

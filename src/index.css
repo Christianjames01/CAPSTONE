@@ -199,11 +199,32 @@ code {
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
+/* Alerts and confirmations (SweetAlert) look like the app's own dialogs
+   (components/Modal.css): brand bar on top, pill buttons, Cancel on the
+   left in neutral, the main action on the right. */
 .swal2-popup {
+  position: relative;
+  overflow: hidden;
   font-family: 'Inter', -apple-system, sans-serif !important;
-  border-radius: 16px !important;
-  padding: 28px 24px !important;
-  box-shadow: 0 20px 60px rgba(16, 24, 39, 0.25) !important;
+  border: 1px solid rgba(16, 24, 39, 0.1) !important;
+  border-radius: 18px !important;
+  padding: 30px 24px 24px !important;
+  box-shadow: 0 30px 70px -20px rgba(10, 15, 30, 0.45) !important;
+}
+
+.swal2-popup:not(.lp-modal)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #123B78, #C8102E);
+}
+
+.swal2-container.swal2-backdrop-show {
+  background: rgba(10, 15, 30, 0.55) !important;
+  backdrop-filter: blur(2px);
 }
 
 .swal2-title {
@@ -223,15 +244,21 @@ code {
 
 .swal2-actions {
   gap: 10px !important;
-  margin-top: 20px !important;
+  margin-top: 22px !important;
+}
+
+.swal2-actions .swal2-cancel {
+  order: -1;
 }
 
 .swal2-styled {
   font-family: 'Inter', -apple-system, sans-serif !important;
   font-weight: 600 !important;
   font-size: 14px !important;
-  border-radius: 8px !important;
-  padding: 11px 22px !important;
+  min-height: 42px;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  padding: 10px 22px !important;
   box-shadow: none !important;
   transition: filter 0.15s ease, transform 0.05s ease !important;
 }
@@ -248,9 +275,19 @@ code {
   box-shadow: 0 0 0 3px rgba(18, 59, 120, 0.25) !important;
 }
 
-.swal2-cancel {
-  background: #C8102E !important;
-  color: #FFFFFF !important;
+.swal2-styled.swal2-confirm {
+  box-shadow: 0 8px 18px -10px rgba(18, 59, 120, 0.9) !important;
+}
+
+.swal2-styled.swal2-cancel {
+  border: 1px solid rgba(16, 24, 39, 0.14) !important;
+  background: #FFFFFF !important;
+  color: #101827 !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+  background: #F1F4FA !important;
+  filter: none;
 }
 
 .swal2-input,
@@ -286,8 +323,19 @@ html[data-theme="dark"] .student-layout .form-input {
 
 
 html[data-theme="dark"] .swal2-popup {
+  border-color: rgba(255, 255, 255, 0.14) !important;
   background: #1A1E28 !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.7) !important;
+}
+
+html[data-theme="dark"] .swal2-styled.swal2-cancel {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: #1A1E28 !important;
+  color: #E7E9EE !important;
+}
+
+html[data-theme="dark"] .swal2-styled.swal2-cancel:hover {
+  background: #232838 !important;
 }
 
 html[data-theme="dark"] .swal2-title {
@@ -366,6 +414,15 @@ html {
 @media (max-width: 560px) {
     .swal2-container {
         padding: 12px !important;
+    }
+
+    .swal2-actions {
+        flex-wrap: nowrap !important;
+        width: 100%;
+    }
+
+    .swal2-actions .swal2-styled {
+        flex: 1 1 0;
     }
 
     .swal2-popup {

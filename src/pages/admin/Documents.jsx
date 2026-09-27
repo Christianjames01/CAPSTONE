@@ -602,11 +602,11 @@ function Documents() {
                         Require students to state a purpose for this document
                     </label>
 
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    <div className="app-modal-actions">
                         <button className="admin-primary-button" onClick={saveDocument} disabled={saving}>
                             {uploadingImage ? 'Uploading image...' : saving ? 'Saving...' : 'Save'}
                         </button>
-                        <button className="admin-danger-button" onClick={() => setShowForm(false)} disabled={saving}>
+                        <button className="admin-secondary-button" onClick={() => setShowForm(false)} disabled={saving}>
                             Cancel
                         </button>
                     </div>

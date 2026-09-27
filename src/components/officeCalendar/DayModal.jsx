@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from '../Modal'
+import { IconCalendar } from '../UiIcons'
 import HoursPicker from './HoursPicker'
 import { DEFAULT_HOURS, hoursOf, validHours } from '../../lib/officeHours'
 import { EVENT_PRESETS, claimTime, formatDate, formatTime, getToday, isWeekendDate, weekdayName } from '../../lib/officeCalendar'
@@ -55,7 +56,7 @@ function DayModal({
     }
 
     return (
-        <Modal title={formatDate(date)} maxWidth={520} onClose={onClose}>
+        <Modal title={formatDate(date)} subtitle="Office status, events and claiming appointments." icon={IconCalendar} maxWidth={520} onClose={onClose}>
             <div className="ocal-day">
                 <div className="ocal-day-badges">
                     <span className={`ocal-badge is-${status.tone}`}>{status.label}</span>

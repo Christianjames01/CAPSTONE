@@ -10,6 +10,7 @@ import { generateTempPassword, resetStudentPassword } from '../../lib/resetStude
 import { updateStudentEmail } from '../../lib/updateStudentEmail'
 import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
+import { IconUserCircle } from '../student/icons'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -500,7 +501,13 @@ function StudentHistory() {
             </div>
 
             {editing && form && (
-                <Modal title="Edit Student Information" maxWidth={720} onClose={() => !saving && setEditing(false)}>
+                <Modal
+                    title="Edit Student Information"
+                    subtitle="Changes are recorded in the activity log."
+                    icon={IconUserCircle}
+                    maxWidth={720}
+                    onClose={() => !saving && setEditing(false)}
+                >
                     <div className="employee-info-grid" style={{ marginBottom: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
                         <div className="form-group">
                             <label className="form-label">First Name</label>
@@ -585,11 +592,11 @@ function StudentHistory() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    <div className="app-modal-actions">
                         <button className="employee-primary-button" onClick={saveEdits} disabled={saving}>
                             {saving ? 'Saving...' : 'Save'}
                         </button>
-                        <button className="employee-danger-button" onClick={() => setEditing(false)} disabled={saving}>
+                        <button className="employee-secondary-button" onClick={() => setEditing(false)} disabled={saving}>
                             Cancel
                         </button>
                     </div>

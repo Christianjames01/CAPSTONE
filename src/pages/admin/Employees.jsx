@@ -459,9 +459,11 @@ function Employees() {
                         {addError && <div className="admin-error-box" style={{ gridColumn: '1 / -1' }}>{addError}</div>}
                         {addMessage && <div className="admin-success-box" style={{ gridColumn: '1 / -1' }}>{addMessage}</div>}
 
-                        <button className="auth-submit" style={{ gridColumn: '1 / -1', width: 'auto', padding: '11px 20px', justifySelf: 'start' }} type="submit" disabled={creating}>
-                            {creating ? 'Creating...' : 'Create Employee Account'}
-                        </button>
+                        <div className="app-modal-actions" style={{ gridColumn: '1 / -1' }}>
+                            <button className="admin-primary-button" type="submit" disabled={creating}>
+                                {creating ? 'Creating...' : 'Create Employee Account'}
+                            </button>
+                        </div>
                     </form>
                 </Modal>
             )}

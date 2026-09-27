@@ -1796,6 +1796,8 @@ function EmployeeRequestDetails() {
                 {showReject && (
                     <Modal
                         title={selectedRequirement ? 'Reject Requirement' : 'Reject Payment'}
+                        subtitle="The student sees your reason and can upload a replacement."
+                        icon={IconX}
                         onClose={() => {
                             setShowReject(false)
                             setSelectedRequirement(null)
@@ -1819,14 +1821,14 @@ function EmployeeRequestDetails() {
                             className="employee-textarea"
                         />
 
-                        <div className="employee-actions-row">
+                        <div className="employee-actions-row app-modal-actions">
                             <button
                                 onClick={() => {
                                     setShowReject(false)
                                     setSelectedRequirement(null)
                                     setRejectionReason('')
                                 }}
-                                className="employee-danger-button"
+                                className="employee-secondary-button"
                             >
                                 Cancel
                             </button>

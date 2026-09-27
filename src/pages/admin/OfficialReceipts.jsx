@@ -328,7 +328,7 @@ function OfficialReceipts() {
                         disabled={processing === rejectTarget.receipt_id}
                     />
 
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    <div className="app-modal-actions">
                         <button
                             className="admin-secondary-button"
                             onClick={closeRejectModal}

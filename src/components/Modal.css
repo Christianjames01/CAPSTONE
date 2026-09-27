@@ -173,14 +173,64 @@
     line-height: 1.45;
 }
 
-/* Main action buttons get rounder corners to match the dialog. */
+/* Every portal's buttons inside a dialog look like the dialog's own
+   pill buttons (app-modal-btn). */
 .app-modal-body .auth-submit,
 .app-modal-body .admin-primary-button,
-.app-modal-body .admin-secondary-button,
-.app-modal-body .admin-danger-button,
 .app-modal-body .employee-primary-button,
-.app-modal-body .employee-secondary-button {
-    border-radius: 10px;
+.app-modal-body .student-primary-button,
+.app-modal-body .admin-secondary-button,
+.app-modal-body .employee-secondary-button,
+.app-modal-body .student-secondary-button,
+.app-modal-body .admin-danger-button,
+.app-modal-body .employee-danger-button,
+.app-modal-body .student-danger-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.app-modal-body .auth-submit,
+.app-modal-body .admin-primary-button,
+.app-modal-body .employee-primary-button,
+.app-modal-body .student-primary-button {
+    border: 1px solid var(--blue, #123B78);
+    box-shadow: 0 8px 18px -10px var(--blue, #123B78);
+}
+
+.app-modal-body .admin-secondary-button,
+.app-modal-body .employee-secondary-button,
+.app-modal-body .student-secondary-button {
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.14));
+    background: var(--surface, #fff);
+    color: var(--ink, #101827);
+}
+
+.app-modal-body .admin-secondary-button:hover:not(:disabled),
+.app-modal-body .employee-secondary-button:hover:not(:disabled),
+.app-modal-body .student-secondary-button:hover:not(:disabled) {
+    border-color: var(--slate, #57616F);
+    background: var(--paper, #F1F4FA);
+}
+
+.app-modal-body .admin-danger-button,
+.app-modal-body .employee-danger-button,
+.app-modal-body .student-danger-button {
+    border: 1px solid var(--red, #C8102E);
+    box-shadow: 0 8px 18px -10px var(--red, #C8102E);
+}
+
+.app-modal-body .admin-danger-button:hover:not(:disabled),
+.app-modal-body .employee-danger-button:hover:not(:disabled),
+.app-modal-body .student-danger-button:hover:not(:disabled) {
+    filter: brightness(0.92);
 }
 
 /* ---- Forms and actions (Profile dialogs, two-factor setup) ------------ */
@@ -203,17 +253,26 @@
     grid-column: 1 / -1;
 }
 
-/* Main action on the right, Cancel beside it. Buttons are written main
-   action first, so row-reverse puts it last. */
+/* Cancel on the left, the main (or reject) action on the right, whatever
+   order the buttons are written in. */
 .app-modal-actions {
     display: flex;
-    flex-direction: row-reverse;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    align-items: center;
     gap: 10px;
     margin-top: 4px;
     padding-top: 16px;
     border-top: 1px solid var(--line, rgba(16, 24, 39, 0.1));
+}
+
+.app-modal-actions > * {
+    order: 2;
+}
+
+.app-modal-actions > .app-modal-btn:not(.is-primary),
+.app-modal-actions > [class*="secondary-button"] {
+    order: 1;
 }
 
 .app-modal-btn {
@@ -310,7 +369,7 @@
         grid-template-columns: 1fr;
     }
 
-    .app-modal-btn {
+    .app-modal-actions > button {
         flex: 1 1 0;
     }
 

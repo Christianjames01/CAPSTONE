@@ -1370,9 +1370,9 @@ function AdminRequestDetails() {
                         }
                     />
 
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    <div className="app-modal-actions">
                         <button
-                            className="admin-danger-button"
+                            className="admin-secondary-button"
                             onClick={() => {
                                 setShowReject(false)
                                 setSelectedRequirement(null)

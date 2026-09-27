@@ -1,4 +1,5 @@
 import Modal from '../Modal'
+import { IconCalendar } from '../UiIcons'
 import { EVENT_PRESETS, eachDateInRange, formatDateShort, isWeekendDate } from '../../lib/officeCalendar'
 import './OfficeCalendar.css'
 
@@ -34,7 +35,7 @@ function RangeModal({
     }
 
     return (
-        <Modal title="Add an event to a range of days" maxWidth={520} onClose={onClose}>
+        <Modal title="Add an event to a range of days" subtitle="The same event on every day from start to end." icon={IconCalendar} maxWidth={520} onClose={onClose}>
             <form className="ocal-day" onSubmit={submit}>
                 <p className="ocal-day-empty" style={{ marginTop: 0 }}>
                     Applies the same event to every day in the range, Mondays and weekends included, so you don't have to add it one day at a time.
