@@ -282,15 +282,14 @@ function Messages() {
         return shown
     }
 
-    // "Ask about a request": asks the staff member handling it (switching to
-    // their conversation), then posts the automatic status reply. With
-    // ALL_REQUESTS, asks the current conversation about every request.
+    // "Ask about a request": asks the person in the open conversation (the
+    // student chose who to talk to), who then sends the automatic status
+    // reply. With ALL_REQUESTS, asks about every request.
     const askAboutRequest = async (request) => {
         setAskOpen(false)
         const all = request === ALL_REQUESTS
-        const contact = (!all && contacts.find((c) => c.employeeId && c.employeeId === request.assigned_employee_id)) || selected
+        const contact = selected
         if (!contact || !userId) return
-        if (contact.userId !== selectedUserId) selectContact(contact)
         let question
 
         try {
