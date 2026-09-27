@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { loadDirectoryProfiles } from './directoryProfiles'
 
 export const REGISTRAR_LABEL = 'HCDC-Registrar'
 
@@ -14,8 +15,8 @@ export async function buildSenderLabels(userIds, { showRegistrarHeadName = false
 
     // Both lookups at once (one round trip instead of two); the employee
     // lookup simply returns nothing for non-employees.
-    const [{ data: profiles }, { data: employees }] = await Promise.all([
-        supabase.from('profiles').select('user_id, first_name, last_name, role').in('user_id', userIds),
+    const [profiles, { data: employees }] = await Promise.all([
+        loadDirectoryProfiles(userIds),
         supabase.from('employees').select('user_id, display_name').in('user_id', userIds),
     ])
 

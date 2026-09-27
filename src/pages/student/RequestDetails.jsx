@@ -11,6 +11,7 @@ import RepresentativeStudentCard from '../../components/RepresentativeStudentCar
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { loadDirectoryProfiles } from '../../lib/directoryProfiles'
 
 const STATUS_META = {
     pending: {
@@ -266,11 +267,7 @@ function RequestDetails() {
                             .single()
 
                         if (employeeRow) {
-                            const { data: employeeProfile } = await supabase
-                                .from('profiles')
-                                .select('first_name, last_name')
-                                .eq('user_id', employeeRow.user_id)
-                                .single()
+                            const [employeeProfile] = await loadDirectoryProfiles([employeeRow.user_id])
 
                             // Prefer the employee's nickname (set by an admin), same as
                             // the student Messages page.
