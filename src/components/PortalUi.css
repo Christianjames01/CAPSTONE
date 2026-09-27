@@ -370,3 +370,30 @@
 .ui-date-badge.status-claimed span {
     background: var(--success-text, #1e8a5f);
 }
+
+/* Phones: a header with a status pill puts the document image and the
+   pill on the first row and the title/details full width below, instead
+   of squeezing the title between them. */
+@media (max-width: 640px) {
+    .ui-detail-hero:has(> [class*="status-pill"]) {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 14px;
+    }
+
+    .ui-detail-hero:has(> [class*="status-pill"]) > .ui-detail-main {
+        flex: 1 1 100% !important;
+        order: 3;
+    }
+
+    .ui-detail-hero > [class*="status-pill"] {
+        align-self: center !important;
+        margin-left: auto;
+    }
+
+    .ui-detail-main h1 {
+        font-size: 21px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+}

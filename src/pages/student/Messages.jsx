@@ -72,24 +72,48 @@ function Messages() {
             if (userError || !user) throw new Error('You are not logged in.')
             setUserId(user.id)
 
-            const { data: student, error: studentError } = await supabase
-                .from('students')
-                .select('student_id, college_id, program_id')
-                .eq('user_id', user.id)
-                .single()
+            // Round 1: the student record, their messages and what they've
+            // hidden, all at once (each round trip is ~0.3 s from Davao).
+            const [{ data: student, error: studentError }, { data: messageRows, error: messagesError }, hiddenIds, { data: documentTypes }] = await Promise.all([
+                supabase.from('students').select('student_id, college_id, program_id').eq('user_id', user.id).single(),
+                supabase
+                    .from('messages')
+                    .select('*')
+                    .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
+                    .order('created_at', { ascending: true }),
+                loadHiddenMessageIds(user.id),
+                supabase.from('document_types').select('document_type_id, document_name'),
+            ])
 
             if (studentError || !student) throw new Error('Student record could not be found.')
+            if (messagesError) throw new Error('Failed to load messages: ' + messagesError.message)
+
+            // [[ref=<employee>]] marks a Registrar Head reply sent into the
+            // conversation with that employee; the tag itself is never shown.
+            const rows = (messageRows || [])
+                .filter((m) => !hiddenIds.has(m.message_id))
+                .map((m) => {
+                    const ref = refOf(m.message)
+                    const shown = readMessage(m)
+                    return ref ? { ...shown, refUserId: ref } : shown
+                })
+            const messageParties = [...new Set(rows.map((m) => otherParty(m, user.id)))].filter(Boolean)
+
+            // Round 2: the student's requests (for who handles them and for
+            // "Ask about a request") and the names of everyone they've messaged.
+            const [{ data: requestRows }, partyLabels] = await Promise.all([
+                supabase
+                    .from('document_requests')
+                    .select('request_id, request_number, status, assigned_employee_id, document_type_id, requested_at')
+                    .eq('student_id', student.student_id)
+                    .order('requested_at', { ascending: false }),
+                buildSenderLabels(messageParties),
+            ])
 
             // Employees handling the student's requests, newest request first.
-            const { data: ownRequests } = await supabase
-                .from('document_requests')
-                .select('request_number, assigned_employee_id, status, requested_at')
-                .eq('student_id', student.student_id)
-                .not('assigned_employee_id', 'is', null)
-                .order('requested_at', { ascending: false })
-
+            const ownRequests = (requestRows || []).filter((r) => r.assigned_employee_id)
             const requestsByEmployee = {}
-            for (const r of ownRequests || []) {
+            for (const r of ownRequests) {
                 if (!requestsByEmployee[r.assigned_employee_id]) requestsByEmployee[r.assigned_employee_id] = []
                 requestsByEmployee[r.assigned_employee_id].push(r)
             }
@@ -100,6 +124,7 @@ function Messages() {
                 if (fallback) employeeIds = [fallback]
             }
 
+            // Round 3: those employees.
             const { data: employeeRows } = employeeIds.length
                 ? await supabase
                     .from('employees')
@@ -107,29 +132,9 @@ function Messages() {
                     .in('employee_id', employeeIds)
                 : { data: [] }
 
-            const { data: messageRows, error: messagesError } = await supabase
-                .from('messages')
-                .select('*')
-                .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
-                .order('created_at', { ascending: true })
-
-            if (messagesError) throw new Error('Failed to load messages: ' + messagesError.message)
-
-            // Messages this student deleted "for me".
-            const hiddenIds = await loadHiddenMessageIds(user.id)
-            // [[ref=<employee>]] marks a Registrar Head reply sent into the
-            // conversation with that employee; the tag itself is never shown.
-            const rows = (messageRows || [])
-                .filter((m) => !hiddenIds.has(m.message_id))
-                .map((m) => {
-                    const ref = refOf(m.message)
-                    const shown = readMessage(m)
-                    return ref ? { ...shown, refUserId: ref } : shown
-                })
-
             const employeeUserIds = (employeeRows || []).map((e) => e.user_id)
-            const otherUserIds = [...new Set([...employeeUserIds, ...rows.map((m) => otherParty(m, user.id))])].filter(Boolean)
-            const labels = await buildSenderLabels(otherUserIds)
+            const missing = employeeUserIds.filter((id) => !partyLabels[id])
+            const labels = missing.length ? { ...partyLabels, ...(await buildSenderLabels(missing)) } : partyLabels
 
             // Which conversation each message belongs in. Messages with an
             // employee go in that employee's conversation, and so do Registrar
@@ -186,17 +191,7 @@ function Messages() {
 
 
             // Requests the student can ask about (open ones first).
-            const { data: requestRows } = await supabase
-                .from('document_requests')
-                .select('request_id, request_number, status, assigned_employee_id, document_type_id, requested_at')
-                .eq('student_id', student.student_id)
-                .order('requested_at', { ascending: false })
-
-            const typeIds = [...new Set((requestRows || []).map((r) => r.document_type_id).filter(Boolean))]
-            const { data: typeRows } = typeIds.length
-                ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', typeIds)
-                : { data: [] }
-            const docName = Object.fromEntries((typeRows || []).map((t) => [t.document_type_id, t.document_name]))
+            const docName = Object.fromEntries((documentTypes || []).map((t) => [t.document_type_id, t.document_name]))
 
             setRequests((requestRows || []).map((r) => ({ ...r, documentName: docName[r.document_type_id] || '' })))
             setContacts(list)

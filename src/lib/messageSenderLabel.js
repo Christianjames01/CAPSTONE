@@ -12,16 +12,12 @@ export const REGISTRAR_LABEL = 'HCDC-Registrar'
 export async function buildSenderLabels(userIds, { showRegistrarHeadName = false } = {}) {
     if (userIds.length === 0) return {}
 
-    const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, first_name, last_name, role')
-        .in('user_id', userIds)
-
-    const employeeIds = (profiles || []).filter((p) => p.role === 'employee').map((p) => p.user_id)
-
-    const { data: employees } = employeeIds.length
-        ? await supabase.from('employees').select('user_id, display_name').in('user_id', employeeIds)
-        : { data: [] }
+    // Both lookups at once (one round trip instead of two); the employee
+    // lookup simply returns nothing for non-employees.
+    const [{ data: profiles }, { data: employees }] = await Promise.all([
+        supabase.from('profiles').select('user_id, first_name, last_name, role').in('user_id', userIds),
+        supabase.from('employees').select('user_id, display_name').in('user_id', userIds),
+    ])
 
     const displayNameByUserId = Object.fromEntries((employees || []).map((e) => [e.user_id, e.display_name]))
 

@@ -55,18 +55,22 @@ function Messages() {
 
             setUserId(user.id)
 
-            const { data, error: messagesError } = await supabase
-                .from('messages')
-                .select('*')
-                .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
-                .order('created_at', { ascending: true })
+            // Round 1: the messages and what this user hid, together (each
+            // round trip is ~0.3 s from Davao).
+            const [{ data, error: messagesError }, hiddenIds] = await Promise.all([
+                supabase
+                    .from('messages')
+                    .select('*')
+                    .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
+                    .order('created_at', { ascending: true }),
+                // Messages this user deleted "for me" stay out of every thread.
+                loadHiddenMessageIds(user.id),
+            ])
 
             if (messagesError) {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
 
-            // Messages this user deleted "for me" stay out of every thread.
-            const hiddenIds = await loadHiddenMessageIds(user.id)
             const rows = (data || []).filter((m) => !hiddenIds.has(m.message_id))
 
             const otherUserIds = [
@@ -74,10 +78,17 @@ function Messages() {
                     rows.map((m) => (m.sender_user_id === user.id ? m.receiver_user_id : m.sender_user_id))
                 )
             ]
+            // Students a head reply was filed under (see REF_TAG below).
+            const refStudentIds = [...new Set(rows.map((m) => m.message.match(/^\[\[ref=([0-9a-f-]+)\]\]/)?.[1]).filter(Boolean))]
+            const everyoneIds = [...new Set([...otherUserIds, ...refStudentIds])]
 
-            const { data: profiles } = otherUserIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', otherUserIds)
-                : { data: [] }
+            // Round 2: everyone's profile and display name, together.
+            const [{ data: profiles }, prefetchedLabels] = await Promise.all([
+                everyoneIds.length
+                    ? supabase.from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', everyoneIds)
+                    : Promise.resolve({ data: [] }),
+                buildSenderLabels(everyoneIds, { showRegistrarHeadName: true }),
+            ])
 
             const profileByUserId = Object.fromEntries(
                 (profiles || []).map((p) => [p.user_id, p])
@@ -104,14 +115,7 @@ function Messages() {
                 if (!profileByUserId[match[1]]) studentIdsToFetch.add(match[1])
             }
 
-            if (studentIdsToFetch.size > 0) {
-                const { data: extraProfiles } = await supabase
-                    .from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', [...studentIdsToFetch])
-
-                for (const p of extraProfiles || []) profileByUserId[p.user_id] = p
-            }
-
-            const labels = await buildSenderLabels([...otherUserIds, ...studentIdsToFetch], { showRegistrarHeadName: true })
+            const labels = prefetchedLabels
 
             // A reply this employee sent into a shared conversation fans out
             // as one row per recipient (student + head), all with the same

@@ -72,17 +72,20 @@ function Messages() {
 
             setCurrentUserId(user.id)
 
-            const { data, error: messagesError } = await supabase
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: true })
+            // Round 1: every message and what the head hid, together (each
+            // round trip is ~0.3 s from Davao).
+            const [{ data, error: messagesError }, hiddenIds] = await Promise.all([
+                supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: true }),
+                // Messages this user deleted "for me".
+                loadHiddenMessageIds(user.id),
+            ])
 
             if (messagesError) {
                 throw new Error('Failed to load messages: ' + messagesError.message)
             }
-
-            // Messages this user deleted "for me".
-            const hiddenIds = await loadHiddenMessageIds(user.id)
             const visible = (data || []).filter((m) => !hiddenIds.has(m.message_id))
 
             setRawMessages(visible)
@@ -91,12 +94,15 @@ function Messages() {
                 ...new Set(visible.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
             ]
 
-            const { data: profiles } = userIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', userIds)
-                : { data: [] }
+            // Round 2: everyone's profile and display name, together.
+            const [{ data: profiles }, labels] = await Promise.all([
+                userIds.length
+                    ? supabase.from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', userIds)
+                    : Promise.resolve({ data: [] }),
+                buildSenderLabels(userIds),
+            ])
 
             const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
-            const labels = await buildSenderLabels(userIds)
 
             const nameFor = (userId) => labels[userId] || 'Unknown'
 

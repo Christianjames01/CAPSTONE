@@ -907,3 +907,29 @@
     width: 28px;
     height: 28px;
 }
+
+/* Phones: document image and status pill on the first row, the title and
+   details full width below (see PortalUi.css for the other portals). */
+@media (max-width: 640px) {
+    .admin-detail-hero:has(> [class*="status-pill"]) {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 14px;
+    }
+
+    .admin-detail-hero:has(> [class*="status-pill"]) > .admin-detail-main {
+        flex: 1 1 100% !important;
+        order: 3;
+    }
+
+    .admin-detail-hero > [class*="status-pill"] {
+        align-self: center !important;
+        margin-left: auto;
+    }
+
+    .admin-detail-main h1 {
+        font-size: 21px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+}

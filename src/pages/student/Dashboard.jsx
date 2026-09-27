@@ -65,6 +65,8 @@ function Dashboard() {
     // Update in place when requests change -- no manual refresh needed.
     useLiveRefresh(['document_requests', 'claim_schedules', 'announcements', 'office_open_days', 'messages'], loadDashboard)
 
+    // Everything is fetched in two rounds of parallel requests (instead of
+    // one after another): each database round trip is ~0.3 s from Davao.
     async function loadDashboard() {
         try {
             const {
@@ -76,72 +78,102 @@ function Dashboard() {
                 return
             }
 
-            const [posted, officeNotices] = await Promise.all([
+            // Round 1: everything that only needs the signed-in user.
+            const [
+                posted,
+                officeNotices,
+                { data: profile },
+                { data: student },
+                { count: unreadNotifications },
+                { data: messageRows },
+                hiddenIds,
+                { count: unreadMessages },
+                { data: documentTypes },
+            ] = await Promise.all([
                 fetchActiveAnnouncements('show_to_students'),
                 fetchOfficeScheduleNotices(),
+                supabase.from('profiles').select('first_name, last_name').eq('user_id', user.id).single(),
+                supabase.from('students').select('student_id, college_id, program_id').eq('user_id', user.id).single(),
+                supabase.from('notifications').select('notification_id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_read', false),
+                supabase
+                    .from('messages')
+                    .select('message_id, sender_user_id, receiver_user_id, message, is_read, created_at, deleted_at')
+                    .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
+                    .order('created_at', { ascending: false })
+                    .limit(20),
+                loadHiddenMessageIds(user.id),
+                supabase.from('messages').select('message_id', { count: 'exact', head: true }).eq('receiver_user_id', user.id).eq('is_read', false),
+                supabase.from('document_types').select('document_type_id, document_name'),
             ])
+
             setAnnouncements([...officeNotices.filter((n) => n.announcement_date), ...posted, ...officeNotices.filter((n) => !n.announcement_date)])
+            if (profile) setName(profile.first_name)
+            setUnreadCount(unreadNotifications || 0)
+            setUnreadMessageCount(unreadMessages || 0)
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('first_name, last_name')
-                .eq('user_id', user.id)
-                .single()
+            const documentNameById = Object.fromEntries(
+                (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
+            )
 
-            if (profile) {
-                setName(profile.first_name)
+            // Most recent message in any of the student's conversations (the
+            // staff handling their requests, or the Registrar Head), shown the
+            // way Messages shows it: tags removed, deleted ones as such.
+            const latest = (messageRows || []).find((m) => !hiddenIds.has(m.message_id))
+            const otherId = latest && (latest.sender_user_id === user.id ? latest.receiver_user_id : latest.sender_user_id)
+
+            // Round 2: things that need the student record or the latest message.
+            const [
+                { data: requestRows },
+                { data: scheduleRows },
+                { count: missedCount },
+                labels,
+                { data: employeeRow },
+            ] = await Promise.all([
+                student
+                    ? supabase
+                        .from('document_requests')
+                        .select('request_id, request_number, document_type_id, status, requested_at, total_amount')
+                        .eq('student_id', student.student_id)
+                        .order('requested_at', { ascending: false })
+                    : Promise.resolve({ data: [] }),
+                student
+                    ? supabase
+                        .from('claim_schedules')
+                        .select('claim_schedule_id, request_id, claim_date, claim_time, scheduled_date, scheduled_time, status')
+                        .eq('student_id', student.student_id)
+                        .neq('status', 'cancelled')
+                        .neq('status', 'claimed')
+                        .order('claim_date', { ascending: true })
+                        .limit(1)
+                    : Promise.resolve({ data: [] }),
+                student
+                    ? supabase.from('claim_schedules').select('claim_schedule_id', { count: 'exact', head: true }).eq('student_id', student.student_id).eq('status', 'missed')
+                    : Promise.resolve({ count: 0 }),
+                otherId ? buildSenderLabels([otherId]) : Promise.resolve({}),
+                otherId
+                    ? supabase.from('employees').select('employee_id, display_name').eq('user_id', otherId).maybeSingle()
+                    : Promise.resolve({ data: null }),
+            ])
+
+            if (latest) {
+                setLatestMessage({
+                    ...readMessage(latest),
+                    fromStaff: latest.sender_user_id !== user.id,
+                    otherName: employeeRow?.display_name?.trim() || labels[otherId] || REGISTRAR_LABEL,
+                    employeeId: employeeRow?.employee_id || null,
+                })
+            } else {
+                setLatestMessage(null)
             }
-
-            const { data: student } = await supabase
-                .from('students')
-                .select('student_id, college_id, program_id')
-                .eq('user_id', user.id)
-                .single()
 
             if (!student) {
                 setLoading(false)
                 return
             }
 
-            const { data: requestRows } = await supabase
-                .from('document_requests')
-                .select('request_id, request_number, document_type_id, status, requested_at, total_amount')
-                .eq('student_id', student.student_id)
-                .order('requested_at', { ascending: false })
-
             const rows = requestRows || []
-            const documentTypeIds = [...new Set(rows.map((r) => r.document_type_id).filter(Boolean))]
-
-            const { data: documentTypes } = documentTypeIds.length
-                ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
-                : { data: [] }
-
-            const documentNameById = Object.fromEntries(
-                (documentTypes || []).map((d) => [d.document_type_id, d.document_name])
-            )
-
             setRequests(rows.map((r) => ({ ...r, documentName: documentNameById[r.document_type_id] || 'Document' })))
-
-            const { count } = await supabase
-                .from('notifications')
-                .select('notification_id', { count: 'exact', head: true })
-                .eq('user_id', user.id)
-                .eq('is_read', false)
-
-            setUnreadCount(count || 0)
-
-            const requestIds = rows.map((r) => r.request_id)
-
-            const { data: scheduleRows } = requestIds.length
-                ? await supabase
-                    .from('claim_schedules')
-                    .select('claim_schedule_id, request_id, claim_date, claim_time, scheduled_date, scheduled_time, status')
-                    .in('request_id', requestIds)
-                    .neq('status', 'cancelled')
-                    .neq('status', 'claimed')
-                    .order('claim_date', { ascending: true })
-                    .limit(1)
-                : { data: [] }
+            setMissedClaimCount(missedCount || 0)
 
             if (scheduleRows && scheduleRows.length > 0) {
                 const schedule = scheduleRows[0]
@@ -152,53 +184,8 @@ function Dashboard() {
                     requestNumber: request?.request_number,
                     documentName: documentNameById[request?.document_type_id] || 'Document',
                 })
-            }
-
-            const { count: missedCount } = await supabase
-                .from('claim_schedules')
-                .select('claim_schedule_id', { count: 'exact', head: true })
-                .eq('student_id', student.student_id)
-                .eq('status', 'missed')
-
-            setMissedClaimCount(missedCount || 0)
-
-            // Most recent message in any of the student's conversations (the
-            // staff handling their requests, or the Registrar Head), shown the
-            // way Messages shows it: tags removed, deleted ones as such.
-            const [{ data: messageRows }, hiddenIds, { count: unreadCount }] = await Promise.all([
-                supabase
-                    .from('messages')
-                    .select('message_id, sender_user_id, receiver_user_id, message, is_read, created_at, deleted_at')
-                    .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
-                    .order('created_at', { ascending: false })
-                    .limit(20),
-                loadHiddenMessageIds(user.id),
-                supabase
-                    .from('messages')
-                    .select('message_id', { count: 'exact', head: true })
-                    .eq('receiver_user_id', user.id)
-                    .eq('is_read', false),
-            ])
-
-            const latest = (messageRows || []).find((m) => !hiddenIds.has(m.message_id))
-            setUnreadMessageCount(unreadCount || 0)
-
-            if (latest) {
-                const shown = readMessage(latest)
-                const otherId = latest.sender_user_id === user.id ? latest.receiver_user_id : latest.sender_user_id
-                const [labels, { data: employeeRow }] = await Promise.all([
-                    buildSenderLabels([otherId]),
-                    supabase.from('employees').select('employee_id, display_name').eq('user_id', otherId).maybeSingle(),
-                ])
-
-                setLatestMessage({
-                    ...shown,
-                    fromStaff: latest.sender_user_id !== user.id,
-                    otherName: employeeRow?.display_name?.trim() || labels[otherId] || REGISTRAR_LABEL,
-                    employeeId: employeeRow?.employee_id || null,
-                })
             } else {
-                setLatestMessage(null)
+                setUpcomingClaim(null)
             }
 
         } catch (error) {

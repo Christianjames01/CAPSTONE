@@ -117,185 +117,197 @@ function AdminRequestDetails() {
             if (!silent) setNewStatus(requestData.status)
             if (!silent) setReassignTo(requestData.assigned_employee_id || '')
 
-            const { data: studentData } = await supabase
-                .from('students')
-                .select('student_id, user_id, student_number')
-                .eq('student_id', requestData.student_id)
-                .single()
+            // Everything below only needs the request, so load it all at once (each round trip is ~0.3 s from Davao).
+            await Promise.all([
+                (async () => {
+                    const { data: studentData } = await supabase
+                        .from('students')
+                        .select('student_id, user_id, student_number')
+                        .eq('student_id', requestData.student_id)
+                        .single()
 
-            if (studentData?.user_id) {
-                const { data: studentProfile } = await supabase
-                    .from('profiles')
-                    .select('first_name, last_name')
-                    .eq('user_id', studentData.user_id)
-                    .single()
+                    if (studentData?.user_id) {
+                        const { data: studentProfile } = await supabase
+                            .from('profiles')
+                            .select('first_name, last_name')
+                            .eq('user_id', studentData.user_id)
+                            .single()
 
-                setStudent({
-                    ...studentData,
-                    name: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
-                })
-            } else {
-                setStudent(studentData || null)
-            }
-
-            if (requestData.document_type_id) {
-                const { data: doc } = await supabase
-                    .from('document_types')
-                    .select('document_name, preview_image_url')
-                    .eq('document_type_id', requestData.document_type_id)
-                    .single()
-
-                setDocumentName(doc?.document_name || 'Document')
-
-                setDocumentPreview(doc?.preview_image_url || null)
-            }
-
-            const { data: receiptData } = await supabase
-                .from('official_receipts')
-                .select('*')
-                .eq('request_id', requestId)
-                .order('uploaded_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-
-            setReceipt(receiptData || null)
-            setReceiptUrl('')
-
-            if (receiptData?.receipt_file_path) {
-                const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-                    .from('official-receipts')
-                    .createSignedUrl(receiptData.receipt_file_path, 3600)
-
-                if (!signedUrlError) {
-                    setReceiptUrl(signedUrlData?.signedUrl || '')
-                }
-            }
-
-            const { data: requirementRows } = await supabase
-                .from('request_requirements')
-                .select(`
-                    request_requirement_id,
-                    file_name,
-                    file_path,
-                    status,
-                    uploaded_at,
-                    rejection_reason,
-                    document_requirements (
-                        requirement_id,
-                        requirement_name,
-                        description,
-                        is_required
-                    )
-                `)
-                .eq('request_id', requestId)
-                .order('created_at', { ascending: true })
-
-            setRequirements(requirementRows || [])
-
-            const urls = {}
-
-            for (const requirement of requirementRows || []) {
-                if (requirement.file_path && ['uploaded', 'approved', 'rejected'].includes(requirement.status)) {
-                    const { data: signedData, error: signedError } = await supabase.storage
-                        .from('student-requirements')
-                        .createSignedUrl(requirement.file_path, 3600)
-
-                    if (!signedError) {
-                        urls[requirement.request_requirement_id] = signedData?.signedUrl || ''
+                        setStudent({
+                            ...studentData,
+                            name: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
+                        })
+                    } else {
+                        setStudent(studentData || null)
                     }
-                }
-            }
+                })(),
+                (async () => {
+                    if (requestData.document_type_id) {
+                        const { data: doc } = await supabase
+                            .from('document_types')
+                            .select('document_name, preview_image_url')
+                            .eq('document_type_id', requestData.document_type_id)
+                            .single()
 
-            setRequirementUrls(urls)
+                        setDocumentName(doc?.document_name || 'Document')
 
-            const { data: employeeRows } = await supabase
-                .from('employees')
-                .select('employee_id, user_id, employee_number, status')
-                .eq('status', 'active')
+                        setDocumentPreview(doc?.preview_image_url || null)
+                    }
+                })(),
+                (async () => {
+                    const { data: receiptData } = await supabase
+                        .from('official_receipts')
+                        .select('*')
+                        .eq('request_id', requestId)
+                        .order('uploaded_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
 
-            const userIds = [...new Set((employeeRows || []).map((e) => e.user_id))]
+                    setReceipt(receiptData || null)
+                    setReceiptUrl('')
 
-            const { data: profiles } = userIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
-                : { data: [] }
+                    if (receiptData?.receipt_file_path) {
+                        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+                            .from('official-receipts')
+                            .createSignedUrl(receiptData.receipt_file_path, 3600)
 
-            const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
-
-            const employeeList = (employeeRows || []).map((e) => ({
-                ...e,
-                name: profileByUserId[e.user_id]
-                    ? `${profileByUserId[e.user_id].first_name} ${profileByUserId[e.user_id].last_name}`.trim()
-                    : e.employee_number,
-            }))
-
-            setEmployees(employeeList)
-
-            const current = employeeList.find((e) => e.employee_id === requestData.assigned_employee_id)
-            setCurrentEmployeeName(current ? current.name : 'Unassigned')
-
-            const { data: scheduleRow, error: scheduleError } = await supabase
-                .from('claim_schedules')
-                .select('claim_schedule_id, status, scheduled_date, scheduled_time, claim_date, claim_time, claimed_at, reschedule_requested_at, reschedule_reason')
-                .eq('request_id', requestId)
-                .neq('status', 'cancelled')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-
-            if (scheduleError) {
-                console.error('CLAIM SCHEDULE LOAD ERROR:', scheduleError)
-            } else {
-                setClaimSchedule(scheduleRow || null)
-            }
-
-            const { data: ratingRow } = await supabase
-                .from('request_ratings')
-                .select('rating, comment')
-                .eq('request_id', requestId)
-                .maybeSingle()
-
-            setRating(ratingRow || null)
-
-            const { data: activityRows, error: activityError } = await supabase
-                .from('activity_logs')
-                .select('activity_log_id, employee_id, user_id, action, description, created_at')
-                .ilike('description', `%"${requestData.request_number}"%`)
-                .order('created_at', { ascending: false })
-
-            if (activityError) {
-                console.error('REQUEST ACTIVITY ERROR:', activityError)
-            } else {
-                const activityLogRows = activityRows || []
-                const activityEmployeeIds = [...new Set(activityLogRows.map((r) => r.employee_id).filter(Boolean))]
-
-                const { data: activityEmployees } = activityEmployeeIds.length
-                    ? await supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', activityEmployeeIds)
-                    : { data: [] }
-
-                const activityUserIds = [...new Set([
-                    ...(activityEmployees || []).map((e) => e.user_id),
-                    ...activityLogRows.map((r) => r.user_id).filter(Boolean),
-                ])]
-
-                const { data: activityProfiles } = activityUserIds.length
-                    ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', activityUserIds)
-                    : { data: [] }
-
-                const activityProfileByUserId = Object.fromEntries((activityProfiles || []).map((p) => [p.user_id, p]))
-                const activityEmployeeById = Object.fromEntries((activityEmployees || []).map((e) => [e.employee_id, e]))
-
-                setRequestActivity(
-                    activityLogRows.map((r) => {
-                        const emp = r.employee_id ? activityEmployeeById[r.employee_id] : null
-                        const profile = emp ? activityProfileByUserId[emp.user_id] : (r.user_id ? activityProfileByUserId[r.user_id] : null)
-
-                        return {
-                            ...r,
-                            actorName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'System',
+                        if (!signedUrlError) {
+                            setReceiptUrl(signedUrlData?.signedUrl || '')
                         }
-                    })
-                )
-            }
+                    }
+                })(),
+                (async () => {
+                    const { data: requirementRows } = await supabase
+                        .from('request_requirements')
+                        .select(`
+                            request_requirement_id,
+                            file_name,
+                            file_path,
+                            status,
+                            uploaded_at,
+                            rejection_reason,
+                            document_requirements (
+                                requirement_id,
+                                requirement_name,
+                                description,
+                                is_required
+                            )
+                        `)
+                        .eq('request_id', requestId)
+                        .order('created_at', { ascending: true })
+
+                    setRequirements(requirementRows || [])
+
+                    const urls = {}
+
+                    for (const requirement of requirementRows || []) {
+                        if (requirement.file_path && ['uploaded', 'approved', 'rejected'].includes(requirement.status)) {
+                            const { data: signedData, error: signedError } = await supabase.storage
+                                .from('student-requirements')
+                                .createSignedUrl(requirement.file_path, 3600)
+
+                            if (!signedError) {
+                                urls[requirement.request_requirement_id] = signedData?.signedUrl || ''
+                            }
+                        }
+                    }
+
+                    setRequirementUrls(urls)
+                })(),
+                (async () => {
+                    const { data: employeeRows } = await supabase
+                        .from('employees')
+                        .select('employee_id, user_id, employee_number, status')
+                        .eq('status', 'active')
+
+                    const userIds = [...new Set((employeeRows || []).map((e) => e.user_id))]
+
+                    const { data: profiles } = userIds.length
+                        ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
+                        : { data: [] }
+
+                    const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
+
+                    const employeeList = (employeeRows || []).map((e) => ({
+                        ...e,
+                        name: profileByUserId[e.user_id]
+                            ? `${profileByUserId[e.user_id].first_name} ${profileByUserId[e.user_id].last_name}`.trim()
+                            : e.employee_number,
+                    }))
+
+                    setEmployees(employeeList)
+
+                    const current = employeeList.find((e) => e.employee_id === requestData.assigned_employee_id)
+                    setCurrentEmployeeName(current ? current.name : 'Unassigned')
+                })(),
+                (async () => {
+                    const { data: scheduleRow, error: scheduleError } = await supabase
+                        .from('claim_schedules')
+                        .select('claim_schedule_id, status, scheduled_date, scheduled_time, claim_date, claim_time, claimed_at, reschedule_requested_at, reschedule_reason')
+                        .eq('request_id', requestId)
+                        .neq('status', 'cancelled')
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
+
+                    if (scheduleError) {
+                        console.error('CLAIM SCHEDULE LOAD ERROR:', scheduleError)
+                    } else {
+                        setClaimSchedule(scheduleRow || null)
+                    }
+                })(),
+                (async () => {
+                    const { data: ratingRow } = await supabase
+                        .from('request_ratings')
+                        .select('rating, comment')
+                        .eq('request_id', requestId)
+                        .maybeSingle()
+
+                    setRating(ratingRow || null)
+                })(),
+                (async () => {
+                    const { data: activityRows, error: activityError } = await supabase
+                        .from('activity_logs')
+                        .select('activity_log_id, employee_id, user_id, action, description, created_at')
+                        .ilike('description', `%"${requestData.request_number}"%`)
+                        .order('created_at', { ascending: false })
+
+                    if (activityError) {
+                        console.error('REQUEST ACTIVITY ERROR:', activityError)
+                    } else {
+                        const activityLogRows = activityRows || []
+                        const activityEmployeeIds = [...new Set(activityLogRows.map((r) => r.employee_id).filter(Boolean))]
+
+                        const { data: activityEmployees } = activityEmployeeIds.length
+                            ? await supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', activityEmployeeIds)
+                            : { data: [] }
+
+                        const activityUserIds = [...new Set([
+                            ...(activityEmployees || []).map((e) => e.user_id),
+                            ...activityLogRows.map((r) => r.user_id).filter(Boolean),
+                        ])]
+
+                        const { data: activityProfiles } = activityUserIds.length
+                            ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', activityUserIds)
+                            : { data: [] }
+
+                        const activityProfileByUserId = Object.fromEntries((activityProfiles || []).map((p) => [p.user_id, p]))
+                        const activityEmployeeById = Object.fromEntries((activityEmployees || []).map((e) => [e.employee_id, e]))
+
+                        setRequestActivity(
+                            activityLogRows.map((r) => {
+                                const emp = r.employee_id ? activityEmployeeById[r.employee_id] : null
+                                const profile = emp ? activityProfileByUserId[emp.user_id] : (r.user_id ? activityProfileByUserId[r.user_id] : null)
+
+                                return {
+                                    ...r,
+                                    actorName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'System',
+                                }
+                            })
+                        )
+                    }
+                })(),
+            ])
 
         } catch (err) {
             console.error('ADMIN REQUEST DETAILS ERROR:', err)

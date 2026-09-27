@@ -242,96 +242,106 @@ function RequestDetails() {
 
             setRequest(requestData)
 
-            if (requestData.document_type_id) {
-                const { data: doc } = await supabase
-                    .from('document_types')
-                    .select('document_name, preview_image_url')
-                    .eq('document_type_id', requestData.document_type_id)
-                    .single()
+            // Everything below only needs the request, so load it all at once (each round trip is ~0.3 s from Davao).
+            await Promise.all([
+                (async () => {
+                    if (requestData.document_type_id) {
+                        const { data: doc } = await supabase
+                            .from('document_types')
+                            .select('document_name, preview_image_url')
+                            .eq('document_type_id', requestData.document_type_id)
+                            .single()
 
-                setDocumentName(doc?.document_name || 'Document')
+                        setDocumentName(doc?.document_name || 'Document')
 
-                setDocumentPreview(doc?.preview_image_url || null)
-            }
+                        setDocumentPreview(doc?.preview_image_url || null)
+                    }
+                })(),
+                (async () => {
+                    if (requestData.assigned_employee_id) {
+                        const { data: employeeRow } = await supabase
+                            .from('employees')
+                            .select('user_id, position_title, display_name')
+                            .eq('employee_id', requestData.assigned_employee_id)
+                            .single()
 
-            if (requestData.assigned_employee_id) {
-                const { data: employeeRow } = await supabase
-                    .from('employees')
-                    .select('user_id, position_title, display_name')
-                    .eq('employee_id', requestData.assigned_employee_id)
-                    .single()
+                        if (employeeRow) {
+                            const { data: employeeProfile } = await supabase
+                                .from('profiles')
+                                .select('first_name, last_name')
+                                .eq('user_id', employeeRow.user_id)
+                                .single()
 
-                if (employeeRow) {
-                    const { data: employeeProfile } = await supabase
-                        .from('profiles')
-                        .select('first_name, last_name')
-                        .eq('user_id', employeeRow.user_id)
-                        .single()
+                            // Prefer the employee's nickname (set by an admin), same as
+                            // the student Messages page.
+                            const realName = employeeProfile
+                                ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim()
+                                : ''
 
-                    // Prefer the employee's nickname (set by an admin), same as
-                    // the student Messages page.
-                    const realName = employeeProfile
-                        ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim()
-                        : ''
+                            setAssignedEmployee({
+                                name: employeeRow.display_name?.trim() || realName || 'Registrar Staff',
+                                positionTitle: employeeRow.position_title,
+                            })
+                        }
+                    } else {
+                        setAssignedEmployee(null)
+                    }
+                })(),
+                (async () => {
+                    const {
+                        data: requirementRows,
+                        error: requirementError
+                    } = await supabase
+                        .from('request_requirements')
+                        .select('request_requirement_id, status')
+                        .eq('request_id', requestId)
 
-                    setAssignedEmployee({
-                        name: employeeRow.display_name?.trim() || realName || 'Registrar Staff',
-                        positionTitle: employeeRow.position_title,
-                    })
-                }
-            } else {
-                setAssignedEmployee(null)
-            }
+                    if (requirementError) {
+                        console.error('REQUIREMENTS LOAD ERROR:', requirementError)
+                    }
 
-            const {
-                data: requirementRows,
-                error: requirementError
-            } = await supabase
-                .from('request_requirements')
-                .select('request_requirement_id, status')
-                .eq('request_id', requestId)
+                    setRequirements(requirementRows || [])
+                })(),
+                (async () => {
+                    const {
+                        data: scheduleRow,
+                        error: scheduleError
+                    } = await supabase
+                        .from('claim_schedules')
+                        .select('*')
+                        .eq('request_id', requestId)
+                        .neq('status', 'cancelled')
+                        .order('claim_date', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
 
-            if (requirementError) {
-                console.error('REQUIREMENTS LOAD ERROR:', requirementError)
-            }
+                    if (scheduleError) {
+                        console.error('CLAIM SCHEDULE LOAD ERROR:', scheduleError)
+                    }
 
-            setRequirements(requirementRows || [])
+                    setClaimSchedule(scheduleRow || null)
+                })(),
+                (async () => {
+                    const { data: credentialData } = await supabase
+                        .from('credentials')
+                        .select('credential_id, credential_number, generated_at, status, revocation_reason')
+                        .eq('request_id', requestId)
+                        .order('generated_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
 
-            const {
-                data: scheduleRow,
-                error: scheduleError
-            } = await supabase
-                .from('claim_schedules')
-                .select('*')
-                .eq('request_id', requestId)
-                .neq('status', 'cancelled')
-                .order('claim_date', { ascending: false })
-                .limit(1)
-                .maybeSingle()
+                    setCredential(credentialData || null)
+                })(),
+                (async () => {
+                    const { data: ratingRow } = await supabase
+                        .from('request_ratings')
+                        .select('rating_id, rating, comment')
+                        .eq('request_id', requestId)
+                        .maybeSingle()
 
-            if (scheduleError) {
-                console.error('CLAIM SCHEDULE LOAD ERROR:', scheduleError)
-            }
-
-            setClaimSchedule(scheduleRow || null)
-
-            const { data: credentialData } = await supabase
-                .from('credentials')
-                .select('credential_id, credential_number, generated_at, status, revocation_reason')
-                .eq('request_id', requestId)
-                .order('generated_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-
-            setCredential(credentialData || null)
-
-            const { data: ratingRow } = await supabase
-                .from('request_ratings')
-                .select('rating_id, rating, comment')
-                .eq('request_id', requestId)
-                .maybeSingle()
-
-            setRating(ratingRow || null)
+                    setRating(ratingRow || null)
+                })(),
+            ])
 
         } catch (error) {
             console.error(
