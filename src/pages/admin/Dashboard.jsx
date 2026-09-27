@@ -10,6 +10,7 @@ import { averageLoad as averageOf, isOverloaded } from '../../lib/workloadBalanc
 import { readableLogText } from '../../lib/logText'
 import '../../components/DashboardStats.css'
 import './AdminPages.css'
+import AvatarFace from '../../components/AvatarFace'
 
 const QUICK_LINKS = [
     { to: '/admin/requests', label: 'All Requests', Icon: IconFileStack },
@@ -211,7 +212,7 @@ function AdminDashboard() {
 
             const [{ data: studentProfiles }, { data: studentColleges }] = await Promise.all([
                 studentUserIds.length
-                    ? supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', studentUserIds)
+                    ? supabase.from('profiles').select('user_id, first_name, last_name, profile_photo_url').in('user_id', studentUserIds)
                     : Promise.resolve({ data: [] }),
                 studentCollegeIds.length
                     ? supabase.from('colleges').select('college_id, college_name').in('college_id', studentCollegeIds)
@@ -229,6 +230,7 @@ function AdminDashboard() {
                         ...s,
                         fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
                         collegeName: collegeNameById[s.college_id] || 'Unassigned',
+                        photoUrl: profile?.profile_photo_url || '',
                     }
                 })
             )
@@ -512,7 +514,7 @@ function AdminDashboard() {
                         {recentStudents.map((student) => (
                             <li key={student.student_id}>
                                 <button onClick={() => navigate(`/admin/students/${student.student_id}`)}>
-                                    <span className="dash-avatar" aria-hidden="true">{initialsOf(student.fullName)}</span>
+                                    <span className="dash-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <span className="dash-students-body">
                                         <strong>{student.fullName}</strong>
                                         <span>{student.student_number}</span>

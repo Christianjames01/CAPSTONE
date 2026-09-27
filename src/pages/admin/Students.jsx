@@ -9,6 +9,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconIdCard, IconHourglass, IconLayers, IconBuilding } from './icons'
 import './AdminPages.css'
+import AvatarFace from '../../components/AvatarFace'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students are
@@ -148,7 +149,7 @@ function Students() {
         const userIds = [...new Set(rows.map((s) => s.user_id))]
 
         const { data: profiles } = userIds.length
-            ? await supabase.from('profiles').select('user_id, first_name, last_name, email').in('user_id', userIds)
+            ? await supabase.from('profiles').select('user_id, first_name, last_name, email, profile_photo_url').in('user_id', userIds)
             : { data: [] }
 
         const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
@@ -170,6 +171,7 @@ function Students() {
                 ...s,
                 fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
                 email: profile?.email || '',
+                photoUrl: profile?.profile_photo_url || '',
                 collegeName: collegeNameById[s.college_id] || '',
                 programName: programNameById[s.program_id] || '',
             }
@@ -211,7 +213,7 @@ function Students() {
     const loadPendingProfiles = async (studentRows) => {
         const { data: studentProfiles, error: profilesError } = await supabase
             .from('profiles')
-            .select('user_id, first_name, last_name, email, created_at, status')
+            .select('user_id, first_name, last_name, email, created_at, status, profile_photo_url')
             .eq('role', 'student')
             .order('created_at', { ascending: false })
 
@@ -390,14 +392,12 @@ function Students() {
         ? groupedResults.find((g) => g.key === selectedProgramKey)
         : null
 
-    const initialsOf = (name) =>
-        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
 
     const renderStudentCard = (student) => (
         <div className="admin-list-card" key={student.student_id}>
             <div className="admin-list-card-header">
                 <div className="admin-card-title">
-                    <span className={`admin-avatar${student.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true">{initialsOf(student.fullName)}</span>
+                    <span className={`admin-avatar${student.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                     <div>
                         <h3>{student.fullName}</h3>
                         <p>{student.student_number} · {student.email}</p>
@@ -511,7 +511,7 @@ function Students() {
                         <div className="admin-list-card" key={student.student_id}>
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
-                                    <span className="admin-avatar" aria-hidden="true">{initialsOf(student.fullName)}</span>
+                                    <span className="admin-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <div>
                                         <h3>{student.fullName}</h3>
                                         <p>{student.student_number} · {student.email}</p>
@@ -576,7 +576,7 @@ function Students() {
                         <div className="admin-list-card" key={p.user_id}>
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
-                                    <span className="admin-avatar is-muted" aria-hidden="true">{initialsOf(`${p.first_name} ${p.last_name}`)}</span>
+                                    <span className="admin-avatar is-muted" aria-hidden="true"><AvatarFace photo={p.profile_photo_url} name={`${p.first_name} ${p.last_name}`} /></span>
                                     <div>
                                         <h3>{`${p.first_name} ${p.last_name}`.trim() || 'Unknown'}</h3>
                                         <p>{p.email}</p>

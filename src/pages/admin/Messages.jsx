@@ -12,6 +12,7 @@ import Modal from '../../components/Modal'
 import MessageBubble from '../../components/MessageBubble'
 import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
+import AvatarFace from '../../components/AvatarFace'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -86,7 +87,7 @@ function Messages() {
             ]
 
             const { data: profiles } = userIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name, role').in('user_id', userIds)
+                ? await supabase.from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', userIds)
                 : { data: [] }
 
             const profileByUserId = Object.fromEntries((profiles || []).map((p) => [p.user_id, p]))
@@ -170,8 +171,10 @@ function Messages() {
                     ...t,
                     nameA: nameFor(t.participantA),
                     roleA: roleFor(t.participantA),
+                    photoA: profileByUserId[t.participantA]?.profile_photo_url || '',
                     nameB: nameFor(t.participantB),
                     roleB: roleFor(t.participantB),
+                    photoB: profileByUserId[t.participantB]?.profile_photo_url || '',
                 }))
                 .sort((a, b) => {
                     const aLast = a.messages[a.messages.length - 1]?.created_at || ''
@@ -576,8 +579,6 @@ function Messages() {
         )
     }
 
-    const initialsOf = (name) =>
-        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
     const roleLabel = (role) => (role === 'student' ? 'Student' : role === 'employee' ? 'Employee' : role ? 'Registrar' : '')
 
     const unreadThreads = threads.filter((t) => unreadCountFor(t) > 0)
@@ -677,8 +678,8 @@ function Messages() {
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
                                     <span className="msg-avatars" aria-hidden="true">
-                                        <span className="admin-avatar">{initialsOf(thread.nameA)}</span>
-                                        <span className="admin-avatar is-muted">{initialsOf(thread.nameB)}</span>
+                                        <span className="admin-avatar"><AvatarFace photo={thread.photoA} name={thread.nameA} /></span>
+                                        <span className="admin-avatar is-muted"><AvatarFace photo={thread.photoB} name={thread.nameB} /></span>
                                     </span>
                                     <div>
                                         <h3>

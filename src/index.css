@@ -375,3 +375,18 @@ html {
         overflow-y: auto;
     }
 }
+
+/* Profile photo inside any round avatar (components/AvatarFace.jsx). */
+.avatar-face-photo {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+.admin-avatar:has(.avatar-face-photo),
+.ui-avatar:has(.avatar-face-photo),
+.dash-avatar:has(.avatar-face-photo) {
+    overflow: hidden;
+    padding: 0;
+}

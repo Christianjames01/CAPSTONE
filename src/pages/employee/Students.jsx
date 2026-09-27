@@ -6,6 +6,7 @@ import { notifyStudentByStudentId, notifyError } from '../../lib/notify'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
+import AvatarFace from '../../components/AvatarFace'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students
@@ -149,7 +150,7 @@ function Students() {
         const userIds = [...new Set(rows.map((s) => s.user_id))]
 
         const { data: profiles } = userIds.length
-            ? await supabase.from('profiles').select('user_id, first_name, last_name, email').in('user_id', userIds)
+            ? await supabase.from('profiles').select('user_id, first_name, last_name, email, profile_photo_url').in('user_id', userIds)
             : { data: [] }
 
         const profileByUserId = Object.fromEntries(
@@ -178,6 +179,7 @@ function Students() {
                 ...s,
                 fullName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
                 email: profile?.email || '',
+                photoUrl: profile?.profile_photo_url || '',
                 collegeName: collegeNameById[s.college_id] || '',
                 programName: programNameById[s.program_id] || '',
             }
@@ -290,14 +292,12 @@ function Students() {
         ? groupedResults.find((g) => g.key === selectedProgramKey)
         : null
 
-    const initialsOf = (name) =>
-        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
 
     const renderStudentCard = (student) => (
         <div className="employee-list-card" key={student.student_id}>
             <div className="employee-list-card-header">
                 <div className="ui-card-title" style={{ alignItems: 'center' }}>
-                    <span className={`ui-avatar${student.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true">{initialsOf(student.fullName)}</span>
+                    <span className={`ui-avatar${student.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                     <div>
                         <h3>{student.fullName}</h3>
                         <p>{student.student_number} · {student.email}</p>
@@ -353,7 +353,7 @@ function Students() {
                         <div className="employee-list-card" key={student.student_id}>
                             <div className="employee-list-card-header">
                                 <div className="ui-card-title" style={{ alignItems: 'center' }}>
-                                    <span className="ui-avatar" aria-hidden="true">{initialsOf(student.fullName)}</span>
+                                    <span className="ui-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <div>
                                         <h3>{student.fullName}</h3>
                                         <p>{student.student_number} · {student.email}</p>
