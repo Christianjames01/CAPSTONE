@@ -272,12 +272,32 @@ const touchTyping = () => typeof window !== 'undefined' && window.matchMedia('(p
 export function ChatComposer({ value, onChange, onSend, sending, placeholder, canSend, above }) {
     const ref = useRef(null)
 
-    useLayoutEffect(() => {
+    // Grow the box with its text. On phones the chat starts hidden behind
+    // the conversation list, where the box measures 0 tall -- so skip while
+    // hidden and measure again once it's shown (the ResizeObserver fires
+    // when it gets a real size), instead of leaving it collapsed.
+    const grow = () => {
         const el = ref.current
-        if (!el) return
+        if (!el || el.offsetWidth === 0) return
         el.style.height = 'auto'
-        el.style.height = `${Math.min(el.scrollHeight, 132)}px`
-    }, [value])
+        el.style.height = `${Math.min(Math.max(el.scrollHeight, 42), 132)}px`
+    }
+
+    useLayoutEffect(grow, [value])
+
+    useEffect(() => {
+        const el = ref.current
+        if (!el || typeof ResizeObserver === 'undefined') return undefined
+        let lastWidth = el.offsetWidth
+        const observer = new ResizeObserver(() => {
+            if (el.offsetWidth !== lastWidth) {
+                lastWidth = el.offsetWidth
+                grow()
+            }
+        })
+        observer.observe(el)
+        return () => observer.disconnect()
+    }, [])
 
     const send = () => {
         if (!sending && canSend) onSend()
