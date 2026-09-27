@@ -20,16 +20,22 @@ export const STUDENT_TOUR = [
         body: 'Here’s a quick tour of how to request, pay for, track and claim your registrar documents. You can skip it anytime.',
     },
     {
+        target: null,
+        preview: 'security',
+        title: 'Signing in safely',
+        body: 'When you log in, register, continue with Google or change your password, a quick security check pops up: slide the puzzle piece into the gap. It keeps bots out of student accounts.',
+    },
+    {
         target: link('student-nav', '/student/dashboard'),
         preview: 'dashboard',
         title: 'Your dashboard',
-        body: 'See your active requests, what to do next, and Registrar announcements — including office days (Tuesday to Friday) and the hours when a Monday or weekend is opened.',
+        body: 'See your active requests, what to do next, your most recent message from the Registrar, and announcements — including office days (Tuesday to Friday) and the hours when a Monday or weekend is opened.',
     },
     {
         target: link('student-nav', '/student/new-request'),
         preview: 'request',
         title: '1. Request a document',
-        body: 'Choose the document, copies and purpose — and add several documents to one submission if you need more than one. A sample preview shows what each document looks like.',
+        body: 'Choose the document, type how many copies you need, and add a purpose — you can add several documents to one submission. A sample preview shows what each document looks like.',
     },
     {
         target: link('student-nav', '/student/upload-receipt'),
@@ -41,7 +47,7 @@ export const STUDENT_TOUR = [
         target: link('student-nav', '/student/my-requests'),
         preview: 'track',
         title: '3. Track your requests',
-        body: 'Every request and its status, updated live. You’re notified each time something changes, and any missing requirements show up here.',
+        body: 'Every request and its status, updated live. You’re notified each time something changes — and reminded if a request has been waiting on you (payment or requirements) for 2 days.',
     },
     {
         target: link('student-nav', '/student/claim-schedule'),
@@ -59,13 +65,13 @@ export const STUDENT_TOUR = [
         target: link('student-nav', '/student/notifications'),
         preview: 'notifications',
         title: 'Notifications',
-        body: 'Every update about your requests lands here, live — no need to refresh.',
+        body: 'Every update about your requests lands here, live — no need to refresh — including reminders when a request still needs your payment or requirements.',
     },
     {
         target: link('student-nav', '/student/profile'),
         preview: 'profile',
         title: 'Your profile',
-        body: 'Review your student details, update your photo and contact information, and change your password.',
+        body: 'Review your student details, update your photo and contact information, and change your password (after a quick security check).',
     },
     {
         target: link('student-nav', '/student/guide'),
@@ -94,6 +100,12 @@ export const EMPLOYEE_TOUR = [
         preview: 'welcome',
         title: 'Welcome to CertiChain',
         body: 'A quick tour of how you’ll handle document requests, from verification to release. You can skip it anytime.',
+    },
+    {
+        target: null,
+        preview: 'security',
+        title: 'Signing in safely',
+        body: 'Logging in and changing your password start with a quick slide-puzzle security check, and you can add two-factor authentication in your profile for extra protection.',
     },
     {
         target: link('employee-nav', '/employee/dashboard'),
@@ -194,6 +206,12 @@ export const HEAD_TOUR = [
         preview: 'welcome',
         title: 'Welcome, Registrar Head',
         body: 'A quick tour of the tools for running the Registrar’s Office in CertiChain. You can skip it anytime.',
+    },
+    {
+        target: null,
+        preview: 'security',
+        title: 'Signing in safely',
+        body: 'Logging in, creating staff accounts and changing passwords start with a quick slide-puzzle security check. Staff contact details are only visible to signed-in registrar staff, and two-factor authentication is available in your profile.',
     },
     {
         target: link('admin-nav', '/admin/dashboard'),

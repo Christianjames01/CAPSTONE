@@ -42,6 +42,7 @@ const PREVIEWS = {
                 <span>Office days: Tuesday to Friday</span>
             </div>
             <Row title="Transcript of Records" sub="REQ-000012 · Next: upload your receipt" pill="Payment pending" tone="amber" />
+            <Row title="Recent message · From Sar Dela Cruz" sub="Automatic status update: Processing…" pill="1 unread" tone="red" />
         </div>
     ),
 
@@ -49,7 +50,7 @@ const PREVIEWS = {
         <div className="tp-form">
             <label><span>Document</span><div className="tp-input">Transcript of Records <em>▾</em></div></label>
             <div className="tp-form-grid">
-                <label><span>Copies</span><div className="tp-input">1</div></label>
+                <label><span>Copies</span><div className="tp-input tp-typing">2</div></label>
                 <label><span>Fee</span><div className="tp-input is-muted">₱60.00</div></label>
             </div>
             <label><span>Purpose</span><div className="tp-input tp-typing">Scholarship application</div></label>
@@ -121,9 +122,9 @@ const PREVIEWS = {
 
     notifications: () => (
         <div className="tp-stack">
+            <Row title="Still waiting for payment" sub="REQ-000014 · 2 days — pay, then upload your receipt" pill="Reminder" tone="amber" />
             <Row title="Receipt verified" sub="REQ-000012 · just now" pill="New" tone="red" />
-            <Row title="Ready for claiming" sub="Sep 29 at 1:00 PM · Window 3" />
-            <Row title="New message from sar" sub="Yes — it’s scheduled for…" />
+            <Row title="Ready for claiming" sub="Tue, Sep 30 at 1:00 PM · Window 3" />
         </div>
     ),
 
@@ -133,6 +134,19 @@ const PREVIEWS = {
             {['Requesting a document', 'Paying and uploading your receipt', 'Claiming your document'].map((t, i) => (
                 <div className="tp-guide-row" key={t}><span>{i + 1}</span>{t}</div>
             ))}
+        </div>
+    ),
+
+    // The slide-puzzle security check (components/CaptchaCheck.jsx).
+    security: () => (
+        <div className="tp-puzzle">
+            <div className="tp-puzzle-head"><strong>Security check</strong><span>Slide the piece into the gap.</span></div>
+            <div className="tp-puzzle-image">
+                <span className="tp-puzzle-gap" />
+                <span className="tp-puzzle-piece" />
+            </div>
+            <div className="tp-puzzle-track"><span className="tp-puzzle-fill" /><span className="tp-puzzle-handle"><IconCheck /></span></div>
+            <span className="tp-puzzle-note">Verified — you can continue · Protected by Cloudflare</span>
         </div>
     ),
 
