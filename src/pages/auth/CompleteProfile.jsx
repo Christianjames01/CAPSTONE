@@ -6,6 +6,9 @@ import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../
 import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError, isPhoneNumberTaken, phoneNumberTakenMessage } from '../../lib/studentNumberCheck'
 import AuthLayout from './AuthLayout'
 
+// Graduation years offered to alumni, newest first.
+const GRADUATION_YEARS = Array.from({ length: new Date().getFullYear() - 1959 }, (_, i) => new Date().getFullYear() - i)
+
 function CompleteProfile() {
     const navigate = useNavigate()
 
@@ -26,6 +29,9 @@ function CompleteProfile() {
     const [collegeId, setCollegeId] = useState('')
     const [programId, setProgramId] = useState('')
     const [yearLevel, setYearLevel] = useState('')
+    // 'current' student or 'alumni' (graduate: graduation year instead of year level)
+    const [studentType, setStudentType] = useState('current')
+    const [graduationYear, setGraduationYear] = useState('')
 
     const [birthDate, setBirthDate] = useState('')
     const [address, setAddress] = useState('')
@@ -201,7 +207,8 @@ function CompleteProfile() {
                 student_number: studentNumber.trim(),
                 college_id: collegeId,
                 program_id: programId,
-                year_level: yearLevel,
+                year_level: studentType === 'alumni' ? null : yearLevel,
+                ...(studentType === 'alumni' ? { student_type: 'alumni', graduation_year: Number(graduationYear) } : {}),
                 enrollment_status: 'active',
                 birth_date: birthDate || null,
                 address: address.trim() || null,
@@ -353,6 +360,34 @@ function CompleteProfile() {
 
                 <p className="auth-form-section-title">Academic Information</p>
 
+                <div className="auth-type-toggle" role="radiogroup" aria-label="I am a">
+                    <button
+                        type="button"
+                        role="radio"
+                        aria-checked={studentType === 'current'}
+                        className={studentType === 'current' ? 'is-active' : ''}
+                        onClick={() => setStudentType('current')}
+                    >
+                        <strong>Current student</strong>
+                        <span>Currently enrolled at HCDC</span>
+                    </button>
+                    <button
+                        type="button"
+                        role="radio"
+                        aria-checked={studentType === 'alumni'}
+                        className={studentType === 'alumni' ? 'is-active' : ''}
+                        onClick={() => setStudentType('alumni')}
+                    >
+                        <strong>Alumni (graduate)</strong>
+                        <span>Graduated and no longer enrolled</span>
+                    </button>
+                </div>
+                {studentType === 'alumni' && (
+                    <p className="auth-type-note">
+                        Use the student ID number you had at HCDC. The Registrar verifies alumni accounts against school records before you can request documents.
+                    </p>
+                )}
+
                 <div className="auth-form-row">
                     <div className="form-group">
                         <label className="form-label" htmlFor="student-number">Student Number</label>
@@ -376,23 +411,39 @@ function CompleteProfile() {
                         )}
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="year-level">Year Level</label>
-                        <select
-                            id="year-level"
-                            className="form-input"
-                            value={yearLevel}
-                            onChange={(e) => setYearLevel(e.target.value)}
-                            required
-                        >
-                            <option value="">Select</option>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
-                            <option value="5">5th Year</option>
-                        </select>
-                    </div>
+                    {studentType === 'alumni' ? (
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="graduation-year">Year Graduated</label>
+                            <select
+                                id="graduation-year"
+                                className="form-input"
+                                value={graduationYear}
+                                onChange={(e) => setGraduationYear(e.target.value)}
+                                required
+                            >
+                                <option value="">Select</option>
+                                {GRADUATION_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+                    ) : (
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="year-level">Year Level</label>
+                            <select
+                                id="year-level"
+                                className="form-input"
+                                value={yearLevel}
+                                onChange={(e) => setYearLevel(e.target.value)}
+                                required
+                            >
+                                <option value="">Select</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                                <option value="5">5th Year</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 <div className="auth-form-row">

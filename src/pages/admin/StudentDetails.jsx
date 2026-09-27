@@ -72,7 +72,7 @@ function StudentDetails() {
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, enrollment_status, status, address, alternate_phone_number, alternate_email, emergency_contact_name, emergency_contact_number, graduation_year, birth_date')
+                .select('*')
                 .eq('student_id', studentId)
                 .single()
 
@@ -487,12 +487,14 @@ function StudentDetails() {
                     )}
                 </div>
                 <div className="admin-detail-main">
-                    <span className="admin-detail-eyebrow">Student</span>
+                    <span className="admin-detail-eyebrow">{student.student_type === 'alumni' ? 'Alumni' : 'Student'}</span>
                     <h1>{student.fullName}</h1>
                     <p>{student.student_number} · {student.email}</p>
                     <div className="admin-detail-tags">
                         {student.programName && <span>{student.programName}</span>}
-                        {student.year_level && <span>Year {student.year_level}</span>}
+                        {student.student_type === 'alumni'
+                            ? <span>Class of {student.graduation_year || '—'}</span>
+                            : student.year_level && <span>Year {student.year_level}</span>}
                     </div>
                 </div>
             </div>

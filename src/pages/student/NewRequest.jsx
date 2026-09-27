@@ -7,6 +7,7 @@ import { IconX } from './icons'
 import { Skeleton } from '../../components/Skeleton'
 import { DocumentSample } from '../../components/DocumentSample'
 import { useScrollLock } from '../../lib/useScrollLock'
+import { useDraftState, clearDraft } from '../../lib/useDraftState'
 import '../auth/Auth.css'
 import './StudentPages.css'
 
@@ -24,6 +25,9 @@ function NewRequest() {
     const [quantity, setQuantity] = useState(1)
     const [purpose, setPurpose] = useState('')
     const [loading, setLoading] = useState(false)
+    // Documents picked so far, submitted together (kept across a refresh).
+    const [cart, setCart] = useDraftState('newRequest', 'cart', [])
+    const [cartNotice, setCartNotice] = useState('')
     const [loadingDocuments, setLoadingDocuments] = useState(true)
     const [error, setError] = useState('')
     const [studentInfo, setStudentInfo] = useState(null)
@@ -196,170 +200,197 @@ function NewRequest() {
         )
     })
 
-    const submitRequest = async (e) => {
+    const ACTIVE_STATUSES = [
+        'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
+        'processing', 'lacking_requirements', 'ready_for_claiming',
+    ]
+
+    const cartTotal = cart.reduce((sum, item) => sum + item.fee * item.quantity, 0)
+    const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+    // Adds the selected document (with its copies and purpose) to the list.
+    const addToCart = (e) => {
         e.preventDefault()
-
         setError('')
+        setCartNotice('')
 
-        if (!selectedDocument) {
+        if (!selectedDocument || !selectedDocumentDetails) {
             setError('Please select a document.')
             return
         }
 
-        const maxQuantity = selectedDocumentDetails?.max_quantity_per_request || 2
+        const maxQuantity = selectedDocumentDetails.max_quantity_per_request || 2
 
         if (quantity < 1 || quantity > maxQuantity) {
             setError(`Quantity must be between 1 and ${maxQuantity}.`)
             return
         }
 
-        if (selectedDocumentDetails?.requires_purpose && !purpose.trim()) {
+        if (selectedDocumentDetails.requires_purpose && !purpose.trim()) {
             notifyWarning('Please state the purpose of this request — it is required for this document.')
             return
         }
 
+        if (cart.some((item) => item.document_type_id === selectedDocument)) {
+            setError(`${selectedDocumentDetails.document_name} is already in your request list. Remove it first to change it.`)
+            return
+        }
+
+        setCart([
+            ...cart,
+            {
+                document_type_id: selectedDocument,
+                document_name: selectedDocumentDetails.document_name,
+                fee: Number(selectedDocumentDetails.fee || 0),
+                quantity: Number(quantity),
+                purpose: purpose.trim(),
+                max_active_requests: selectedDocumentDetails.max_active_requests || 2,
+            },
+        ])
+        setCartNotice(`${selectedDocumentDetails.document_name} added. Add another document, or submit your list below.`)
+        setSelectedDocument('')
+        setQuantity(1)
+        setPurpose('')
+    }
+
+    const removeFromCart = (documentTypeId) => {
+        setCart(cart.filter((item) => item.document_type_id !== documentTypeId))
+        setCartNotice('')
+    }
+
+    // Submits every document in the list: one request each, linked by a
+    // shared batch_id when there are several so one receipt can cover them.
+    const submitCart = async () => {
+        setError('')
+        setCartNotice('')
+
+        if (cart.length === 0) {
+            setError('Add at least one document to your request list.')
+            return
+        }
+
         setLoading(true)
+        const created = []
 
         try {
-            const {
-                data: { user },
-                error: userError
-            } = await supabase.auth.getUser()
-
-            if (userError || !user) {
-                throw new Error('You are not logged in.')
-            }
+            const { data: { user }, error: userError } = await supabase.auth.getUser()
+            if (userError || !user) throw new Error('You are not logged in.')
 
             const { data: student, error: studentError } = await supabase
                 .from('students')
-                .select(`
-          student_id,
-          college_id,
-          program_id
-        `)
+                .select('student_id, college_id, program_id')
                 .eq('user_id', user.id)
                 .single()
 
-            if (studentError || !student) {
-                throw new Error('Student record could not be found.')
-            }
+            if (studentError || !student) throw new Error('Student record could not be found.')
 
             const { data: existingRequests, error: existingError } = await supabase
                 .from('document_requests')
                 .select('document_type_id, status')
                 .eq('student_id', student.student_id)
 
-            if (existingError) {
-                throw new Error('Failed to check your existing requests: ' + existingError.message)
-            }
+            if (existingError) throw new Error('Failed to check your existing requests: ' + existingError.message)
 
-            const ACTIVE_STATUSES = [
-                'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
-                'processing', 'lacking_requirements', 'ready_for_claiming',
-            ]
-
-            const activeCountForSameDocument = (existingRequests || []).filter(
-                (r) => r.document_type_id === selectedDocument && ACTIVE_STATUSES.includes(r.status)
-            ).length
-
-            const maxActiveRequests = selectedDocumentDetails?.max_active_requests || 2
-
-            if (activeCountForSameDocument >= maxActiveRequests) {
-                throw new Error(
-                    `You already have ${maxActiveRequests} active request${maxActiveRequests === 1 ? '' : 's'} for this document. Please wait for one to finish (or get claimed) before requesting another.`
-                )
+            for (const item of cart) {
+                const active = (existingRequests || []).filter(
+                    (r) => r.document_type_id === item.document_type_id && ACTIVE_STATUSES.includes(r.status)
+                ).length
+                if (active >= item.max_active_requests) {
+                    throw new Error(
+                        `You already have ${item.max_active_requests} active request${item.max_active_requests === 1 ? '' : 's'} for ${item.document_name}. Remove it from your list, or wait for one to finish.`
+                    )
+                }
             }
 
             // May be null when no employee covers this college/program yet --
-            // the request is still saved and waits on the head's Request
+            // the requests still save and wait on the head's Request
             // Assignments page (the database notifies the registrar head).
             const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
+            const batchId = cart.length > 1 ? crypto.randomUUID() : null
 
-            const document = documents.find(
-                (item) =>
-                    item.document_type_id === selectedDocument
-            )
+            for (const item of cart) {
+                const payload = {
+                    student_id: student.student_id,
+                    document_type_id: item.document_type_id,
+                    assigned_employee_id: assignedEmployeeId,
+                    quantity: item.quantity,
+                    unit_fee: item.fee,
+                    priority: 'normal',
+                    purpose: item.purpose || null,
+                    status: 'pending',
+                    ...(batchId ? { batch_id: batchId } : {}),
+                }
 
-            if (!document) {
-                throw new Error('Selected document could not be found.')
-            }
+                let { data: request, error: requestError } = await supabase
+                    .from('document_requests').insert(payload).select().single()
 
-            const unitFee = Number(document.fee || 0)
+                // Before the batch migration is applied: submit unlinked.
+                if (requestError && /batch_id/.test(requestError.message || '')) {
+                    delete payload.batch_id
+                    ;({ data: request, error: requestError } = await supabase
+                        .from('document_requests').insert(payload).select().single())
+                }
 
-            const { data: request, error: requestError } =
-                await supabase
-                    .from('document_requests')
-                    .insert({
-                        student_id: student.student_id,
-                        document_type_id: document.document_type_id,
-                        assigned_employee_id: assignedEmployeeId,
-                        quantity: Number(quantity),
-                        unit_fee: unitFee,
-                        priority: 'normal',
-                        purpose: purpose || null,
-                        status: 'pending'
-                    })
-                    .select()
-                    .single()
+                if (requestError) throw new Error(`Failed to create the request for ${item.document_name}: ${requestError.message}`)
 
-            if (requestError) {
-                throw new Error(
-                    'Failed to create request: ' +
-                    requestError.message
-                )
-            }
+                created.push({ ...request, document_name: item.document_name })
 
-            const { data: requiredDocs, error: requirementsError } = await supabase
-                .from('document_requirements')
-                .select('requirement_id')
-                .eq('document_type_id', document.document_type_id)
+                const { data: requiredDocs, error: requirementsError } = await supabase
+                    .from('document_requirements')
+                    .select('requirement_id')
+                    .eq('document_type_id', item.document_type_id)
 
-            if (requirementsError) {
-                console.error('LOAD REQUIREMENTS ERROR:', requirementsError)
-            } else if (requiredDocs && requiredDocs.length > 0) {
-                const { error: seedError } = await supabase
-                    .from('request_requirements')
-                    .insert(
-                        requiredDocs.map((req) => ({
+                if (requirementsError) {
+                    console.error('LOAD REQUIREMENTS ERROR:', requirementsError)
+                } else if (requiredDocs && requiredDocs.length > 0) {
+                    const { error: seedError } = await supabase
+                        .from('request_requirements')
+                        .insert(requiredDocs.map((req) => ({
                             request_id: request.request_id,
                             requirement_id: req.requirement_id,
                             status: 'pending',
-                        }))
-                    )
-
-                if (seedError) {
-                    console.error('SEED REQUIREMENTS ERROR:', seedError)
+                        })))
+                    if (seedError) console.error('SEED REQUIREMENTS ERROR:', seedError)
                 }
             }
 
             const { data: assignedEmployeeRow } = assignedEmployeeId
-                ? await supabase
-                    .from('employees')
-                    .select('user_id')
-                    .eq('employee_id', assignedEmployeeId)
-                    .single()
+                ? await supabase.from('employees').select('user_id').eq('employee_id', assignedEmployeeId).single()
                 : { data: null }
 
             if (assignedEmployeeRow) {
                 await notify({
                     userId: assignedEmployeeRow.user_id,
-                    title: 'New request pending',
-                    message: `${document.document_name} request ${request.request_number} is waiting for verification.`,
+                    title: created.length > 1 ? `${created.length} new requests pending` : 'New request pending',
+                    message: created.length > 1
+                        ? `Submitted together: ${created.map((r) => `${r.document_name} (${r.request_number})`).join(', ')}.`
+                        : `${created[0].document_name} request ${created[0].request_number} is waiting for verification.`,
                     notificationType: 'request_update',
-                    relatedRequestId: request.request_id,
+                    relatedRequestId: created[0].request_id,
                 })
             }
 
+            clearDraft('newRequest')
+            setCart([])
+
             navigate('/student/my-requests', {
                 state: {
-                    justSubmitted: request.request_number,
+                    justSubmitted: created.map((r) => r.request_number).join(', '),
+                    submittedCount: created.length,
+                    submittedTotal: cartTotal,
                     waitingForAssignment: !assignedEmployeeId,
-                }
+                },
             })
-
         } catch (err) {
             console.error(err)
-            setError(err.message)
+            if (created.length > 0) {
+                // Keep only what still needs submitting.
+                const done = new Set(created.map((r) => r.document_type_id))
+                setCart(cart.filter((item) => !done.has(item.document_type_id)))
+                setError(`${created.map((r) => r.request_number).join(', ')} submitted, but the rest could not be: ${err.message}`)
+            } else {
+                setError(err.message)
+            }
         } finally {
             setLoading(false)
         }
@@ -369,14 +400,14 @@ function NewRequest() {
         <div>
             <div className="student-page-header">
                 <h1>Request a Document</h1>
-                <p>Select the academic document you want to request.</p>
+                <p>Pick one or more documents, then submit them together and pay one total at the Finance Office.</p>
             </div>
 
             {error && <div className="student-error-box">{error}</div>}
 
             <div className="student-request-grid">
             <div className="student-card">
-                <form className="auth-form" onSubmit={submitRequest}>
+                <form className="auth-form" onSubmit={addToCart}>
 
                     <div className="form-group">
                         <label className="form-label">Document</label>
@@ -542,15 +573,74 @@ function NewRequest() {
 
                     <button
                         type="submit"
-                        className="auth-submit"
+                        className={cart.length ? 'rq-add-button' : 'auth-submit'}
                         style={{ width: 'auto', padding: '13px 26px' }}
-                        disabled={loading || loadingDocuments}
+                        disabled={loading || loadingDocuments || !selectedDocument}
                     >
-                        {loading && <span className="auth-spinner" />}
-                        {loading ? 'Submitting...' : 'Submit Request'}
+                        + Add to request list
                     </button>
 
                 </form>
+
+                <section className="rq-cart" aria-label="Your request list">
+                    <div className="rq-cart-head">
+                        <h2>Your request list</h2>
+                        <span>{cart.length} document{cart.length === 1 ? '' : 's'}</span>
+                    </div>
+
+                    {cartNotice && <p className="rq-cart-notice">{cartNotice}</p>}
+
+                    {cart.length === 0 ? (
+                        <p className="rq-cart-empty">
+                            Pick a document above and add it here. You can request several documents at once — for example a
+                            TOR, Certificate of Grades and Good Moral — and pay one total at the Finance Office.
+                        </p>
+                    ) : (
+                        <>
+                            <ul className="rq-cart-items">
+                                {cart.map((item) => (
+                                    <li key={item.document_type_id}>
+                                        <div className="rq-cart-item-main">
+                                            <strong>{item.document_name}</strong>
+                                            <span>
+                                                {item.quantity} cop{item.quantity === 1 ? 'y' : 'ies'} × {peso(item.fee)}
+                                                {item.purpose && ` · ${item.purpose}`}
+                                            </span>
+                                        </div>
+                                        <strong className="rq-cart-price">{peso(item.fee * item.quantity)}</strong>
+                                        <button
+                                            type="button"
+                                            className="rq-cart-remove"
+                                            onClick={() => removeFromCart(item.document_type_id)}
+                                            disabled={loading}
+                                            aria-label={`Remove ${item.document_name}`}
+                                        >
+                                            <IconX />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <div className="rq-cart-total">
+                                <span>Total to pay at the Finance Office</span>
+                                <strong>{peso(cartTotal)}</strong>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="auth-submit rq-cart-submit"
+                                onClick={submitCart}
+                                disabled={loading || loadingDocuments}
+                            >
+                                {loading && <span className="auth-spinner" />}
+                                {loading
+                                    ? 'Submitting...'
+                                    : cart.length > 1 ? `Submit ${cart.length} requests` : 'Submit request'}
+                            </button>
+                            <p className="rq-cart-note">Each document is tracked as its own request. You can upload one official receipt for all of them.</p>
+                        </>
+                    )}
+                </section>
             </div>
 
             <div className="student-card" style={{ position: 'sticky', top: 20 }}>

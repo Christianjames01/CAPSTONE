@@ -41,7 +41,7 @@ function Students() {
     const loadPendingVerifications = async () => {
         const { data: pending } = await supabase
             .from('students')
-            .select('student_id, user_id, student_number, college_id, program_id, year_level, created_at')
+            .select('*')
             .eq('verification_status', 'pending')
             .order('created_at', { ascending: true })
 
@@ -183,7 +183,7 @@ function Students() {
 
             const { data: rows, error: studentsError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
+                .select('*')
                 .order('student_number', { ascending: true })
 
             if (studentsError) {
@@ -235,7 +235,9 @@ function Students() {
 
         const byYear = yearLevelFilter === 'all'
             ? allStudents
-            : allStudents.filter((s) => String(s.year_level) === yearLevelFilter)
+            : yearLevelFilter === 'alumni'
+                ? allStudents.filter((s) => s.student_type === 'alumni')
+                : allStudents.filter((s) => s.student_type !== 'alumni' && String(s.year_level) === yearLevelFilter)
 
         if (!query) return byYear
 
@@ -414,8 +416,8 @@ function Students() {
                     <strong>{student.programName || 'N/A'}</strong>
                 </div>
                 <div className="admin-info-field">
-                    <span>Year Level</span>
-                    <strong>{student.year_level || 'N/A'}</strong>
+                    <span>{student.student_type === 'alumni' ? 'Alumni' : 'Year Level'}</span>
+                    <strong>{student.student_type === 'alumni' ? `Class of ${student.graduation_year || '—'}` : student.year_level || 'N/A'}</strong>
                 </div>
             </div>
 
@@ -480,13 +482,18 @@ function Students() {
                     { key: '3', label: '3rd Year' },
                     { key: '4', label: '4th Year' },
                     { key: '5', label: '5th Year' },
+                    { key: 'alumni', label: 'Alumni' },
                 ].map((chip) => (
                     <button
                         key={chip.key}
                         className={`admin-filter-chip${yearLevelFilter === chip.key ? ' active' : ''}`}
                         onClick={() => { setYearLevelFilter(chip.key); setSelectedProgramKey(null) }}
                     >
-                        {chip.label}<span className="admin-chip-count">{chip.key === 'all' ? allStudents.length : allStudents.filter((s) => String(s.year_level) === chip.key).length}</span>
+                        {chip.label}<span className="admin-chip-count">{chip.key === 'all'
+                            ? allStudents.length
+                            : chip.key === 'alumni'
+                                ? allStudents.filter((s) => s.student_type === 'alumni').length
+                                : allStudents.filter((s) => s.student_type !== 'alumni' && String(s.year_level) === chip.key).length}</span>
                     </button>
                 ))}
             </div>
@@ -523,8 +530,8 @@ function Students() {
                                     <strong>{student.programName || 'N/A'}</strong>
                                 </div>
                                 <div className="admin-info-field">
-                                    <span>Year Level</span>
-                                    <strong>{student.year_level || 'N/A'}</strong>
+                                    <span>{student.student_type === 'alumni' ? 'Alumni' : 'Year Level'}</span>
+                                    <strong>{student.student_type === 'alumni' ? `Class of ${student.graduation_year || '—'}` : student.year_level || 'N/A'}</strong>
                                 </div>
                             </div>
 

@@ -20,6 +20,10 @@ function UploadReceipt() {
     const [uploading, setUploading] = useState(false)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
+    // Other requests submitted together with this one that still need
+    // payment -- one Finance Office receipt can cover them too.
+    const [siblings, setSiblings] = useState([])
+    const [includeIds, setIncludeIds] = useState(() => new Set())
 
     useEffect(() => {
         if (!requestId) {
@@ -138,6 +142,37 @@ function UploadReceipt() {
             }
 
             setCurrentReceipt(existingReceipt || null)
+
+            // Requests submitted together (batch_id; the column may not
+            // exist before its migration -- then there are no siblings).
+            const { data: batchRow } = await supabase
+                .from('document_requests')
+                .select('batch_id')
+                .eq('request_id', requestId)
+                .maybeSingle()
+
+            if (batchRow?.batch_id) {
+                const { data: siblingRows } = await supabase
+                    .from('document_requests')
+                    .select('request_id, request_number, total_amount, status, document_type_id')
+                    .eq('batch_id', batchRow.batch_id)
+                    .eq('student_id', studentData.student_id)
+                    .neq('request_id', requestId)
+                    .in('status', ['pending', 'payment_pending', 'rejected'])
+
+                const typeIds = [...new Set((siblingRows || []).map((r) => r.document_type_id))]
+                const { data: types } = typeIds.length
+                    ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', typeIds)
+                    : { data: [] }
+                const nameById = Object.fromEntries((types || []).map((t) => [t.document_type_id, t.document_name]))
+
+                const list = (siblingRows || []).map((r) => ({ ...r, documentName: nameById[r.document_type_id] || 'Document' }))
+                setSiblings(list)
+                setIncludeIds(new Set(list.map((r) => r.request_id)))
+            } else {
+                setSiblings([])
+                setIncludeIds(new Set())
+            }
 
         } catch (error) {
             console.error(
@@ -376,6 +411,58 @@ function UploadReceipt() {
                 setRequest(updatedRequest)
             }
 
+            const coverSiblings = siblings.filter((sib) => includeIds.has(sib.request_id))
+            const failed = []
+
+            for (const sib of coverSiblings) {
+                const { data: sibReceipt } = await supabase
+                    .from('official_receipts')
+                    .select('receipt_id')
+                    .eq('request_id', sib.request_id)
+                    .eq('student_id', student.student_id)
+                    .maybeSingle()
+
+                const receiptFields = {
+                    amount_paid: Number(sib.total_amount),
+                    receipt_file_name: receiptFile.name,
+                    receipt_file_path: filePath,
+                    receipt_file_url: filePath,
+                    status: 'uploaded',
+                    uploaded_at: new Date().toISOString(),
+                }
+
+                const { error: sibError } = sibReceipt
+                    ? await supabase
+                        .from('official_receipts')
+                        .update({ ...receiptFields, verified_by: null, verified_at: null, rejection_reason: null, remarks: null })
+                        .eq('receipt_id', sibReceipt.receipt_id)
+                    : await supabase
+                        .from('official_receipts')
+                        .insert({ ...receiptFields, request_id: sib.request_id, student_id: student.student_id })
+
+                if (sibError) {
+                    failed.push(sib.request_number)
+                    continue
+                }
+
+                await supabase
+                    .from('document_requests')
+                    .update({ status: 'receipt_uploaded', updated_at: new Date().toISOString() })
+                    .eq('request_id', sib.request_id)
+                    .in('status', ['pending', 'payment_pending', 'rejected'])
+            }
+
+            if (coverSiblings.length > 0) {
+                const covered = coverSiblings.filter((sib) => !failed.includes(sib.request_number)).map((sib) => sib.request_number)
+                if (covered.length) {
+                    setMessage((prev) => `${prev} It was also applied to ${covered.join(', ')}.`)
+                }
+                if (failed.length) {
+                    setError(`The receipt could not be applied to ${failed.join(', ')}. Upload it from ${failed.length === 1 ? 'that request' : 'those requests'} separately.`)
+                }
+                setSiblings((prev) => prev.filter((sib) => !includeIds.has(sib.request_id) || failed.includes(sib.request_number)))
+            }
+
             setReceiptFile(null)
 
             const fileInput =
@@ -519,8 +606,48 @@ function UploadReceipt() {
                         )}
                     </div>
 
+                    {siblings.length > 0 && (
+                        <div className="rq-cover">
+                            <strong>Did one receipt cover your other documents too?</strong>
+                            <p>These were submitted together with this request. Tick the ones this receipt also paid for.</p>
+                            <ul>
+                                {siblings.map((sib) => (
+                                    <li key={sib.request_id}>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={includeIds.has(sib.request_id)}
+                                                onChange={() => setIncludeIds((prev) => {
+                                                    const next = new Set(prev)
+                                                    if (next.has(sib.request_id)) next.delete(sib.request_id)
+                                                    else next.add(sib.request_id)
+                                                    return next
+                                                })}
+                                                disabled={uploading}
+                                            />
+                                            <span>
+                                                <strong>{sib.documentName}</strong>
+                                                <small>{sib.request_number} · ₱{Number(sib.total_amount || 0).toFixed(2)}</small>
+                                            </span>
+                                        </label>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="rq-cover-total">
+                                <span>Total covered by this receipt</span>
+                                <strong>
+                                    ₱{(Number(request?.total_amount || 0) + siblings.filter((sib) => includeIds.has(sib.request_id)).reduce((sum, sib) => sum + Number(sib.total_amount || 0), 0)).toFixed(2)}
+                                </strong>
+                            </div>
+                        </div>
+                    )}
+
                     <button type="submit" className="auth-submit" style={{ width: 'auto', padding: '11px 20px', marginTop: 20 }} disabled={uploading}>
-                        {uploading ? 'Uploading...' : 'Upload Official Receipt'}
+                        {uploading
+                            ? 'Uploading...'
+                            : includeIds.size > 0 && siblings.length > 0
+                                ? `Upload for ${1 + siblings.filter((sib) => includeIds.has(sib.request_id)).length} requests`
+                                : 'Upload Official Receipt'}
                     </button>
                 </form>
             </div>

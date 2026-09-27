@@ -48,6 +48,8 @@ function MyRequest() {
     const [activeChip, setActiveChip] = useState(searchParams.get('status') || 'all')
     const justSubmitted = location.state?.justSubmitted || ''
     const waitingForAssignment = !!location.state?.waitingForAssignment
+    const submittedCount = location.state?.submittedCount || 1
+    const submittedTotal = location.state?.submittedTotal
 
     const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
 
@@ -164,6 +166,11 @@ function MyRequest() {
             )
         })
 
+    const batchSizes = {}
+    for (const r of requests) {
+        if (r.batch_id) batchSizes[r.batch_id] = (batchSizes[r.batch_id] || 0) + 1
+    }
+
     return (
         <div>
             <div className="student-page-header-row" style={{ marginBottom: 28 }}>
@@ -183,7 +190,15 @@ function MyRequest() {
 
             {justSubmitted && (
                 <div className="student-success-box">
-                    Request {justSubmitted} submitted successfully.
+                    {submittedCount > 1
+                        ? <>{submittedCount} requests submitted successfully ({justSubmitted}).</>
+                        : <>Request {justSubmitted} submitted successfully.</>}
+                    {typeof submittedTotal === 'number' && submittedTotal > 0 && (
+                        <>
+                            {' '}Pay the total of <strong>₱{submittedTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> at
+                            the Finance Office, then upload your official receipt{submittedCount > 1 ? ' — one receipt can cover all of them' : ''}.
+                        </>
+                    )}
                     {waitingForAssignment && (
                         <>
                             {' '}No registrar staff is assigned to your college and program yet — the
@@ -249,6 +264,9 @@ function MyRequest() {
                             <div>
                                 <h3>{request.documentName}</h3>
                                 <p>Request {request.request_number}</p>
+                                {request.batch_id && batchSizes[request.batch_id] > 1 && (
+                                    <span className="rq-batch-tag">Submitted together with {batchSizes[request.batch_id] - 1} other{batchSizes[request.batch_id] - 1 === 1 ? '' : 's'}</span>
+                                )}
                                 {!request.assigned_employee_id && !['completed', 'cancelled', 'rejected'].includes(request.status) && (
                                     <p style={{ marginTop: 4, fontSize: 12.5, fontWeight: 600, color: 'var(--warning-text, #B45309)' }}>
                                         Waiting for the Registrar to assign staff for your college and program

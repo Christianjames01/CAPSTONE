@@ -463,3 +463,57 @@
     margin: 0;
     accent-color: var(--blue);
 }
+
+/* Register / complete profile: current student vs alumni */
+.auth-type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.auth-type-toggle button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: var(--white, #fff);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.auth-type-toggle button strong {
+    font-size: 14px;
+}
+
+.auth-type-toggle button span {
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.auth-type-toggle button.is-active {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.auth-type-note {
+    margin: -4px 0 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--blue-tint);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+@media (max-width: 480px) {
+    .auth-type-toggle {
+        grid-template-columns: 1fr;
+    }
+}
