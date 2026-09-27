@@ -7,6 +7,13 @@
     align-items: start;
 }
 
+/* Grid items default to min-width: auto, so the sideways contact row on
+   phones used to stretch the page to the width of every card combined
+   (phones then zoomed the whole page out). */
+.sm-layout > * {
+    min-width: 0;
+}
+
 .sm-contacts {
     padding: 14px !important;
 }
@@ -181,7 +188,7 @@
 
 @media (max-width: 820px) {
     .sm-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .sm-contacts ul {
@@ -192,10 +199,43 @@
     }
 
     .sm-contacts li {
-        flex: 0 0 240px;
+        flex: 0 0 min(240px, 78%);
     }
 
     .sm-thread {
         min-height: 320px;
+    }
+}
+
+@media (max-width: 560px) {
+    .sm-contacts,
+    .sm-thread {
+        padding: 14px !important;
+    }
+
+    .sm-thread-head {
+        flex-wrap: wrap;
+    }
+
+    .sm-thread-head > div {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .sm-thread-head p {
+        overflow-wrap: anywhere;
+    }
+
+    .sm-mark-read {
+        margin-left: 0;
+    }
+
+    .sm-composer input {
+        min-width: 0;
+    }
+
+    .sm-composer .auth-submit {
+        flex-shrink: 0;
+        padding: 11px 16px !important;
     }
 }
