@@ -7,10 +7,10 @@ import { useScrollLock } from '../lib/useScrollLock'
 import './ProductTour.css'
 
 // Guided demo tour. Each step opens its real page (the path of its sidebar
-// link, or step.route), waits for it to load, and spotlights the actual
-// section on screen (step.area, or the page's main section) with the
-// explanation beside it. Steps without a page (welcome, security) -- or a
-// page that doesn't load in time -- show a picture instead.
+// link, or step.route), waits for it to load, and spotlights the whole page
+// (the portal's content area, from the top) with the explanation in the
+// corner -- a sheet at the bottom on phones. Steps without a page (welcome,
+// security check) show a picture instead.
 //
 // Starts on its own the first time a newly created account opens its
 // portal, and whenever START_TOUR_EVENT is dispatched (the User Guide's
@@ -18,7 +18,8 @@ import './ProductTour.css'
 // this browser.
 
 const NEW_ACCOUNT_DAYS = 14
-const AREA_WAIT_MS = 6000
+// How long to wait for a page's content before showing it anyway.
+const AREA_WAIT_MS = 4000
 
 const storageKey = (role, userId) => `certichain_tour_done:${role}:${userId}`
 
@@ -38,7 +39,7 @@ function routeOf(step) {
     return step.target?.match(/href="([^"]+)"/)?.[1] || null
 }
 
-// Where to look for the real section on a page, most specific first.
+// Signs that a page has finished loading (its main sections are there).
 function areaCandidates(step, portal) {
     return [
         ...(step.area ? [step.area] : []),
@@ -58,6 +59,11 @@ function isShown(el) {
     if (!el) return false
     const r = el.getBoundingClientRect()
     return r.width > 0 && r.height > 0 && !el.closest('[aria-busy="true"]')
+}
+
+// The portal's content area -- what the tour spotlights.
+function pageArea(portal) {
+    return document.querySelector(`.${portal}-content`)
 }
 
 function findArea(step, portal) {
@@ -202,9 +208,7 @@ function ProductTour({ role, steps: allSteps }) {
         let scrollTries = 0
         const bringIntoView = (el) => {
             const r = el.getBoundingClientRect()
-            const target = window.innerWidth < 700
-                ? window.scrollY + r.top - 72
-                : window.scrollY + r.top - Math.max(24, (window.innerHeight - Math.min(r.height, window.innerHeight)) / 2)
+            const target = window.scrollY + r.top - (window.innerWidth < 700 ? 64 : 0)
             document.documentElement.scrollTop = Math.max(0, target)
             document.body.scrollTop = Math.max(0, target)
         }
@@ -215,7 +219,7 @@ function ProductTour({ role, steps: allSteps }) {
         const measure = () => {
             let el = areaEl.current
             if (!el || !el.isConnected) {
-                el = findArea(step, portal)
+                el = pageArea(portal)
                 areaEl.current = el
             }
             if (!el) {
@@ -234,9 +238,11 @@ function ProductTour({ role, steps: allSteps }) {
 
         const look = () => {
             if (stopped) return
-            const el = findArea(step, portal)
-            if (el) {
-                areaEl.current = el
+            const loaded = findArea(step, portal)
+            const timedOut = Date.now() - startedAt > AREA_WAIT_MS
+            const page = pageArea(portal)
+            if (page && (loaded || timedOut)) {
+                areaEl.current = page
                 measure()
                 setTimeout(() => {
                     if (stopped) return
@@ -245,7 +251,7 @@ function ProductTour({ role, steps: allSteps }) {
                 }, 450)
                 return
             }
-            if (Date.now() - startedAt > AREA_WAIT_MS) {
+            if (timedOut) {
                 setFinding(false)
                 setRect(visibleRect(step.target))
                 return
