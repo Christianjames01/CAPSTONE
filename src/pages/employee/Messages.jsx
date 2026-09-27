@@ -11,7 +11,7 @@ import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
-import { pendingInquiry, statusReplyFor, inquiryRequestNumber } from '../../lib/requestStatusMessages'
+import { pendingInquiry, statusReplyFor, inquiryRequestNumber, inquiryLabel } from '../../lib/requestStatusMessages'
 
 function Messages() {
     const [userId, setUserId] = useState(null)
@@ -341,7 +341,7 @@ function Messages() {
     const fillStatusReply = async () => {
         try {
             setFillingStatus(true)
-            setReply(await statusReplyFor(inquiryNumber))
+            setReply(await statusReplyFor(inquiryNumber, inquiry.sender_user_id))
             setReplyTo(inquiry)
         } catch (err) {
             notifyError(err.message || 'Could not look up that request.')
@@ -513,7 +513,7 @@ function Messages() {
                                     above={inquiryNumber && (
                                         <div className="chat-composer-extra">
                                             <button type="button" className="chat-pill-button" onClick={fillStatusReply} disabled={fillingStatus}>
-                                                {fillingStatus ? 'Looking up…' : `Reply with status of ${inquiryNumber}`}
+                                                {fillingStatus ? 'Looking up…' : `Reply with status of ${inquiryLabel(inquiryNumber)}`}
                                             </button>
                                         </div>
                                     )}

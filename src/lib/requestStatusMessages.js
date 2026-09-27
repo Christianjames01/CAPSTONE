@@ -24,16 +24,66 @@ export const requestStatusLabel = (status) => STATUS_TEXT[status]?.[0] || (statu
 const CLOSED = ['completed', 'cancelled']
 export const isOpenRequest = (r) => !CLOSED.includes(r.status)
 
-const INQUIRY = /^Status inquiry: ([A-Z]+-[\w-]+)/
+const INQUIRY = /^Status inquiry: ([A-Z]+-[\w-]+|all my requests)/
+
+// Asking about every request at once.
+export const ALL_REQUESTS = 'ALL'
 
 export function inquiryText(request) {
+    if (request === ALL_REQUESTS) {
+        return 'Status inquiry: all my requests. Hi! May I know the current status of all my document requests?'
+    }
     const doc = request.documentName ? ` (${request.documentName})` : ''
     return `Status inquiry: ${request.request_number}${doc}. Hi! May I know the current status of my request?`
 }
 
-// The request number a message asks about, or null.
+// The request number a message asks about, ALL_REQUESTS, or null.
 export function inquiryRequestNumber(text) {
-    return (text || '').match(INQUIRY)?.[1] || null
+    const found = (text || '').match(INQUIRY)?.[1] || null
+    return found === 'all my requests' ? ALL_REQUESTS : found
+}
+
+export const inquiryLabel = (number) => (number === ALL_REQUESTS ? 'all their requests' : number)
+
+// Groups for the "Ask about a request" menu.
+export function groupRequests(requests) {
+    const groups = [
+        { key: 'open', label: 'In progress', items: requests.filter((r) => !['completed', 'cancelled', 'rejected'].includes(r.status)) },
+        { key: 'rejected', label: 'Needs attention', items: requests.filter((r) => r.status === 'rejected') },
+        { key: 'completed', label: 'Completed', items: requests.filter((r) => r.status === 'completed') },
+        { key: 'cancelled', label: 'Cancelled', items: requests.filter((r) => r.status === 'cancelled') },
+    ]
+    return groups.filter((g) => g.items.length > 0)
+}
+
+// "Status update for your requests:" with one line per request, for staff
+// answering an all-requests inquiry from `studentUserId`.
+async function summaryReplyFor(studentUserId) {
+    const { data: student, error } = await supabase
+        .from('students')
+        .select('student_id')
+        .eq('user_id', studentUserId)
+        .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!student) throw new Error('Student record not found.')
+
+    const { data: requests, error: requestError } = await supabase
+        .from('document_requests')
+        .select('request_number, status, document_type_id, requested_at')
+        .eq('student_id', student.student_id)
+        .order('requested_at', { ascending: false })
+    if (requestError) throw new Error(requestError.message)
+
+    const typeIds = [...new Set((requests || []).map((r) => r.document_type_id).filter(Boolean))]
+    const { data: types } = typeIds.length
+        ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', typeIds)
+        : { data: [] }
+    const docName = Object.fromEntries((types || []).map((t) => [t.document_type_id, t.document_name]))
+
+    if (!requests?.length) return 'Status update for your requests: you have no document requests yet.'
+    return ['Status update for your requests:', ...requests.map((r) =>
+        `- ${r.request_number}${docName[r.document_type_id] ? ` (${docName[r.document_type_id]})` : ''}: ${requestStatusLabel(r.status)}`
+    )].join('\n')
 }
 
 // The newest unanswered status inquiry message in a conversation (sent by
@@ -50,7 +100,9 @@ export function pendingInquiry(messages, selfId) {
 
 // "Status update for REQ-000123 (Transcript of Records): Processing. ..."
 // for staff to send. Throws if the request can't be read.
-export async function statusReplyFor(requestNumber) {
+export async function statusReplyFor(requestNumber, studentUserId) {
+    if (requestNumber === ALL_REQUESTS) return summaryReplyFor(studentUserId)
+
     const { data: request, error } = await supabase
         .from('document_requests')
         .select('request_id, request_number, status, document_type_id')

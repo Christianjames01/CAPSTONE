@@ -14,7 +14,7 @@ import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
-import { inquiryText, isOpenRequest, requestStatusLabel } from '../../lib/requestStatusMessages'
+import { ALL_REQUESTS, groupRequests, inquiryText, requestStatusLabel } from '../../lib/requestStatusMessages'
 
 const DEFAULT_MESSAGE =
     "Hi, I'd like to ask about my document request. Please let me know if you need anything " +
@@ -283,10 +283,12 @@ function Messages() {
     }
 
     // "Ask about a request": asks the staff member handling it (switching to
-    // their conversation), then posts the automatic status reply.
+    // their conversation), then posts the automatic status reply. With
+    // ALL_REQUESTS, asks the current conversation about every request.
     const askAboutRequest = async (request) => {
         setAskOpen(false)
-        const contact = contacts.find((c) => c.employeeId && c.employeeId === request.assigned_employee_id) || selected
+        const all = request === ALL_REQUESTS
+        const contact = (!all && contacts.find((c) => c.employeeId && c.employeeId === request.assigned_employee_id)) || selected
         if (!contact || !userId) return
         if (contact.userId !== selectedUserId) selectContact(contact)
         let question
@@ -311,7 +313,7 @@ function Messages() {
             await new Promise((resolve) => setTimeout(resolve, 1800 + Math.random() * 900))
 
             const { data: autoReply, error: replyError } = await supabase.rpc('auto_reply_request_status', {
-                p_request_id: request.request_id,
+                p_request_id: all ? null : request.request_id,
                 p_reply_as: contact.userId,
                 p_reply_to: question?.message_id || null,
             })
@@ -529,14 +531,26 @@ function Messages() {
                                                 {askOpen && (
                                                     <div className="req-ask-menu" role="menu" aria-label="Your requests">
                                                         <p className="req-ask-hint">Get the current status sent to you right away.</p>
-                                                        {[...requests.filter(isOpenRequest), ...requests.filter((r) => !isOpenRequest(r))].slice(0, 8).map((r) => (
-                                                            <button key={r.request_id} type="button" role="menuitem" className="req-ask-item" onClick={() => askAboutRequest(r)}>
-                                                                <span className="req-ask-main">
-                                                                    <strong>{r.request_number}</strong>
-                                                                    <span>{r.documentName || 'Document request'}</span>
-                                                                </span>
-                                                                <span className={`req-ask-status status-${r.status}`}>{requestStatusLabel(r.status)}</span>
-                                                            </button>
+                                                        <button type="button" role="menuitem" className="req-ask-item is-all" onClick={() => askAboutRequest(ALL_REQUESTS)}>
+                                                            <span className="req-ask-main">
+                                                                <strong>All my requests</strong>
+                                                                <span>The status of every request in one reply</span>
+                                                            </span>
+                                                            <span className="req-ask-status">{requests.length}</span>
+                                                        </button>
+                                                        {groupRequests(requests).map((group) => (
+                                                            <div key={group.key} className="req-ask-group" role="group" aria-label={group.label}>
+                                                                <span className="req-ask-group-label">{group.label} · {group.items.length}</span>
+                                                                {group.items.map((r) => (
+                                                                    <button key={r.request_id} type="button" role="menuitem" className="req-ask-item" onClick={() => askAboutRequest(r)}>
+                                                                        <span className="req-ask-main">
+                                                                            <strong>{r.request_number}</strong>
+                                                                            <span>{r.documentName || 'Document request'}</span>
+                                                                        </span>
+                                                                        <span className={`req-ask-status status-${r.status}`}>{requestStatusLabel(r.status)}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 )}

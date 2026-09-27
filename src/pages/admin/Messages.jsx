@@ -13,7 +13,7 @@ import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessa
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
-import { pendingInquiry, statusReplyFor, inquiryRequestNumber } from '../../lib/requestStatusMessages'
+import { pendingInquiry, statusReplyFor, inquiryRequestNumber, inquiryLabel } from '../../lib/requestStatusMessages'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -592,7 +592,7 @@ function Messages() {
     const fillStatusReply = async () => {
         try {
             setFillingStatus(true)
-            setReply(await statusReplyFor(inquiryNumber))
+            setReply(await statusReplyFor(inquiryNumber, inquiry.sender_user_id))
             setReplyTo(inquiry)
         } catch (err) {
             notifyError(err.message || 'Could not look up that request.')
@@ -765,7 +765,7 @@ function Messages() {
                                         <div className="chat-composer-extra">
                                             {inquiryNumber && (
                                                 <button type="button" className="chat-pill-button" onClick={fillStatusReply} disabled={fillingStatus}>
-                                                    {fillingStatus ? 'Looking up…' : `Reply with status of ${inquiryNumber}`}
+                                                    {fillingStatus ? 'Looking up…' : `Reply with status of ${inquiryLabel(inquiryNumber)}`}
                                                 </button>
                                             )}
                                             {!reply && (
