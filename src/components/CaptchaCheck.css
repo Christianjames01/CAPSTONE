@@ -1,31 +1,113 @@
-/* Turnstile box on the auth forms (CaptchaCheck.jsx). */
+/* "I'm not a robot" check on the auth forms (CaptchaCheck.jsx). */
 .captcha-check {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
-    min-height: 65px;
+    gap: 8px;
     margin: 6px 0 14px;
 }
 
+.captcha-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(320px, 100%);
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fafafa;
+    color: #101827;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.captcha-box:hover:not(:disabled) {
+    border-color: #9aa3b2;
+}
+
+.captcha-box:focus-visible {
+    outline: 2px solid #123B78;
+    outline-offset: 2px;
+}
+
+.captcha-box:disabled {
+    cursor: default;
+}
+
+.captcha-box-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #9aa3b2;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.captcha-box.is-done .captcha-box-mark {
+    border-color: #1e8a5f;
+    background: #1e8a5f;
+    color: #fff;
+}
+
+.captcha-box-mark svg {
+    width: 16px;
+    height: 16px;
+}
+
+.captcha-box-text {
+    flex: 1;
+}
+
+.captcha-box.is-done .captcha-box-text {
+    color: #1e8a5f;
+    font-weight: 600;
+}
+
+.captcha-box-brand {
+    font-size: 9.5px;
+    line-height: 1.2;
+    color: #6b7280;
+    text-align: right;
+}
+
+.captcha-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #c7cdd8;
+    border-top-color: #123B78;
+    border-radius: 50%;
+    animation: captcha-spin 0.7s linear infinite;
+}
+
+@keyframes captcha-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Cloudflare's own widget: only takes space if it needs the user. */
+.captcha-host:empty {
+    display: none;
+}
+
 .captcha-check-error {
+    margin: 0;
     font-size: 12.5px;
     color: var(--danger-text, #C8102E);
 }
 
-/* On-demand check (lib/captcha.js getCaptchaToken): only visible if
-   Cloudflare asks for a click. */
-.captcha-floating {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    z-index: 3000;
-    transform: translateX(-50%);
+html[data-theme="dark"] .captcha-box {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: #1c202b;
+    color: #e7e9ee;
 }
 
-.captcha-floating:not(:empty) {
-    padding: 6px;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 16px 40px -16px rgba(10, 20, 40, 0.5);
+html[data-theme="dark"] .captcha-box-mark {
+    border-color: #97a0b3;
+    background: #12141b;
 }
