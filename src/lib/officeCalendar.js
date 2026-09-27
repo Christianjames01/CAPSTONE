@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { formatHours } from './officeHours'
+import { hoursOf, noteWithoutHours } from './officeHours'
 
 // Date helpers shared by the admin and employee Office Calendar pages.
 // Dates are handled as local 'YYYY-MM-DD' strings throughout so they compare
@@ -203,7 +203,8 @@ export async function fetchOfficeScheduleNotices() {
     }
 
     for (const day of openDays) {
-        const hours = formatHours(day.open_time, day.close_time)
+        const hours = hoursOf(day)
+        const note = noteWithoutHours(day.note)
         notices.push({
             announcement_id: `office-open-${day.open_date}`,
             announcement_date: day.open_date,
@@ -211,8 +212,8 @@ export async function fetchOfficeScheduleNotices() {
             open_time: day.open_time,
             close_time: day.close_time,
             title: `The Registrar's Office is open on ${weekdayName(day.open_date)}${hours ? `, ${hours}` : ''}`,
-            message: day.note
-                ? escapeHtml(day.note)
+            message: note
+                ? `${escapeHtml(note)}${hours ? ` Office hours: <strong>${hours}</strong>.` : ''}`
                 : `Although ${weekdayName(day.open_date)}s are normally closed, the office will be open this day${hours ? ` from <strong>${hours}</strong>` : ''} for claiming and walk-ins.`,
         })
     }

@@ -208,13 +208,14 @@ function Announcements() {
             } else {
                 const { data: { user } } = await supabase.auth.getUser()
 
-                const { data, error: insertError } = await writeWithHours(
+                const { data, error: insertError, hoursSaved } = await writeWithHours(
                     (row) => supabase.from('announcements').insert(row).select().single(),
                     { ...payload, created_by: user?.id || null },
                     hours
                 )
 
                 if (insertError) throw new Error(insertError.message)
+                if (hours && !hoursSaved) notifyWarning('Announcement posted, but the office hours need a database update before they can be saved (migration 20260928020000_office_hours).')
 
                 await logAdmin('add_announcement', data.announcement_id, `Posted announcement "${stripHtml(payload.title)}".`)
             }

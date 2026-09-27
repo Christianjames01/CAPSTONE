@@ -9,7 +9,7 @@ import DayModal from '../../components/officeCalendar/DayModal'
 import RangeModal from '../../components/officeCalendar/RangeModal'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
-import { formatHours, writeWithHours } from '../../lib/officeHours'
+import { formatHours, isMissingHoursColumn, noteWithHours, writeWithHours } from '../../lib/officeHours'
 
 function OfficeCalendar() {
     const navigate = useNavigate()
@@ -198,7 +198,8 @@ function OfficeCalendar() {
                 const { error: insertError, hoursSaved } = await writeWithHours(
                     (row) => supabase.from('office_open_days').insert(row),
                     { open_date: dayModalDate, created_by: user.id },
-                    hours
+                    hours,
+                    { hoursInNote: true }
                 )
 
                 if (insertError) throw new Error(insertError.message)
@@ -233,16 +234,15 @@ function OfficeCalendar() {
             setTogglingOpen(true)
             const { data: { user } } = await supabase.auth.getUser()
 
-            const { error: updateError } = await supabase
-                .from('office_open_days')
-                .update({ open_time: hours.open, close_time: hours.close })
-                .eq('open_day_id', existing.open_day_id)
+            const update = (values) => supabase.from('office_open_days').update(values).eq('open_day_id', existing.open_day_id)
+            let { error: updateError } = await update({ open_time: hours.open, close_time: hours.close })
 
-            if (updateError) {
-                throw new Error(/open_time|close_time/i.test(updateError.message)
-                    ? 'Office hours need a database update first (migration 20260928020000_office_hours).'
-                    : updateError.message)
+            // Before the office-hours migration: keep the hours in the note.
+            if (updateError && isMissingHoursColumn(updateError)) {
+                ({ error: updateError } = await update({ note: noteWithHours(existing.note, hours) }))
             }
+
+            if (updateError) throw new Error(updateError.message)
 
             await logActivity({
                 userId: user?.id,

@@ -11,7 +11,7 @@ import {
     relativeDayLabel,
     isClosedWeekday,
 } from '../../lib/officeCalendar'
-import { hoursOf } from '../../lib/officeHours'
+import { hoursOf, noteWithoutHours } from '../../lib/officeHours'
 import './OfficeCalendar.css'
 
 const WEEKDAY_HEADS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -120,7 +120,7 @@ function CalendarBoard({
             date: day.open_date,
             endDate: day.open_date,
             title: hoursOf(day) ? `Open · ${hoursOf(day)}` : 'Open for claiming',
-            note: day.note,
+            note: noteWithoutHours(day.note),
             day,
         }))
         return [...eventItems, ...openItems].sort((a, b) => a.date.localeCompare(b.date))
@@ -216,7 +216,7 @@ function CalendarBoard({
         const dayClaims = claimSchedulesByDate[dateStr] || []
 
         const chips = []
-        if (openEntry) chips.push({ key: 'open', type: 'open', label: hoursOf(openEntry) ? `Open ${hoursOf(openEntry)}` : 'Open for claiming', title: openEntry.note || `Marked open${hoursOf(openEntry) ? `, ${hoursOf(openEntry)}` : ''}` })
+        if (openEntry) chips.push({ key: 'open', type: 'open', label: hoursOf(openEntry) ? `Open ${hoursOf(openEntry)}` : 'Open for claiming', title: noteWithoutHours(openEntry.note) || `Marked open${hoursOf(openEntry) ? `, ${hoursOf(openEntry)}` : ''}` })
         dayEvents.forEach((ev) => chips.push({ key: ev.event_id, type: 'event', label: ev.title, title: ev.note || ev.title }))
         if (dayClaims.length > 0) chips.push({ key: 'claims', type: 'claim', label: `${dayClaims.length} claiming`, title: `${plural(dayClaims.length, 'student')} scheduled to claim` })
 

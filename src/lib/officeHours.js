@@ -26,8 +26,22 @@ export function formatHours(open, close) {
     return `${formatClock(open)} – ${formatClock(close)}`
 }
 
+// Until the office-hours migration is applied, an open day's hours are kept
+// in its note as "Office hours: 8:00 AM – 5:00 PM".
+const NOTE_HOURS = /\s*(?:·\s*)?Office hours: ([^·]+)/
+
 export function hoursOf(row) {
-    return formatHours(row?.open_time, row?.close_time)
+    return formatHours(row?.open_time, row?.close_time) || row?.note?.match(NOTE_HOURS)?.[1]?.trim() || ''
+}
+
+export function noteWithoutHours(note) {
+    return (note || '').replace(NOTE_HOURS, '').trim()
+}
+
+export function noteWithHours(note, hours) {
+    const base = noteWithoutHours(note)
+    const tag = `Office hours: ${formatHours(hours.open, hours.close)}`
+    return base ? `${base} · ${tag}` : tag
 }
 
 export function validHours(hours) {
@@ -38,12 +52,18 @@ export function validHours(hours) {
 // the write is retried without them so opening a day still works.
 const missingHoursColumn = (error) => /open_time|close_time/i.test(error?.message || '')
 
-export async function writeWithHours(run, row, hours) {
+// `hoursInNote`: when the columns are missing, keep the hours in the row's
+// note instead (open days), so students still see them.
+export async function writeWithHours(run, row, hours, { hoursInNote = false } = {}) {
     const withHours = validHours(hours) ? { ...row, open_time: hours.open, close_time: hours.close } : row
     let result = await run(withHours)
     if (result.error && withHours !== row && missingHoursColumn(result.error)) {
-        result = await run(row)
-        return { ...result, hoursSaved: false }
+        result = await run(hoursInNote ? { ...row, note: noteWithHours(row.note, hours) } : row)
+        return { ...result, hoursSaved: hoursInNote && !result.error }
     }
     return { ...result, hoursSaved: withHours !== row }
+}
+
+export function isMissingHoursColumn(error) {
+    return missingHoursColumn(error)
 }
