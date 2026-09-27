@@ -13,6 +13,7 @@ import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { useTyping } from '../../lib/useTyping'
 
 const DEFAULT_MESSAGE =
     "Hi, I'd like to ask about my document request. Please let me know if you need anything " +
@@ -49,6 +50,7 @@ function Messages() {
     const [error, setError] = useState('')
 
     useLiveRefresh(['messages'], (options) => loadMessages(options))
+    const { typingUserIds, sendTyping } = useTyping(userId)
 
     useEffect(() => {
         loadMessages()
@@ -262,6 +264,7 @@ function Messages() {
 
             setMessages((prev) => [...prev, data])
             setReply('')
+            sendTyping([selected.userId], false)
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
             notifyError(err.message || 'Failed to send message.')
@@ -306,6 +309,15 @@ function Messages() {
 
     const threadOfContact = (c) => messages.filter((m) => threadFor(m) === c.userId)
 
+    // The staff member, or other registrar staff who wrote in this
+    // conversation (e.g. the head), typing right now.
+    const typersIn = (c) => {
+        const senders = new Set([c.userId, ...threadOfContact(c).map((m) => m.sender_user_id)])
+        return typingUserIds.filter((id) => id !== userId && senders.has(id))
+    }
+    const activeTypers = selected ? typersIn(selected) : []
+    const typerName = (id) => (id === selected?.userId ? selected.name : labels[id] || REGISTRAR_LABEL)
+
     const previewOf = (m) => {
         if (!m) return 'Start a conversation'
         if (m.deleted_at) return m.sender_user_id === userId ? 'You deleted a message' : 'Message deleted'
@@ -345,6 +357,7 @@ function Messages() {
                                     meta={c.requests.length ? `Handles ${c.requests.join(', ')}` : c.subtitle}
                                     preview={previewOf(last)}
                                     time={last ? chatListTime(last.created_at) : ''}
+                                    typing={typersIn(c).length > 0}
                                     onClick={() => selectContact(c)}
                                 />
                             )
@@ -364,11 +377,16 @@ function Messages() {
                                         selected.subtitle,
                                         selected.requests.length > 0 && `${selected.handlesActive ? 'Handling' : 'Handled'} ${selected.requests.join(', ')}`,
                                     ].filter(Boolean).join(' · ')}
+                                    typing={activeTypers.length > 0 && `${typerName(activeTypers[0])} is typing…`}
                                 />
 
                                 <ChatMessages
                                     messages={thread}
                                     threadKey={selected.userId}
+                                    typing={activeTypers.length > 0 && {
+                                        people: [{ name: typerName(activeTypers[0]) }],
+                                        label: `${typerName(activeTypers[0])} is typing`,
+                                    }}
                                     empty={<>No messages with {selected.name} yet. Say hello — they'll reply here.</>}
                                     renderMessage={(m, { groupStart, groupEnd }) => {
                                         const isSelf = m.sender_user_id === userId
@@ -403,7 +421,10 @@ function Messages() {
 
                                 <ChatComposer
                                     value={reply}
-                                    onChange={setReply}
+                                    onChange={(value) => {
+                                        setReply(value)
+                                        sendTyping([selected.userId], !!value.trim())
+                                    }}
                                     onSend={sendMessage}
                                     sending={sending}
                                     canSend={!!reply.trim() || thread.length === 0}

@@ -12,6 +12,7 @@ import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
 import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { useTyping } from '../../lib/useTyping'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -45,6 +46,7 @@ function Messages() {
     const [searchingStudents, setSearchingStudents] = useState(false)
 
     useLiveRefresh(['messages'], (options) => loadMessages(options))
+    const { typingUserIds, sendTyping } = useTyping(currentUserId)
 
     useEffect(() => {
         loadMessages()
@@ -401,6 +403,7 @@ function Messages() {
             })
 
             setReply('')
+            sendTyping(recipients.map((r) => r.id), false)
 
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
@@ -541,6 +544,10 @@ function Messages() {
         return `${m.sender_user_id === currentUserId ? 'You' : nameForSender(m.sender_user_id).split(' ')[0]}: ${m.message}`
     }
 
+    const typersIn = (thread) =>
+        [thread.participantA, thread.participantB].filter((id) => id !== currentUserId && typingUserIds.includes(id))
+    const activeTypers = activeThread ? typersIn(activeThread) : []
+
     const photoOf = (userId) => (activeThread?.participantA === userId ? activeThread.photoA : activeThread?.participantB === userId ? activeThread.photoB : '')
 
     return (
@@ -612,6 +619,7 @@ function Messages() {
                                         meta={isMyThread(thread) ? null : 'Oversight'}
                                         preview={previewOf(last)}
                                         time={last ? chatListTime(last.created_at) : ''}
+                                        typing={typersIn(thread).length > 0}
                                         onClick={() => openThread(thread)}
                                     />
                                 )
@@ -629,6 +637,7 @@ function Messages() {
                                     people={peopleOf(activeThread)}
                                     title={titleOf(activeThread)}
                                     subtitle={subtitleOf(activeThread)}
+                                    typing={activeTypers.length > 0 && `${nameForSender(activeTypers[0])} is typing…`}
                                     actions={activeThread.messages.length > 0 && (
                                         <button
                                             type="button"
@@ -646,6 +655,10 @@ function Messages() {
                                 <ChatMessages
                                     messages={activeThread.messages}
                                     threadKey={activeThread.pairKey}
+                                    typing={activeTypers.length > 0 && {
+                                        people: [{ name: nameForSender(activeTypers[0]), photo: photoOf(activeTypers[0]) }],
+                                        label: `${nameForSender(activeTypers[0])} is typing`,
+                                    }}
                                     empty="No messages yet — say hello below."
                                     renderMessage={(m, { groupStart, groupEnd }) => {
                                         const isSelf = m.sender_user_id === currentUserId
@@ -675,7 +688,10 @@ function Messages() {
 
                                 <ChatComposer
                                     value={reply}
-                                    onChange={setReply}
+                                    onChange={(value) => {
+                                        setReply(value)
+                                        sendTyping(otherParticipants(activeThread).map((p) => p.id), !!value.trim())
+                                    }}
                                     onSend={sendReply}
                                     sending={sending}
                                     canSend={!!reply.trim()}

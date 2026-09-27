@@ -107,7 +107,7 @@ export function ChatListEmpty({ children }) {
     return <li className="chat-list-empty">{children}</li>
 }
 
-export function ChatListItem({ active, unread = 0, people, name, meta, preview, time, onClick }) {
+export function ChatListItem({ active, unread = 0, people, name, meta, preview, time, typing, onClick }) {
     return (
         <li>
             <button
@@ -124,7 +124,9 @@ export function ChatListItem({ active, unread = 0, people, name, meta, preview, 
                     </span>
                     {meta && <span className="chat-item-meta">{meta}</span>}
                     <span className="chat-item-bottom">
-                        <span className="chat-item-preview">{preview}</span>
+                        {typing
+                            ? <span className="chat-item-preview is-typing">typing…</span>
+                            : <span className="chat-item-preview">{preview}</span>}
                         {unread > 0 && <span className="chat-item-badge" aria-label={`${unread} unread`}>{unread > 9 ? '9+' : unread}</span>}
                     </span>
                 </span>
@@ -155,7 +157,7 @@ export function ChatPlaceholder({ title, text }) {
     )
 }
 
-export function ChatHeader({ onBack, people, title, subtitle, actions }) {
+export function ChatHeader({ onBack, people, title, subtitle, typing, actions }) {
     return (
         <header className="chat-head">
             <button type="button" className="chat-back" onClick={onBack} aria-label="Back to conversations">
@@ -166,7 +168,7 @@ export function ChatHeader({ onBack, people, title, subtitle, actions }) {
             <ChatAvatar people={people} size={40} />
             <div className="chat-head-text">
                 <h2>{title}</h2>
-                {subtitle && <p>{subtitle}</p>}
+                {typing ? <p className="is-typing">{typing}</p> : subtitle && <p>{subtitle}</p>}
             </div>
             {actions && <div className="chat-head-actions">{actions}</div>}
         </header>
@@ -177,10 +179,13 @@ export function ChatHeader({ onBack, people, title, subtitle, actions }) {
 // each message where it sits in a run from the same sender, so bubbles can
 // stack like Messenger (one name on top, one avatar and time at the end).
 // Stays pinned to the newest message unless the reader scrolled up.
-export function ChatMessages({ messages, threadKey, empty, renderMessage }) {
+// `typing`: { people, label } while someone in the conversation is
+// typing -- shown as a bubble with animated dots after the last message.
+export function ChatMessages({ messages, threadKey, empty, renderMessage, typing }) {
     const ref = useRef(null)
     const pinned = useRef(true)
     const lastKey = useRef(null)
+    const isTyping = !!typing
 
     const onScroll = () => {
         const el = ref.current
@@ -195,7 +200,7 @@ export function ChatMessages({ messages, threadKey, empty, renderMessage }) {
             pinned.current = true
         }
         lastKey.current = threadKey
-    }, [threadKey, messages])
+    }, [threadKey, messages, isTyping])
 
     const items = []
     messages.forEach((m, i) => {
@@ -214,7 +219,15 @@ export function ChatMessages({ messages, threadKey, empty, renderMessage }) {
 
     return (
         <div className="chat-body" ref={ref} onScroll={onScroll}>
-            {messages.length === 0 ? <div className="chat-body-empty">{empty}</div> : items}
+            {messages.length === 0 && !typing ? <div className="chat-body-empty">{empty}</div> : items}
+            {typing && (
+                <div className="msg-row is-group-start is-group-end chat-typing-row">
+                    <span className="msg-avatar-slot" aria-hidden="true"><ChatAvatar people={typing.people} size={28} /></span>
+                    <div className="chat-typing" role="status" aria-label={typing.label}>
+                        <span /><span /><span />
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

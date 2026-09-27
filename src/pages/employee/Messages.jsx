@@ -10,6 +10,7 @@ import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
 import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { useTyping } from '../../lib/useTyping'
 
 function Messages() {
     const [userId, setUserId] = useState(null)
@@ -28,6 +29,7 @@ function Messages() {
     const [busy, setBusy] = useState(false)
 
     useLiveRefresh(['messages'], (options) => loadMessages(options))
+    const { typingUserIds, sendTyping } = useTyping(userId)
 
     useEffect(() => {
         loadMessages()
@@ -263,6 +265,7 @@ function Messages() {
                 prev.map((t) => (t.otherUserId === activeThread.otherUserId ? updatedThread : t))
             )
             setReply('')
+            sendTyping(recipientIds, false)
 
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
@@ -339,6 +342,13 @@ function Messages() {
 
     const personOf = (thread) => ({ name: thread.name, photo: thread.photo })
 
+    // Who in a conversation is typing right now (the student, or anyone
+    // else who has written in it, e.g. the head).
+    const typersIn = (thread) =>
+        [thread.otherUserId, ...(thread.extraParticipantIds || [])].filter((id) => typingUserIds.includes(id))
+    const activeTypers = activeThread ? typersIn(activeThread) : []
+    const typerName = (id) => (id === activeThread?.otherUserId ? activeThread.name : senderNames[id] || 'Someone')
+
     return (
         <div>
             {error && <div className="employee-error-box">{error}</div>}
@@ -399,6 +409,7 @@ function Messages() {
                                         name={thread.name}
                                         preview={previewOf(last)}
                                         time={last ? chatListTime(last.created_at) : ''}
+                                        typing={typersIn(thread).length > 0}
                                         onClick={() => openThread(thread)}
                                     />
                                 )
@@ -416,11 +427,16 @@ function Messages() {
                                     people={[personOf(activeThread)]}
                                     title={activeThread.name}
                                     subtitle={activeThread.role === 'student' ? 'Student' : "Registrar's Office"}
+                                    typing={activeTypers.length > 0 && `${typerName(activeTypers[0])} is typing…`}
                                 />
 
                                 <ChatMessages
                                     messages={activeThread.messages}
                                     threadKey={activeThread.otherUserId}
+                                    typing={activeTypers.length > 0 && {
+                                        people: [activeTypers[0] === activeThread.otherUserId ? personOf(activeThread) : { name: typerName(activeTypers[0]) }],
+                                        label: `${typerName(activeTypers[0])} is typing`,
+                                    }}
                                     empty="No messages yet."
                                     renderMessage={(m, { groupStart, groupEnd }) => {
                                         const isSelf = m.sender_user_id === userId
@@ -454,7 +470,10 @@ function Messages() {
 
                                 <ChatComposer
                                     value={reply}
-                                    onChange={setReply}
+                                    onChange={(value) => {
+                                        setReply(value)
+                                        sendTyping([activeThread.otherUserId, ...(activeThread.extraParticipantIds || [])], !!value.trim())
+                                    }}
                                     onSend={sendReply}
                                     sending={sending}
                                     canSend={!!reply.trim()}
