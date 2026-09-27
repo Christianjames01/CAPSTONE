@@ -1,7 +1,12 @@
 /* Messenger-style Messages layout (components/ChatApp.jsx). Uses each
    portal's theme tokens, so light and dark mode both work. */
 
+/* Chat colors: other people's bubbles and the input fields need to stand
+   out from the chat background in dark mode too. */
 .chat-app {
+    --chat-other: var(--paper);
+    --chat-field: var(--paper);
+    --chat-self: var(--blue);
     display: grid;
     grid-template-columns: 340px minmax(0, 1fr);
     height: calc(100vh - 88px);
@@ -17,6 +22,12 @@
 .chat-app > * {
     min-width: 0;
     min-height: 0;
+}
+
+html[data-theme="dark"] .chat-app {
+    --chat-other: #2C3446;
+    --chat-field: #262D3C;
+    --chat-self: #2466C8;
 }
 
 /* ---- Conversation list -------------------------------------------------- */
@@ -66,7 +77,7 @@
     padding: 9px 14px 9px 38px;
     border: none;
     border-radius: 999px;
-    background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357616F' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M19.5 19.5 15 15'/%3E%3C/svg%3E") no-repeat 13px center / 16px;
+    background: var(--chat-field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357616F' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M19.5 19.5 15 15'/%3E%3C/svg%3E") no-repeat 13px center / 16px;
     color: var(--ink);
     font-size: 14px;
     outline: none;
@@ -424,7 +435,7 @@
     padding: 10px 16px;
     border: none;
     border-radius: 20px;
-    background: var(--paper);
+    background: var(--chat-field);
     color: var(--ink);
     font: inherit;
     font-size: 14.5px;
@@ -447,7 +458,7 @@
     margin: 0;
     border: none;
     border-radius: 50%;
-    background: var(--blue);
+    background: var(--chat-self);
     color: #fff;
     cursor: pointer;
     transition: transform 0.12s ease, opacity 0.12s ease;
@@ -606,7 +617,7 @@
     gap: 4px;
     padding: 12px 14px;
     border-radius: 18px;
-    background: var(--paper);
+    background: var(--chat-other);
 }
 
 .chat-typing span {

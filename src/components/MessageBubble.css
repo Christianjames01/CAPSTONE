@@ -336,11 +336,11 @@
 }
 
 .msg-row:not(.is-self) .msg-bubble {
-    background: var(--paper);
+    background: var(--chat-other, var(--paper));
 }
 
 .msg-row.is-self .msg-bubble {
-    background: linear-gradient(160deg, var(--blue-accent, var(--blue)), var(--blue));
+    background: var(--chat-self, var(--blue));
 }
 
 .msg-row:not(.is-self):not(.is-group-start) .msg-bubble { border-top-left-radius: 5px; }
