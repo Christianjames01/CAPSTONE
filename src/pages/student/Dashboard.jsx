@@ -4,7 +4,9 @@ import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
-import { findAssignedEmployee } from '../../lib/assignEmployee'
+import { loadHiddenMessageIds, readMessage } from '../../lib/messageActions'
+import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
+import { chatListTime } from '../../lib/chatTime'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
 import { fetchOfficeScheduleNotices } from '../../lib/officeCalendar'
 import AnnouncementNotice from '../../components/AnnouncementNotice'
@@ -61,7 +63,7 @@ function Dashboard() {
     }, [])
 
     // Update in place when requests change -- no manual refresh needed.
-    useLiveRefresh(['document_requests', 'claim_schedules', 'announcements', 'office_open_days'], loadDashboard)
+    useLiveRefresh(['document_requests', 'claim_schedules', 'announcements', 'office_open_days', 'messages'], loadDashboard)
 
     async function loadDashboard() {
         try {
@@ -160,39 +162,43 @@ function Dashboard() {
 
             setMissedClaimCount(missedCount || 0)
 
-            const assignedEmployeeId = await findAssignedEmployee(student.college_id, student.program_id)
+            // Most recent message in any of the student's conversations (the
+            // staff handling their requests, or the Registrar Head), shown the
+            // way Messages shows it: tags removed, deleted ones as such.
+            const [{ data: messageRows }, hiddenIds, { count: unreadCount }] = await Promise.all([
+                supabase
+                    .from('messages')
+                    .select('message_id, sender_user_id, receiver_user_id, message, is_read, created_at, deleted_at')
+                    .or(`sender_user_id.eq.${user.id},receiver_user_id.eq.${user.id}`)
+                    .order('created_at', { ascending: false })
+                    .limit(20),
+                loadHiddenMessageIds(user.id),
+                supabase
+                    .from('messages')
+                    .select('message_id', { count: 'exact', head: true })
+                    .eq('receiver_user_id', user.id)
+                    .eq('is_read', false),
+            ])
 
-            if (assignedEmployeeId) {
-                const { data: employeeRow } = await supabase
-                    .from('employees')
-                    .select('user_id')
-                    .eq('employee_id', assignedEmployeeId)
-                    .single()
+            const latest = (messageRows || []).find((m) => !hiddenIds.has(m.message_id))
+            setUnreadMessageCount(unreadCount || 0)
 
-                if (employeeRow) {
-                    const { data: messageRows } = await supabase
-                        .from('messages')
-                        .select('message_id, sender_user_id, message, is_read, created_at')
-                        .or(`and(sender_user_id.eq.${user.id},receiver_user_id.eq.${employeeRow.user_id}),and(sender_user_id.eq.${employeeRow.user_id},receiver_user_id.eq.${user.id})`)
-                        .order('created_at', { ascending: false })
-                        .limit(1)
+            if (latest) {
+                const shown = readMessage(latest)
+                const otherId = latest.sender_user_id === user.id ? latest.receiver_user_id : latest.sender_user_id
+                const [labels, { data: employeeRow }] = await Promise.all([
+                    buildSenderLabels([otherId]),
+                    supabase.from('employees').select('employee_id, display_name').eq('user_id', otherId).maybeSingle(),
+                ])
 
-                    if (messageRows && messageRows.length > 0) {
-                        setLatestMessage({
-                            ...messageRows[0],
-                            fromStaff: messageRows[0].sender_user_id === employeeRow.user_id,
-                        })
-                    }
-
-                    const { count } = await supabase
-                        .from('messages')
-                        .select('message_id', { count: 'exact', head: true })
-                        .eq('receiver_user_id', user.id)
-                        .eq('sender_user_id', employeeRow.user_id)
-                        .eq('is_read', false)
-
-                    setUnreadMessageCount(count || 0)
-                }
+                setLatestMessage({
+                    ...shown,
+                    fromStaff: latest.sender_user_id !== user.id,
+                    otherName: employeeRow?.display_name?.trim() || labels[otherId] || REGISTRAR_LABEL,
+                    employeeId: employeeRow?.employee_id || null,
+                })
+            } else {
+                setLatestMessage(null)
             }
 
         } catch (error) {
@@ -443,8 +449,7 @@ function Dashboard() {
                                         Recent Message
                                     </h3>
                                     <p>
-                                        {latestMessage.fromStaff ? 'From your registrar staff' : 'You sent'} ·{' '}
-                                        {new Date(latestMessage.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                                        {latestMessage.fromStaff ? `From ${latestMessage.otherName}` : `You to ${latestMessage.otherName}`} · {chatListTime(latestMessage.created_at)}
                                     </p>
                                 </div>
                                 {unreadMessageCount > 0 && (
@@ -453,12 +458,17 @@ function Dashboard() {
                             </div>
 
                             <p style={{ fontSize: 13.5, color: 'var(--ink)', margin: '4px 0 10px' }}>
-                                {latestMessage.message.length > 140
-                                    ? `${latestMessage.message.slice(0, 140)}…`
-                                    : latestMessage.message}
+                                {latestMessage.deleted_at
+                                    ? <em style={{ color: 'var(--slate)' }}>{latestMessage.fromStaff ? 'This message was deleted.' : 'You deleted this message.'}</em>
+                                    : latestMessage.message.length > 140
+                                        ? `${latestMessage.message.slice(0, 140)}…`
+                                        : latestMessage.message}
                             </p>
 
-                            <button className="student-link-button" onClick={() => navigate('/student/messages')}>
+                            <button
+                                className="student-link-button"
+                                onClick={() => navigate(latestMessage.employeeId ? `/student/messages?employee=${latestMessage.employeeId}` : '/student/messages')}
+                            >
                                 {unreadMessageCount > 0 ? 'Reply →' : 'View conversation →'}
                             </button>
                         </div>
