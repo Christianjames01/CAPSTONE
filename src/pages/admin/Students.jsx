@@ -35,7 +35,7 @@ function Students() {
     const [selectedProgramKey, setSelectedProgramKey] = useState(null)
     const [yearLevelFilter, setYearLevelFilter] = useState('all')
 
-    useLiveRefresh(['students', 'profiles'], () => { loadAllStudents({ silent: true }); loadPendingVerifications() })
+    useLiveRefresh(['students'], () => { loadAllStudents({ silent: true }); loadPendingVerifications() })
 
     useEffect(() => {
         loadAllStudents()

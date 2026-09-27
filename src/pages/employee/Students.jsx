@@ -29,7 +29,7 @@ function Students() {
     const [reviewingId, setReviewingId] = useState(null)
     const [selectedProgramKey, setSelectedProgramKey] = useState(null)
 
-    useLiveRefresh(['students', 'profiles'], () => { loadPendingVerifications(); if (!term.trim()) loadAllStudents({ silent: true }) })
+    useLiveRefresh(['students'], () => { loadPendingVerifications(); if (!term.trim()) loadAllStudents({ silent: true }) })
 
     useEffect(() => {
         loadAllStudents()

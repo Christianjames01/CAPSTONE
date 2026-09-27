@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
@@ -10,6 +10,7 @@ import ProductTour from '../../components/ProductTour'
 import { HEAD_TOUR } from '../../lib/tourSteps'
 import './AdminLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import PageLoading from '../../components/PageLoading'
 
 const NAV_ITEMS = [
     { to: '/admin/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
@@ -213,7 +214,7 @@ function AdminLayout() {
             </aside>
 
             <main className="admin-content">
-                <Outlet />
+                <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
             </main>
 
             <ProductTour role="head" steps={HEAD_TOUR} />

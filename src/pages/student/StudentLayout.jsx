@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -27,6 +27,7 @@ import '../../components/PortalUi.css'
 import { STUDENT_TOUR } from '../../lib/tourSteps'
 import './StudentLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import PageLoading from '../../components/PageLoading'
 
 const NAV_ITEMS = [
     { to: '/student/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
@@ -262,7 +263,7 @@ function StudentLayout() {
             </aside>
 
             <main className="student-content">
-                <Outlet />
+                <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
             </main>
 
             <ProductTour role="student" steps={STUDENT_TOUR} />

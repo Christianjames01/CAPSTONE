@@ -36,7 +36,7 @@ function StudentHistory() {
     const [resettingPassword, setResettingPassword] = useState(false)
     const [changingEmail, setChangingEmail] = useState(false)
 
-    useLiveRefresh(['students', 'profiles', 'document_requests'], (options) => loadHistory(options))
+    useLiveRefresh(['students', 'document_requests'], (options) => loadHistory(options))
 
     useEffect(() => {
         loadHistory()

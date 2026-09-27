@@ -1,87 +1,93 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import PageLoading from './components/PageLoading'
+
+// Each page is downloaded the first time it's opened (code splitting), so
+// signing in doesn't mean downloading every page of every portal.
 
 import ProtectedRoute from './components/ProtectedRoute'
 import RequireFullEmployeeAccess from './components/RequireFullEmployeeAccess'
 import StudentVerificationGate from './components/StudentVerificationGate'
 import HomeRoute from './components/HomeRoute'
 
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import EmployeeRegister from './pages/auth/EmployeeRegister'
-import AuthCallback from './pages/auth/AuthCallback'
-import CompleteProfile from './pages/auth/CompleteProfile'
-import ForgotPassword from './pages/auth/ForgotPassword'
-import ResetPassword from './pages/auth/ResetPassword'
-import ForceChangePassword from './pages/auth/ForceChangePassword'
+const Login = lazy(() => import('./pages/auth/Login'))
+const Register = lazy(() => import('./pages/auth/Register'))
+const EmployeeRegister = lazy(() => import('./pages/auth/EmployeeRegister'))
+const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'))
+const CompleteProfile = lazy(() => import('./pages/auth/CompleteProfile'))
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
+const ForceChangePassword = lazy(() => import('./pages/auth/ForceChangePassword'))
 
-import Terms from './pages/legal/Terms'
-import PrivacyPolicy from './pages/legal/PrivacyPolicy'
-import CookiePolicy from './pages/legal/CookiePolicy'
-import RefundPolicy from './pages/legal/RefundPolicy'
+const Terms = lazy(() => import('./pages/legal/Terms'))
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'))
+const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'))
+const RefundPolicy = lazy(() => import('./pages/legal/RefundPolicy'))
 
-import VerifyCredential from './pages/verify/VerifyCredential'
-import QueueDisplay from './pages/QueueDisplay'
+const VerifyCredential = lazy(() => import('./pages/verify/VerifyCredential'))
+const QueueDisplay = lazy(() => import('./pages/QueueDisplay'))
 
-import StudentLayout from './pages/student/StudentLayout'
-import Dashboard from './pages/student/Dashboard'
-import NewRequest from './pages/student/NewRequest'
-import MyRequest from './pages/student/MyRequest'
-import StudentRequestDetails from './pages/student/RequestDetails'
-import UploadReceipt from './pages/student/UploadReceipt'
-import UploadReceiptList from './pages/student/UploadReceiptList'
-import UploadRequirements from './pages/student/UploadRequirements'
-import StudentClaimSchedule from './pages/student/ClaimSchedule'
-import StudentMessages from './pages/student/Messages'
-import Notifications from './pages/student/Notifications'
-import Profile from './pages/student/Profile'
-import HelpSupport from './pages/student/HelpSupport'
-import StudentUserGuide from './pages/student/UserGuidePage'
-import EmployeeUserGuide from './pages/employee/UserGuidePage'
-import AdminUserGuide from './pages/admin/UserGuidePage'
+const StudentLayout = lazy(() => import('./pages/student/StudentLayout'))
+const Dashboard = lazy(() => import('./pages/student/Dashboard'))
+const NewRequest = lazy(() => import('./pages/student/NewRequest'))
+const MyRequest = lazy(() => import('./pages/student/MyRequest'))
+const StudentRequestDetails = lazy(() => import('./pages/student/RequestDetails'))
+const UploadReceipt = lazy(() => import('./pages/student/UploadReceipt'))
+const UploadReceiptList = lazy(() => import('./pages/student/UploadReceiptList'))
+const UploadRequirements = lazy(() => import('./pages/student/UploadRequirements'))
+const StudentClaimSchedule = lazy(() => import('./pages/student/ClaimSchedule'))
+const StudentMessages = lazy(() => import('./pages/student/Messages'))
+const Notifications = lazy(() => import('./pages/student/Notifications'))
+const Profile = lazy(() => import('./pages/student/Profile'))
+const HelpSupport = lazy(() => import('./pages/student/HelpSupport'))
+const StudentUserGuide = lazy(() => import('./pages/student/UserGuidePage'))
+const EmployeeUserGuide = lazy(() => import('./pages/employee/UserGuidePage'))
+const AdminUserGuide = lazy(() => import('./pages/admin/UserGuidePage'))
 
-import EmployeeLayout from './pages/employee/EmployeeLayout'
-import EmployeeDashboard from './pages/employee/Dashboard'
-import EmployeeRequestDetails from './pages/employee/RequestDetails'
-import ClaimSchedule from './pages/employee/ClaimSchedule'
-import AssignedRequests from './pages/employee/AssignedRequests'
-import RequestVerification from './pages/employee/RequestVerification'
-import DocumentProcessing from './pages/employee/DocumentProcessing'
-import ClaimScheduleList from './pages/employee/ClaimScheduleList'
-import EmployeeOfficeCalendar from './pages/employee/OfficeCalendar'
-import EmployeeStudents from './pages/employee/Students'
-import StudentHistory from './pages/employee/StudentHistory'
-import EmployeeMessages from './pages/employee/Messages'
-import EmployeeNotifications from './pages/employee/Notifications'
-import ActivityLogs from './pages/employee/ActivityLogs'
-import EmployeeQueue from './pages/employee/Queue'
-import EmployeeProfile from './pages/employee/Profile'
+const EmployeeLayout = lazy(() => import('./pages/employee/EmployeeLayout'))
+const EmployeeDashboard = lazy(() => import('./pages/employee/Dashboard'))
+const EmployeeRequestDetails = lazy(() => import('./pages/employee/RequestDetails'))
+const ClaimSchedule = lazy(() => import('./pages/employee/ClaimSchedule'))
+const AssignedRequests = lazy(() => import('./pages/employee/AssignedRequests'))
+const RequestVerification = lazy(() => import('./pages/employee/RequestVerification'))
+const DocumentProcessing = lazy(() => import('./pages/employee/DocumentProcessing'))
+const ClaimScheduleList = lazy(() => import('./pages/employee/ClaimScheduleList'))
+const EmployeeOfficeCalendar = lazy(() => import('./pages/employee/OfficeCalendar'))
+const EmployeeStudents = lazy(() => import('./pages/employee/Students'))
+const StudentHistory = lazy(() => import('./pages/employee/StudentHistory'))
+const EmployeeMessages = lazy(() => import('./pages/employee/Messages'))
+const EmployeeNotifications = lazy(() => import('./pages/employee/Notifications'))
+const ActivityLogs = lazy(() => import('./pages/employee/ActivityLogs'))
+const EmployeeQueue = lazy(() => import('./pages/employee/Queue'))
+const EmployeeProfile = lazy(() => import('./pages/employee/Profile'))
 
-import AdminLayout from './pages/admin/AdminLayout'
-import AdminDashboard from './pages/admin/Dashboard'
-import AllRequests from './pages/admin/AllRequests'
-import AdminRequestDetails from './pages/admin/RequestDetails'
-import Assignments from './pages/admin/Assignments'
-import AdminEmployees from './pages/admin/Employees'
-import EmployeeDetails from './pages/admin/EmployeeDetails'
-import AdminStudents from './pages/admin/Students'
-import AdminStudentDetails from './pages/admin/StudentDetails'
-import AdminDocuments from './pages/admin/Documents'
-import Announcements from './pages/admin/Announcements'
-import CollegesPrograms from './pages/admin/CollegesPrograms'
-import AdminClaimSchedules from './pages/admin/ClaimSchedules'
-import OfficeCalendar from './pages/admin/OfficeCalendar'
-import AdminQueue from './pages/admin/Queue'
-import AdminClaimSchedule from './pages/admin/ClaimSchedule'
-import OfficialReceipts from './pages/admin/OfficialReceipts'
-import AdminMessages from './pages/admin/Messages'
-import AdminNotifications from './pages/admin/Notifications'
-import AdminActivityLogs from './pages/admin/ActivityLogs'
-import Reports from './pages/admin/Reports'
-import AdminProfile from './pages/admin/Profile'
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const AllRequests = lazy(() => import('./pages/admin/AllRequests'))
+const AdminRequestDetails = lazy(() => import('./pages/admin/RequestDetails'))
+const Assignments = lazy(() => import('./pages/admin/Assignments'))
+const AdminEmployees = lazy(() => import('./pages/admin/Employees'))
+const EmployeeDetails = lazy(() => import('./pages/admin/EmployeeDetails'))
+const AdminStudents = lazy(() => import('./pages/admin/Students'))
+const AdminStudentDetails = lazy(() => import('./pages/admin/StudentDetails'))
+const AdminDocuments = lazy(() => import('./pages/admin/Documents'))
+const Announcements = lazy(() => import('./pages/admin/Announcements'))
+const CollegesPrograms = lazy(() => import('./pages/admin/CollegesPrograms'))
+const AdminClaimSchedules = lazy(() => import('./pages/admin/ClaimSchedules'))
+const OfficeCalendar = lazy(() => import('./pages/admin/OfficeCalendar'))
+const AdminQueue = lazy(() => import('./pages/admin/Queue'))
+const AdminClaimSchedule = lazy(() => import('./pages/admin/ClaimSchedule'))
+const OfficialReceipts = lazy(() => import('./pages/admin/OfficialReceipts'))
+const AdminMessages = lazy(() => import('./pages/admin/Messages'))
+const AdminNotifications = lazy(() => import('./pages/admin/Notifications'))
+const AdminActivityLogs = lazy(() => import('./pages/admin/ActivityLogs'))
+const Reports = lazy(() => import('./pages/admin/Reports'))
+const AdminProfile = lazy(() => import('./pages/admin/Profile'))
 
 function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<PageLoading />}>
       <Routes>
 
         <Route
@@ -462,6 +468,7 @@ function App() {
         </Route>
 
       </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

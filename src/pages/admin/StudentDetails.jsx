@@ -48,7 +48,7 @@ function StudentDetails() {
     const [changingEmail, setChangingEmail] = useState(false)
     const [currentRole, setCurrentRole] = useState('')
 
-    useLiveRefresh(['students', 'profiles', 'document_requests', 'request_requirements'], (options) => loadDetails(options))
+    useLiveRefresh(['students', 'document_requests', 'request_requirements'], (options) => loadDetails(options))
 
     useEffect(() => {
         loadDetails()

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { dashboardPathForRole } from '../lib/roleRedirect'
-import LandingPage from '../pages/LandingPage/LandingPage'
+import PageLoading from './PageLoading'
+
+// Only visitors who aren't signed in see the landing page, so load it then.
+const LandingPage = lazy(() => import('../pages/LandingPage/LandingPage'))
 
 function HomeRoute() {
     const [checking, setChecking] = useState(true)
@@ -49,7 +52,7 @@ function HomeRoute() {
 
     if (redirectTo) return <Navigate to={redirectTo} replace />
 
-    return <LandingPage />
+    return <Suspense fallback={<PageLoading />}><LandingPage /></Suspense>
 }
 
 export default HomeRoute

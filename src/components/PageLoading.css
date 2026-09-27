@@ -1,0 +1,39 @@
+.page-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    height: 3px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.page-loading.is-inline {
+    position: relative;
+    z-index: auto;
+    margin: -4px 0 16px;
+    border-radius: 3px;
+}
+
+.page-loading-bar {
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #123B78, #C8102E);
+    animation: page-loading-slide 1s ease-in-out infinite;
+}
+
+@keyframes page-loading-slide {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(250%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-loading-bar {
+        width: 100%;
+        animation: none;
+        opacity: 0.6;
+    }
+}

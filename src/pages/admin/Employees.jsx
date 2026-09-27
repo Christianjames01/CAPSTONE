@@ -44,7 +44,7 @@ function Employees() {
     const [addError, setAddError] = useState('')
     const [addMessage, setAddMessage] = useState('')
 
-    useLiveRefresh(['employees', 'employee_assignments', 'profiles'], (options) => loadEmployees(options))
+    useLiveRefresh(['employees', 'employee_assignments'], (options) => loadEmployees(options))
 
     useEffect(() => {
         loadEmployees()

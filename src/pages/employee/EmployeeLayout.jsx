@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import hcdcLogo from '../../assets/hcdc-logo.png'
@@ -13,6 +13,7 @@ import '../../components/PortalUi.css'
 import { EMPLOYEE_TOUR } from '../../lib/tourSteps'
 import './EmployeeLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import PageLoading from '../../components/PageLoading'
 
 const NAV_ITEMS = [
     { to: '/employee/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
@@ -222,7 +223,7 @@ function EmployeeLayout() {
             </aside>
 
             <main className="employee-content">
-                <Outlet />
+                <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
             </main>
 
             <ProductTour role="employee" steps={EMPLOYEE_TOUR} />
