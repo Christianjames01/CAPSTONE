@@ -2,12 +2,14 @@
 // password reset). Supabase checks the token server-side once "CAPTCHA
 // protection" is enabled in Auth settings with the Turnstile secret key.
 //
-// Off until VITE_TURNSTILE_SITE_KEY is set: no widget, no token, and auth
-// works exactly as before. Turn it on in this order:
-//   1. set the site key (Vercel env / .env) and redeploy,
-//   2. then enable CAPTCHA protection in Supabase with the secret key.
+// With CAPTCHA enabled in Supabase, every sign-up, password sign-in and
+// password reset must send a token from this site key.
 
-export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
+// The public site key, written here on purpose instead of read from a
+// Vercel variable: a secret key pasted into that variable by mistake would
+// otherwise be published inside the website (Vite inlines env values).
+// The secret key belongs only in Supabase Auth.
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAEk6wBO7GnQDBJCw'
 export const captchaEnabled = Boolean(TURNSTILE_SITE_KEY)
 
 let scriptPromise = null
