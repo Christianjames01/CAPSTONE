@@ -11,6 +11,7 @@ import { useDraftState, clearDraft } from '../../lib/useDraftState'
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { digitsOnly } from '../../lib/typedNumber'
 
 // Alphabetical order puts "Fourth Year" right after "First Year" (both
 // start with "F"), so year_level needs an explicit chronological order
@@ -536,16 +537,25 @@ function NewRequest() {
                     )}
 
                     <div className="form-group">
-                        <label className="form-label">Quantity</label>
+                        <label className="form-label" htmlFor="request-quantity">Quantity</label>
                         <input
+                            id="request-quantity"
                             className="form-input"
-                            type="number"
-                            min="1"
-                            max={selectedDocumentDetails?.max_quantity_per_request || 2}
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            placeholder="1"
                             value={quantity}
-                            onChange={(e) => setQuantity(Math.min(selectedDocumentDetails?.max_quantity_per_request || 2, Number(e.target.value)))}
+                            onChange={(e) => {
+                                const typed = digitsOnly(e.target.value)
+                                setQuantity(typed === '' ? '' : Math.min(selectedDocumentDetails?.max_quantity_per_request || 2, Number(typed)))
+                            }}
+                            onBlur={() => { if (!Number(quantity)) setQuantity(1) }}
                             disabled={loading}
                         />
+                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                            Up to {selectedDocumentDetails?.max_quantity_per_request || 2} {(selectedDocumentDetails?.max_quantity_per_request || 2) === 1 ? 'copy' : 'copies'} per request.
+                        </small>
                     </div>
 
                     <div className="form-group">

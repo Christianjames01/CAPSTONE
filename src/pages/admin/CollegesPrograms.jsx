@@ -11,6 +11,7 @@ import { IconBuilding, IconLayers, IconBan } from './icons'
 import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { digitsOnly, decimalOnly } from '../../lib/typedNumber'
 
 // programs.duration_years is always stored in years -- these just let the
 // admin type/read a short vocational course's length in whichever unit
@@ -616,11 +617,12 @@ function CollegesPrograms() {
                                         <input
                                             id="program-duration"
                                             className="form-input"
-                                            type="number"
-                                            min="0"
-                                            step={programDurationUnit === 'months' ? 1 : 0.5}
+                                            type="text"
+                                            inputMode={programDurationUnit === 'months' ? 'numeric' : 'decimal'}
+                                            autoComplete="off"
+                                            placeholder={programDurationUnit === 'months' ? 'e.g. 48' : 'e.g. 4'}
                                             value={programForm.duration_years}
-                                            onChange={(e) => setProgramForm({ ...programForm, duration_years: e.target.value })}
+                                            onChange={(e) => setProgramForm({ ...programForm, duration_years: programDurationUnit === 'months' ? digitsOnly(e.target.value) : decimalOnly(e.target.value) })}
                                             disabled={saving}
                                             style={{ flex: 1, minWidth: 0 }}
                                         />
@@ -796,11 +798,12 @@ function CollegesPrograms() {
                                     <input
                                         id="new-program-duration"
                                         className="form-input"
-                                        type="number"
-                                        min="0"
-                                        step={customDurationUnit === 'months' ? 1 : 0.5}
+                                        type="text"
+                                        inputMode={customDurationUnit === 'months' ? 'numeric' : 'decimal'}
+                                        autoComplete="off"
+                                        placeholder={customDurationUnit === 'months' ? 'e.g. 48' : 'e.g. 4'}
                                         value={customProgram.durationYears}
-                                        onChange={(e) => setCustomProgram({ ...customProgram, durationYears: e.target.value })}
+                                        onChange={(e) => setCustomProgram({ ...customProgram, durationYears: customDurationUnit === 'months' ? digitsOnly(e.target.value) : decimalOnly(e.target.value) })}
                                         disabled={addingBulk}
                                         style={{ flex: 1, minWidth: 0 }}
                                     />

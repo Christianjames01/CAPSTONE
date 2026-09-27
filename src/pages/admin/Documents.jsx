@@ -11,6 +11,7 @@ import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { digitsOnly, decimalOnly } from '../../lib/typedNumber'
 
 const PREVIEW_IMAGE_BUCKET = 'document-previews'
 
@@ -503,17 +504,17 @@ function Documents() {
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="doc-fee">Fee (₱)</label>
-                            <input id="doc-fee" className="form-input" type="number" min="0" step="0.01" value={form.fee} onChange={(e) => setForm({ ...form, fee: e.target.value })} disabled={saving} />
+                            <input id="doc-fee" className="form-input" type="text" inputMode="decimal" autoComplete="off" placeholder="0.00" value={form.fee} onChange={(e) => setForm({ ...form, fee: decimalOnly(e.target.value) })} disabled={saving} />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="doc-days-min">Processing Days (Min)</label>
-                            <input id="doc-days-min" className="form-input" type="number" min="0" value={form.processing_days_min} onChange={(e) => setForm({ ...form, processing_days_min: e.target.value })} disabled={saving} />
+                            <input id="doc-days-min" className="form-input" type="text" inputMode="numeric" autoComplete="off" value={form.processing_days_min} onChange={(e) => setForm({ ...form, processing_days_min: digitsOnly(e.target.value) })} disabled={saving} />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="doc-days-max">Processing Days (Max)</label>
-                            <input id="doc-days-max" className="form-input" type="number" min="0" value={form.processing_days_max} onChange={(e) => setForm({ ...form, processing_days_max: e.target.value })} disabled={saving} />
+                            <input id="doc-days-max" className="form-input" type="text" inputMode="numeric" autoComplete="off" value={form.processing_days_max} onChange={(e) => setForm({ ...form, processing_days_max: digitsOnly(e.target.value) })} disabled={saving} />
                         </div>
                     </div>
 
@@ -524,10 +525,11 @@ function Documents() {
                                 <input
                                     id="doc-max-active-requests"
                                     className="form-input"
-                                    type="number"
-                                    min="1"
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
                                     value={form.max_active_requests}
-                                    onChange={(e) => setForm({ ...form, max_active_requests: e.target.value })}
+                                    onChange={(e) => setForm({ ...form, max_active_requests: digitsOnly(e.target.value) })}
                                     disabled={saving}
                                 />
                                 <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
@@ -540,10 +542,11 @@ function Documents() {
                                 <input
                                     id="doc-max-quantity"
                                     className="form-input"
-                                    type="number"
-                                    min="1"
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
                                     value={form.max_quantity_per_request}
-                                    onChange={(e) => setForm({ ...form, max_quantity_per_request: e.target.value })}
+                                    onChange={(e) => setForm({ ...form, max_quantity_per_request: digitsOnly(e.target.value) })}
                                     disabled={saving}
                                 />
                                 <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>

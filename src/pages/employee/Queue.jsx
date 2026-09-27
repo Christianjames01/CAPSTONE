@@ -7,6 +7,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconTicket, IconHourglass, IconCheckCircle, IconXCircle } from '../admin/icons'
 import './EmployeePages.css'
+import { digitsOnly } from '../../lib/typedNumber'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -219,13 +220,14 @@ function EmployeeQueue() {
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                         <span style={{ color: 'var(--slate)' }}>Count</span>
                         <input
-                            type="number"
-                            min={1}
-                            max={100}
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            aria-label="How many queue numbers to issue"
                             className="employee-search-input"
                             style={{ width: 70, padding: '8px 10px' }}
                             value={batchCount}
-                            onChange={(e) => setBatchCount(e.target.value)}
+                            onChange={(e) => setBatchCount(digitsOnly(e.target.value).slice(0, 3))}
                             disabled={issuing}
                         />
                     </label>
