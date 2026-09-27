@@ -2,18 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
-import CaptchaCheck from '../../components/CaptchaCheck'
-import { captchaEnabled } from '../../lib/captcha'
+import { captchaEnabled, getCaptchaToken } from '../../lib/captcha'
 
 function ForgotPassword() {
-    // Turnstile token for Supabase Auth (see lib/captcha.js); single-use, so
-    // the check is remounted (captchaKey) after every attempt.
-    const [captchaToken, setCaptchaToken] = useState(null)
-    const [captchaKey, setCaptchaKey] = useState(0)
-    const resetCaptcha = () => {
-        setCaptchaToken(null)
-        setCaptchaKey((k) => k + 1)
-    }
     const [email, setEmail] = useState('')
     const [message, setMessage] = useState('')
     const [status, setStatus] = useState('idle')
@@ -26,9 +17,11 @@ function ForgotPassword() {
         setMessage('')
         setStatus('idle')
 
+        // The security check (slide puzzle + Cloudflare) pops up now.
+        const captchaToken = await getCaptchaToken()
         if (captchaEnabled && !captchaToken) {
             setStatus('error')
-            setMessage('Please complete the security check ("Verify you are human") first.')
+            setMessage('Please complete the security check to get a reset link.')
             setLoading(false)
             return
         }
@@ -37,7 +30,6 @@ function ForgotPassword() {
             redirectTo: `${window.location.origin}/reset-password`,
             captchaToken: captchaToken || undefined,
         })
-        resetCaptcha()
 
         setLoading(false)
 
@@ -81,8 +73,6 @@ function ForgotPassword() {
                 {message && (
                     <p className={`form-message ${status === 'error' ? 'error' : 'success'}`}>{message}</p>
                 )}
-
-                <CaptchaCheck key={captchaKey} onToken={setCaptchaToken} />
 
                 <button type="submit" className="auth-submit" disabled={loading || status === 'success'}>
                     {loading ? 'Sending...' : 'Send reset link'}

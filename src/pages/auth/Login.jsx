@@ -8,21 +8,12 @@ import { getInactiveAccountMessage, getEmployeeAccountIssue, employeeIssueMessag
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordToggleButton from './PasswordToggleButton'
-import CaptchaCheck from '../../components/CaptchaCheck'
-import { captchaEnabled } from '../../lib/captcha'
+import { captchaEnabled, getCaptchaToken } from '../../lib/captcha'
 
 function Login() {
     const navigate = useNavigate()
     const location = useLocation()
 
-    // Turnstile token for Supabase Auth (see lib/captcha.js); single-use, so
-    // the check is remounted (captchaKey) after every attempt.
-    const [captchaToken, setCaptchaToken] = useState(null)
-    const [captchaKey, setCaptchaKey] = useState(0)
-    const resetCaptcha = () => {
-        setCaptchaToken(null)
-        setCaptchaKey((k) => k + 1)
-    }
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [message, setMessage] = useState(location.state?.message || '')
@@ -100,9 +91,11 @@ function Login() {
             return
         }
 
+        // The security check (slide puzzle + Cloudflare) pops up now.
+        const captchaToken = await getCaptchaToken()
         if (captchaEnabled && !captchaToken) {
             setMessageType('error')
-            setMessage('Please complete the security check ("Verify you are human") above the Log in button.')
+            setMessage('Please complete the security check to log in.')
             setLoading(false)
             return
         }
@@ -112,7 +105,6 @@ function Login() {
             password,
             options: { captchaToken: captchaToken || undefined },
         })
-        resetCaptcha()
 
         if (error) {
             const attempt = await recordLoginAttempt(email, false)
@@ -279,8 +271,6 @@ function Login() {
                                 Forgot password?
                             </Link>
                         </div>
-
-                        <CaptchaCheck key={captchaKey} onToken={setCaptchaToken} />
 
                         {message && <p className={`form-message ${messageType}`}>{message}</p>}
 

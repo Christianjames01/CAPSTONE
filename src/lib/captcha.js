@@ -33,43 +33,13 @@ export function loadTurnstile() {
     return scriptPromise
 }
 
-// A one-time token for actions without a visible check on the page (e.g.
-// confirming your current password on the Profile page). Usually passes
-// silently; if Cloudflare wants a click, a small box appears on screen.
-// Returns undefined when CAPTCHA isn't enabled.
+// Asks the user to pass the security check (slide puzzle, then Cloudflare)
+// in a pop-up, and returns the one-time token -- or null if they closed it.
+// Called right before each sign-up / password sign-in / password reset (and
+// the Profile password re-checks), so the forms don't show the puzzle until
+// it's needed. Returns undefined when CAPTCHA isn't enabled.
 export async function getCaptchaToken() {
     if (!captchaEnabled) return undefined
-
-    const turnstile = await loadTurnstile()
-
-    return new Promise((resolve, reject) => {
-        const host = document.createElement('div')
-        host.className = 'captcha-floating'
-        document.body.appendChild(host)
-
-        let widgetId = null
-        const cleanup = () => {
-            setTimeout(() => {
-                try { if (widgetId !== null) turnstile.remove(widgetId) } catch { /* already gone */ }
-                host.remove()
-            }, 0)
-        }
-
-        widgetId = turnstile.render(host, {
-            sitekey: TURNSTILE_SITE_KEY,
-            appearance: 'interaction-only',
-            callback: (token) => {
-                resolve(token)
-                cleanup()
-            },
-            'error-callback': () => {
-                reject(new Error('Security check failed. Please try again.'))
-                cleanup()
-            },
-            'timeout-callback': () => {
-                reject(new Error('Security check timed out. Please try again.'))
-                cleanup()
-            },
-        })
-    })
+    const { openCaptchaPrompt } = await import('./captchaPrompt.jsx')
+    return openCaptchaPrompt()
 }
