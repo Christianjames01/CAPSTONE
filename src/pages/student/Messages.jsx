@@ -9,7 +9,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
 import { ChatApp, ChatSidebar, ChatListItem, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
 import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
-import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend, refOf, stripRef, DIRECT_HEAD_MESSAGES_SINCE } from '../../lib/messageActions'
+import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend, refOf, stripRef } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -123,29 +123,17 @@ function Messages() {
             const labels = await buildSenderLabels(otherUserIds)
 
             // Which conversation each message belongs in. Messages with an
-            // employee go in that employee's conversation. A Registrar Head
-            // reply tagged with an employee goes in that employee's
-            // conversation. Any other head message is a direct one and gets
-            // its own conversation -- except older untagged ones, which go
-            // in the conversation that was active when they were sent (the
-            // one holding the latest earlier message), as before.
+            // employee go in that employee's conversation, and so do Registrar
+            // Head replies sent into it (tagged with that employee, see
+            // admin/Messages sendReply). Any other message from the head is a
+            // direct one and gets its own conversation.
             const employeeUserSet = new Set(employeeUserIds)
             const assigned = {}
-            let lastThread = null
             for (const m of rows) {
                 const other = otherParty(m, user.id)
-                if (employeeUserSet.has(other)) {
-                    assigned[m.message_id] = other
-                    lastThread = other
-                } else if (m.refUserId && employeeUserSet.has(m.refUserId)) {
-                    assigned[m.message_id] = m.refUserId
-                } else if (new Date(m.created_at) >= new Date(DIRECT_HEAD_MESSAGES_SINCE)) {
-                    assigned[m.message_id] = other
-                } else if (employeeUserSet.size > 0) {
-                    assigned[m.message_id] = lastThread // null = not placed yet (see below)
-                } else {
-                    assigned[m.message_id] = other
-                }
+                assigned[m.message_id] = !employeeUserSet.has(other) && m.refUserId && employeeUserSet.has(m.refUserId)
+                    ? m.refUserId
+                    : other
             }
 
             const lastAt = (uid) => {
@@ -187,11 +175,6 @@ function Messages() {
             // Active handlers first, then most recent conversation.
             list.sort((a, b) => Number(b.handlesActive) - Number(a.handlesActive) || b.lastAt - a.lastAt || b.latestRequestAt - a.latestRequestAt)
 
-            // Staff messages sent before any employee conversation existed go
-            // in the top conversation.
-            for (const id of Object.keys(assigned)) {
-                if (!assigned[id]) assigned[id] = list[0]?.userId || null
-            }
 
             setContacts(list)
             setMessages(rows)

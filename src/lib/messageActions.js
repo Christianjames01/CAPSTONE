@@ -90,7 +90,3 @@ export function stripRef(text) {
     return (text || '').replace(REF_TAG, '')
 }
 
-// Head messages to a student sent after this go in their own "Registrar"
-// conversation unless tagged as part of a student-employee conversation.
-// Older untagged ones keep the old placement (in the employee's chat).
-export const DIRECT_HEAD_MESSAGES_SINCE = '2026-09-27T08:45:00Z'
