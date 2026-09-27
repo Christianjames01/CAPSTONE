@@ -167,10 +167,20 @@ function Register() {
             return
         }
 
+        const isAlumni = studentType === 'alumni'
+
+        // HCDC accounts are deactivated after graduation, so alumni must
+        // sign up with a personal email they can still open.
+        if (isAlumni && email.trim().toLowerCase().endsWith('@hcdc.edu.ph')) {
+            setStatus('error')
+            setMessage('Alumni must use a personal email (e.g. Gmail). HCDC email accounts are deactivated after graduation, so you would not receive our emails there.')
+            return
+        }
+
         const problem = validateRegistrationDetails({
             phoneNumber,
             alternatePhoneNumber,
-            alternateEmail,
+            alternateEmail: isAlumni ? email : alternateEmail,
             emergencyContactNumber,
         })
         if (problem) {
@@ -256,7 +266,7 @@ function Register() {
                 birth_date: birthDate || null,
                 address: address.trim() || null,
                 alternate_phone_number: alternatePhoneNumber.trim() || null,
-                alternate_email: alternateEmail.trim() || null,
+                alternate_email: (studentType === 'alumni' ? email : alternateEmail).trim() || null,
                 emergency_contact_name: emergencyContactName.trim() || null,
                 emergency_contact_number: emergencyContactNumber.trim() || null,
             })
@@ -301,16 +311,23 @@ function Register() {
 
                 <div className="auth-form-row">
                     <div className="form-group">
-                        <label className="form-label" htmlFor="register-email">Email</label>
+                        <label className="form-label" htmlFor="register-email">
+                            {studentType === 'alumni' ? 'Personal email (e.g. Gmail)' : 'Email'}
+                        </label>
                         <input
                             id="register-email"
                             type="email"
                             className="form-input"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="juan.delacruz@hcdc.edu.ph"
+                            placeholder={studentType === 'alumni' ? 'juan.delacruz@gmail.com' : 'juan.delacruz@hcdc.edu.ph'}
                             required
                         />
+                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                            {studentType === 'alumni'
+                                ? 'Use an email you can still open. HCDC email accounts are deactivated after graduation.'
+                                : 'Graduates: choose “Alumni” below and use a personal email instead.'}
+                        </small>
                     </div>
 
                     <div className="form-group">
@@ -606,6 +623,7 @@ function Register() {
                     </small>
                 </div>
 
+                {studentType !== 'alumni' && (
                 <div className="form-group">
                     <label className="form-label" htmlFor="alternate-email">Personal Email</label>
                     <input
@@ -622,6 +640,7 @@ function Register() {
                         A personal, non-HCDC email you still control after graduation. Your HCDC account is deactivated once you graduate, so switch your login to this address beforehand from Profile &gt; Login Email.
                     </small>
                 </div>
+                )}
 
                 <div className="auth-form-row">
                     <div className="form-group">

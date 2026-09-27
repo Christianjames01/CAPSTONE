@@ -281,6 +281,15 @@ function Login() {
                         <GoogleIcon />
                         {googleLoading ? 'Redirecting...' : 'Continue with your HCDC Google account'}
                     </button>
+
+                    <div className="auth-alumni-note">
+                        <strong>Graduates</strong>
+                        <p>
+                            Sign in with your email and password above — HCDC Google accounts are deactivated after graduation.
+                            If you registered with your HCDC email and can no longer open it, contact the Registrar to switch
+                            your login to your personal email.
+                        </p>
+                    </div>
                 </>
             )}
         </AuthLayout>

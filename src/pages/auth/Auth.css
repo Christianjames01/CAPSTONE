@@ -517,3 +517,26 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Login: note for graduates */
+.auth-alumni-note {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--blue-tint);
+}
+
+.auth-alumni-note strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.auth-alumni-note p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--slate);
+}
