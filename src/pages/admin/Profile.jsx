@@ -10,6 +10,7 @@ import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib
 import '../auth/Auth.css'
 import './AdminPages.css'
 import { getCaptchaToken } from '../../lib/captcha'
+import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconBriefcase, IconKey } from '../../components/ProfileParts'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -262,51 +263,81 @@ function Profile() {
         <div>
             <div className="admin-page-header">
                 <h1>Profile</h1>
-                <p>Your account information.</p>
+                <p>Your account information and sign-in security.</p>
             </div>
 
             {error && <div className="admin-error-box">{error}</div>}
             {message && <div className="admin-success-box">{message}</div>}
 
-            <div className="admin-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div
-                    style={{
-                        width: 56, height: 56, borderRadius: '50%', background: 'var(--blue-accent, var(--blue))', color: 'var(--white)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18,
-                        flexShrink: 0, overflow: 'hidden',
-                    }}
-                >
-                    {profile?.profile_photo_url ? (
-                        <img src={profile.profile_photo_url} alt={fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (initials || 'RH')}
-                </div>
+            <div className="pf-page">
+                <ProfileHero
+                    photoUrl={profile?.profile_photo_url}
+                    name={fullName}
+                    initials={initials || 'RH'}
+                    eyebrow={profile?.role === 'admin' ? 'System Admin' : 'Registrar Head'}
+                    subtitle={authEmail}
+                    tags={[employee?.position_title, employee?.employee_number, "Registrar's Office"]}
+                />
 
-                <div>
-                    <h2 style={{ fontSize: 18, marginBottom: 4 }}>{fullName}</h2>
-                    <p style={{ textTransform: 'capitalize' }}>{profile?.role === 'admin' ? 'System Admin' : 'Registrar Head'}</p>
-                </div>
-            </div>
+                <div className="pf-layout">
+                    <div className="pf-column">
+                        {employee && (
+                            <ProfileSection icon={IconBriefcase} title="Employment Information" subtitle="Your record at the Registrar's Office.">
+                                <ProfileFields
+                                    fields={[
+                                        { label: 'Employee Number', value: employee.employee_number },
+                                        { label: 'Position', value: employee.position_title },
+                                        { label: 'Status', value: employee.status, capitalize: true },
+                                    ]}
+                                />
+                            </ProfileSection>
+                        )}
 
-            {employee && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 16 }}>Employment Information</h2>
-                    <div className="admin-info-grid">
-                        <div className="admin-info-field"><span>Employee Number</span><strong>{employee.employee_number}</strong></div>
-                        <div className="admin-info-field"><span>Position</span><strong>{employee.position_title}</strong></div>
-                        <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{employee.status}</strong></div>
+                        <ProfileSection
+                            icon={IconPhone}
+                            title="Contact Information"
+                            subtitle="How students and staff can reach you."
+                            actionLabel="Edit"
+                            onAction={() => setEditing(true)}
+                        >
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Email', value: authEmail },
+                                    { label: 'Phone Number', value: profile?.phone_number },
+                                ]}
+                            />
+                        </ProfileSection>
                     </div>
-                </div>
-            )}
 
-            <div className="admin-card">
-                <div className="admin-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Contact Information</h2>
-                    <button className="admin-link-button" onClick={() => setEditing(true)}>Edit</button>
-                </div>
+                    <div className="pf-column">
+                        <ProfileSection icon={IconShield} title="Sign-in & Security" subtitle="Keep your account safe.">
+                            <div className="pf-rows">
+                                <SecurityRow
+                                    icon={IconMail}
+                                    title="Login email"
+                                    text={authEmail || 'Change the email address you use to log in. You confirm the new address before it takes effect.'}
+                                    actionLabel="Change"
+                                    onAction={() => setChangingEmail(true)}
+                                >
+                                    {emailMessage && <div className="admin-success-box pf-message">{emailMessage}</div>}
+                                </SecurityRow>
 
-                <div className="admin-info-grid" style={{ marginTop: 16 }}>
-                    <div className="admin-info-field"><span>Email</span><strong>{authEmail || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Phone Number</span><strong>{profile?.phone_number || 'Not set'}</strong></div>
+                                <SecurityRow
+                                    icon={IconKey}
+                                    title="Password"
+                                    text="Change your account password."
+                                    actionLabel="Change"
+                                    onAction={() => setChangingPassword(true)}
+                                >
+                                    {passwordMessage && <div className="admin-success-box pf-message">{passwordMessage}</div>}
+                                </SecurityRow>
+
+                                <SecurityRow icon={IconLock} title="Two-factor authentication">
+                                    <MfaSetup linkButtonClassName="pf-action" dangerButtonClassName="admin-danger-button" />
+                                </SecurityRow>
+                            </div>
+                        </ProfileSection>
+                    </div>
                 </div>
             </div>
 
@@ -351,20 +382,6 @@ function Profile() {
                     </div>
                 </Modal>
             )}
-
-            <div className="admin-card">
-                <div className="admin-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Login Email</h2>
-                    <button className="admin-link-button" onClick={() => setChangingEmail(true)}>
-                        Change email
-                    </button>
-                </div>
-
-                {emailMessage && <div className="admin-success-box" style={{ marginTop: 16 }}>{emailMessage}</div>}
-                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: emailMessage ? 0 : 16 }}>
-                    Change the email address you use to log in. You'll need to confirm the new address before it takes effect.
-                </p>
-            </div>
 
             {changingEmail && (
                 <Modal
@@ -431,20 +448,6 @@ function Profile() {
                     </div>
                 </Modal>
             )}
-
-            <div className="admin-card">
-                <div className="admin-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Password</h2>
-                    <button className="admin-link-button" onClick={() => setChangingPassword(true)}>
-                        Change password
-                    </button>
-                </div>
-
-                {passwordMessage && <div className="admin-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
-                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
-                    Change your account password.
-                </p>
-            </div>
 
             {changingPassword && (
                 <Modal
@@ -524,11 +527,6 @@ function Profile() {
                     </div>
                 </Modal>
             )}
-
-            <div className="admin-card">
-                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup linkButtonClassName="admin-link-button" dangerButtonClassName="admin-danger-button" />
-            </div>
         </div>
     )
 }

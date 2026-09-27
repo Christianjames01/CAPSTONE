@@ -8,6 +8,9 @@ import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib
 import '../auth/Auth.css'
 import './EmployeePages.css'
 import { getCaptchaToken } from '../../lib/captcha'
+import { IconPhone, IconBook } from '../student/icons'
+import { IconLock } from '../../components/UiIcons'
+import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconBriefcase, IconKey } from '../../components/ProfileParts'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -246,109 +249,93 @@ function Profile() {
         <div>
             <div className="employee-page-header">
                 <h1>Profile</h1>
-                <p>View your employee information and update your contact details.</p>
+                <p>Your employee information, assignments and sign-in security.</p>
             </div>
 
             {error && <div className="employee-error-box">{error}</div>}
             {message && <div className="employee-success-box">{message}</div>}
 
-            <div className="employee-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div
-                    style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: '50%',
-                        background: 'var(--blue)',
-                        color: 'var(--white)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        fontSize: 18,
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                    }}
-                >
-                    {profile?.profile_photo_url ? (
-                        <img
-                            src={profile.profile_photo_url}
-                            alt={fullName}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    ) : (
-                        initials || 'EM'
-                    )}
-                </div>
+            <div className="pf-page">
+                <ProfileHero
+                    photoUrl={profile?.profile_photo_url}
+                    name={fullName}
+                    initials={initials || 'EM'}
+                    eyebrow="Registrar Staff"
+                    subtitle={profile?.email}
+                    tags={[employee?.position_title, employee?.employee_number, collegeName]}
+                />
 
-                <div>
-                    <h2 style={{ fontSize: 18, marginBottom: 4 }}>{fullName}</h2>
-                    <p>{employee?.employee_number} · {employee?.position_title}</p>
-                </div>
-            </div>
+                <div className="pf-layout">
+                    <div className="pf-column">
+                        <ProfileSection icon={IconBriefcase} title="Employment Information" subtitle="Managed by the Registrar Head.">
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Employee Number', value: employee?.employee_number },
+                                    { label: 'Position', value: employee?.position_title },
+                                    { label: 'Assigned College', value: collegeName },
+                                    { label: 'Status', value: employee?.status, capitalize: true },
+                                ]}
+                            />
+                        </ProfileSection>
 
-            <div className="employee-card">
-                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Employment Information</h2>
+                        <ProfileSection
+                            icon={IconBook}
+                            title="Assigned Divisions & Programs"
+                            subtitle="Requests are routed to you only for these programs."
+                        >
+                            {assignments.length === 0 ? (
+                                <p className="pf-note" style={{ marginTop: 0 }}>
+                                    You have no active college/program assignments yet.
+                                </p>
+                            ) : (
+                                <div className="pf-list">
+                                    {assignments.map((a) => (
+                                        <div key={a.assignment_id} className="pf-list-item">
+                                            <div>
+                                                <strong>{a.programName}</strong>
+                                                <span>{a.collegeName}</span>
+                                            </div>
+                                            {a.is_primary && <span className="pf-badge">Primary</span>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </ProfileSection>
 
-                <div className="employee-info-grid">
-                    <div className="employee-info-field">
-                        <span>Employee Number</span>
-                        <strong>{employee?.employee_number || 'N/A'}</strong>
+                        <ProfileSection
+                            icon={IconPhone}
+                            title="Contact Information"
+                            subtitle="How students and the office can reach you."
+                            actionLabel="Edit"
+                            onAction={() => setEditing(true)}
+                        >
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Email', value: profile?.email },
+                                    { label: 'Phone Number', value: profile?.phone_number },
+                                ]}
+                            />
+                        </ProfileSection>
                     </div>
 
-                    <div className="employee-info-field">
-                        <span>Position</span>
-                        <strong>{employee?.position_title || 'N/A'}</strong>
-                    </div>
+                    <div className="pf-column">
+                        <ProfileSection icon={IconShield} title="Sign-in & Security" subtitle="Keep your account safe.">
+                            <div className="pf-rows">
+                                <SecurityRow
+                                    icon={IconKey}
+                                    title="Password"
+                                    text="Change the password the Registrar Head set for your account."
+                                    actionLabel="Change"
+                                    onAction={() => setChangingPassword(true)}
+                                >
+                                    {passwordMessage && <div className="employee-success-box pf-message">{passwordMessage}</div>}
+                                </SecurityRow>
 
-                    <div className="employee-info-field">
-                        <span>Assigned College</span>
-                        <strong>{collegeName || 'N/A'}</strong>
-                    </div>
-
-                    <div className="employee-info-field">
-                        <span>Status</span>
-                        <strong style={{ textTransform: 'capitalize' }}>{employee?.status || 'N/A'}</strong>
-                    </div>
-                </div>
-            </div>
-
-            <div className="employee-card">
-                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Assigned Academic Divisions & Programs</h2>
-
-                {assignments.length === 0 ? (
-                    <p style={{ fontSize: 13.5, color: 'var(--slate)' }}>
-                        You have no active college/program assignments. Requests are routed to you only for programs you're assigned to.
-                    </p>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {assignments.map((a) => (
-                            <div key={a.assignment_id} className="employee-info-field">
-                                <span>{a.collegeName}{a.is_primary && ' · Primary'}</span>
-                                <strong>{a.programName}</strong>
+                                <SecurityRow icon={IconLock} title="Two-factor authentication">
+                                    <MfaSetup linkButtonClassName="pf-action" dangerButtonClassName="employee-danger-button" />
+                                </SecurityRow>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="employee-card">
-                <div className="employee-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Contact Information</h2>
-
-                    <button className="employee-link-button" onClick={() => setEditing(true)}>
-                        Edit
-                    </button>
-                </div>
-
-                <div className="employee-info-grid" style={{ marginTop: 16 }}>
-                    <div className="employee-info-field">
-                        <span>Email</span>
-                        <strong>{profile?.email || 'N/A'}</strong>
-                    </div>
-
-                    <div className="employee-info-field">
-                        <span>Phone Number</span>
-                        <strong>{profile?.phone_number || 'Not set'}</strong>
+                        </ProfileSection>
                     </div>
                 </div>
             </div>
@@ -401,21 +388,6 @@ function Profile() {
                     </div>
                 </Modal>
             )}
-
-            <div className="employee-card">
-                <div className="employee-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Password</h2>
-
-                    <button className="employee-link-button" onClick={() => setChangingPassword(true)}>
-                        Change password
-                    </button>
-                </div>
-
-                {passwordMessage && <div className="employee-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
-                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
-                    Change the password the Registrar Head set for your account.
-                </p>
-            </div>
 
             {changingPassword && (
                 <Modal
@@ -493,11 +465,6 @@ function Profile() {
                     </div>
                 </Modal>
             )}
-
-            <div className="employee-card">
-                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup />
-            </div>
         </div>
     )
 }

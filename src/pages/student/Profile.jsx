@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { IconPencil } from '../../components/UiIcons'
+import { IconLock } from '../../components/UiIcons'
+import { IconPhone, IconMail, IconBook, IconUserCircle } from './icons'
 import { supabase } from '../../lib/supabase'
 import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
@@ -9,6 +10,7 @@ import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { getCaptchaToken } from '../../lib/captcha'
+import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconKey } from '../../components/ProfileParts'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -445,190 +447,111 @@ function Profile() {
             {error && <div className="student-error-box">{error}</div>}
             {message && <div className="student-success-box">{message}</div>}
 
-            <div className="student-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div
-                        style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: '50%',
-                            background: 'var(--blue)',
-                            color: 'var(--white)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: 18,
-                            overflow: 'hidden',
-                        }}
-                    >
-                        {profile?.profile_photo_url ? (
-                            <img
-                                src={profile.profile_photo_url}
-                                alt={fullName}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            <input
+                id="avatar-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                disabled={uploadingAvatar}
+                onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) uploadAvatar(file)
+                    e.target.value = ''
+                }}
+            />
+
+            <div className="pf-page">
+                <ProfileHero
+                    photoUrl={profile?.profile_photo_url}
+                    name={fullName}
+                    initials={initials || 'ST'}
+                    eyebrow="Student"
+                    subtitle={[programName, collegeName].filter(Boolean).join(' · ') || profile?.email}
+                    tags={[student?.student_number, student?.year_level, student?.enrollment_status]}
+                    onChangePhoto={() => document.getElementById('avatar-input').click()}
+                    uploading={uploadingAvatar}
+                />
+
+                <div className="pf-layout">
+                    <div className="pf-column">
+                        <ProfileSection icon={IconBook} title="Academic Information" subtitle="From your school records.">
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Student Number', value: student?.student_number },
+                                    { label: 'Year Level', value: student?.year_level },
+                                    { label: 'College', value: collegeName, wide: true },
+                                    { label: 'Program', value: programName, wide: true },
+                                    { label: 'Enrollment Status', value: student?.enrollment_status },
+                                    { label: 'Graduation Year', value: student?.graduation_year },
+                                ]}
                             />
-                        ) : (
-                            initials || 'ST'
-                        )}
+                        </ProfileSection>
+
+                        <ProfileSection icon={IconUserCircle} title="Personal Information" subtitle="Managed by the Registrar's Office.">
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Full Name', value: fullName, wide: true },
+                                    { label: 'Email', value: profile?.email, wide: true },
+                                    { label: 'Birth Date', value: student?.birth_date ? formatDate(student.birth_date) : '' },
+                                ]}
+                            />
+                            <p className="pf-note">
+                                Name, email, and birth information are managed by the Registrar's Office.
+                                Contact the Registrar to request changes.
+                            </p>
+                        </ProfileSection>
+
+                        <ProfileSection
+                            icon={IconPhone}
+                            title="Contact Information"
+                            subtitle="How the Registrar can reach you about your requests."
+                            actionLabel={editing ? '' : 'Edit'}
+                            onAction={startEditing}
+                        >
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Phone Number', value: profile?.phone_number },
+                                    { label: 'Alternate Phone', value: student?.alternate_phone_number },
+                                    { label: 'Address', value: student?.address, wide: true },
+                                    { label: 'Personal Email', value: student?.alternate_email, wide: true },
+                                    { label: 'Emergency Contact', value: student?.emergency_contact_name },
+                                    { label: 'Emergency Number', value: student?.emergency_contact_number },
+                                ]}
+                            />
+                        </ProfileSection>
                     </div>
 
-                    <input
-                        id="avatar-input"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        style={{ display: 'none' }}
-                        disabled={uploadingAvatar}
-                        onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) uploadAvatar(file)
-                            e.target.value = ''
-                        }}
-                    />
+                    <div className="pf-column">
+                        <ProfileSection icon={IconShield} title="Sign-in & Security" subtitle="Keep your account safe.">
+                            <div className="pf-rows">
+                                <SecurityRow
+                                    icon={IconMail}
+                                    title="Login email"
+                                    text="Your HCDC account is deactivated once you graduate. Switch your login to a personal email beforehand so you can still sign in and track requests afterward."
+                                    actionLabel="Change"
+                                    onAction={() => {
+                                        setNewEmail(student?.alternate_email || '')
+                                        setChangingEmail(true)
+                                    }}
+                                >
+                                    {emailMessage && <div className="student-success-box pf-message">{emailMessage}</div>}
+                                </SecurityRow>
 
-                    <button
-                        type="button"
-                        onClick={() => document.getElementById('avatar-input').click()}
-                        disabled={uploadingAvatar}
-                        title="Change photo"
-                        style={{
-                            position: 'absolute',
-                            bottom: -2,
-                            right: -2,
-                            width: 22,
-                            height: 22,
-                            borderRadius: '50%',
-                            background: 'var(--red)',
-                            color: 'var(--white)',
-                            border: '2px solid var(--white)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 11,
-                            cursor: 'pointer',
-                        }}
-                    >
-                        {uploadingAvatar ? '…' : <IconPencil />}
-                    </button>
-                </div>
+                                <SecurityRow
+                                    icon={IconKey}
+                                    title="Password"
+                                    text="Change your account password."
+                                    actionLabel="Change"
+                                    onAction={() => setChangingPassword(true)}
+                                >
+                                    {passwordMessage && <div className="student-success-box pf-message">{passwordMessage}</div>}
+                                </SecurityRow>
 
-                <div style={{ minWidth: 0 }}>
-                    <h2 style={{ fontSize: 18, marginBottom: 4, overflowWrap: 'break-word' }}>{fullName}</h2>
-                    <p>{student?.student_number}</p>
-                    <button
-                        type="button"
-                        className="student-link-button"
-                        style={{ marginTop: 4, fontSize: 12.5 }}
-                        onClick={() => document.getElementById('avatar-input').click()}
-                        disabled={uploadingAvatar}
-                    >
-                        {uploadingAvatar ? 'Uploading...' : 'Change profile photo'}
-                    </button>
-                </div>
-            </div>
-
-            <div className="student-card">
-                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Academic Information</h2>
-
-                <div className="student-info-grid">
-                    <div className="student-info-field">
-                        <span>Student Number</span>
-                        <strong>{student?.student_number || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>College</span>
-                        <strong>{collegeName || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Program</span>
-                        <strong>{programName || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Year Level</span>
-                        <strong>{student?.year_level || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Enrollment Status</span>
-                        <strong>{student?.enrollment_status || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Graduation Year</span>
-                        <strong>{student?.graduation_year || 'N/A'}</strong>
-                    </div>
-                </div>
-            </div>
-
-            <div className="student-card">
-                <h2 style={{ fontSize: 16, marginBottom: 16 }}>Personal Information</h2>
-
-                <div className="student-info-grid">
-                    <div className="student-info-field">
-                        <span>Full Name</span>
-                        <strong>{fullName || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Email</span>
-                        <strong>{profile?.email || 'N/A'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Birth Date</span>
-                        <strong>{formatDate(student?.birth_date)}</strong>
-                    </div>
-                </div>
-
-                <p style={{ fontSize: 12, color: 'var(--slate)', marginTop: 14 }}>
-                    Name, email, and birth information are managed by the Registrar's Office.
-                    Contact the Registrar to request changes.
-                </p>
-            </div>
-
-            <div className="student-card">
-                <div className="student-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Contact Information</h2>
-
-                    {!editing && (
-                        <button className="student-link-button" onClick={startEditing}>
-                            Edit
-                        </button>
-                    )}
-                </div>
-
-                <div className="student-info-grid" style={{ marginTop: 16 }}>
-                    <div className="student-info-field">
-                        <span>Phone Number</span>
-                        <strong>{profile?.phone_number || 'Not set'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Address</span>
-                        <strong>{student?.address || 'Not set'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Alternate Phone Number</span>
-                        <strong>{student?.alternate_phone_number || 'Not set'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Personal Email</span>
-                        <strong>{student?.alternate_email || 'Not set'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Emergency Contact Name</span>
-                        <strong>{student?.emergency_contact_name || 'Not set'}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Emergency Contact Number</span>
-                        <strong>{student?.emergency_contact_number || 'Not set'}</strong>
+                                <SecurityRow icon={IconLock} title="Two-factor authentication">
+                                    <MfaSetup linkButtonClassName="pf-action" dangerButtonClassName="student-danger-button" />
+                                </SecurityRow>
+                            </div>
+                        </ProfileSection>
                     </div>
                 </div>
             </div>
@@ -731,27 +654,6 @@ function Profile() {
                 </Modal>
             )}
 
-            <div className="student-card">
-                <div className="student-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Login Email</h2>
-                    <button
-                        className="student-link-button"
-                        onClick={() => {
-                            setNewEmail(student?.alternate_email || '')
-                            setChangingEmail(true)
-                        }}
-                    >
-                        Change email
-                    </button>
-                </div>
-
-                {emailMessage && <div className="student-success-box" style={{ marginTop: 16 }}>{emailMessage}</div>}
-                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: emailMessage ? 0 : 16 }}>
-                    Your HCDC account is deactivated once you graduate. Switch your login to a personal email
-                    beforehand so you can still sign in and track requests afterward.
-                </p>
-            </div>
-
             {changingEmail && (
                 <Modal
                     title="Change Login Email"
@@ -815,26 +717,6 @@ function Profile() {
                     </div>
                 </Modal>
             )}
-
-            <div className="student-card">
-                <div className="student-page-header-row">
-                    <h2 style={{ fontSize: 16 }}>Password</h2>
-
-                    <button className="student-link-button" onClick={() => setChangingPassword(true)}>
-                        Change password
-                    </button>
-                </div>
-
-                {passwordMessage && <div className="student-success-box" style={{ marginTop: 16 }}>{passwordMessage}</div>}
-                <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: passwordMessage ? 0 : 16 }}>
-                    Change your account password.
-                </p>
-            </div>
-
-            <div className="student-card">
-                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Two-Factor Authentication</h2>
-                <MfaSetup linkButtonClassName="student-link-button" dangerButtonClassName="student-danger-button" />
-            </div>
 
             {changingPassword && (
                 <Modal

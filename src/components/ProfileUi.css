@@ -1,0 +1,471 @@
+/* Profile page, shared by every portal (see ProfileParts.jsx). Same look as
+   the detail pages: a header card with the blue-to-red top bar, then cards
+   with an icon and fields as tiles. */
+
+.pf-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pf-layout {
+    display: grid;
+    gap: 20px;
+    align-items: start;
+}
+
+.pf-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+@media (min-width: 1100px) {
+    .pf-layout {
+        grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+    }
+}
+
+/* ---- Header card ---------------------------------------------------------- */
+.pf-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 28px 28px 26px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background:
+        radial-gradient(120% 140% at 100% 0%, var(--blue-tint) 0%, transparent 55%),
+        var(--surface);
+}
+
+.pf-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--red));
+}
+
+.pf-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.pf-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 30px;
+    font-weight: 700;
+    box-shadow: 0 0 0 4px var(--surface), 0 0 0 6px var(--blue-tint);
+}
+
+.pf-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pf-avatar-edit {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 3px solid var(--surface);
+    border-radius: 50%;
+    background: var(--red);
+    color: var(--white);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.pf-avatar-edit:hover:not(:disabled) {
+    transform: scale(1.08);
+}
+
+.pf-avatar-edit svg {
+    width: 14px;
+    height: 14px;
+}
+
+.pf-hero-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
+.pf-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--blue-accent, var(--blue));
+}
+
+.pf-hero-main h1 {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.pf-hero-main p {
+    font-size: 14px;
+    color: var(--slate);
+    overflow-wrap: anywhere;
+}
+
+.pf-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.pf-tags span {
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+}
+
+.pf-tags span:first-child {
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+}
+
+.pf-photo-link {
+    margin-top: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+    cursor: pointer;
+}
+
+.pf-photo-link:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+/* ---- Section cards -------------------------------------------------------- */
+.pf-card {
+    padding: 22px 24px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.pf-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.pf-icon,
+.pf-row-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+}
+
+.pf-icon svg,
+.pf-row-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.pf-card-heading {
+    flex: 1;
+    min-width: 0;
+}
+
+.pf-card-heading h2 {
+    margin: 0;
+    font-size: 16.5px;
+}
+
+.pf-card-heading p {
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+.pf-action {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.pf-action:hover:not(:disabled) {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.pf-action:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* ---- Fields --------------------------------------------------------------- */
+.pf-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.pf-field {
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--paper);
+    box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.pf-field.is-wide {
+    grid-column: 1 / -1;
+}
+
+.pf-field span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--slate);
+}
+
+.pf-field strong {
+    display: block;
+    font-size: 14.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.pf-field strong.is-empty {
+    font-weight: 500;
+    color: var(--slate);
+    opacity: 0.8;
+}
+
+.pf-field strong.is-capitalized {
+    text-transform: capitalize;
+}
+
+.pf-note {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--slate);
+}
+
+/* ---- Sign-in & security rows ---------------------------------------------- */
+.pf-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.pf-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 0;
+    border-top: 1px solid var(--line);
+}
+
+.pf-row:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.pf-row:last-child {
+    padding-bottom: 0;
+}
+
+.pf-row-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--paper);
+    color: var(--slate);
+}
+
+.pf-row-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.pf-row-main > strong {
+    display: block;
+    font-size: 14.5px;
+}
+
+.pf-row-main > p {
+    margin-top: 3px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--slate);
+}
+
+/* The two-factor block brings its own text and buttons. */
+.pf-row-main .pf-action {
+    margin-top: 2px;
+}
+
+.pf-row-main > div > p:first-child {
+    margin: 3px 0 10px !important;
+    font-size: 12.5px !important;
+    line-height: 1.5;
+}
+
+.pf-row .pf-message {
+    margin-top: 10px;
+}
+
+/* ---- Assignments ---------------------------------------------------------- */
+.pf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pf-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--paper);
+}
+
+.pf-list-item > div {
+    min-width: 0;
+}
+
+.pf-list-item strong {
+    display: block;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.pf-list-item span {
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.pf-badge {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+/* ---- Phones --------------------------------------------------------------- */
+@media (max-width: 640px) {
+    .pf-page,
+    .pf-layout,
+    .pf-column {
+        gap: 14px;
+    }
+
+    .pf-hero {
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 26px 18px 20px;
+        text-align: center;
+    }
+
+    .pf-hero-main {
+        align-items: center;
+    }
+
+    .pf-hero-main h1 {
+        font-size: 22px;
+    }
+
+    .pf-tags {
+        justify-content: center;
+    }
+
+    .pf-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 26px;
+    }
+
+    .pf-card {
+        padding: 18px 16px;
+    }
+
+    .pf-card-head {
+        margin-bottom: 14px;
+    }
+
+    .pf-action {
+        padding: 7px 13px;
+    }
+
+    .pf-fields {
+        gap: 8px;
+    }
+
+    .pf-field {
+        padding: 10px 12px;
+    }
+
+    .pf-field strong {
+        font-size: 13.5px;
+    }
+}
+
+@media (max-width: 380px) {
+    .pf-fields {
+        grid-template-columns: 1fr;
+    }
+}
