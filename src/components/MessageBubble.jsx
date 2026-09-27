@@ -25,10 +25,49 @@ const TrashIcon = () => (
 // Messenger-style runs (see ChatMessages): `groupStart` / `groupEnd` square
 // off the corners between consecutive bubbles from one sender, and
 // `avatar` (other people's messages) shows beside the last one. Edit and
-// Delete appear on hover, or on tap on touch screens.
+// Delete appear on hover, or on a long press on phones (like Messenger).
 function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, disabled, avatar, groupStart = true, groupEnd = true }) {
     const [editing, setEditing] = useState(false)
     const [revealed, setRevealed] = useState(false)
+    const rowRef = useRef(null)
+    const pressTimer = useRef(null)
+
+    // Long press opens the Edit / Delete menu; tapping anywhere else
+    // closes it.
+    useEffect(() => {
+        if (!revealed) return undefined
+        const close = (e) => {
+            if (!rowRef.current?.contains(e.target)) setRevealed(false)
+        }
+        document.addEventListener('pointerdown', close)
+        return () => document.removeEventListener('pointerdown', close)
+    }, [revealed])
+
+    useEffect(() => () => clearTimeout(pressTimer.current), [])
+
+    const openMenu = () => {
+        setRevealed(true)
+        navigator.vibrate?.(12)
+    }
+
+    const cancelPress = () => clearTimeout(pressTimer.current)
+
+    const pressHandlers = {
+        onTouchStart: () => {
+            clearTimeout(pressTimer.current)
+            pressTimer.current = setTimeout(openMenu, 450)
+        },
+        onTouchMove: cancelPress,
+        onTouchEnd: cancelPress,
+        onTouchCancel: cancelPress,
+        // Android fires contextmenu on long press (and desktop on right
+        // click): show our menu instead of the browser's.
+        onContextMenu: (e) => {
+            e.preventDefault()
+            cancelPress()
+            openMenu()
+        },
+    }
     const [draft, setDraft] = useState(text)
     const [saving, setSaving] = useState(false)
     const inputRef = useRef(null)
@@ -87,7 +126,7 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
     ].filter(Boolean).join(' ')
 
     return (
-        <div className={rowClass}>
+        <div className={rowClass} ref={rowRef}>
         {!isSelf && avatar !== undefined && (
             <span className="msg-avatar-slot" aria-hidden="true">{groupEnd ? avatar : null}</span>
         )}
@@ -134,7 +173,7 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
             ) : (
                 <div
                     className={`msg-bubble${deletedNote ? ' is-deleted' : ''}`}
-                    onClick={showActions ? () => setRevealed((r) => !r) : undefined}
+                    {...(showActions ? pressHandlers : {})}
                 >
                     {deletedNote && (
                         <div className="msg-deleted-note">
@@ -155,12 +194,12 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
             {showActions && (
                 <div className="msg-actions">
                     {onEdit && (
-                        <button type="button" onClick={startEditing} disabled={disabled}>
+                        <button type="button" onClick={() => { setRevealed(false); startEditing() }} disabled={disabled}>
                             <PencilIcon /> Edit
                         </button>
                     )}
                     {onDelete && (
-                        <button type="button" className="is-danger" onClick={onDelete} disabled={disabled}>
+                        <button type="button" className="is-danger" onClick={() => { setRevealed(false); onDelete() }} disabled={disabled}>
                             <TrashIcon /> Delete
                         </button>
                     )}

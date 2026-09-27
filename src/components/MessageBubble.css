@@ -407,6 +407,53 @@
     .msg-row:not(.is-revealed) .msg-actions {
         display: none;
     }
+
+    /* Long press: no text-selection popup on your own bubbles, a small
+       "pressed" look, and the Edit / Delete menu as a floating pill. */
+    .msg-row.is-self .msg-bubble {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .msg-row.is-self.is-revealed .msg-bubble {
+        transform: scale(0.97);
+        filter: brightness(0.92);
+    }
+
+    .msg-row.is-revealed .msg-actions {
+        display: flex;
+        gap: 2px;
+        margin-top: 6px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 10px 24px -12px rgba(10, 20, 40, 0.45);
+        animation: msg-menu-in 0.14s ease-out;
+    }
+
+    .msg-row.is-revealed .msg-actions button {
+        padding: 9px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--ink);
+    }
+
+    .msg-row.is-revealed .msg-actions button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .msg-row.is-revealed .msg-actions button.is-danger {
+        color: var(--danger-text, var(--red));
+    }
+}
+
+@keyframes msg-menu-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+    to { opacity: 1; transform: none; }
 }
 
 @media (max-width: 640px) {
