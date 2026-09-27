@@ -18,6 +18,7 @@ import RepresentativeStaffCard from '../../components/RepresentativeStaffCard'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import ReceiptChecks from '../../components/ReceiptChecks'
 
 const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
@@ -151,7 +152,7 @@ function AdminRequestDetails() {
 
             const { data: receiptData } = await supabase
                 .from('official_receipts')
-                .select('receipt_id, receipt_number, amount_paid, status, uploaded_at, rejection_reason, receipt_file_name, receipt_file_path')
+                .select('*')
                 .eq('request_id', requestId)
                 .order('uploaded_at', { ascending: false })
                 .limit(1)
@@ -1132,6 +1133,8 @@ function AdminRequestDetails() {
                                 <strong style={{ textTransform: 'capitalize' }}>{receipt.status}</strong>
                             </div>
                         </div>
+
+                        <ReceiptChecks receipt={receipt} />
 
                         <div className="ra-row">
                             {receiptUrl ? (

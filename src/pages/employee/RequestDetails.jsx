@@ -18,6 +18,7 @@ import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons
 import '../../components/ReceiptActions.css'
 import { loadStudentsById } from '../../lib/studentNames'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import ReceiptChecks from '../../components/ReceiptChecks'
 
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
@@ -194,22 +195,7 @@ function EmployeeRequestDetails() {
                 error: receiptError
             } = await supabase
                 .from('official_receipts')
-                .select(`
-                    receipt_id,
-                    request_id,
-                    student_id,
-                    receipt_number,
-                    amount_paid,
-                    receipt_file_name,
-                    receipt_file_path,
-                    receipt_file_url,
-                    status,
-                    uploaded_at,
-                    verified_by,
-                    verified_at,
-                    rejection_reason,
-                    remarks
-                `)
+                .select('*')
                 .eq(
                     'request_id',
                     requestId
@@ -1470,6 +1456,8 @@ function EmployeeRequestDetails() {
                                     <span className={`employee-status-pill status-${receipt.status}`}>{receipt.status}</span>
                                 </div>
                             </div>
+
+                            <ReceiptChecks receipt={receipt} />
 
                             <div style={{ marginTop: 20 }}>
                                 <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 8 }}>Receipt File</p>

@@ -10,6 +10,7 @@ import { notifyStudentByStudentId, notifyError, notifyWarning, confirmModal } fr
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
+import ReceiptChecks from '../../components/ReceiptChecks'
 
 function formatDate(value) {
     if (!value) return ''
@@ -46,7 +47,7 @@ function OfficialReceipts() {
 
             const { data: rows, error: receiptError } = await supabase
                 .from('official_receipts')
-                .select('receipt_id, request_id, student_id, receipt_number, amount_paid, status, uploaded_at, rejection_reason')
+                .select('*')
                 .order('uploaded_at', { ascending: false })
 
             if (receiptError) {
@@ -285,6 +286,8 @@ function OfficialReceipts() {
                                 <strong>{formatDate(r.uploaded_at) || 'N/A'}</strong>
                             </div>
                         </div>
+
+                        <ReceiptChecks receipt={r} compact />
 
                         {r.rejection_reason && (
                             <div className="admin-error-box" style={{ marginBottom: 0 }}>Rejected: {r.rejection_reason}</div>

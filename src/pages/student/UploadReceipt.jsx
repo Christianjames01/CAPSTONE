@@ -7,6 +7,28 @@ import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
+// SHA-256 of the file, so staff are warned when the same photo is uploaded
+// for another request.
+async function sha256Hex(file) {
+    try {
+        const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+        return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+    } catch {
+        return null
+    }
+}
+
+// Saves with the receipt number, file fingerprint and group; before the
+// receipt-safeguards migration adds file_hash / receipt_group_id, retries
+// with just the receipt number.
+async function saveWithSafeguards(run, safeguards) {
+    const result = await run(safeguards)
+    if (result.error && /file_hash|receipt_group_id/i.test(result.error.message || '')) {
+        return run({ receipt_number: safeguards.receipt_number })
+    }
+    return result
+}
+
 function UploadReceipt() {
     const { requestId } = useParams()
     const navigate = useNavigate()
@@ -25,6 +47,9 @@ function UploadReceipt() {
     // payment -- one Finance Office receipt can cover them too.
     const [siblings, setSiblings] = useState([])
     const [includeIds, setIncludeIds] = useState(() => new Set())
+    // The number printed on the Finance Office receipt. Required: the same
+    // receipt can't be used for another request (checked by the database).
+    const [receiptNumber, setReceiptNumber] = useState('')
 
     useLiveRefresh(['official_receipts', 'document_requests'], (options) => loadRequest(options))
 
@@ -199,6 +224,11 @@ function UploadReceipt() {
         setError('')
         setMessage('')
 
+        if (!receiptNumber.trim()) {
+            setError('Please enter the receipt number printed on your official receipt.')
+            return
+        }
+
         if (!receiptFile) {
             setError(
                 'Please select your official receipt file.'
@@ -245,6 +275,14 @@ function UploadReceipt() {
 
         try {
             setUploading(true)
+
+            // One upload = one receipt: link every request it pays for
+            // (staff check them together), and fingerprint the file so a
+            // reused photo can be spotted.
+            const coverSiblings = siblings.filter((sib) => includeIds.has(sib.request_id))
+            const groupId = coverSiblings.length > 0 ? crypto.randomUUID() : null
+            const fileHash = await sha256Hex(receiptFile)
+            const safeguards = { receipt_number: receiptNumber.trim().toUpperCase(), file_hash: fileHash, receipt_group_id: groupId }
 
             const fileExtension =
                 receiptFile.name
@@ -304,9 +342,10 @@ function UploadReceipt() {
 
                 const {
                     error
-                } = await supabase
+                } = await saveWithSafeguards((extra) => supabase
                     .from('official_receipts')
                     .update({
+                        ...extra,
                         amount_paid: paid,
 
                         receipt_file_name:
@@ -334,7 +373,7 @@ function UploadReceipt() {
                     .eq(
                         'receipt_id',
                         existingReceipt.receipt_id
-                    )
+                    ), safeguards)
 
                 databaseError = error
 
@@ -342,9 +381,10 @@ function UploadReceipt() {
 
                 const {
                     error
-                } = await supabase
+                } = await saveWithSafeguards((extra) => supabase
                     .from('official_receipts')
                     .insert({
+                        ...extra,
                         request_id:
                             requestId,
 
@@ -368,7 +408,7 @@ function UploadReceipt() {
 
                         uploaded_at:
                             new Date().toISOString()
-                    })
+                    }), safeguards)
 
                 databaseError = error
             }
@@ -414,7 +454,6 @@ function UploadReceipt() {
                 setRequest(updatedRequest)
             }
 
-            const coverSiblings = siblings.filter((sib) => includeIds.has(sib.request_id))
             const failed = []
 
             for (const sib of coverSiblings) {
@@ -435,13 +474,13 @@ function UploadReceipt() {
                 }
 
                 const { error: sibError } = sibReceipt
-                    ? await supabase
+                    ? await saveWithSafeguards((extra) => supabase
                         .from('official_receipts')
-                        .update({ ...receiptFields, verified_by: null, verified_at: null, rejection_reason: null, remarks: null })
-                        .eq('receipt_id', sibReceipt.receipt_id)
-                    : await supabase
+                        .update({ ...extra, ...receiptFields, verified_by: null, verified_at: null, rejection_reason: null, remarks: null })
+                        .eq('receipt_id', sibReceipt.receipt_id), safeguards)
+                    : await saveWithSafeguards((extra) => supabase
                         .from('official_receipts')
-                        .insert({ ...receiptFields, request_id: sib.request_id, student_id: student.student_id })
+                        .insert({ ...extra, ...receiptFields, request_id: sib.request_id, student_id: student.student_id }), safeguards)
 
                 if (sibError) {
                     failed.push(sib.request_number)
@@ -467,6 +506,7 @@ function UploadReceipt() {
             }
 
             setReceiptFile(null)
+            setReceiptNumber('')
 
             const fileInput =
                 document.getElementById(
@@ -587,6 +627,25 @@ function UploadReceipt() {
 
                 <form onSubmit={handleUpload}>
                     <div className="form-group">
+                        <label className="form-label" htmlFor="receipt-number">Receipt Number</label>
+                        <input
+                            id="receipt-number"
+                            type="text"
+                            className="form-input"
+                            value={receiptNumber}
+                            onChange={(e) => setReceiptNumber(e.target.value)}
+                            placeholder="e.g. 0012345"
+                            autoComplete="off"
+                            maxLength={40}
+                            disabled={uploading}
+                            required
+                        />
+                        <small style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--slate)' }}>
+                            The number printed on your Finance Office official receipt. Each receipt can only be used once.
+                        </small>
+                    </div>
+
+                    <div className="form-group">
                         <label className="form-label">Receipt File</label>
 
                         <input
@@ -612,7 +671,7 @@ function UploadReceipt() {
                     {siblings.length > 0 && (
                         <div className="rq-cover">
                             <strong>Did one receipt cover your other documents too?</strong>
-                            <p>These were submitted together with this request. Tick the ones this receipt also paid for.</p>
+                            <p>These were submitted together with this request. Tick the ones this same receipt also paid for — the Registrar will check that the receipt shows the total below, and all of them are verified together.</p>
                             <ul>
                                 {siblings.map((sib) => (
                                     <li key={sib.request_id}>

@@ -1,0 +1,61 @@
+/* Receipt checks for staff (ReceiptChecks.jsx). Portal theme tokens. */
+.receipt-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.receipt-checks.is-compact {
+    margin-top: 0;
+}
+
+.receipt-checks-number {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--slate);
+}
+
+.receipt-checks-number strong {
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+}
+
+.receipt-check {
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: 10px;
+    background: var(--paper);
+}
+
+.receipt-check strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.receipt-check p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--slate);
+}
+
+.receipt-check p b {
+    color: var(--ink);
+}
+
+.receipt-check.is-group {
+    border-left-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.receipt-check.is-warning {
+    border-left-color: var(--warning-text, #b7791f);
+    background: var(--warning-bg, rgba(255, 193, 7, 0.14));
+}
