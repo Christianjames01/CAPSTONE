@@ -29,6 +29,12 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/dashboard'),
+        highlights: [
+            { selector: '.student-stat-grid', text: "Your requests at a glance — tap a tile to open that list." },
+            { selector: '.student-announcements', text: "Announcements from the Registrar, like office hours and closures." },
+            { selector: '.student-list-card:not(:has(.request-stepper))', text: "Your most recent message from the Registrar staff." },
+            { selector: '.student-list-card:has(.request-stepper)', text: "Your latest requests and how far along they are." },
+        ],
         area: '.student-stat-grid',
         preview: 'dashboard',
         title: 'Your dashboard',
@@ -36,6 +42,14 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/new-request'),
+        highlights: [
+            { selector: '.student-request-grid input.form-input', text: "Search for the document you need." },
+            { selector: '.student-request-grid button.student-list-card', text: "Pick a document — the fee is on the right." },
+            { selector: '#request-quantity', text: "Type how many copies you need." },
+            { selector: '.student-request-grid textarea', text: "Say what the document is for." },
+            { selector: '.rq-add-button', text: "Add it to your list — you can add more documents." },
+            { selector: '.rq-cart', text: "Your list. Submit everything together, then pay once at the Finance Office." },
+        ],
         area: '.student-request-grid',
         preview: 'request',
         title: '1. Request a document',
@@ -43,6 +57,11 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/upload-receipt'),
+        highlights: [
+            { selector: '.page-stats', text: "What still needs a receipt, and the amount due." },
+            { selector: '.student-list-card', text: "Each request waiting for payment." },
+            { selector: '.student-list-card .ui-card-actions', text: "Upload a photo of your official receipt here." },
+        ],
         area: '.page-stats',
         preview: 'payment',
         title: '2. Pay, then upload your receipt',
@@ -50,18 +69,35 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/my-requests'),
+        highlights: [
+            { selector: '.page-stats', text: "A summary — tap a tile to filter your requests." },
+            { selector: '.ui-search-field', text: "Search by request number or document." },
+            { selector: '.student-filter-row', text: "Filter by status." },
+            { selector: '.student-list-card', text: "Each request with its status. Updates appear live." },
+            { selector: '.student-list-card .ui-card-actions', text: "Open a request for the full details and next steps." },
+        ],
         preview: 'track',
         title: '3. Track your requests',
         body: 'Every request and its status, updated live. You’re notified each time something changes — and reminded if a request has been waiting on you (payment or requirements) for 2 days.',
     },
     {
         target: link('student-nav', '/student/claim-schedule'),
+        highlights: [
+            { selector: '.page-stats', text: "Upcoming, claimed and missed claiming dates." },
+            { selector: '.student-list-card', text: "Your claiming date, time and window." },
+        ],
         preview: 'claim',
         title: '4. Claim your document',
         body: 'When it’s ready you get a claiming date, time and window on an office day (Tuesday to Friday, or a Monday/weekend the office opens). Bring a valid ID and your original receipt — or authorize a representative.',
     },
     {
         target: link('student-nav', '/student/messages'),
+        highlights: [
+            { selector: '.chat-list', text: "Your conversations with the registrar staff." },
+            { selector: '.chat-body', text: "Messages show here, like Messenger. Long-press one to reply." },
+            { selector: '.req-ask', text: "Ask about a request — the status is sent to you right away." },
+            { selector: '.chat-composer textarea', text: "Type your message here." },
+        ],
         area: '.chat-app',
         preview: 'messages',
         title: 'Message the Registrar',
@@ -69,6 +105,10 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/notifications'),
+        highlights: [
+            { selector: '.page-stats', text: "Unread and today’s notifications." },
+            { selector: '.student-list-card', text: "Every update about your requests, including reminders." },
+        ],
         preview: 'notifications',
         title: 'Notifications',
         body: 'Every update about your requests lands here, live — no need to refresh — including reminders when a request still needs your payment or requirements.',
@@ -147,6 +187,10 @@ export const EMPLOYEE_TOUR = [
     },
     {
         target: link('employee-nav', '/employee/office-calendar'),
+        highlights: [
+            { selector: '.ocal-grid', text: "Tap a day to add an event, or open a Monday or weekend with office hours." },
+            { selector: '.ocal-sidebar', text: "Coming up: events, opened days and claiming appointments." },
+        ],
         area: '.ocal-layout',
         preview: 'calendar',
         title: 'Office calendar',
@@ -168,6 +212,11 @@ export const EMPLOYEE_TOUR = [
     },
     {
         target: link('employee-nav', '/employee/messages'),
+        highlights: [
+            { selector: '.chat-list', text: "Conversations with students, newest first." },
+            { selector: '.chat-tabs', text: "Show all or only unread conversations." },
+            { selector: '.chat-body', text: "Replies, typing, and quick status answers happen here." },
+        ],
         area: '.chat-app',
         optional: true,
         preview: 'staffMessages',
@@ -277,6 +326,10 @@ export const HEAD_TOUR = [
     },
     {
         target: link('admin-nav', '/admin/office-calendar'),
+        highlights: [
+            { selector: '.ocal-grid', text: "Tap a day to add an event, or open a Monday or weekend with office hours." },
+            { selector: '.ocal-sidebar', text: "Coming up: events, opened days and claiming appointments." },
+        ],
         area: '.ocal-layout',
         preview: 'calendar',
         title: 'Office calendar',
@@ -296,6 +349,11 @@ export const HEAD_TOUR = [
     },
     {
         target: link('admin-nav', '/admin/messages'),
+        highlights: [
+            { selector: '.chat-list', text: "Conversations with students, newest first." },
+            { selector: '.chat-tabs', text: "Show all or only unread conversations." },
+            { selector: '.chat-body', text: "Replies, typing, and quick status answers happen here." },
+        ],
         area: '.chat-app',
         preview: 'staffMessages',
         title: 'Messages',

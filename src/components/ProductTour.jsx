@@ -6,11 +6,12 @@ import TourPreview from './TourPreview'
 import { useScrollLock } from '../lib/useScrollLock'
 import './ProductTour.css'
 
-// Guided demo tour. Each step opens its real page (the path of its sidebar
-// link, or step.route), waits for it to load, and spotlights the whole page
-// (the portal's content area, from the top) with the explanation in the
-// corner -- a sheet at the bottom on phones. Steps without a page (welcome,
-// security check) show a picture instead.
+// Guided demo tour that plays like a short video. Each step opens its real
+// page (the path of its sidebar link, or step.route), waits for it to load
+// and spotlights the whole page; then a pointer glides to the important
+// parts one by one (step.highlights, or common parts of any list page) with
+// a caption, and the tour moves on by itself. Pause / Back / Next are always
+// there. Steps without a page (welcome, security check) show a picture.
 //
 // Starts on its own the first time a newly created account opens its
 // portal, and whenever START_TOUR_EVENT is dispatched (the User Guide's
@@ -20,6 +21,12 @@ import './ProductTour.css'
 const NEW_ACCOUNT_DAYS = 14
 // How long to wait for a page's content before showing it anyway.
 const AREA_WAIT_MS = 4000
+const DWELL_MS = 3200 // per highlighted part
+const PAGE_ONLY_MS = 5000 // a page with no parts found
+const PICTURE_MS = 6500 // welcome / security picture steps
+const PART_RETRY_MS = 300 // while a page is still loading its parts
+const PART_RETRIES = 10
+const MOBILE = 700
 
 const storageKey = (role, userId) => `certichain_tour_done:${role}:${userId}`
 
@@ -55,23 +62,49 @@ function areaCandidates(step, portal) {
     ]
 }
 
+// Parts of a typical list page, used when a step has no highlights of its own.
+function genericHighlights(portal) {
+    return [
+        { selector: `.${portal}-page-header h1, .${portal}-page-header-row h1, .${portal}-dashboard-header h1`, text: 'This is the page — here’s what’s on it.' },
+        { selector: '.page-stats, .dash-overview-grid', text: 'A quick summary at the top. Tap a tile to filter.' },
+        { selector: `.ui-search-field, .${portal}-search-field, .chat-search`, text: 'Search the list.' },
+        { selector: `.${portal}-filter-row, .chat-tabs`, text: 'Filter by status.' },
+        { selector: `.${portal}-list-card, .chat-item`, text: 'Each card is one item — open it for the details.' },
+        { selector: `.ui-card-actions, .${portal}-card-actions`, text: 'Actions for that item are here.' },
+    ]
+}
+
 function isShown(el) {
     if (!el) return false
     const r = el.getBoundingClientRect()
     return r.width > 0 && r.height > 0 && !el.closest('[aria-busy="true"]')
 }
 
-// The portal's content area -- what the tour spotlights.
+function firstShown(selector) {
+    try {
+        return [...document.querySelectorAll(selector)].find(isShown) || null
+    } catch {
+        return null
+    }
+}
+
+// The portal's content area -- the page spotlight.
 function pageArea(portal) {
     return document.querySelector(`.${portal}-content`)
 }
 
 function findArea(step, portal) {
     for (const selector of areaCandidates(step, portal)) {
-        const el = [...document.querySelectorAll(selector)].find(isShown)
+        const el = firstShown(selector)
         if (el) return el
     }
     return null
+}
+
+// The parts to point at on this page, in order (only those on screen).
+function resolveHighlights(step, portal) {
+    const list = step.highlights || genericHighlights(portal)
+    return list.map((h) => ({ ...h, el: firstShown(h.selector) })).filter((h) => h.el)
 }
 
 // The sidebar link's box if it's actually on screen (it's off-canvas on
@@ -86,33 +119,34 @@ function visibleRect(selector) {
     return r
 }
 
-// The on-screen part of an element (a tall section is only spotlit where
-// it's visible).
+// The on-screen part of an element.
 function clippedRect(el) {
     const r = el.getBoundingClientRect()
     const top = Math.max(r.top, 8)
     const left = Math.max(r.left, 8)
     const bottom = Math.min(r.bottom, window.innerHeight - 8)
     const right = Math.min(r.right, window.innerWidth - 8)
-    if (bottom - top < 20 || right - left < 20) return null
+    if (bottom - top < 12 || right - left < 12) return null
     return { top, left, width: right - left, height: bottom - top, bottom, right }
 }
 
-// Put the card beside the spotlight where there's room; a sheet at the
-// bottom on phones.
-function cardPosition(r) {
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const W = Math.min(380, vw - 24)
-    const clampX = (x) => Math.max(12, Math.min(x, vw - W - 12))
-    const clampY = (y) => Math.max(12, Math.min(y, vh - 280))
+// Scroll instantly (the page is scroll-locked while the tour is open, and a
+// smooth scroll doesn't run on a locked page).
+function scrollPageTo(y) {
+    const top = Math.max(0, y)
+    document.documentElement.scrollTop = top
+    document.body.scrollTop = top
+}
 
-    if (vw < 700) return { left: 12, right: 12, bottom: 12 }
-    if (vw - r.right >= W + 28) return { left: r.right + 16, top: clampY(r.top), width: W }
-    if (r.left >= W + 28) return { left: r.left - W - 16, top: clampY(r.top), width: W }
-    if (vh - r.bottom >= 300) return { left: clampX(r.left), top: r.bottom + 16, width: W }
-    if (r.top >= 300) return { left: clampX(r.left), bottom: vh - r.top + 16, width: W }
-    return { right: 16, bottom: 16, width: W }
+// Put a highlighted part in the upper part of the screen (above the phone
+// sheet / clear of the desktop card) if it isn't already comfortably visible.
+function bringPartIntoView(el) {
+    const r = el.getBoundingClientRect()
+    const mobile = window.innerWidth < MOBILE
+    const visibleTop = mobile ? 70 : 24
+    const visibleBottom = mobile ? window.innerHeight * 0.5 : window.innerHeight - 40
+    if (r.top >= visibleTop && r.bottom <= visibleBottom) return
+    scrollPageTo(window.scrollY + r.top - (mobile ? 90 : Math.max(60, window.innerHeight * 0.22)))
 }
 
 function ProductTour({ role, steps: allSteps }) {
@@ -123,23 +157,46 @@ function ProductTour({ role, steps: allSteps }) {
     const [steps, setSteps] = useState([])
     const [index, setIndex] = useState(-1) // -1 = closed
     const [rect, setRect] = useState(null) // sidebar link (fallback)
-    const [area, setArea] = useState(null) // { rect } of the real section
+    const [area, setArea] = useState(null) // { rect } of the page
     const [finding, setFinding] = useState(false)
+    const [playing, setPlaying] = useState(true)
+    const [hl, setHl] = useState(0) // which part of the page is being shown
+    const [partCount, setPartCount] = useState(0)
+    const [pointer, setPointer] = useState(null) // { x, y, rect, text }
+    const [attempt, setAttempt] = useState(0) // re-looks for parts while a page loads
     const areaEl = useRef(null)
+    const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < MOBILE)
 
     const open = index >= 0 && index < steps.length
     const step = open ? steps[index] : null
     const route = step ? routeOf(step) : null
+    const ready = open && !finding && (!route || !!area)
+    const pageReady = !!area
 
     // The page behind the demo stays put while it is open.
     useScrollLock(open)
+
+    useEffect(() => {
+        const onResize = () => setIsMobile(window.innerWidth < MOBILE)
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [])
+
+    const goTo = useCallback((i) => {
+        setIndex(i)
+        setHl(0)
+        setAttempt(0)
+        setPartCount(0)
+        setPointer(null)
+    }, [])
 
     const start = useCallback(() => {
         // Drop optional steps whose target isn't in this portal (e.g. links
         // hidden for limited-access employees).
         setSteps(allSteps.filter((s) => !s.optional || document.querySelector(s.target)))
-        setIndex(0)
-    }, [allSteps])
+        setPlaying(true)
+        goTo(0)
+    }, [allSteps, goTo])
 
     // Auto-start for new accounts that haven't seen the tour.
     useEffect(() => {
@@ -174,12 +231,11 @@ function ProductTour({ role, steps: allSteps }) {
         if (open && route && location.pathname !== route) navigate(route)
     }, [open, route, location.pathname, navigate])
 
-    // Find the real section once the page has loaded, bring it into view
-    // and keep the spotlight on it.
+    // Wait for the page's content, then spotlight the whole page (and keep
+    // the spotlight on it while it loads or re-renders).
     useLayoutEffect(() => {
         if (!open) return undefined
-        // Syncing with the page layout (an external system): reset, then
-        // measure once the section is found.
+        // Syncing with the page layout (an external system).
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setArea(null)
         areaEl.current = null
@@ -196,26 +252,10 @@ function ProductTour({ role, steps: allSteps }) {
 
         setFinding(true)
         let stopped = false
-        const startedAt = Date.now()
         let timer = null
+        let scrolledTop = false
+        const startedAt = Date.now()
 
-        // Pages re-render (data loading, live updates) and can swap the
-        // section for a new element: find it again when that happens.
-        // Bring the section into view. Instant: the page is scroll-locked
-        // while the tour is open, and a smooth scroll doesn't run on a locked
-        // page. On phones, leave room at the bottom for the explanation sheet.
-        let scrolledTo = null
-        let scrollTries = 0
-        const bringIntoView = (el) => {
-            const r = el.getBoundingClientRect()
-            const target = window.scrollY + r.top - (window.innerWidth < 700 ? 64 : 0)
-            document.documentElement.scrollTop = Math.max(0, target)
-            document.body.scrollTop = Math.max(0, target)
-        }
-
-        // Pages re-render (data loading, live updates) and can swap the
-        // section for a new element or move it: find it again and scroll it
-        // back into view when that happens.
         const measure = () => {
             let el = areaEl.current
             if (!el || !el.isConnected) {
@@ -226,13 +266,11 @@ function ProductTour({ role, steps: allSteps }) {
                 setArea(null)
                 return
             }
-            let r = clippedRect(el)
-            if ((el !== scrolledTo || !r) && scrollTries < 12) {
-                scrolledTo = el
-                scrollTries += 1
-                bringIntoView(el)
-                r = clippedRect(el)
+            if (!scrolledTop) {
+                scrolledTop = true
+                scrollPageTo(window.scrollY + el.getBoundingClientRect().top - (window.innerWidth < MOBILE ? 64 : 0))
             }
+            const r = clippedRect(el)
             setArea(r ? { rect: r } : null)
         }
 
@@ -248,7 +286,7 @@ function ProductTour({ role, steps: allSteps }) {
                     if (stopped) return
                     measure()
                     setFinding(false)
-                }, 450)
+                }, 400)
                 return
             }
             if (timedOut) {
@@ -262,7 +300,6 @@ function ProductTour({ role, steps: allSteps }) {
 
         window.addEventListener('resize', measure)
         window.addEventListener('scroll', measure, true)
-        // Content still loading can move the section; keep up with it.
         const follow = setInterval(measure, 500)
         return () => {
             stopped = true
@@ -275,37 +312,110 @@ function ProductTour({ role, steps: allSteps }) {
 
     const close = useCallback(() => {
         setIndex(-1)
+        setPointer(null)
         if (key) writeDone(key)
     }, [key])
 
     const next = useCallback(() => {
-        setIndex((i) => {
-            if (i + 1 >= steps.length) {
-                if (key) writeDone(key)
-                return -1
-            }
-            return i + 1
-        })
-    }, [steps.length, key])
+        if (index + 1 >= steps.length) {
+            close()
+            return
+        }
+        goTo(index + 1)
+    }, [index, steps.length, goTo, close])
 
-    const back = () => setIndex((i) => Math.max(0, i - 1))
+    const back = useCallback(() => goTo(Math.max(0, index - 1)), [index, goTo])
+
+    // The walkthrough: point at each part of the page in turn, then move on.
+    useEffect(() => {
+        if (!ready) return undefined
+        const parts = route && pageReady ? resolveHighlights(step, portal) : []
+        const part = parts[hl]
+        let frame = 0
+
+        const place = () => {
+            if (!part) return
+            // The page may have re-rendered the part: find it again.
+            if (!part.el.isConnected) part.el = firstShown(part.selector)
+            if (!part.el) return
+            const r = clippedRect(part.el)
+            if (!r) return
+            setPointer({
+                x: r.left + Math.min(r.width * 0.72, r.width - 14),
+                y: r.top + Math.min(r.height * 0.62, 34),
+                rect: r,
+                text: part.text,
+            })
+        }
+
+        if (part) {
+            bringPartIntoView(part.el)
+            frame = requestAnimationFrame(place)
+        }
+        frame = requestAnimationFrame(() => {
+            setPartCount(parts.length)
+            if (!part) setPointer(null)
+            place()
+        })
+
+        window.addEventListener('scroll', place, true)
+        window.addEventListener('resize', place)
+
+        let timer = null
+        if (route && !part && attempt < PART_RETRIES) {
+            // Still loading: look for the parts again shortly.
+            timer = setTimeout(() => setAttempt((a) => a + 1), PART_RETRY_MS)
+        } else if (playing) {
+            const isLastStep = index === steps.length - 1
+            const wait = part ? DWELL_MS : route ? PAGE_ONLY_MS : PICTURE_MS
+            timer = setTimeout(() => {
+                if (part && hl + 1 < parts.length) setHl(hl + 1)
+                else if (!isLastStep) goTo(index + 1)
+                else setPlaying(false)
+            }, wait)
+        }
+
+        return () => {
+            cancelAnimationFrame(frame)
+            clearTimeout(timer)
+            window.removeEventListener('scroll', place, true)
+            window.removeEventListener('resize', place)
+        }
+    }, [ready, pageReady, route, step, portal, hl, playing, index, steps.length, goTo, attempt])
 
     useEffect(() => {
         if (!open) return undefined
         const onKey = (e) => {
             if (e.key === 'Escape') close()
             else if (e.key === 'ArrowRight') next()
-            else if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1))
+            else if (e.key === 'ArrowLeft') back()
+            else if (e.key === ' ' && e.target === document.body) {
+                e.preventDefault()
+                setPlaying((p) => !p)
+            }
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-    }, [open, close, next])
+    }, [open, close, next, back])
 
     if (!open) return null
 
     const isLast = index === steps.length - 1
     const onPage = !!area
     const spot = area?.rect || (!finding && rect)
+    const partProgress = partCount > 0 ? Math.min(1, (hl + 1) / partCount) : 1
+
+    // Caption beside the pointed-at part (desktop); in the sheet on phones.
+    const captionStyle = pointer && !isMobile
+        ? (() => {
+            const r = pointer.rect
+            const below = window.innerHeight - r.bottom > 90
+            return {
+                left: Math.max(12, Math.min(r.left, window.innerWidth - 332)),
+                ...(below ? { top: r.bottom + 12 } : { bottom: window.innerHeight - r.top + 12 }),
+            }
+        })()
+        : null
 
     return (
         <div className="tour-root" role="dialog" aria-modal="true" aria-labelledby="tour-title">
@@ -318,13 +428,39 @@ function ProductTour({ role, steps: allSteps }) {
                 <div className="tour-backdrop" />
             )}
 
+            {pointer && (
+                <>
+                    <div
+                        className="tour-focus"
+                        style={{ left: pointer.rect.left - 5, top: pointer.rect.top - 5, width: pointer.rect.width + 10, height: pointer.rect.height + 10 }}
+                    />
+                    <div className="tour-pointer" style={{ transform: `translate(${pointer.x}px, ${pointer.y}px)` }} aria-hidden="true">
+                        <span key={`${index}-${hl}`} className="tour-click" />
+                        <svg viewBox="0 0 24 24" width="26" height="26">
+                            <path d="M4 2.5 20 13l-7.2 1.4L9.6 21 4 2.5z" fill="#fff" stroke="#101827" strokeWidth="1.6" strokeLinejoin="round" />
+                        </svg>
+                    </div>
+                    {captionStyle && (
+                        <div key={`cap-${index}-${hl}`} className="tour-caption" style={captionStyle}>{pointer.text}</div>
+                    )}
+                </>
+            )}
+
             <div
                 className={`tour-card ${onPage ? 'is-floating' : 'is-centered'}`}
-                style={onPage ? cardPosition(area.rect) : undefined}
+                style={onPage ? (isMobile ? { left: 12, right: 12, bottom: 12 } : { right: 16, bottom: 16, width: Math.min(380, window.innerWidth - 24) }) : undefined}
             >
                 <div className="tour-card-top">
                     <span className="tour-progress">Step {index + 1} of {steps.length}</span>
                     <button type="button" className="tour-skip" onClick={close}>Skip demo</button>
+                </div>
+
+                <div className="tour-timeline" aria-hidden="true">
+                    {steps.map((s, i) => (
+                        <span key={s.title} className={i < index ? 'is-done' : i === index ? 'is-active' : ''}>
+                            {i === index && <i style={{ width: `${partProgress * 100}%` }} />}
+                        </span>
+                    ))}
                 </div>
 
                 {finding ? (
@@ -336,11 +472,25 @@ function ProductTour({ role, steps: allSteps }) {
                 <h3 id="tour-title">{step.title}</h3>
                 <p>{step.body}</p>
 
-                <div className="tour-dots" aria-hidden="true">
-                    {steps.map((s, i) => <span key={s.title} className={i === index ? 'is-active' : i < index ? 'is-done' : ''} />)}
-                </div>
+                {pointer && isMobile && (
+                    <p key={`m-${index}-${hl}`} className="tour-now"><span aria-hidden="true">▶</span> {pointer.text}</p>
+                )}
 
                 <div className="tour-actions">
+                    <button
+                        type="button"
+                        className="tour-play"
+                        onClick={() => setPlaying((p) => !p)}
+                        aria-label={playing ? 'Pause demo' : 'Play demo'}
+                        title={playing ? 'Pause' : 'Play'}
+                    >
+                        {playing ? (
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+                        )}
+                    </button>
+                    <span className="tour-actions-spacer" />
                     {index > 0 && (
                         <button type="button" className="tour-back" onClick={back}>Back</button>
                     )}
@@ -354,7 +504,7 @@ function ProductTour({ role, steps: allSteps }) {
                         </button>
                     ) : (
                         <button type="button" className="tour-next" onClick={next} autoFocus>
-                            {index === 0 ? 'Start tour' : isLast ? 'Finish' : 'Next'} →
+                            {isLast ? 'Finish' : 'Next'} →
                         </button>
                     )}
                 </div>
