@@ -141,6 +141,16 @@ function Register() {
         setGoogleLoading(true)
         setMessage('')
 
+        // Same security check as email sign-in before handing off to Google
+        // (Google also runs its own bot checks).
+        const captchaToken = await getCaptchaToken()
+        if (captchaEnabled && !captchaToken) {
+            setStatus('error')
+            setMessage('Please complete the security check to continue with Google.')
+            setGoogleLoading(false)
+            return
+        }
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
