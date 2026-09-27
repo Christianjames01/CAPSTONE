@@ -693,32 +693,24 @@ function Register() {
 
             {showTermsModal && (
                 <div
-                    style={{
-                        position: 'fixed', inset: 0, background: 'rgba(10, 20, 40, 0.55)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: 20, zIndex: 1000,
-                    }}
+                    className="terms-overlay"
                     onClick={() => setShowTermsModal(false)}
                 >
                     <div
-                        style={{
-                            background: 'var(--white)', borderRadius: 10, width: '100%', maxWidth: 640,
-                            maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                            boxShadow: '0 20px 60px rgba(10, 20, 40, 0.35)',
-                        }}
+                        className="terms-dialog"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--line)' }}>
+                        <div className="terms-head">
                             <h2 style={{ fontSize: 18, marginBottom: 4 }}>Terms, Privacy, Cookie &amp; Refund Policy</h2>
                             <p style={{ fontSize: 13 }}>Please review all four before creating your account.</p>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 4, padding: '10px 22px 0', flexWrap: 'wrap' }}>
+                        <div className="terms-tabs">
                             <button
                                 type="button"
                                 onClick={() => setLegalTab('terms')}
                                 className={legalTab === 'terms' ? 'auth-submit' : 'auth-google-button'}
-                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                                style={{ width: 'auto', padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
                                 Terms of Service
                             </button>
@@ -726,7 +718,7 @@ function Register() {
                                 type="button"
                                 onClick={() => setLegalTab('privacy')}
                                 className={legalTab === 'privacy' ? 'auth-submit' : 'auth-google-button'}
-                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                                style={{ width: 'auto', padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
                                 Privacy Policy
                             </button>
@@ -734,7 +726,7 @@ function Register() {
                                 type="button"
                                 onClick={() => setLegalTab('cookie')}
                                 className={legalTab === 'cookie' ? 'auth-submit' : 'auth-google-button'}
-                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                                style={{ width: 'auto', padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
                                 Cookie Policy
                             </button>
@@ -742,21 +734,21 @@ function Register() {
                                 type="button"
                                 onClick={() => setLegalTab('refund')}
                                 className={legalTab === 'refund' ? 'auth-submit' : 'auth-google-button'}
-                                style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}
+                                style={{ width: 'auto', padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
                                 Refund Policy
                             </button>
                         </div>
 
-                        <div style={{ flex: 1, minHeight: 0, padding: '14px 22px' }}>
+                        <div className="terms-body">
                             <iframe
                                 title={LEGAL_TABS[legalTab].title}
                                 src={LEGAL_TABS[legalTab].src}
-                                style={{ width: '100%', height: '100%', minHeight: 320, border: '1px solid var(--line)', borderRadius: 6 }}
+                                className="terms-frame"
                             />
                         </div>
 
-                        <div style={{ padding: '16px 22px', borderTop: '1px solid var(--line)' }}>
+                        <div className="terms-foot">
                             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, lineHeight: 1.5, marginBottom: 14, cursor: 'pointer' }}>
                                 <input
                                     type="checkbox"
