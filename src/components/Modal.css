@@ -22,6 +22,7 @@
     width: 100%;
     max-width: 460px;
     max-height: 88vh;
+    max-height: 88dvh;
     overflow: hidden;
     border: 1px solid var(--line, rgba(16, 24, 39, 0.1));
     border-radius: 18px;
@@ -207,6 +208,7 @@
     .app-modal-card {
         max-width: none !important;
         max-height: 92vh;
+        max-height: 92dvh;
         border-radius: 20px 20px 0 0;
         animation: app-modal-sheet 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -217,6 +219,7 @@
 
     .app-modal-body {
         padding: 16px 18px 24px;
+        padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 12px));
     }
 }
 

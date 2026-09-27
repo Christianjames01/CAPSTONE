@@ -1921,6 +1921,7 @@ h2 span {
     display: flex;
     flex-direction: column;
     max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -1945,6 +1946,7 @@ h2 span {
     display: block;
     width: 100%;
     max-height: calc(100vh - 150px);
+    max-height: calc(100dvh - 150px);
     object-fit: contain;
 }
 

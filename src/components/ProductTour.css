@@ -57,6 +57,7 @@
     left: 50%;
     width: min(520px, calc(100vw - 32px));
     max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
     overflow-y: auto;
     transform: translate(-50%, -50%);
     animation: tour-fade 0.2s ease-out;

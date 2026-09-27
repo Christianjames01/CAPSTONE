@@ -343,3 +343,35 @@ html[data-theme="dark"] .swal2-textarea:focus {
   width: 17px;
   height: 17px;
 }
+/* ---- iPhone / touch devices ------------------------------------------
+   iOS Safari zooms the page into any field whose text is under 16px, so
+   fields use 16px on touch screens, and text never inflates in landscape.
+   Alerts fit the visible screen on phones. */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+    select,
+    textarea,
+    .swal2-input,
+    .swal2-textarea,
+    .swal2-select {
+        font-size: 16px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .swal2-container {
+        padding: 12px !important;
+    }
+
+    .swal2-popup {
+        width: 100% !important;
+        max-height: 88vh;
+        max-height: 88dvh;
+        overflow-y: auto;
+    }
+}

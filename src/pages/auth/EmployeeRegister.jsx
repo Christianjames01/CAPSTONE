@@ -224,7 +224,7 @@ function EmployeeRegister() {
                     <div
                         style={{
                             background: 'var(--white)', borderRadius: 10, width: '100%', maxWidth: 640,
-                            maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                            maxHeight: 'min(85vh, 85dvh)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
                             boxShadow: '0 20px 60px rgba(10, 20, 40, 0.35)',
                         }}
                         onClick={(e) => e.stopPropagation()}
@@ -257,7 +257,7 @@ function EmployeeRegister() {
                             <iframe
                                 title={legalTab === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
                                 src={legalTab === 'terms' ? '/terms?embed=1' : '/privacy-policy?embed=1'}
-                                style={{ width: '100%', height: '100%', minHeight: 320, border: '1px solid var(--line)', borderRadius: 6 }}
+                                style={{ width: '100%', height: '100%', minHeight: 120, border: '1px solid var(--line)', borderRadius: 6 }}
                             />
                         </div>
 

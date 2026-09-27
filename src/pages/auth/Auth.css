@@ -22,6 +22,7 @@
     -webkit-font-smoothing: antialiased;
 
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: grid;
     grid-template-columns: 1fr 1fr;

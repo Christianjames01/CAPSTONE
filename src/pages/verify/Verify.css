@@ -24,6 +24,7 @@
     color: var(--ink);
     background: linear-gradient(180deg, #EEF3FB 0, #FBFCFE 360px);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .verify-page .is-mono {

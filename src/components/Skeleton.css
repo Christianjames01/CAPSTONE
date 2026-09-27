@@ -129,6 +129,7 @@ html[data-theme="dark"] {
 .skeleton-app-shell {
     display: flex;
     min-height: 100vh;
+    min-height: 100dvh;
     background: var(--skeleton-page-bg);
 }
 
