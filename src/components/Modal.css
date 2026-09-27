@@ -321,6 +321,54 @@
     cursor: not-allowed;
 }
 
+/* A titled group of fields (e.g. Add Employee: Name, Employment, ...). */
+.app-modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.app-modal-section + .app-modal-section {
+    padding-top: 16px;
+    border-top: 1px dashed var(--line, rgba(16, 24, 39, 0.12));
+}
+
+.app-modal-section > h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--blue-accent, var(--blue, #123B78));
+}
+
+.app-modal-optional {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--paper, #F1F4FA);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--slate, #57616F);
+}
+
+.app-modal-help {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--slate, #57616F);
+}
+
+.app-modal-section > .app-modal-help {
+    margin-top: -2px;
+}
+
 /* A short explanation at the top of a dialog. */
 .app-modal-hint {
     padding: 10px 12px;

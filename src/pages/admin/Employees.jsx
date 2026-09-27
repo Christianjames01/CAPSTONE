@@ -6,6 +6,8 @@ import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
 import { notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
+import PasswordRequirements from '../../components/PasswordRequirements'
+import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import PageStats from '../../components/PageStats'
 import { IconUsers, IconHourglass, IconFileStack, IconBuilding } from './icons'
 import './AdminPages.css'
@@ -136,6 +138,14 @@ function Employees() {
         setForm((prev) => ({ ...prev, [field]: value }))
     }
 
+    const closeAddForm = () => {
+        if (creating) return
+        setShowAddForm(false)
+        setForm(BLANK_FORM)
+        setAddError('')
+        setAddMessage('')
+    }
+
     const addEmployee = async (e) => {
         e.preventDefault()
 
@@ -148,8 +158,8 @@ function Employees() {
             return
         }
 
-        if (form.password.length < 6) {
-            setAddError('Password must be at least 6 characters.')
+        if (!passwordMeetsRequirements(form.password)) {
+            setAddError(passwordRequirementMessage())
             return
         }
 
@@ -371,95 +381,118 @@ function Employees() {
             {showAddForm && (
                 <Modal
                     title="Add Employee"
-                    subtitle="Create a registrar staff account."
+                    subtitle="Creates a login and an active staff account right away."
                     icon={IconUsers}
-                    maxWidth={720}
-                    onClose={() => { if (creating) return; setShowAddForm(false); setForm(BLANK_FORM); setAddError(''); setAddMessage('') }}
+                    maxWidth={640}
+                    onClose={closeAddForm}
                 >
-                    <p style={{ fontSize: 13, marginBottom: 16 }}>
-                        Creates a login account and an active employee profile immediately — no separate activation step needed.
-                    </p>
+                    <form onSubmit={addEmployee} className="app-modal-form" noValidate>
+                        <section className="app-modal-section">
+                            <h4>Name</h4>
+                            <div className="app-modal-grid">
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-first">First Name</label>
+                                    <input id="emp-first" className="form-input" type="text" autoComplete="off" value={form.firstName} onChange={(e) => updateForm('firstName', e.target.value)} disabled={creating} />
+                                </div>
 
-                    <form onSubmit={addEmployee} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px 20px' }}>
-                        <div className="form-group">
-                            <label className="form-label">First Name</label>
-                            <input className="form-input" type="text" value={form.firstName} onChange={(e) => updateForm('firstName', e.target.value)} disabled={creating} />
-                        </div>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-last">Last Name</label>
+                                    <input id="emp-last" className="form-input" type="text" autoComplete="off" value={form.lastName} onChange={(e) => updateForm('lastName', e.target.value)} disabled={creating} />
+                                </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Last Name</label>
-                            <input className="form-input" type="text" value={form.lastName} onChange={(e) => updateForm('lastName', e.target.value)} disabled={creating} />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Nickname (optional)</label>
-                            <input className="form-input" type="text" value={form.displayName} onChange={(e) => updateForm('displayName', e.target.value)} placeholder="Shown to students instead of the real name" disabled={creating} />
-                            <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
-                                If set, students see this name (not the real name) when messaging this employee. Staff and other admins still see the real name everywhere else.
-                            </small>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Employee Number</label>
-                            <input className="form-input" type="text" value={form.employeeNumber} onChange={(e) => updateForm('employeeNumber', e.target.value)} placeholder="e.g. EMP-0042" disabled={creating} />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Position Title</label>
-                            <input className="form-input" type="text" value={form.positionTitle} onChange={(e) => updateForm('positionTitle', e.target.value)} placeholder="e.g. Registrar Staff" disabled={creating} />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Assigned College</label>
-                            <select
-                                className="form-input"
-                                value={form.assignedCollegeId}
-                                onChange={(e) => setForm((prev) => ({ ...prev, assignedCollegeId: e.target.value, assignedProgramId: '' }))}
-                                disabled={creating}
-                            >
-                                <option value="">-- None --</option>
-                                {colleges.map((c) => (
-                                    <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Assigned Program</label>
-                            <select
-                                className="form-input"
-                                value={form.assignedProgramId}
-                                onChange={(e) => updateForm('assignedProgramId', e.target.value)}
-                                disabled={creating || !form.assignedCollegeId}
-                            >
-                                <option value="">
-                                    {form.assignedCollegeId ? '-- None --' : 'Select a college first'}
-                                </option>
-                                {programs.filter((p) => p.college_id === form.assignedCollegeId).map((p) => (
-                                    <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
-                                ))}
-                            </select>
-                            <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
-                                Determines which student requests are routed to this employee automatically. Optional — you can also add this later from the employee's page.
-                            </small>
-                        </div>
-
-                        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px 20px' }}>
-                            <div className="form-group">
-                                <label className="form-label">Email</label>
-                                <input className="form-input" type="email" value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="employee@hcdc.edu.ph" disabled={creating} />
+                                <div className="form-group is-wide">
+                                    <label className="form-label" htmlFor="emp-nickname">Nickname <span className="app-modal-optional">optional</span></label>
+                                    <input id="emp-nickname" className="form-input" type="text" autoComplete="off" value={form.displayName} onChange={(e) => updateForm('displayName', e.target.value)} placeholder="Shown to students instead of the real name" disabled={creating} />
+                                    <small className="app-modal-help">
+                                        Students see this name when messaging this employee. Staff still see the real name.
+                                    </small>
+                                </div>
                             </div>
+                        </section>
 
-                            <div className="form-group">
-                                <label className="form-label">Temporary Password</label>
-                                <input className="form-input" type="password" value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" disabled={creating} />
+                        <section className="app-modal-section">
+                            <h4>Employment</h4>
+                            <div className="app-modal-grid">
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-number">Employee Number</label>
+                                    <input id="emp-number" className="form-input" type="text" autoComplete="off" value={form.employeeNumber} onChange={(e) => updateForm('employeeNumber', e.target.value)} placeholder="e.g. EMP-0042" disabled={creating} />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-position">Position Title</label>
+                                    <input id="emp-position" className="form-input" type="text" autoComplete="off" value={form.positionTitle} onChange={(e) => updateForm('positionTitle', e.target.value)} placeholder="e.g. Registrar Staff" disabled={creating} />
+                                </div>
                             </div>
-                        </div>
+                        </section>
 
-                        {addError && <div className="admin-error-box" style={{ gridColumn: '1 / -1' }}>{addError}</div>}
-                        {addMessage && <div className="admin-success-box" style={{ gridColumn: '1 / -1' }}>{addMessage}</div>}
+                        <section className="app-modal-section">
+                            <h4>Assignment <span className="app-modal-optional">optional</span></h4>
+                            <div className="app-modal-grid">
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-college">College</label>
+                                    <select
+                                        id="emp-college"
+                                        className="form-input"
+                                        value={form.assignedCollegeId}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, assignedCollegeId: e.target.value, assignedProgramId: '' }))}
+                                        disabled={creating}
+                                    >
+                                        <option value="">None</option>
+                                        {colleges.map((c) => (
+                                            <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                        <div className="app-modal-actions" style={{ gridColumn: '1 / -1' }}>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-program">Program</label>
+                                    <select
+                                        id="emp-program"
+                                        className="form-input"
+                                        value={form.assignedProgramId}
+                                        onChange={(e) => updateForm('assignedProgramId', e.target.value)}
+                                        disabled={creating || !form.assignedCollegeId}
+                                    >
+                                        <option value="">
+                                            {form.assignedCollegeId ? 'None' : 'Select a college first'}
+                                        </option>
+                                        {programs.filter((p) => p.college_id === form.assignedCollegeId).map((p) => (
+                                            <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <small className="app-modal-help">
+                                Student requests for this program are routed to this employee. You can also set it later on the employee's page.
+                            </small>
+                        </section>
+
+                        <section className="app-modal-section">
+                            <h4>Login account</h4>
+                            <div className="app-modal-grid">
+                                <div className="form-group is-wide">
+                                    <label className="form-label" htmlFor="emp-email">Email</label>
+                                    <input id="emp-email" className="form-input" type="email" autoComplete="off" value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="employee@hcdc.edu.ph" disabled={creating} />
+                                </div>
+
+                                <div className="form-group is-wide">
+                                    <label className="form-label" htmlFor="emp-password">Temporary Password</label>
+                                    <input id="emp-password" className="form-input" type="password" autoComplete="new-password" value={form.password} onChange={(e) => updateForm('password', e.target.value)} disabled={creating} />
+                                    <PasswordRequirements password={form.password} />
+                                    <small className="app-modal-help">
+                                        Give this to the employee. They can change it from their Profile after logging in.
+                                    </small>
+                                </div>
+                            </div>
+                        </section>
+
+                        {addError && <div className="admin-error-box" style={{ margin: 0 }}>{addError}</div>}
+                        {addMessage && <div className="admin-success-box" style={{ margin: 0 }}>{addMessage}</div>}
+
+                        <div className="app-modal-actions">
+                            <button className="admin-secondary-button" type="button" onClick={closeAddForm} disabled={creating}>
+                                Cancel
+                            </button>
                             <button className="admin-primary-button" type="submit" disabled={creating}>
                                 {creating ? 'Creating...' : 'Create Employee Account'}
                             </button>
