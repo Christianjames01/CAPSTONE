@@ -548,7 +548,7 @@ function Profile() {
                                 </SecurityRow>
 
                                 <SecurityRow icon={IconLock} title="Two-factor authentication">
-                                    <MfaSetup linkButtonClassName="pf-action" dangerButtonClassName="student-danger-button" />
+                                    <MfaSetup linkButtonClassName="pf-action" />
                                 </SecurityRow>
                             </div>
                         </ProfileSection>
@@ -557,8 +557,14 @@ function Profile() {
             </div>
 
             {editing && (
-                <Modal title="Edit Contact Information" onClose={cancelEditing}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <Modal
+                    title="Edit Contact Information"
+                    subtitle="How the Registrar can reach you about your requests."
+                    icon={IconPhone}
+                    maxWidth={560}
+                    onClose={cancelEditing}
+                >
+                    <div className="app-modal-grid">
 
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
@@ -568,18 +574,6 @@ function Profile() {
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 placeholder="09XX XXX XXXX"
-                                disabled={saving}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Address</label>
-                            <input
-                                className="form-input"
-                                type="text"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                placeholder="Your current address"
                                 disabled={saving}
                             />
                         </div>
@@ -596,7 +590,19 @@ function Profile() {
                             />
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group is-wide">
+                            <label className="form-label">Address</label>
+                            <input
+                                className="form-input"
+                                type="text"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                placeholder="Your current address"
+                                disabled={saving}
+                            />
+                        </div>
+
+                        <div className="form-group is-wide">
                             <label className="form-label">Personal Email</label>
                             <input
                                 className="form-input"
@@ -637,13 +643,13 @@ function Profile() {
 
                         {error && <div className="student-error-box">{error}</div>}
 
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="auth-submit" style={{ width: 'auto', padding: '11px 20px' }} onClick={saveChanges} disabled={saving}>
+                        <div className="app-modal-actions">
+                            <button className="app-modal-btn is-primary" onClick={saveChanges} disabled={saving}>
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>
 
                             <button
-                                className="student-danger-button"
+                                className="app-modal-btn"
                                 onClick={cancelEditing}
                                 disabled={saving}
                             >
@@ -657,6 +663,8 @@ function Profile() {
             {changingEmail && (
                 <Modal
                     title="Change Login Email"
+                    subtitle="You will confirm the new address from your inbox."
+                    icon={IconMail}
                     onClose={() => {
                         if (emailSaving) return
                         setEmailCurrentPassword('')
@@ -665,7 +673,7 @@ function Profile() {
                         setChangingEmail(false)
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className="app-modal-form">
                         <div className="form-group">
                             <label className="form-label">Current Password</label>
                             <input
@@ -691,10 +699,9 @@ function Profile() {
 
                         {emailError && <div className="student-error-box">{emailError}</div>}
 
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div className="app-modal-actions">
                             <button
-                                className="auth-submit"
-                                style={{ width: 'auto', padding: '11px 20px' }}
+                                className="app-modal-btn is-primary"
                                 onClick={changeEmail}
                                 disabled={emailSaving}
                             >
@@ -702,7 +709,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-danger-button"
+                                className="app-modal-btn"
                                 onClick={() => {
                                     setEmailCurrentPassword('')
                                     setNewEmail('')
@@ -721,6 +728,8 @@ function Profile() {
             {changingPassword && (
                 <Modal
                     title="Change Password"
+                    subtitle="Use a strong password you do not use elsewhere."
+                    icon={IconKey}
                     onClose={() => {
                         setCurrentPassword('')
                         setNewPassword('')
@@ -729,7 +738,7 @@ function Profile() {
                         setChangingPassword(false)
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className="app-modal-form">
                         <div className="form-group">
                             <label className="form-label">Current Password</label>
                             <input
@@ -766,10 +775,9 @@ function Profile() {
 
                         {passwordError && <div className="student-error-box">{passwordError}</div>}
 
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div className="app-modal-actions">
                             <button
-                                className="auth-submit"
-                                style={{ width: 'auto', padding: '11px 20px' }}
+                                className="app-modal-btn is-primary"
                                 onClick={changePassword}
                                 disabled={passwordSaving}
                             >
@@ -777,7 +785,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="student-danger-button"
+                                className="app-modal-btn"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')

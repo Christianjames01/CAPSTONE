@@ -183,6 +183,95 @@
     border-radius: 10px;
 }
 
+/* ---- Forms and actions (Profile dialogs, two-factor setup) ------------ */
+
+.app-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Two fields per row; wide fields, notes and the actions span both. */
+.app-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+}
+
+.app-modal-grid > .is-wide,
+.app-modal-grid > :not(.form-group) {
+    grid-column: 1 / -1;
+}
+
+/* Main action on the right, Cancel beside it. Buttons are written main
+   action first, so row-reverse puts it last. */
+.app-modal-actions {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line, rgba(16, 24, 39, 0.1));
+}
+
+.app-modal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    margin: 0;
+    padding: 10px 20px;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.14));
+    border-radius: 999px;
+    background: var(--surface, #fff);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink, #101827);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-modal-btn:hover:not(:disabled) {
+    border-color: var(--slate, #57616F);
+    background: var(--paper, #F1F4FA);
+}
+
+.app-modal-btn.is-primary {
+    border-color: var(--blue, #123B78);
+    background: var(--blue, #123B78);
+    color: var(--white, #fff);
+    box-shadow: 0 8px 18px -10px var(--blue, #123B78);
+}
+
+.app-modal-btn.is-primary:hover:not(:disabled) {
+    border-color: var(--blue-dark, #0C2A57);
+    background: var(--blue-dark, #0C2A57);
+}
+
+.app-modal-btn:focus-visible {
+    outline: 2px solid var(--blue-accent, var(--blue, #123B78));
+    outline-offset: 2px;
+}
+
+.app-modal-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* A short explanation at the top of a dialog. */
+.app-modal-hint {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--paper, #F1F4FA);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--slate, #57616F);
+}
+
 /* Clickable result rows (e.g. picking a student). */
 .app-modal-body .admin-list-card {
     border-radius: 12px;
@@ -215,6 +304,14 @@
 
     .app-modal-header {
         padding: 20px 18px 14px;
+    }
+
+    .app-modal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .app-modal-btn {
+        flex: 1 1 0;
     }
 
     .app-modal-body {

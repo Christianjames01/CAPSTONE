@@ -332,7 +332,7 @@ function Profile() {
                                 </SecurityRow>
 
                                 <SecurityRow icon={IconLock} title="Two-factor authentication">
-                                    <MfaSetup linkButtonClassName="pf-action" dangerButtonClassName="employee-danger-button" />
+                                    <MfaSetup linkButtonClassName="pf-action" />
                                 </SecurityRow>
                             </div>
                         </ProfileSection>
@@ -343,13 +343,15 @@ function Profile() {
             {editing && (
                 <Modal
                     title="Edit Contact Information"
+                    subtitle="How students and the office can reach you."
+                    icon={IconPhone}
                     onClose={() => {
                         if (saving) return
                         setPhoneNumber(profile?.phone_number || '')
                         setEditing(false)
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className="app-modal-form">
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
                             <input
@@ -364,10 +366,9 @@ function Profile() {
 
                         {error && <div className="employee-error-box">{error}</div>}
 
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div className="app-modal-actions">
                             <button
-                                className="auth-submit"
-                                style={{ width: 'auto', padding: '11px 20px' }}
+                                className="app-modal-btn is-primary"
                                 onClick={saveChanges}
                                 disabled={saving}
                             >
@@ -375,7 +376,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="employee-danger-button"
+                                className="app-modal-btn"
                                 onClick={() => {
                                     setPhoneNumber(profile?.phone_number || '')
                                     setEditing(false)
@@ -392,6 +393,8 @@ function Profile() {
             {changingPassword && (
                 <Modal
                     title="Change Password"
+                    subtitle="Use a strong password you do not use elsewhere."
+                    icon={IconKey}
                     onClose={() => {
                         if (passwordSaving) return
                         setCurrentPassword('')
@@ -401,7 +404,7 @@ function Profile() {
                         setChangingPassword(false)
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className="app-modal-form">
                         <div className="form-group">
                             <label className="form-label">Current Password</label>
                             <input
@@ -438,10 +441,9 @@ function Profile() {
 
                         {passwordError && <div className="employee-error-box">{passwordError}</div>}
 
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div className="app-modal-actions">
                             <button
-                                className="auth-submit"
-                                style={{ width: 'auto', padding: '11px 20px' }}
+                                className="app-modal-btn is-primary"
                                 onClick={changePassword}
                                 disabled={passwordSaving}
                             >
@@ -449,7 +451,7 @@ function Profile() {
                             </button>
 
                             <button
-                                className="employee-danger-button"
+                                className="app-modal-btn"
                                 onClick={() => {
                                     setCurrentPassword('')
                                     setNewPassword('')

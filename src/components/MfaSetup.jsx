@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { IconCheck } from './UiIcons'
 import { supabase } from '../lib/supabase'
 import Modal from './Modal'
+import { IconShield } from './ProfileParts'
 
-function MfaSetup({ linkButtonClassName = 'employee-link-button', dangerButtonClassName = 'employee-danger-button' }) {
+function MfaSetup({ linkButtonClassName = 'employee-link-button' }) {
     const [factors, setFactors] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -180,21 +181,26 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button', dangerButtonCl
             )}
 
             {enrolling && (
-                <Modal title="Set Up Two-Factor Authentication" onClose={cancelEnroll}>
+                <Modal
+                    title="Set Up Two-Factor Authentication"
+                    subtitle="Use an authenticator app on your phone."
+                    icon={IconShield}
+                    onClose={cancelEnroll}
+                >
                     {error && <p className="form-message error" style={{ marginBottom: 12 }}>{error}</p>}
 
                     {!enrollData ? (
                         <p style={{ fontSize: 13, color: 'var(--slate)' }}>Setting up...</p>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                            <p style={{ fontSize: 13 }}>
+                        <div className="app-modal-form">
+                            <p className="app-modal-hint">
                                 Scan this QR code with your authenticator app, then enter the 6-digit code it shows.
                             </p>
 
                             <img
                                 src={enrollData.totp.qr_code}
                                 alt="Two-factor authentication QR code"
-                                style={{ width: 260, height: 260, alignSelf: 'center', border: '1px solid var(--line)', borderRadius: 8 }}
+                                style={{ width: 220, height: 220, alignSelf: 'center', padding: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 14 }}
                             />
 
                             <p style={{ fontSize: 12, color: 'var(--slate)' }}>
@@ -216,11 +222,10 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button', dangerButtonCl
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', gap: 10 }}>
+                            <div className="app-modal-actions">
                                 <button
                                     type="button"
-                                    className="auth-submit"
-                                    style={{ width: 'auto', padding: '11px 20px' }}
+                                    className="app-modal-btn is-primary"
                                     onClick={confirmEnroll}
                                     disabled={verifying}
                                 >
@@ -228,7 +233,7 @@ function MfaSetup({ linkButtonClassName = 'employee-link-button', dangerButtonCl
                                 </button>
                                 <button
                                     type="button"
-                                    className={dangerButtonClassName}
+                                    className="app-modal-btn"
                                     onClick={cancelEnroll}
                                     disabled={verifying}
                                 >
