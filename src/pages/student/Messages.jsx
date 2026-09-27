@@ -7,10 +7,11 @@ import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
+import { ChatApp, ChatSidebar, ChatListItem, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
+import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
 import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
-import './StudentMessages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const DEFAULT_MESSAGE =
@@ -18,9 +19,6 @@ const DEFAULT_MESSAGE =
     "from me — I'll check back here for your reply. Thank you!"
 
 const CLOSED_STATUSES = ['completed', 'cancelled', 'rejected']
-
-const initialsOf = (name) =>
-    (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
 
 const otherParty = (m, userId) => (m.sender_user_id === userId ? m.receiver_user_id : m.sender_user_id)
 
@@ -41,6 +39,9 @@ function Messages() {
     const [threadOf, setThreadOf] = useState({})
     const [labels, setLabels] = useState({})
     const [reply, setReply] = useState('')
+    // Phones show the list first; the chat opens full screen when a
+    // conversation is picked (or requested via ?employee=).
+    const [chatOpen, setChatOpen] = useState(!!requestedEmployeeId)
 
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
@@ -206,6 +207,7 @@ function Messages() {
 
     const selectContact = (contact) => {
         setSelectedUserId(contact.userId)
+        setChatOpen(true)
         setReply('')
         if (contact.employeeId) setSearchParams({ employee: contact.employeeId }, { replace: true })
         else setSearchParams({}, { replace: true })
@@ -213,6 +215,7 @@ function Messages() {
 
     const markThreadRead = async () => {
         const ids = unreadInThread.map((m) => m.message_id)
+        if (ids.length === 0) return
         try {
             await markMessagesRead(ids)
             setMessages((prev) => withRead(prev, ids))
@@ -220,6 +223,15 @@ function Messages() {
             notifyError(err.message)
         }
     }
+
+    // An open conversation reads its messages as they arrive, like
+    // Messenger. On phones that's only once the chat is actually open.
+    const threadVisible = !!selected && (chatOpen || !window.matchMedia('(max-width: 880px)').matches)
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (threadVisible && unreadInThread.length > 0) markThreadRead()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [threadVisible, selectedUserId, unreadInThread.length])
 
     const sendMessage = async () => {
         const text = (reply || (thread.length === 0 ? DEFAULT_MESSAGE : '')).trim()
@@ -292,108 +304,91 @@ function Messages() {
         }
     }
 
-    const formatTime = (value) =>
-        new Date(value).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    const threadOfContact = (c) => messages.filter((m) => threadFor(m) === c.userId)
+
+    const previewOf = (m) => {
+        if (!m) return 'Start a conversation'
+        if (m.deleted_at) return m.sender_user_id === userId ? 'You deleted a message' : 'Message deleted'
+        return `${m.sender_user_id === userId ? 'You: ' : ''}${m.message}`
+    }
 
     return (
         <div>
-            <div className="student-page-header">
-                <h1>Messages</h1>
-                <p>Chat with the registrar staff handling your requests. Each person has their own conversation.</p>
-            </div>
-
             {error && <div className="student-error-box">{error}</div>}
 
             {loading ? (
                 <SkeletonList count={3} />
             ) : contacts.length === 0 ? (
-                <div className="student-empty">
-                    No registrar employee is assigned to your requests or program yet. Please check back later or visit
-                    the Registrar's Office directly.
-                </div>
+                <>
+                    <div className="student-page-header">
+                        <h1>Messages</h1>
+                    </div>
+                    <div className="student-empty">
+                        No registrar employee is assigned to your requests or program yet. Please check back later or visit
+                        the Registrar's Office directly.
+                    </div>
+                </>
             ) : (
-                <div className="sm-layout">
-                    <aside className="student-card sm-contacts" aria-label="Conversations">
-                        <span className="sm-contacts-label">Conversations</span>
-                        <ul>
-                            {contacts.map((c) => {
-                                const convo = messages.filter((m) => threadFor(m) === c.userId)
-                                const last = convo[convo.length - 1]
-                                const unread = unreadReceived(convo, userId).length
-                                const active = c.userId === selectedUserId
+                <ChatApp chatOpen={chatOpen && !!selected}>
+                    <ChatSidebar title="Messages" subtitle="Chat with the registrar staff handling your requests.">
+                        {contacts.map((c) => {
+                            const convo = threadOfContact(c)
+                            const last = convo[convo.length - 1]
 
-                                return (
-                                    <li key={c.userId}>
-                                        <button
-                                            type="button"
-                                            className={`sm-contact${active ? ' is-active' : ''}`}
-                                            onClick={() => selectContact(c)}
-                                            aria-current={active ? 'true' : undefined}
-                                        >
-                                            <span className="sm-avatar" aria-hidden="true">{initialsOf(c.name)}</span>
-                                            <span className="sm-contact-main">
-                                                <span className="sm-contact-top">
-                                                    <strong>{c.name}</strong>
-                                                    {unread > 0 && <span className="sm-unread">{unread}</span>}
-                                                </span>
-                                                <span className="sm-contact-sub">
-                                                    {c.requests.length ? `Handles ${c.requests.join(', ')}` : c.subtitle}
-                                                </span>
-                                                <span className="sm-contact-preview">
-                                                    {last
-                                                        ? `${last.sender_user_id === userId ? 'You: ' : ''}${last.deleted_at ? 'Message deleted' : last.message}`
-                                                        : 'No messages yet'}
-                                                </span>
-                                            </span>
-                                        </button>
-                                    </li>
-                                )
-                            })}
-                        </ul>
-                    </aside>
+                            return (
+                                <ChatListItem
+                                    key={c.userId}
+                                    active={c.userId === selectedUserId}
+                                    unread={unreadReceived(convo, userId).length}
+                                    people={[{ name: c.name }]}
+                                    name={c.name}
+                                    meta={c.requests.length ? `Handles ${c.requests.join(', ')}` : c.subtitle}
+                                    preview={previewOf(last)}
+                                    time={last ? chatListTime(last.created_at) : ''}
+                                    onClick={() => selectContact(c)}
+                                />
+                            )
+                        })}
+                    </ChatSidebar>
 
-                    {selected && (
-                        <section className="student-card sm-thread" aria-label={`Conversation with ${selected.name}`}>
-                            <header className="sm-thread-head">
-                                <span className="sm-avatar is-large" aria-hidden="true">{initialsOf(selected.name)}</span>
-                                <div>
-                                    <h2>{selected.name}</h2>
-                                    <p>
-                                        {selected.subtitle}
-                                        {selected.requests.length > 0 && ` · ${selected.handlesActive ? 'Handling' : 'Handled'} ${selected.requests.join(', ')}`}
-                                    </p>
-                                </div>
-                                {unreadInThread.length > 0 && (
-                                    <button className="student-link-button sm-mark-read" onClick={markThreadRead}>
-                                        Mark as read
-                                    </button>
-                                )}
-                            </header>
+                    <ChatPane label={selected ? `Conversation with ${selected.name}` : 'Conversation'}>
+                        {!selected ? (
+                            <ChatPlaceholder title="Your messages" text="Pick a registrar staff member to chat with." />
+                        ) : (
+                            <>
+                                <ChatHeader
+                                    onBack={() => setChatOpen(false)}
+                                    people={[{ name: selected.name }]}
+                                    title={selected.name}
+                                    subtitle={[
+                                        selected.subtitle,
+                                        selected.requests.length > 0 && `${selected.handlesActive ? 'Handling' : 'Handled'} ${selected.requests.join(', ')}`,
+                                    ].filter(Boolean).join(' · ')}
+                                />
 
-                            <div className="sm-messages">
-                                {thread.length === 0 ? (
-                                    <p className="sm-empty">
-                                        No messages with {selected.name} yet. Send a message below to start the conversation.
-                                    </p>
-                                ) : (
-                                    thread.map((m) => {
+                                <ChatMessages
+                                    messages={thread}
+                                    threadKey={selected.userId}
+                                    empty={<>No messages with {selected.name} yet. Say hello — they'll reply here.</>}
+                                    renderMessage={(m, { groupStart, groupEnd }) => {
                                         const isSelf = m.sender_user_id === userId
+                                        const fromOtherStaff = !isSelf && m.sender_user_id !== selected.userId
                                         const senderLabel = isSelf
                                             ? null
-                                            : m.sender_user_id === selected.userId
-                                                ? selected.name
-                                                : labels[m.sender_user_id] || REGISTRAR_LABEL
+                                            : fromOtherStaff
+                                                ? labels[m.sender_user_id] || REGISTRAR_LABEL
+                                                : selected.name
 
                                         return (
                                             <MessageBubble
                                                 key={m.message_id}
                                                 isSelf={isSelf}
-                                                senderLabel={senderLabel}
-                                                badge={m.receiver_user_id === userId && !m.is_read && (
-                                                    <span className="student-status-pill status-pending">New</span>
-                                                )}
+                                                senderLabel={fromOtherStaff && groupStart ? senderLabel : null}
+                                                avatar={isSelf ? undefined : <ChatAvatar people={[{ name: senderLabel }]} size={28} />}
+                                                groupStart={groupStart}
+                                                groupEnd={groupEnd}
                                                 text={m.message}
-                                                time={formatTime(m.created_at)}
+                                                time={groupEnd ? chatBubbleTime(m.created_at) : null}
                                                 edited={!!m.edited_at}
                                                 deletedNote={m.deleted_at
                                                     ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
@@ -403,32 +398,21 @@ function Messages() {
                                                 disabled={busy}
                                             />
                                         )
-                                    })
-                                )}
-                            </div>
-
-                            <div className="sm-composer">
-                                <input
-                                    className="student-search-input"
-                                    value={reply}
-                                    onChange={(e) => setReply(e.target.value)}
-                                    placeholder={thread.length === 0 ? DEFAULT_MESSAGE : `Message ${selected.name}…`}
-                                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                    disabled={sending}
-                                    aria-label={`Message ${selected.name}`}
+                                    }}
                                 />
-                                <button
-                                    className="auth-submit"
-                                    style={{ width: 'auto', padding: '11px 20px' }}
-                                    onClick={sendMessage}
-                                    disabled={sending || (!reply.trim() && thread.length > 0)}
-                                >
-                                    {sending ? 'Sending...' : 'Send'}
-                                </button>
-                            </div>
-                        </section>
-                    )}
-                </div>
+
+                                <ChatComposer
+                                    value={reply}
+                                    onChange={setReply}
+                                    onSend={sendMessage}
+                                    sending={sending}
+                                    canSend={!!reply.trim() || thread.length === 0}
+                                    placeholder={thread.length === 0 ? 'Say hello, or press send for a quick hello' : `Message ${selected.name}…`}
+                                />
+                            </>
+                        )}
+                    </ChatPane>
+                </ChatApp>
             )}
         </div>
     )

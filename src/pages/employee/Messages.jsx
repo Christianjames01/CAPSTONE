@@ -5,6 +5,8 @@ import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
+import { ChatApp, ChatSidebar, ChatListItem, ChatListEmpty, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
+import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
 import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -15,7 +17,11 @@ function Messages() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    const [activeThread, setActiveThread] = useState(null)
+    // The open conversation is looked up in `threads` on every render, so
+    // messages arriving live show up in it straight away.
+    const [activeId, setActiveId] = useState(null)
+    const [search, setSearch] = useState('')
+    const [filter, setFilter] = useState('all')
     const [reply, setReply] = useState('')
     const [sending, setSending] = useState(false)
     const [senderNames, setSenderNames] = useState({})
@@ -64,7 +70,7 @@ function Messages() {
             ]
 
             const { data: profiles } = otherUserIds.length
-                ? await supabase.from('profiles').select('user_id, first_name, last_name, role').in('user_id', otherUserIds)
+                ? await supabase.from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', otherUserIds)
                 : { data: [] }
 
             const profileByUserId = Object.fromEntries(
@@ -94,7 +100,7 @@ function Messages() {
 
             if (studentIdsToFetch.size > 0) {
                 const { data: extraProfiles } = await supabase
-                    .from('profiles').select('user_id, first_name, last_name, role').in('user_id', [...studentIdsToFetch])
+                    .from('profiles').select('user_id, first_name, last_name, role, profile_photo_url').in('user_id', [...studentIdsToFetch])
 
                 for (const p of extraProfiles || []) profileByUserId[p.user_id] = p
             }
@@ -135,6 +141,8 @@ function Messages() {
                     grouped[otherId] = {
                         otherUserId: otherId,
                         name: labels[otherId] || 'Unknown',
+                        photo: profileByUserId[otherId]?.profile_photo_url || '',
+                        role: profileByUserId[otherId]?.role || '',
                         messages: [],
                         unreadCount: 0,
                         // Anyone besides "the" other person (e.g. the head)
@@ -198,11 +206,21 @@ function Messages() {
         }
     }
 
+    const activeThread = threads.find((t) => t.otherUserId === activeId) || null
+
     const openThread = (thread) => {
-        const readIds = unreadReceived(thread.messages, userId).map((m) => m.message_id)
-        setActiveThread({ ...thread, messages: withRead(thread.messages, readIds), unreadCount: 0 })
-        markThreadsRead([thread])
+        setActiveId(thread.otherUserId)
+        setReply('')
     }
+
+    // Opening a conversation, or a message arriving while it's open, marks
+    // it read -- like Messenger.
+    const activeUnread = activeThread ? unreadReceived(activeThread.messages, userId).length : 0
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (activeThread && activeUnread > 0) markThreadsRead([activeThread])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeId, activeUnread])
 
     const totalUnread = threads.reduce((sum, t) => sum + t.unreadCount, 0)
 
@@ -241,7 +259,6 @@ function Messages() {
                 messages: [...activeThread.messages, displayRow],
             }
 
-            setActiveThread(updatedThread)
             setThreads((prev) =>
                 prev.map((t) => (t.otherUserId === activeThread.otherUserId ? updatedThread : t))
             )
@@ -256,7 +273,7 @@ function Messages() {
     }
 
     const replaceActiveThread = (updatedThread) => {
-        setActiveThread(updatedThread)
+        if (updatedThread.messages.length === 0) setActiveId(null)
         setThreads((prev) =>
             updatedThread.messages.length === 0
                 ? prev.filter((t) => t.otherUserId !== updatedThread.otherUserId)
@@ -309,135 +326,144 @@ function Messages() {
         }
     }
 
-    const formatTime = (value) =>
-        new Date(value).toLocaleString('en-PH', {
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-        })
+    const q = search.trim().toLowerCase()
+    const visibleThreads = threads
+        .filter((t) => filter !== 'unread' || t.unreadCount > 0)
+        .filter((t) => !q || t.name.toLowerCase().includes(q))
 
-    if (activeThread) {
-        return (
-            <div>
-                <button className="employee-link-button" style={{ marginBottom: 16 }} onClick={() => setActiveThread(null)}>
-                    ← Back to Messages
-                </button>
-
-                <div className="employee-page-header">
-                    <h1>{activeThread.name}</h1>
-                </div>
-
-                <div className="employee-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {activeThread.messages.map((m) => {
-                        const isSelf = m.sender_user_id === userId
-
-                        return (
-                            <MessageBubble
-                                key={m.message_id}
-                                isSelf={isSelf}
-                                senderLabel={!isSelf ? (senderNames[m.sender_user_id] || 'Unknown') : null}
-                                text={m.message}
-                                time={formatTime(m.created_at)}
-                                edited={!!m.edited_at}
-                                deletedNote={deletedLabel(m)}
-                                onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
-                                onDelete={isSelf ? () => deleteMessage(m) : undefined}
-                                disabled={busy}
-                            />
-                        )
-                    })}
-                </div>
-
-                <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                    <input
-                        className="employee-search-input"
-                        style={{ flex: 1, maxWidth: 'none' }}
-                        value={reply}
-                        onChange={(e) => setReply(e.target.value)}
-                        placeholder="Type a reply..."
-                        aria-label="Type a reply"
-                        onKeyDown={(e) => e.key === 'Enter' && sendReply()}
-                        disabled={sending}
-                    />
-
-                    <button
-                        className="employee-card"
-                        style={{ margin: 0, padding: '11px 20px', background: 'var(--blue)', color: 'var(--white)', fontWeight: 600, fontSize: 14 }}
-                        onClick={sendReply}
-                        disabled={sending}
-                    >
-                        {sending ? 'Sending...' : 'Send'}
-                    </button>
-                </div>
-            </div>
-        )
+    const previewOf = (m) => {
+        if (!m) return ''
+        if (m.deleted_at) return deletedLabel(m)
+        return `${m.sender_user_id === userId ? 'You: ' : ''}${m.message}`
     }
+
+    const personOf = (thread) => ({ name: thread.name, photo: thread.photo })
 
     return (
         <div>
-            <div className="employee-page-header-row">
-                <div className="employee-page-header">
-                    <h1>Messages</h1>
-                    <p>Student inquiries and conversations.</p>
-                </div>
-
-                {totalUnread > 0 && (
-                    <button className="employee-link-button" onClick={() => markThreadsRead(threads)}>
-                        Mark all as read
-                    </button>
-                )}
-            </div>
-
             {error && <div className="employee-error-box">{error}</div>}
 
             {loading ? (
-                <SkeletonList count={3} />
-            ) : threads.length === 0 ? (
-                <div className="employee-empty">No messages yet.</div>
+                <SkeletonList count={4} />
             ) : (
-                threads.map((thread) => {
-                    const lastMessage = thread.messages[thread.messages.length - 1]
-
-                    return (
-                        <div
-                            key={thread.otherUserId}
-                            role="button"
-                            tabIndex={0}
-                            className="employee-list-card"
-                            style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                            onClick={() => openThread(thread)}
-                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openThread(thread))}
-                        >
-                            <div className="employee-list-card-header">
-                                <div>
-                                    <h3>{thread.name}</h3>
-                                    <p>{lastMessage?.deleted_at ? <em>{deletedLabel(lastMessage)}</em> : lastMessage?.message}</p>
+                <ChatApp chatOpen={!!activeThread}>
+                    <ChatSidebar
+                        title="Messages"
+                        subtitle="Student inquiries and conversations."
+                        actions={totalUnread > 0 && (
+                            <button type="button" className="chat-pill-button" onClick={() => markThreadsRead(threads)}>
+                                Mark all read
+                            </button>
+                        )}
+                        toolbar={threads.length > 0 && (
+                            <>
+                                <input
+                                    className="chat-search"
+                                    type="search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search Messages"
+                                    aria-label="Search conversations"
+                                />
+                                <div className="chat-tabs">
+                                    {[
+                                        { key: 'all', label: 'All' },
+                                        { key: 'unread', label: 'Unread', count: threads.filter((t) => t.unreadCount > 0).length },
+                                    ].map((tab) => (
+                                        <button
+                                            key={tab.key}
+                                            type="button"
+                                            className={`chat-tab${filter === tab.key ? ' is-active' : ''}`}
+                                            onClick={() => setFilter(tab.key)}
+                                        >
+                                            {tab.label}{tab.count ? <span>{tab.count}</span> : null}
+                                        </button>
+                                    ))}
                                 </div>
+                            </>
+                        )}
+                    >
+                        {threads.length === 0 ? (
+                            <ChatListEmpty>No messages yet. Conversations with students will show up here.</ChatListEmpty>
+                        ) : visibleThreads.length === 0 ? (
+                            <ChatListEmpty>No conversations match.</ChatListEmpty>
+                        ) : (
+                            visibleThreads.map((thread) => {
+                                const last = thread.messages[thread.messages.length - 1]
+                                return (
+                                    <ChatListItem
+                                        key={thread.otherUserId}
+                                        active={thread.otherUserId === activeId}
+                                        unread={thread.unreadCount}
+                                        people={[personOf(thread)]}
+                                        name={thread.name}
+                                        preview={previewOf(last)}
+                                        time={last ? chatListTime(last.created_at) : ''}
+                                        onClick={() => openThread(thread)}
+                                    />
+                                )
+                            })
+                        )}
+                    </ChatSidebar>
 
-                                {thread.unreadCount > 0 && (
-                                    <span className="employee-status-pill status-pending">{thread.unreadCount} new</span>
-                                )}
-                            </div>
+                    <ChatPane label={activeThread ? `Conversation with ${activeThread.name}` : 'Conversation'}>
+                        {!activeThread ? (
+                            <ChatPlaceholder title="Your messages" text="Pick a conversation to read and reply." />
+                        ) : (
+                            <>
+                                <ChatHeader
+                                    onBack={() => setActiveId(null)}
+                                    people={[personOf(activeThread)]}
+                                    title={activeThread.name}
+                                    subtitle={activeThread.role === 'student' ? 'Student' : "Registrar's Office"}
+                                />
 
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                                <span style={{ fontSize: 12, color: 'var(--slate)' }}>
-                                    {lastMessage ? formatTime(lastMessage.created_at) : ''}
-                                </span>
+                                <ChatMessages
+                                    messages={activeThread.messages}
+                                    threadKey={activeThread.otherUserId}
+                                    empty="No messages yet."
+                                    renderMessage={(m, { groupStart, groupEnd }) => {
+                                        const isSelf = m.sender_user_id === userId
+                                        const senderName = senderNames[m.sender_user_id] || 'Unknown'
+                                        const fromOtherPerson = !isSelf && m.sender_user_id !== activeThread.otherUserId
 
-                                {thread.unreadCount > 0 && (
-                                    <button
-                                        className="employee-link-button"
-                                        onClick={(e) => { e.stopPropagation(); markThreadsRead([thread]) }}
-                                        onKeyDown={(e) => e.stopPropagation()}
-                                    >
-                                        Mark as read
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })
+                                        return (
+                                            <MessageBubble
+                                                key={m.message_id}
+                                                isSelf={isSelf}
+                                                senderLabel={fromOtherPerson && groupStart ? senderName : null}
+                                                avatar={isSelf ? undefined : (
+                                                    <ChatAvatar
+                                                        people={[fromOtherPerson ? { name: senderName } : personOf(activeThread)]}
+                                                        size={28}
+                                                    />
+                                                )}
+                                                groupStart={groupStart}
+                                                groupEnd={groupEnd}
+                                                text={m.message}
+                                                time={groupEnd ? chatBubbleTime(m.created_at) : null}
+                                                edited={!!m.edited_at}
+                                                deletedNote={deletedLabel(m)}
+                                                onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
+                                                onDelete={isSelf ? () => deleteMessage(m) : undefined}
+                                                disabled={busy}
+                                            />
+                                        )
+                                    }}
+                                />
+
+                                <ChatComposer
+                                    value={reply}
+                                    onChange={setReply}
+                                    onSend={sendReply}
+                                    sending={sending}
+                                    canSend={!!reply.trim()}
+                                    placeholder={`Message ${activeThread.name}…`}
+                                />
+                            </>
+                        )}
+                    </ChatPane>
+                </ChatApp>
             )}
         </div>
     )

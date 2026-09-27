@@ -21,8 +21,14 @@ const TrashIcon = () => (
 // `deletedNote`, e.g. "You deleted a message" / "Yul deleted a message":
 // the message was unsent, so the placeholder replaces the text and there
 // are no actions.
-function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, disabled }) {
+//
+// Messenger-style runs (see ChatMessages): `groupStart` / `groupEnd` square
+// off the corners between consecutive bubbles from one sender, and
+// `avatar` (other people's messages) shows beside the last one. Edit and
+// Delete appear on hover, or on tap on touch screens.
+function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, disabled, avatar, groupStart = true, groupEnd = true }) {
     const [editing, setEditing] = useState(false)
+    const [revealed, setRevealed] = useState(false)
     const [draft, setDraft] = useState(text)
     const [saving, setSaving] = useState(false)
     const inputRef = useRef(null)
@@ -72,7 +78,19 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
     const showActions = isSelf && !editing && !deletedNote && (onEdit || onDelete)
     const unchanged = draft.trim() === text
 
+    const rowClass = [
+        'msg-row',
+        isSelf && 'is-self',
+        groupStart && 'is-group-start',
+        groupEnd && 'is-group-end',
+        revealed && 'is-revealed',
+    ].filter(Boolean).join(' ')
+
     return (
+        <div className={rowClass}>
+        {!isSelf && avatar !== undefined && (
+            <span className="msg-avatar-slot" aria-hidden="true">{groupEnd ? avatar : null}</span>
+        )}
         <div className={`msg${isSelf ? ' is-self' : ''}${editing ? ' is-editing' : ''}`}>
             {(senderLabel || badge) && (
                 <div className="msg-sender">
@@ -114,7 +132,10 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
                     </div>
                 </div>
             ) : (
-                <div className={`msg-bubble${deletedNote ? ' is-deleted' : ''}`}>
+                <div
+                    className={`msg-bubble${deletedNote ? ' is-deleted' : ''}`}
+                    onClick={showActions ? () => setRevealed((r) => !r) : undefined}
+                >
                     {deletedNote && (
                         <div className="msg-deleted-note">
                             <TrashIcon />
@@ -122,10 +143,12 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
                         </div>
                     )}
                     {!deletedNote && <p className="msg-text">{text}</p>}
-                    <span className="msg-time">
-                        {time}
-                        {edited && !deletedNote && <span className="msg-edited"> · edited</span>}
-                    </span>
+                    {(time || (edited && !deletedNote)) && (
+                        <span className="msg-time">
+                            {time}
+                            {edited && !deletedNote && <span className="msg-edited">{time ? ' · ' : ''}edited</span>}
+                        </span>
+                    )}
                 </div>
             )}
 
@@ -143,6 +166,7 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
                     )}
                 </div>
             )}
+        </div>
         </div>
     )
 }

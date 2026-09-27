@@ -289,3 +289,128 @@
 .msg.is-self .msg-bubble.is-deleted .msg-time {
     color: var(--slate);
 }
+
+/* ---------- Messenger-style rows (Messages pages) ---------- */
+
+.msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+}
+
+.msg-row.is-self {
+    justify-content: flex-end;
+}
+
+.msg-row.is-group-start {
+    margin-top: 10px;
+}
+
+.msg-row .msg {
+    align-self: auto;
+    max-width: min(72%, 560px);
+    min-width: 0;
+}
+
+.msg-row .msg.is-editing {
+    width: min(560px, 100%);
+    max-width: 100%;
+}
+
+.msg-avatar-slot {
+    display: flex;
+    flex-shrink: 0;
+    width: 28px;
+}
+
+.msg-row .msg-sender {
+    margin: 0 0 3px 12px;
+    font-size: 11.5px;
+}
+
+.msg-row .msg-bubble {
+    padding: 8px 13px;
+    border: none;
+    border-radius: 18px;
+}
+
+.msg-row:not(.is-self) .msg-bubble {
+    background: var(--paper);
+}
+
+.msg-row.is-self .msg-bubble {
+    background: linear-gradient(160deg, var(--blue-accent, var(--blue)), var(--blue));
+}
+
+.msg-row:not(.is-self):not(.is-group-start) .msg-bubble { border-top-left-radius: 5px; }
+.msg-row:not(.is-self):not(.is-group-end) .msg-bubble { border-bottom-left-radius: 5px; }
+.msg-row.is-self:not(.is-group-start) .msg-bubble { border-top-right-radius: 5px; }
+.msg-row.is-self:not(.is-group-end) .msg-bubble { border-bottom-right-radius: 5px; }
+
+.msg-row .msg-bubble .msg-text {
+    font-size: 14.5px;
+    line-height: 1.45;
+}
+
+.msg-row .msg-time {
+    margin-top: 2px;
+    font-size: 10.5px;
+}
+
+.msg-row .msg-bubble.is-deleted {
+    border: 1px dashed var(--line);
+    background: transparent;
+}
+
+.msg-row .msg-actions {
+    margin-top: 2px;
+}
+
+.msg-row .msg-actions button {
+    padding: 2px 8px;
+    font-size: 11.5px;
+}
+
+.msg-row.is-self .msg-bubble {
+    cursor: default;
+}
+
+@media (hover: hover) {
+    /* Beside the bubble on hover, so hidden actions take no space. */
+    .msg-row .msg {
+        position: relative;
+    }
+
+    .msg-row .msg-actions {
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        margin: 0 6px 0 0;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateY(-50%);
+        transition: opacity 0.12s ease;
+    }
+
+    .msg-row .msg.is-editing .msg-actions {
+        display: none;
+    }
+
+    .msg-row:hover .msg-actions,
+    .msg-row:focus-within .msg-actions {
+        opacity: 1;
+    }
+}
+
+@media (hover: none) {
+    .msg-row:not(.is-revealed) .msg-actions {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .msg-row .msg {
+        max-width: 80%;
+    }
+}
