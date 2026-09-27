@@ -9,7 +9,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
 import { ChatApp, ChatSidebar, ChatListItem, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
 import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
-import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend, refOf, stripRef } from '../../lib/messageActions'
+import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend, refOf, readMessage, withReplyTag, quoteFor, jumpToMessage } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -44,6 +44,8 @@ function Messages() {
     // The student's requests, for "Ask about a request".
     const [requests, setRequests] = useState([])
     const [askOpen, setAskOpen] = useState(false)
+    // The message being answered (Messenger-style reply), or null.
+    const [replyTo, setReplyTo] = useState(null)
     // Staff member "typing" the automatic status reply (their user id).
     const [autoTyping, setAutoTyping] = useState(null)
     // Phones show the list first; the chat opens full screen when a
@@ -121,7 +123,8 @@ function Messages() {
                 .filter((m) => !hiddenIds.has(m.message_id))
                 .map((m) => {
                     const ref = refOf(m.message)
-                    return ref ? { ...m, message: stripRef(m.message), refUserId: ref } : m
+                    const shown = readMessage(m)
+                    return ref ? { ...shown, refUserId: ref } : shown
                 })
 
             const employeeUserIds = (employeeRows || []).map((e) => e.user_id)
@@ -225,6 +228,7 @@ function Messages() {
         setSelectedUserId(contact.userId)
         setChatOpen(true)
         setReply('')
+        setReplyTo(null)
         if (contact.employeeId) setSearchParams({ employee: contact.employeeId }, { replace: true })
         else setSearchParams({}, { replace: true })
     }
@@ -252,13 +256,13 @@ function Messages() {
     const addMessage = (row) =>
         setMessages((prev) => (prev.some((m) => m.message_id === row.message_id) ? prev : [...prev, row]))
 
-    const sendText = async (text, contact) => {
+    const sendText = async (text, contact, replyToId = null) => {
         const { data, error: sendError } = await supabase
             .from('messages')
             .insert({
                 sender_user_id: userId,
                 receiver_user_id: contact.userId,
-                message: text,
+                message: withReplyTag(text, replyToId),
                 is_read: false,
             })
             .select()
@@ -273,8 +277,9 @@ function Messages() {
             notificationType: 'message',
         })
 
-        addMessage(data)
-        return data
+        const shown = readMessage(data)
+        addMessage(shown)
+        return shown
     }
 
     // "Ask about a request": asks the staff member handling it (switching to
@@ -284,10 +289,11 @@ function Messages() {
         const contact = contacts.find((c) => c.employeeId && c.employeeId === request.assigned_employee_id) || selected
         if (!contact || !userId) return
         if (contact.userId !== selectedUserId) selectContact(contact)
+        let question
 
         try {
             setSending(true)
-            await sendText(inquiryText(request), contact)
+            question = await sendText(inquiryText(request), contact)
         } catch (err) {
             console.error('ASK ABOUT REQUEST ERROR:', err)
             notifyError(err.message || 'Failed to send your question.')
@@ -307,11 +313,12 @@ function Messages() {
             const { data: autoReply, error: replyError } = await supabase.rpc('auto_reply_request_status', {
                 p_request_id: request.request_id,
                 p_reply_as: contact.userId,
+                p_reply_to: question?.message_id || null,
             })
             // Before the migration the staff member still gets the question
             // and can answer it with one click.
             if (replyError) console.warn('AUTO STATUS REPLY UNAVAILABLE:', replyError.message)
-            else if (autoReply) addMessage(autoReply)
+            else if (autoReply) addMessage(readMessage(autoReply))
         } catch (err) {
             console.warn('AUTO STATUS REPLY ERROR:', err)
         } finally {
@@ -325,8 +332,9 @@ function Messages() {
 
         try {
             setSending(true)
-            await sendText(text, selected)
+            await sendText(text, selected, replyTo?.message_id)
             setReply('')
+            setReplyTo(null)
             sendTyping([selected.userId], false)
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
@@ -359,7 +367,7 @@ function Messages() {
     // Returns false on failure so the bubble stays in edit mode.
     const editMessage = async (m, newText) => {
         try {
-            await editOwnMessage(m.message_id, newText)
+            await editOwnMessage(m.message_id, newText, m.replyTo)
             const edited_at = new Date().toISOString()
             setMessages((prev) => prev.map((x) => (isSameSend(x, m) ? { ...x, message: newText, edited_at } : x)))
             return true
@@ -381,6 +389,8 @@ function Messages() {
     }
     const activeTypers = selected ? typersIn(selected) : []
     const typerName = (id) => (id === selected?.userId ? selected.name : labels[id] || REGISTRAR_LABEL)
+    const nameOf = (id) => (id === userId ? 'You' : typerName(id))
+    const threadById = Object.fromEntries(thread.map((m) => [m.message_id, m]))
 
     const previewOf = (m) => {
         if (!m) return 'Start a conversation'
@@ -464,7 +474,10 @@ function Messages() {
                                         return (
                                             <MessageBubble
                                                 key={m.message_id}
+                                                messageId={m.message_id}
                                                 isSelf={isSelf}
+                                                onReply={() => setReplyTo(m)}
+                                                quote={quoteFor(m, { byId: threadById, selfId: userId, nameOf, onJump: jumpToMessage })}
                                                 senderLabel={fromOtherStaff && groupStart ? senderLabel : null}
                                                 avatar={isSelf ? undefined : <ChatAvatar people={[{ name: senderLabel }]} size={28} />}
                                                 groupStart={groupStart}
@@ -490,6 +503,12 @@ function Messages() {
                                         sendTyping([selected.userId], !!value.trim())
                                     }}
                                     onSend={sendMessage}
+                                    replyingTo={replyTo && {
+                                        id: replyTo.message_id,
+                                        name: replyTo.sender_user_id === userId ? 'yourself' : nameOf(replyTo.sender_user_id),
+                                        text: replyTo.message,
+                                    }}
+                                    onCancelReply={() => setReplyTo(null)}
                                     sending={sending}
                                     canSend={!!reply.trim() || thread.length === 0}
                                     placeholder={thread.length === 0 ? 'Say hello, or press send for a quick hello' : `Message ${selected.name}…`}

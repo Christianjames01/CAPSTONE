@@ -461,3 +461,91 @@
         max-width: 80%;
     }
 }
+
+/* ---------- Replies (quote above the bubble) ---------- */
+
+.msg-quote {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 100%;
+    margin: 0 0 -8px;
+    padding: 6px 12px 14px;
+    border: none;
+    border-radius: 14px 14px 4px 4px;
+    background: var(--chat-other, var(--paper));
+    color: var(--slate);
+    text-align: left;
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+.msg:not(.is-self) .msg-quote {
+    border: 1px dashed var(--line);
+    background: color-mix(in srgb, var(--chat-other, var(--paper)) 45%, transparent);
+}
+
+.msg.is-self .msg-quote {
+    align-self: flex-end;
+    background: var(--blue-tint);
+}
+
+.msg-quote:disabled {
+    cursor: default;
+}
+
+.msg-quote-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--slate);
+}
+
+.msg-quote-label svg {
+    width: 12px;
+    height: 12px;
+}
+
+.msg-quote-text {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--ink);
+    opacity: 0.75;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
+}
+
+.msg-row .msg-quote + .msg-bubble {
+    position: relative;
+}
+
+.msg-row.is-flash .msg-bubble {
+    animation: msg-flash 1.2s ease;
+}
+
+@keyframes msg-flash {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    25% { box-shadow: 0 0 0 4px var(--blue-tint); }
+}
+
+/* Other people's messages: the hover menu sits to the right of the bubble. */
+@media (hover: hover) {
+    .msg-row:not(.is-self) .msg-actions {
+        right: auto;
+        left: 100%;
+        margin: 0 0 0 6px;
+    }
+}
+
+@media (hover: none) {
+    .msg-row .msg-bubble {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}

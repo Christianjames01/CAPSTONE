@@ -7,11 +7,11 @@ import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
 import { ChatApp, ChatSidebar, ChatListItem, ChatListEmpty, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
 import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
-import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend, readMessage, withReplyTag, quoteFor, jumpToMessage } from '../../lib/messageActions'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
-import { pendingInquiry, statusReplyFor } from '../../lib/requestStatusMessages'
+import { pendingInquiry, statusReplyFor, inquiryRequestNumber } from '../../lib/requestStatusMessages'
 
 function Messages() {
     const [userId, setUserId] = useState(null)
@@ -29,6 +29,8 @@ function Messages() {
     const [senderNames, setSenderNames] = useState({})
     const [busy, setBusy] = useState(false)
     const [fillingStatus, setFillingStatus] = useState(false)
+    // The message being answered (Messenger-style reply), or null.
+    const [replyTo, setReplyTo] = useState(null)
 
     useLiveRefresh(['messages'], (options) => loadMessages(options))
     const { typingUserIds, sendTyping } = useTyping(userId)
@@ -158,7 +160,7 @@ function Messages() {
                     }
                 }
 
-                grouped[otherId].messages.push({ ...m, message: displayMessage })
+                grouped[otherId].messages.push(readMessage({ ...m, message: displayMessage }))
 
                 if (m.receiver_user_id === user.id && !m.is_read) {
                     grouped[otherId].unreadCount += 1
@@ -215,6 +217,7 @@ function Messages() {
     const openThread = (thread) => {
         setActiveId(thread.otherUserId)
         setReply('')
+        setReplyTo(null)
     }
 
     // Opening a conversation, or a message arriving while it's open, marks
@@ -242,7 +245,7 @@ function Messages() {
             const rows = recipientIds.map((id) => ({
                 sender_user_id: userId,
                 receiver_user_id: id,
-                message: reply.trim(),
+                message: withReplyTag(reply.trim(), replyTo?.message_id),
                 is_read: false,
             }))
 
@@ -256,7 +259,7 @@ function Messages() {
             }
 
             // One bubble here even though it went out as multiple rows.
-            const displayRow = data.find((d) => d.receiver_user_id === activeThread.otherUserId) || data[0]
+            const displayRow = readMessage(data.find((d) => d.receiver_user_id === activeThread.otherUserId) || data[0])
 
             const updatedThread = {
                 ...activeThread,
@@ -267,6 +270,7 @@ function Messages() {
                 prev.map((t) => (t.otherUserId === activeThread.otherUserId ? updatedThread : t))
             )
             setReply('')
+            setReplyTo(null)
             sendTyping(recipientIds, false)
 
         } catch (err) {
@@ -317,7 +321,7 @@ function Messages() {
     // Returns false on failure so the bubble stays in edit mode.
     const editMessage = async (m, newText) => {
         try {
-            await editOwnMessage(m.message_id, newText)
+            await editOwnMessage(m.message_id, newText, m.replyTo)
             const edited_at = new Date().toISOString()
             replaceActiveThread({
                 ...activeThread,
@@ -332,11 +336,13 @@ function Messages() {
     }
 
     // A student asked "what's the status of REQ-…?": fill in the answer.
-    const inquiryNumber = activeThread ? pendingInquiry(activeThread.messages, userId) : null
+    const inquiry = activeThread ? pendingInquiry(activeThread.messages, userId) : null
+    const inquiryNumber = inquiryRequestNumber(inquiry?.message)
     const fillStatusReply = async () => {
         try {
             setFillingStatus(true)
             setReply(await statusReplyFor(inquiryNumber))
+            setReplyTo(inquiry)
         } catch (err) {
             notifyError(err.message || 'Could not look up that request.')
         } finally {
@@ -356,6 +362,8 @@ function Messages() {
     }
 
     const personOf = (thread) => ({ name: thread.name, photo: thread.photo })
+    const nameOf = (id) => (id === userId ? 'You' : id === activeThread?.otherUserId ? activeThread.name : senderNames[id] || 'Someone')
+    const threadById = activeThread ? Object.fromEntries(activeThread.messages.map((m) => [m.message_id, m])) : {}
 
     // Who in a conversation is typing right now (the student, or anyone
     // else who has written in it, e.g. the head).
@@ -461,7 +469,10 @@ function Messages() {
                                         return (
                                             <MessageBubble
                                                 key={m.message_id}
+                                                messageId={m.message_id}
                                                 isSelf={isSelf}
+                                                onReply={() => setReplyTo(m)}
+                                                quote={quoteFor(m, { byId: threadById, selfId: userId, nameOf, onJump: jumpToMessage })}
                                                 senderLabel={fromOtherPerson && groupStart ? senderName : null}
                                                 avatar={isSelf ? undefined : (
                                                     <ChatAvatar
@@ -490,6 +501,12 @@ function Messages() {
                                         sendTyping([activeThread.otherUserId, ...(activeThread.extraParticipantIds || [])], !!value.trim())
                                     }}
                                     onSend={sendReply}
+                                    replyingTo={replyTo && {
+                                        id: replyTo.message_id,
+                                        name: replyTo.sender_user_id === userId ? 'yourself' : nameOf(replyTo.sender_user_id),
+                                        text: replyTo.message,
+                                    }}
+                                    onCancelReply={() => setReplyTo(null)}
                                     sending={sending}
                                     canSend={!!reply.trim()}
                                     placeholder={`Message ${activeThread.name}…`}

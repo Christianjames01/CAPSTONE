@@ -269,7 +269,9 @@ export function ChatMessages({ messages, threadKey, empty, renderMessage, typing
 // like Messenger; with a keyboard, Enter sends and Shift+Enter adds a line.
 const touchTyping = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 
-export function ChatComposer({ value, onChange, onSend, sending, placeholder, canSend, above }) {
+// `replyingTo`: { name, text } while answering a message (with
+// `onCancelReply`); the box gets focus when a reply starts.
+export function ChatComposer({ value, onChange, onSend, sending, placeholder, canSend, above, replyingTo, onCancelReply }) {
     const ref = useRef(null)
 
     // Grow the box with its text. On phones the chat starts hidden behind
@@ -299,6 +301,11 @@ export function ChatComposer({ value, onChange, onSend, sending, placeholder, ca
         return () => observer.disconnect()
     }, [])
 
+    const replyKey = replyingTo?.id
+    useEffect(() => {
+        if (replyKey) ref.current?.focus()
+    }, [replyKey])
+
     const send = () => {
         if (!sending && canSend) onSend()
     }
@@ -306,6 +313,17 @@ export function ChatComposer({ value, onChange, onSend, sending, placeholder, ca
     return (
         <div className="chat-composer">
             {above}
+            {replyingTo && (
+                <div className="chat-replying">
+                    <div className="chat-replying-text">
+                        <strong>Replying to {replyingTo.name}</strong>
+                        <span>{replyingTo.text}</span>
+                    </div>
+                    <button type="button" className="chat-icon-button" onClick={onCancelReply} aria-label="Cancel reply">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                    </button>
+                </div>
+            )}
             <div className="chat-composer-row">
                 <textarea
                     ref={ref}

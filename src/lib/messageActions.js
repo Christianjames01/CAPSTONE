@@ -34,10 +34,11 @@ export async function hideMessagesForMe(userId, messageIds) {
     if (error) throw new Error('Failed to delete message: ' + error.message)
 }
 
-export async function editOwnMessage(messageId, newText) {
+// `replyTo`: keeps a reply a reply after editing.
+export async function editOwnMessage(messageId, newText, replyTo = null) {
     const { error } = await supabase.rpc('edit_my_message', {
         p_message_id: String(messageId),
-        p_new_text: newText,
+        p_new_text: replyTo ? `[[reply=${replyTo}]]${newText}` : newText,
     })
 
     if (error) throw new Error(error.message)
@@ -90,3 +91,54 @@ export function stripRef(text) {
     return (text || '').replace(REF_TAG, '')
 }
 
+
+// Messenger-style replies: [[reply=<message id>]] after any [[ref=]] tag
+// names the message being answered. edit_my_message keeps whatever text it
+// is given, so edits pass the tag back in (see editOwnMessage).
+const REPLY_TAG = /^\[\[reply=([0-9a-f-]+)\]\]/
+
+export function withReplyTag(text, replyToId) {
+    return replyToId ? `[[reply=${replyToId}]]${text}` : text
+}
+
+// A stored message as shown: routing and reply tags removed, with
+// `replyTo` (the answered message's id) when it's a reply.
+export function readMessage(row) {
+    const text = stripRef(row.message)
+    const match = text.match(REPLY_TAG)
+    return match
+        ? { ...row, message: text.slice(match[0].length), replyTo: match[1] }
+        : { ...row, message: text, replyTo: row.replyTo || null }
+}
+
+// Quote shown above a reply, Messenger style: "You replied to Sar" /
+// "Sar replied to you". `byId` holds the conversation's messages.
+export function quoteFor(m, { byId, selfId, nameOf, onJump }) {
+    if (!m.replyTo) return null
+    const original = byId[m.replyTo]
+    const senderIsSelf = m.sender_user_id === selfId
+    const who = senderIsSelf ? 'You' : (nameOf(m.sender_user_id) || 'Someone').split(' ')[0]
+
+    if (!original) return { label: `${who} replied to a message`, text: 'Original message unavailable' }
+
+    const toSelf = original.sender_user_id === selfId
+    const target = toSelf
+        ? (senderIsSelf ? 'yourself' : 'you')
+        : original.sender_user_id === m.sender_user_id ? 'themself' : (nameOf(original.sender_user_id) || 'someone').split(' ')[0]
+
+    return {
+        label: `${who} replied to ${target}`,
+        text: original.deleted_at ? 'Message deleted' : original.message,
+        onClick: onJump ? () => onJump(original.message_id) : undefined,
+    }
+}
+
+// Scroll a message into view and flash it (tapping a quote).
+export function jumpToMessage(messageId) {
+    const el = document.getElementById(`msg-${messageId}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.remove('is-flash')
+    void el.offsetWidth
+    el.classList.add('is-flash')
+}

@@ -11,11 +11,14 @@
 -- Safe to re-run.
 
 drop function if exists public.auto_reply_request_status(uuid);
+drop function if exists public.auto_reply_request_status(uuid, uuid);
 
 -- p_reply_as: the staff member whose conversation the question was asked
 -- in, so the reply lands there. Must be an employee or the Registrar Head;
 -- otherwise the employee handling the request (or the head) replies.
-create or replace function public.auto_reply_request_status(p_request_id uuid, p_reply_as uuid default null)
+-- p_reply_to: the student's question; the reply quotes it, Messenger style
+-- ([[reply=<id>]] tag, see src/lib/messageActions.js).
+create or replace function public.auto_reply_request_status(p_request_id uuid, p_reply_as uuid default null, p_reply_to uuid default null)
 returns jsonb
 language plpgsql
 security definer
@@ -45,7 +48,7 @@ begin
     if exists (
         select 1 from messages
          where receiver_user_id = auth.uid()
-           and message like 'Automatic status update for ' || v_req.request_number || '%'
+           and message like '%Automatic status update for ' || v_req.request_number || '%'
            and created_at > now() - interval '1 minute'
     ) then
         return null;
@@ -108,6 +111,13 @@ begin
         v_label,
         v_next);
 
+    -- Only quote a question the student themself sent.
+    if p_reply_to is not null and exists (
+        select 1 from messages where message_id = p_reply_to and sender_user_id = auth.uid()
+    ) then
+        v_text := '[[reply=' || p_reply_to || ']]' || trim(v_text);
+    end if;
+
     insert into messages (sender_user_id, receiver_user_id, message, is_read)
     values (v_staff, auth.uid(), trim(v_text), false)
     returning * into v_msg;
@@ -116,5 +126,5 @@ begin
 end;
 $$;
 
-revoke execute on function public.auto_reply_request_status(uuid, uuid) from public, anon;
-grant execute on function public.auto_reply_request_status(uuid, uuid) to authenticated;
+revoke execute on function public.auto_reply_request_status(uuid, uuid, uuid) from public, anon;
+grant execute on function public.auto_reply_request_status(uuid, uuid, uuid) to authenticated;

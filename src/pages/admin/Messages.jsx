@@ -9,11 +9,11 @@ import Modal from '../../components/Modal'
 import MessageBubble from '../../components/MessageBubble'
 import { ChatApp, ChatSidebar, ChatListItem, ChatListEmpty, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
 import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
-import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend, refOf, stripRef } from '../../lib/messageActions'
+import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend, refOf, readMessage, withReplyTag, quoteFor, jumpToMessage } from '../../lib/messageActions'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
-import { pendingInquiry, statusReplyFor } from '../../lib/requestStatusMessages'
+import { pendingInquiry, statusReplyFor, inquiryRequestNumber } from '../../lib/requestStatusMessages'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -41,6 +41,8 @@ function Messages() {
     const [threadFilter, setThreadFilter] = useState('all')
     const [sending, setSending] = useState(false)
     const [fillingStatus, setFillingStatus] = useState(false)
+    // The message being answered (Messenger-style reply), or null.
+    const [replyTo, setReplyTo] = useState(null)
 
     const [showNewMessage, setShowNewMessage] = useState(false)
     const [studentQuery, setStudentQuery] = useState('')
@@ -107,7 +109,7 @@ function Messages() {
             // employee's copy.
             const rows = visible
                 .filter((m) => !refOf(m.message) || roleFor(m.receiver_user_id) === 'student')
-                .map((m) => (refOf(m.message) ? { ...m, message: stripRef(m.message) } : m))
+                .map(readMessage)
 
             // Rows saved in the same send (same sender and moment) but to
             // someone else -- how a fanned-out reply is recognised.
@@ -256,6 +258,7 @@ function Messages() {
     const openThread = (thread) => {
         setActiveKey(thread.pairKey)
         setReply('')
+        setReplyTo(null)
     }
 
     const closeThread = () => {
@@ -408,7 +411,7 @@ function Messages() {
                 return {
                     sender_user_id: currentUserId,
                     receiver_user_id: r.id,
-                    message: tagFor ? `[[ref=${tagFor}]]${reply.trim()}` : reply.trim(),
+                    message: `${tagFor ? `[[ref=${tagFor}]]` : ''}${withReplyTag(reply.trim(), replyTo?.message_id)}`,
                     is_read: false,
                 }
             })
@@ -426,7 +429,7 @@ function Messages() {
             // as a single bubble here -- it's one message from the head's
             // point of view, not several. Show the untagged copy.
             const shown = data.find((d) => d.receiver_user_id === studentRecipient?.id) || data[0]
-            const displayRow = { ...shown, message: stripRef(shown.message) }
+            const displayRow = readMessage(shown)
             const updatedThread = { ...activeThread, messages: [...activeThread.messages, displayRow] }
 
             setThreads((prev) => {
@@ -437,6 +440,7 @@ function Messages() {
             })
 
             setReply('')
+            setReplyTo(null)
             sendTyping(recipients.map((r) => r.id), false)
 
         } catch (err) {
@@ -484,7 +488,7 @@ function Messages() {
     // false on failure so the bubble stays in edit mode.
     const editMessage = async (m, newText) => {
         try {
-            await editOwnMessage(m.message_id, newText)
+            await editOwnMessage(m.message_id, newText, m.replyTo)
             const edited_at = new Date().toISOString()
             const apply = (list) => list.map((x) => (isSameSend(x, m) ? { ...x, message: newText, edited_at } : x))
 
@@ -583,17 +587,22 @@ function Messages() {
     const activeTypers = activeThread ? typersIn(activeThread) : []
 
     // A student asked "what's the status of REQ-…?": fill in the answer.
-    const inquiryNumber = activeThread ? pendingInquiry(activeThread.messages, currentUserId) : null
+    const inquiry = activeThread ? pendingInquiry(activeThread.messages, currentUserId) : null
+    const inquiryNumber = inquiryRequestNumber(inquiry?.message)
     const fillStatusReply = async () => {
         try {
             setFillingStatus(true)
             setReply(await statusReplyFor(inquiryNumber))
+            setReplyTo(inquiry)
         } catch (err) {
             notifyError(err.message || 'Could not look up that request.')
         } finally {
             setFillingStatus(false)
         }
     }
+
+    const nameOf = (id) => (id === currentUserId ? 'You' : nameForSender(id))
+    const threadById = activeThread ? Object.fromEntries(activeThread.messages.map((m) => [m.message_id, m])) : {}
 
     const photoOf = (userId) => (activeThread?.participantA === userId ? activeThread.photoA : activeThread?.participantB === userId ? activeThread.photoB : '')
 
@@ -714,7 +723,10 @@ function Messages() {
                                         return (
                                             <MessageBubble
                                                 key={m.message_id}
+                                                messageId={m.message_id}
                                                 isSelf={isSelf}
+                                                onReply={() => setReplyTo(m)}
+                                                quote={quoteFor(m, { byId: threadById, selfId: currentUserId, nameOf, onJump: jumpToMessage })}
                                                 senderLabel={groupStart && (isSelf ? !isMyThread(activeThread) : peopleOf(activeThread).length > 1) ? senderName : null}
                                                 avatar={isSelf ? undefined : (
                                                     <ChatAvatar people={[{ name: senderName, photo: photoOf(m.sender_user_id) }]} size={28} />
@@ -740,6 +752,12 @@ function Messages() {
                                         sendTyping(otherParticipants(activeThread).map((p) => p.id), !!value.trim())
                                     }}
                                     onSend={sendReply}
+                                    replyingTo={replyTo && {
+                                        id: replyTo.message_id,
+                                        name: replyTo.sender_user_id === currentUserId ? 'yourself' : nameOf(replyTo.sender_user_id),
+                                        text: replyTo.message,
+                                    }}
+                                    onCancelReply={() => setReplyTo(null)}
                                     sending={sending}
                                     canSend={!!reply.trim()}
                                     placeholder={isMyThread(activeThread) ? `Message ${titleOf(activeThread)}…` : 'Message both of them…'}

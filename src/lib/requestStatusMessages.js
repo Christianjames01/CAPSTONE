@@ -36,15 +36,14 @@ export function inquiryRequestNumber(text) {
     return (text || '').match(INQUIRY)?.[1] || null
 }
 
-// The newest unanswered status inquiry in a conversation (sent by someone
-// other than `selfId` with no reply from `selfId` after it), or null.
+// The newest unanswered status inquiry message in a conversation (sent by
+// someone other than `selfId` with no reply from `selfId` after it), or null.
 export function pendingInquiry(messages, selfId) {
     for (let i = messages.length - 1; i >= 0; i--) {
         const m = messages[i]
         if (m.sender_user_id === selfId) return null
         if (m.deleted_at) continue
-        const number = inquiryRequestNumber(m.message)
-        if (number) return number
+        if (inquiryRequestNumber(m.message)) return m
     }
     return null
 }

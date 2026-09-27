@@ -8,6 +8,13 @@ const PencilIcon = () => (
     </svg>
 )
 
+const ReplyIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 14 4 9l5-5" />
+        <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+    </svg>
+)
+
 const TrashIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5" />
@@ -26,7 +33,9 @@ const TrashIcon = () => (
 // off the corners between consecutive bubbles from one sender, and
 // `avatar` (other people's messages) shows beside the last one. Edit and
 // Delete appear on hover, or on a long press on phones (like Messenger).
-function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, disabled, avatar, groupStart = true, groupEnd = true }) {
+// `onReply` adds Reply to the menu (any message); `quote` ({ label, text,
+// onClick }) shows the answered message above a reply.
+function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, onReply, quote, disabled, avatar, groupStart = true, groupEnd = true }) {
     const [editing, setEditing] = useState(false)
     const [revealed, setRevealed] = useState(false)
     const rowRef = useRef(null)
@@ -114,7 +123,8 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
         }
     }
 
-    const showActions = isSelf && !editing && !deletedNote && (onEdit || onDelete)
+    const canEdit = isSelf && (onEdit || onDelete)
+    const showActions = !editing && !deletedNote && (onReply || canEdit)
     const unchanged = draft.trim() === text
 
     const rowClass = [
@@ -126,7 +136,7 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
     ].filter(Boolean).join(' ')
 
     return (
-        <div className={rowClass} ref={rowRef}>
+        <div className={rowClass} ref={rowRef} id={messageId ? `msg-${messageId}` : undefined}>
         {!isSelf && avatar !== undefined && (
             <span className="msg-avatar-slot" aria-hidden="true">{groupEnd ? avatar : null}</span>
         )}
@@ -136,6 +146,19 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
                     {senderLabel}
                     {badge}
                 </div>
+            )}
+
+            {quote && !editing && (
+                <button
+                    type="button"
+                    className="msg-quote"
+                    onClick={quote.onClick}
+                    disabled={!quote.onClick}
+                    title={quote.onClick ? 'Show the original message' : undefined}
+                >
+                    <span className="msg-quote-label"><ReplyIcon /> {quote.label}</span>
+                    <span className="msg-quote-text">{quote.text}</span>
+                </button>
             )}
 
             {editing ? (
@@ -193,12 +216,17 @@ function MessageBubble({ isSelf, senderLabel, badge, text, time, edited, deleted
 
             {showActions && (
                 <div className="msg-actions">
-                    {onEdit && (
+                    {onReply && (
+                        <button type="button" onClick={() => { setRevealed(false); onReply() }} disabled={disabled}>
+                            <ReplyIcon /> Reply
+                        </button>
+                    )}
+                    {isSelf && onEdit && (
                         <button type="button" onClick={() => { setRevealed(false); startEditing() }} disabled={disabled}>
                             <PencilIcon /> Edit
                         </button>
                     )}
-                    {onDelete && (
+                    {isSelf && onDelete && (
                         <button type="button" className="is-danger" onClick={() => { setRevealed(false); onDelete() }} disabled={disabled}>
                             <TrashIcon /> Delete
                         </button>
