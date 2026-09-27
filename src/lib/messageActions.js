@@ -75,3 +75,22 @@ export function markSendDeleted(list, deletedMsg, userId) {
 export function isSameSend(m, edited) {
     return m.sender_user_id === edited.sender_user_id && m.created_at === edited.created_at
 }
+
+// Hidden routing tag at the start of a fanned-out copy: [[ref=<user id>]]
+// names the other person in the conversation it belongs to (the student on
+// the employee's copy, the employee on the student's copy). edit_my_message
+// and delete_my_message keep it. Never shown.
+const REF_TAG = /^\[\[ref=([0-9a-f-]+)\]\]/
+
+export function refOf(text) {
+    return (text || '').match(REF_TAG)?.[1] || null
+}
+
+export function stripRef(text) {
+    return (text || '').replace(REF_TAG, '')
+}
+
+// Head messages to a student sent after this go in their own "Registrar"
+// conversation unless tagged as part of a student-employee conversation.
+// Older untagged ones keep the old placement (in the employee's chat).
+export const DIRECT_HEAD_MESSAGES_SINCE = '2026-09-27T08:45:00Z'

@@ -9,7 +9,7 @@ import Modal from '../../components/Modal'
 import MessageBubble from '../../components/MessageBubble'
 import { ChatApp, ChatSidebar, ChatListItem, ChatListEmpty, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
 import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
-import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend, refOf, stripRef } from '../../lib/messageActions'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
@@ -81,16 +81,10 @@ function Messages() {
             const hiddenIds = await loadHiddenMessageIds(user.id)
             const visible = (data || []).filter((m) => !hiddenIds.has(m.message_id))
 
-            // The [[ref=...]] tagged copy is a routing helper only the
-            // employee's own page needs (see sendReply) -- the untagged
-            // sibling sent to the student already carries the real
-            // content, so drop the tagged copy here rather than showing
-            // the same message twice.
             setRawMessages(visible)
-            const rows = visible.filter((m) => !m.message.startsWith('[[ref='))
 
             const userIds = [
-                ...new Set(rows.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
+                ...new Set(visible.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
             ]
 
             const { data: profiles } = userIds.length
@@ -103,6 +97,21 @@ function Messages() {
             const nameFor = (userId) => labels[userId] || 'Unknown'
 
             const roleFor = (userId) => profileByUserId[userId]?.role || ''
+
+            // A reply into a student-employee conversation is saved as one
+            // row per recipient, each tagged [[ref=]] (see sendReply). Show
+            // the student's copy (tag removed) and drop the employee's, so
+            // the message appears once. Older replies only tagged the
+            // employee's copy.
+            const rows = visible
+                .filter((m) => !refOf(m.message) || roleFor(m.receiver_user_id) === 'student')
+                .map((m) => (refOf(m.message) ? { ...m, message: stripRef(m.message) } : m))
+
+            // Rows saved in the same send (same sender and moment) but to
+            // someone else -- how a fanned-out reply is recognised.
+            const otherReceiversOf = (m) => visible
+                .filter((x) => x.sender_user_id === m.sender_user_id && x.created_at === m.created_at && x.receiver_user_id !== m.receiver_user_id)
+                .map((x) => x.receiver_user_id)
 
             const grouped = {}
 
@@ -123,11 +132,12 @@ function Messages() {
 
             // A reply sent while viewing someone else's conversation is
             // delivered as one row per recipient (messages is strictly
-            // 1:1), so a fresh reload naturally regroups it into its own
-            // "head <-> student" / "head <-> employee" pairs. Fold those
-            // back into whichever existing non-head thread the other
-            // person already belongs to, so it reads as one conversation
-            // in this list too, not three.
+            // 1:1), so a fresh reload regroups it into its own
+            // "head <-> student" / "head <-> employee" pairs. Fold only those
+            // fanned-out copies back into the conversation they were sent
+            // in. A direct message between the head and a student (or a
+            // student's reply to it) has no sibling and stays in its own
+            // head <-> student conversation.
             {
                 for (const [key, group] of Object.entries(grouped)) {
                     const isHeadGroup = group.participantA === user.id || group.participantB === user.id
@@ -147,6 +157,7 @@ function Messages() {
 
                     const signatureOf = (m) => `${m.sender_user_id}|${m.message}|${m.created_at}`
                     const touched = new Set()
+                    const moved = new Set()
 
                     for (const m of group.messages) {
                         const signature = signatureOf(m)
@@ -161,15 +172,29 @@ function Messages() {
                             // Show it once, but keep the head's own copy so its
                             // unread status counts and "Mark as read" can clear it.
                             if (m.receiver_user_id === user.id) sibling.g.messages[sibling.index] = m
+                            moved.add(m.message_id)
                             continue
                         }
 
-                        candidates[0].messages.push(m)
-                        touched.add(candidates[0])
+                        // The head's own fanned-out reply: its other copy went
+                        // to the other person of the conversation it belongs in.
+                        const others = m.sender_user_id === user.id ? otherReceiversOf(m) : []
+                        const target = others
+                            .map((id) => grouped[[otherId, id].sort().join('|')])
+                            .find((g) => g && g.pairKey !== key)
+
+                        if (target) {
+                            target.messages.push(m)
+                            touched.add(target)
+                            moved.add(m.message_id)
+                        }
                     }
 
                     for (const g of touched) g.messages.sort((a, b) => a.created_at.localeCompare(b.created_at))
-                    delete grouped[key]
+
+                    // Whatever is left is a direct conversation with the head.
+                    group.messages = group.messages.filter((m) => !moved.has(m.message_id))
+                    if (group.messages.length === 0) delete grouped[key]
                 }
             }
 
@@ -370,12 +395,18 @@ function Messages() {
         try {
             setSending(true)
 
+            // Replying into a student-employee conversation: tag each copy
+            // with the other person, so both of their pages file it in this
+            // conversation (the student's page would otherwise treat a head
+            // message as a direct one).
+            const staffRecipient = recipients.find((r) => r.role !== 'student')
             const rows = recipients.map((r) => {
-                const needsTag = recipients.length > 1 && studentRecipient && r.id !== studentRecipient.id
+                const fannedOut = recipients.length > 1 && studentRecipient
+                const tagFor = !fannedOut ? null : r.id !== studentRecipient.id ? studentRecipient.id : staffRecipient?.id
                 return {
                     sender_user_id: currentUserId,
                     receiver_user_id: r.id,
-                    message: needsTag ? `[[ref=${studentRecipient.id}]]${reply.trim()}` : reply.trim(),
+                    message: tagFor ? `[[ref=${tagFor}]]${reply.trim()}` : reply.trim(),
                     is_read: false,
                 }
             })
@@ -392,7 +423,8 @@ function Messages() {
             // Delivered as one row per recipient under the hood, but shown
             // as a single bubble here -- it's one message from the head's
             // point of view, not several. Show the untagged copy.
-            const displayRow = data.find((d) => !d.message.startsWith('[[ref=')) || data[0]
+            const shown = data.find((d) => d.receiver_user_id === studentRecipient?.id) || data[0]
+            const displayRow = { ...shown, message: stripRef(shown.message) }
             const updatedThread = { ...activeThread, messages: [...activeThread.messages, displayRow] }
 
             setThreads((prev) => {

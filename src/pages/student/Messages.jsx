@@ -9,7 +9,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
 import { ChatApp, ChatSidebar, ChatListItem, ChatPane, ChatHeader, ChatMessages, ChatComposer, ChatPlaceholder, ChatAvatar } from '../../components/ChatApp'
 import { chatListTime, chatBubbleTime } from '../../lib/chatTime'
-import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
+import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend, refOf, stripRef, DIRECT_HEAD_MESSAGES_SINCE } from '../../lib/messageActions'
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -109,19 +109,26 @@ function Messages() {
 
             // Messages this student deleted "for me".
             const hiddenIds = await loadHiddenMessageIds(user.id)
-            const rows = (messageRows || []).filter((m) => !hiddenIds.has(m.message_id))
+            // [[ref=<employee>]] marks a Registrar Head reply sent into the
+            // conversation with that employee; the tag itself is never shown.
+            const rows = (messageRows || [])
+                .filter((m) => !hiddenIds.has(m.message_id))
+                .map((m) => {
+                    const ref = refOf(m.message)
+                    return ref ? { ...m, message: stripRef(m.message), refUserId: ref } : m
+                })
 
             const employeeUserIds = (employeeRows || []).map((e) => e.user_id)
             const otherUserIds = [...new Set([...employeeUserIds, ...rows.map((m) => otherParty(m, user.id))])].filter(Boolean)
             const labels = await buildSenderLabels(otherUserIds)
 
             // Which conversation each message belongs in. Messages with an
-            // employee go in that employee's conversation. Messages from
-            // other registrar staff (the Registrar Head replying while
-            // viewing a student-employee conversation) go in the
-            // conversation that was active when they were sent -- the one
-            // holding the latest earlier message -- so they read as part
-            // of the same chat.
+            // employee go in that employee's conversation. A Registrar Head
+            // reply tagged with an employee goes in that employee's
+            // conversation. Any other head message is a direct one and gets
+            // its own conversation -- except older untagged ones, which go
+            // in the conversation that was active when they were sent (the
+            // one holding the latest earlier message), as before.
             const employeeUserSet = new Set(employeeUserIds)
             const assigned = {}
             let lastThread = null
@@ -130,6 +137,10 @@ function Messages() {
                 if (employeeUserSet.has(other)) {
                     assigned[m.message_id] = other
                     lastThread = other
+                } else if (m.refUserId && employeeUserSet.has(m.refUserId)) {
+                    assigned[m.message_id] = m.refUserId
+                } else if (new Date(m.created_at) >= new Date(DIRECT_HEAD_MESSAGES_SINCE)) {
+                    assigned[m.message_id] = other
                 } else if (employeeUserSet.size > 0) {
                     assigned[m.message_id] = lastThread // null = not placed yet (see below)
                 } else {
@@ -157,10 +168,10 @@ function Messages() {
                 }
             })
 
-            // With no employee to talk to, other registrar staff who messaged
-            // the student (e.g. the Registrar Head) get their own conversation.
-            for (const uid of new Set(rows.map((m) => otherParty(m, user.id)))) {
-                if (!uid || employeeUserSet.size > 0 || list.some((c) => c.userId === uid)) continue
+            // Other registrar staff with a direct conversation (e.g. the
+            // Registrar Head messaging the student) get their own entry.
+            for (const uid of new Set(Object.values(assigned))) {
+                if (!uid || list.some((c) => c.userId === uid)) continue
                 list.push({
                     userId: uid,
                     employeeId: null,
