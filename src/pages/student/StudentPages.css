@@ -387,14 +387,29 @@
 
 .student-request-grid {
     display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     gap: 20px;
     align-items: start;
 }
 
+/* Grid items default to min-width: auto, so a long document name used to
+   stretch the column past a phone's width (and the phone zoomed out). */
+.student-request-grid > * {
+    min-width: 0;
+}
+
+.student-request-grid .student-list-card-header > div {
+    min-width: 0;
+}
+
+.student-request-grid .student-list-card-header h3 {
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
 @media (max-width: 900px) {
     .student-request-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
