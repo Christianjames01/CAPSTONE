@@ -950,3 +950,98 @@
     align-items: center;
     gap: 8px;
 }
+
+/* ---- updates: office hours, replies, receipt checks ---------------------- */
+.tp-announce.is-open {
+    border-left-color: #1e8a5f;
+}
+
+.tp-cal.is-week {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.tp-cal-day.is-open {
+    background: #E8F5EE;
+    color: #14583d;
+    font-size: 10px;
+    box-shadow: inset 0 0 0 1px #1e8a5f;
+}
+
+.tp-cal-legend i.is-open {
+    margin-left: 6px;
+    background: #E8F5EE;
+    border: 1px solid #1e8a5f;
+}
+
+.tp-quote {
+    display: block;
+    margin: -2px 0 5px;
+    padding: 4px 8px;
+    border-left: 2px solid #123B78;
+    border-radius: 6px;
+    background: #F1F4FA;
+    font-size: 10px;
+    font-weight: 700;
+    color: #57616F;
+}
+
+.tp-quote.is-self {
+    border-left-color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.tp-typing-dots.is-other {
+    background: #fff;
+}
+
+.tp-typing-dots.is-other span {
+    background: #97A0B3;
+}
+
+.tp-chip {
+    align-self: flex-start;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: #EAF1FB;
+    font-size: 11px;
+    font-weight: 700;
+    color: #123B78;
+    animation: tp-rise 0.4s ease-out 0.9s both;
+}
+
+.tp-cover {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #14583d;
+}
+
+.tp-note {
+    display: block;
+    padding: 6px 9px;
+    border-left: 3px solid #123B78;
+    border-radius: 6px;
+    background: #EAF1FB;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #123B78;
+}
+
+.tp-note.is-warn {
+    border-left-color: #b7791f;
+    background: #FDF3E1;
+    color: #8a5a10;
+}
+
+.tp-or {
+    padding: 4px 8px;
+    border: 1px solid #dde3ee;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: #101827;
+}

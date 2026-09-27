@@ -36,6 +36,11 @@ const PREVIEWS = {
                 <div className="tp-tile"><strong>0</strong><span>To claim</span></div>
                 <div className="tp-tile is-accent"><strong>1</strong><span>Next step</span></div>
             </div>
+            <div className="tp-announce is-open">
+                <span className="tp-pill is-green">Office open · Sat, Oct 4</span>
+                <strong>Open for claiming, 8:00 AM – 5:00 PM</strong>
+                <span>Office days: Tuesday to Friday</span>
+            </div>
             <Row title="Transcript of Records" sub="REQ-000012 · Next: upload your receipt" pill="Payment pending" tone="amber" />
         </div>
     ),
@@ -61,6 +66,8 @@ const PREVIEWS = {
                 <div className="tp-receipt-line is-total"><span>Paid</span><span>₱60.00</span></div>
             </div>
             <div className="tp-upload">
+                <span className="tp-or">OR No. 0045821</span>
+                <span className="tp-cover"><Check /> + REQ-000013</span>
                 <span className="tp-upload-icon"><IconUpload /></span>
                 <span>receipt-photo.jpg</span>
                 <div className="tp-bar"><span className="tp-bar-fill" /></div>
@@ -85,8 +92,8 @@ const PREVIEWS = {
         <div className="tp-claim">
             <div className="tp-ticket">
                 <span className="tp-ticket-month">SEP</span>
-                <strong>29</strong>
-                <span>Monday</span>
+                <strong>30</strong>
+                <span>Tuesday</span>
             </div>
             <div className="tp-claim-info">
                 <strong>1:00 PM · Window 3</strong>
@@ -102,9 +109,13 @@ const PREVIEWS = {
 
     messages: () => (
         <div className="tp-chat">
-            <div className="tp-bubble is-self">Hi! Is my TOR ready to claim?</div>
-            <div className="tp-bubble"><em>sar</em>Yes — it’s scheduled for Sep 29, 1:00 PM at Window 3.</div>
-            <div className="tp-bubble is-self tp-typing-dots"><span /><span /><span /></div>
+            <div className="tp-bubble is-self">Status inquiry: REQ-000012 (Transcript of Records). May I know the status?</div>
+            <div className="tp-bubble">
+                <span className="tp-quote">sar replied to you</span>
+                Automatic status update: Processing. Your request is being processed by the Registrar.
+            </div>
+            <div className="tp-bubble tp-typing-dots is-other"><span /><span /><span /></div>
+            <span className="tp-chip">Ask about a request ▾</span>
         </div>
     ),
 
@@ -149,7 +160,9 @@ const PREVIEWS = {
                 <div className="tp-receipt-line is-total"><span>Amount</span><span>₱60.00</span></div>
             </div>
             <div className="tp-verify-actions">
-                <div className="tp-button is-green tp-pulse"><IconCheck className="is-leading" />Verify receipt</div>
+                <span className="tp-note is-group">Covers REQ-000012 &amp; REQ-000013 — check it shows ₱120.00</span>
+                <span className="tp-note is-warn">Same photo used on REQ-000009</span>
+                <div className="tp-button is-green tp-pulse"><IconCheck className="is-leading" />Verify both</div>
                 <div className="tp-button is-ghost">Mark invalid…</div>
             </div>
         </div>
@@ -243,6 +256,11 @@ const PREVIEWS = {
                 <strong>Office closed on Oct 1 (holiday)</strong>
                 <span>Claiming scheduled that day moves to Oct 2.</span>
             </div>
+            <div className="tp-announce is-open">
+                <span className="tp-pill is-green">Office open · Sat, Oct 4</span>
+                <strong>Enrollment Saturday</strong>
+                <span>Office hours: 8:00 AM – 6:00 PM</span>
+            </div>
             <div className="tp-button tp-pulse">Publish to students</div>
         </div>
     ),
@@ -255,16 +273,18 @@ const PREVIEWS = {
         </div>
     ),
 
+    // Sun-Sat; Mondays and weekends closed unless opened (with hours).
     calendar: () => (
-        <div className="tp-cal" aria-hidden="true">
-            {['M', 'T', 'W', 'T', 'F'].map((d, i) => <span key={`h${i}`} className="tp-cal-head">{d}</span>)}
-            {Array.from({ length: 15 }, (_, i) => {
-                const day = 22 + i
+        <div className="tp-cal is-week" aria-hidden="true">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={`h${i}`} className="tp-cal-head">{d}</span>)}
+            {Array.from({ length: 14 }, (_, i) => {
+                const day = 21 + i
+                const dow = i % 7
                 const label = day > 30 ? day - 30 : day
-                const cls = day === 29 ? ' is-claim' : day === 31 ? ' is-closed' : ''
-                return <span key={day} className={`tp-cal-day${cls}`}>{label}</span>
+                const cls = day === 27 ? ' is-open' : day === 30 ? ' is-claim' : dow === 0 || dow === 1 || dow === 6 ? ' is-closed' : ''
+                return <span key={day} className={`tp-cal-day${cls}`}>{day === 27 ? '8–5' : label}</span>
             })}
-            <span className="tp-cal-legend"><i className="is-claim" /> Claiming <i className="is-closed" /> Closed</span>
+            <span className="tp-cal-legend"><i className="is-claim" /> Claiming <i className="is-open" /> Opened, 8 AM – 5 PM <i className="is-closed" /> Closed</span>
         </div>
     ),
 
@@ -300,13 +320,19 @@ const PREVIEWS = {
         <div className="tp-stack">
             <Row title="OR No. 0045821 · ₱60.00" sub="Juan Dela Cruz · REQ-000012" pill="Uploaded" tone="amber" />
             <Row title="OR No. 0045790 · ₱10.00" sub="Maria Santos · REQ-000011" pill="Verified" tone="green" />
+            <span className="tp-note is-group">One receipt for REQ-000012 &amp; REQ-000013 · ₱120.00</span>
+            <span className="tp-note is-warn">Receipt number also on REQ-000009</span>
         </div>
     ),
 
     staffMessages: () => (
         <div className="tp-chat">
-            <div className="tp-bubble"><em>Juan Dela Cruz</em>Hi! Is my TOR ready to claim?</div>
-            <div className="tp-bubble is-self">Yes — Sep 29, 1:00 PM at Window 3.</div>
+            <div className="tp-bubble"><em>Juan Dela Cruz</em>Status inquiry: REQ-000012. May I know the status?</div>
+            <div className="tp-bubble is-self">
+                <span className="tp-quote is-self">You replied to Juan</span>
+                Ready for claiming — Tue, Sep 30, 1:00 PM at Window 3.
+            </div>
+            <span className="tp-chip">Reply with status of REQ-000012</span>
         </div>
     ),
 

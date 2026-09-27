@@ -23,19 +23,19 @@ export const STUDENT_TOUR = [
         target: link('student-nav', '/student/dashboard'),
         preview: 'dashboard',
         title: 'Your dashboard',
-        body: 'See your active requests, what you need to do next, and announcements from the Registrar.',
+        body: 'See your active requests, what to do next, and Registrar announcements — including office days (Tuesday to Friday) and the hours when a Monday or weekend is opened.',
     },
     {
         target: link('student-nav', '/student/new-request'),
         preview: 'request',
         title: '1. Request a document',
-        body: 'Choose the document, the number of copies and your purpose. A sample preview shows what the document looks like.',
+        body: 'Choose the document, copies and purpose — and add several documents to one submission if you need more than one. A sample preview shows what each document looks like.',
     },
     {
         target: link('student-nav', '/student/upload-receipt'),
         preview: 'payment',
         title: '2. Pay, then upload your receipt',
-        body: 'Pay the fee in person at the HCDC Finance Office — there’s no online payment. Then upload a clear photo of your official receipt here so the Registrar can verify it.',
+        body: 'Pay in person at the HCDC Finance Office — there’s no online payment. Then enter the receipt number and upload a clear photo. If one receipt paid for several documents, tick them all: they’re checked together, and each receipt can only be used once.',
     },
     {
         target: link('student-nav', '/student/my-requests'),
@@ -47,19 +47,19 @@ export const STUDENT_TOUR = [
         target: link('student-nav', '/student/claim-schedule'),
         preview: 'claim',
         title: '4. Claim your document',
-        body: 'When it’s ready you get a claiming date, time and window. Bring a valid ID and your original receipt — or authorize a representative from the request page.',
+        body: 'When it’s ready you get a claiming date, time and window on an office day (Tuesday to Friday, or a Monday/weekend the office opens). Bring a valid ID and your original receipt — or authorize a representative.',
     },
     {
         target: link('student-nav', '/student/messages'),
         preview: 'messages',
         title: 'Message the Registrar',
-        body: 'Chat with the staff handling your requests. Each person has their own conversation.',
+        body: 'Chat like in Messenger: see when staff are typing, and long-press a message to reply, edit or delete. Use “Ask about a request” to get the status of one — or all — of your requests right away.',
     },
     {
         target: link('student-nav', '/student/notifications'),
         preview: 'notifications',
         title: 'Notifications',
-        body: 'Every update about your requests lands here.',
+        body: 'Every update about your requests lands here, live — no need to refresh.',
     },
     {
         target: link('student-nav', '/student/profile'),
@@ -112,7 +112,7 @@ export const EMPLOYEE_TOUR = [
         optional: true,
         preview: 'verify',
         title: 'Request verification',
-        body: 'Students pay at the Finance Office and upload their official receipt. Verify it, or mark it invalid with a reason.',
+        body: 'Check the receipt number and amount, then verify or mark it invalid with a reason. When one receipt covers several requests you’ll see the total to check, and the decision applies to all of them. Reused photos or numbers are flagged.',
     },
     {
         target: link('employee-nav', '/employee/processing'),
@@ -131,7 +131,7 @@ export const EMPLOYEE_TOUR = [
         target: link('employee-nav', '/employee/office-calendar'),
         preview: 'calendar',
         title: 'Office calendar',
-        body: 'Holidays, office events and upcoming claiming dates, so you schedule on days the office is open.',
+        body: 'The office is closed on Mondays and weekends by default. Tap one to mark it open and set the office hours (like 8 AM – 5 PM) — students see them on their dashboard.',
     },
     {
         target: link('employee-nav', '/employee/queue'),
@@ -152,7 +152,7 @@ export const EMPLOYEE_TOUR = [
         optional: true,
         preview: 'staffMessages',
         title: 'Messages',
-        body: 'Reply to students about their requests.',
+        body: 'Messenger-style chats with students: typing indicator, replies to specific messages, and a one-tap “Reply with status” when a student asks about a request.',
     },
     {
         target: link('employee-nav', '/employee/notifications'),
@@ -235,7 +235,7 @@ export const HEAD_TOUR = [
         target: link('admin-nav', '/admin/announcements'),
         preview: 'announcements',
         title: 'Announcements',
-        body: 'Post notices to students — office closures, schedule changes and reminders.',
+        body: 'Post notices to students — closures, schedule changes and reminders. For a day the office is open, add the office hours so students know when to come.',
     },
     {
         target: link('admin-nav', '/admin/colleges-programs'),
@@ -253,7 +253,7 @@ export const HEAD_TOUR = [
         target: link('admin-nav', '/admin/office-calendar'),
         preview: 'calendar',
         title: 'Office calendar',
-        body: 'Set holidays, office events and open days, so claiming is only scheduled when the office is open.',
+        body: 'Mondays and weekends are closed by default. Mark a day open with its office hours, and add holidays and events, so claiming is only scheduled when the office is open.',
     },
     {
         target: link('admin-nav', '/admin/queue'),
@@ -265,13 +265,13 @@ export const HEAD_TOUR = [
         target: link('admin-nav', '/admin/receipts'),
         preview: 'receipts',
         title: 'Official receipts',
-        body: 'Every uploaded Finance Office receipt, awaiting verification or verified, in one place.',
+        body: 'Every uploaded receipt with its number. Receipts covering several requests are checked as one, and reused photos or receipt numbers are flagged.',
     },
     {
         target: link('admin-nav', '/admin/messages'),
         preview: 'staffMessages',
         title: 'Messages',
-        body: 'See conversations between students and staff, and reply directly when needed.',
+        body: 'Message a student directly (their own conversation with you), oversee student–staff chats and reply in them, with typing, replies and quick status answers.',
     },
     {
         target: link('admin-nav', '/admin/notifications'),
