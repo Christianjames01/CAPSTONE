@@ -475,16 +475,14 @@ function OfficeCalendar() {
                 <div>
                     <h1 style={{ fontSize: 26, marginBottom: 6 }}>Office Calendar</h1>
                     <p>
-                        Tap any day to add an event or note (e.g. "Enrollment Week," "Office Closed —
-                        Holiday"). The office is closed on Mondays, Saturdays and Sundays by default — tap
-                        one to mark the office open that day, so claims can be scheduled there and missed
-                        appointments get auto-rescheduled to it.
+                        Tap a day to add an event or note. Mondays, Saturdays and Sundays are closed unless you
+                        open them — claims can then be scheduled there, and missed ones move to the next open day.
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <button className="employee-secondary-button" onClick={openRangeModal}>+ Add for a Range</button>
-                    <button className="employee-primary-button" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
+                    <button className="employee-secondary-button ocal-pill" onClick={openRangeModal}>+ Add for a Range</button>
+                    <button className="employee-primary-button ocal-pill" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
                 </div>
             </div>
 

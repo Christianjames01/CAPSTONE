@@ -1038,3 +1038,120 @@
 .hours-edit-link {
     margin: 6px 0 10px;
 }
+
+/* ---- System look (same cards, icon tiles and pill buttons as the detail
+   and Profile pages) ------------------------------------------------------ */
+.ocal-sidebar,
+.ocal-main {
+    border-radius: 16px;
+}
+
+.ocal-sidebar {
+    padding: 20px;
+}
+
+.ocal-main {
+    padding: 22px 24px;
+}
+
+.ocal-sidebar-head {
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ocal-head-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+}
+
+.ocal-head-icon.is-claim {
+    background: var(--ocal-claim-bg);
+    color: var(--ocal-claim);
+}
+
+.ocal-head-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.ocal-head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ocal-head-text h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.ocal-head-text p {
+    margin-top: 1px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.ocal-sidebar-head .ocal-count {
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+}
+
+.ocal-sidebar-head-section .ocal-count {
+    background: var(--ocal-claim-bg);
+    color: var(--ocal-claim);
+}
+
+.ocal-sidebar-head.ocal-sidebar-head-section {
+    margin-top: 20px;
+    padding-top: 18px;
+}
+
+.ocal-toolbar {
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.ocal-icon-button.is-bordered {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+}
+
+.ocal-today-button {
+    padding: 8px 18px;
+    border-radius: 999px;
+}
+
+.ocal-page-actions button,
+.admin-page-header-row .ocal-pill,
+.employee-page-header-row .ocal-pill {
+    border-radius: 999px;
+}
+
+@media (max-width: 640px) {
+    .ocal-sidebar {
+        padding: 16px;
+    }
+
+    .ocal-main {
+        padding: 16px 12px;
+    }
+
+    .ocal-toolbar {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+    }
+}
+
+/* Summary tiles under the page header. */
+.admin-page-header-row + .page-stats,
+.employee-page-header-row + .page-stats {
+    margin-top: 22px;
+}

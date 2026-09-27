@@ -12,6 +12,9 @@ import {
     isClosedWeekday,
 } from '../../lib/officeCalendar'
 import { hoursOf, noteWithoutHours, shortHours } from '../../lib/officeHours'
+import PageStats from '../PageStats'
+import { IconCalendar, IconCheck, IconBox } from '../UiIcons'
+import { IconClock } from '../../pages/student/icons'
 import './OfficeCalendar.css'
 
 const WEEKDAY_HEADS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -271,11 +274,27 @@ function CalendarBoard({
         )
     }
 
+    const monthName = viewDate.toLocaleDateString('en-PH', { month: 'long' })
+
     return (
+        <>
+        <PageStats
+            stats={[
+                { label: 'Days with events', value: loading ? '–' : monthSummary.eventDays, note: `In ${monthName}`, Icon: IconCalendar },
+                { label: 'Opened days', value: loading ? '–' : monthSummary.openDays, note: 'Closed days opened for claiming', Icon: IconCheck },
+                { label: 'Claim appointments', value: loading ? '–' : monthSummary.claims, note: `In ${monthName}`, Icon: IconBox },
+                { label: 'Coming up', value: loading ? '–' : upcoming.length + totalUpcomingClaims, note: 'Events, opened days and claims', Icon: IconClock },
+            ]}
+        />
+
         <div className="ocal-layout">
             <aside className="ocal-sidebar" aria-label="Coming up">
                 <div className="ocal-sidebar-head">
-                    <h2>Coming up</h2>
+                    <span className="ocal-head-icon" aria-hidden="true"><IconCalendar /></span>
+                    <div className="ocal-head-text">
+                        <h2>Coming up</h2>
+                        <p>Events and opened days</p>
+                    </div>
                     {!loading && upcoming.length > 0 && <span className="ocal-count">{upcoming.length}</span>}
                 </div>
 
@@ -299,7 +318,11 @@ function CalendarBoard({
                 )}
 
                 <div className="ocal-sidebar-head ocal-sidebar-head-section">
-                    <h2>Upcoming Claiming</h2>
+                    <span className="ocal-head-icon is-claim" aria-hidden="true"><IconBox /></span>
+                    <div className="ocal-head-text">
+                        <h2>Upcoming Claiming</h2>
+                        <p>Documents to hand out</p>
+                    </div>
                     {!loading && totalUpcomingClaims > 0 && <span className="ocal-count">{totalUpcomingClaims}</span>}
                 </div>
 
@@ -367,12 +390,6 @@ function CalendarBoard({
                     </button>
                 </div>
 
-                <div className="ocal-summary">
-                    <span><span className="ocal-dot is-event" aria-hidden="true" />{plural(monthSummary.eventDays, 'day')} with events</span>
-                    <span><span className="ocal-dot is-open" aria-hidden="true" />{plural(monthSummary.openDays, 'opened day')}</span>
-                    <span><span className="ocal-dot is-claim" aria-hidden="true" />{plural(monthSummary.claims, 'claim appointment')}</span>
-                </div>
-
                 {error && <div className="ocal-error" role="alert">{error}</div>}
 
                 <div className={`ocal-grid${loading ? ' is-loading' : ''}`} aria-busy={loading || undefined}>
@@ -389,6 +406,7 @@ function CalendarBoard({
                 </div>
             </section>
         </div>
+        </>
     )
 }
 
