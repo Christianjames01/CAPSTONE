@@ -5,8 +5,18 @@ import { useScrollLock } from '../../lib/useScrollLock'
 import AuthLayout from './AuthLayout'
 import PasswordRequirements from '../../components/PasswordRequirements'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
+import CaptchaCheck from '../../components/CaptchaCheck'
+import { captchaEnabled } from '../../lib/captcha'
 
 function EmployeeRegister() {
+    // Turnstile token for Supabase Auth (see lib/captcha.js); single-use, so
+    // the check is remounted (captchaKey) after every attempt.
+    const [captchaToken, setCaptchaToken] = useState(null)
+    const [captchaKey, setCaptchaKey] = useState(0)
+    const resetCaptcha = () => {
+        setCaptchaToken(null)
+        setCaptchaKey((k) => k + 1)
+    }
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [employeeNumber, setEmployeeNumber] = useState('')
@@ -48,6 +58,11 @@ function EmployeeRegister() {
     }
 
     const handleRegister = async () => {
+        if (captchaEnabled && !captchaToken) {
+            setMessage('Please complete the security check ("Verify you are human") above the Register button.')
+            return
+        }
+
         setLoading(true)
         setMessage('')
 
@@ -55,6 +70,7 @@ function EmployeeRegister() {
             email,
             password,
             options: {
+                captchaToken: captchaToken || undefined,
                 emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     role: 'employee',
@@ -63,6 +79,7 @@ function EmployeeRegister() {
                 },
             },
         })
+        resetCaptcha()
 
         if (error) {
             setStatus('error')
@@ -204,6 +221,8 @@ function EmployeeRegister() {
                     Before your account is created, you'll be asked to review and agree to CertiChain's{' '}
                     Terms of Service and Privacy Policy.
                 </p>
+
+                <CaptchaCheck key={captchaKey} onToken={setCaptchaToken} />
 
                 <button type="submit" className="auth-submit" disabled={loading}>
                     {loading && <span className="auth-spinner" />}

@@ -1,0 +1,31 @@
+/* Turnstile box on the auth forms (CaptchaCheck.jsx). */
+.captcha-check {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 65px;
+    margin: 6px 0 14px;
+}
+
+.captcha-check-error {
+    font-size: 12.5px;
+    color: var(--danger-text, #C8102E);
+}
+
+/* On-demand check (lib/captcha.js getCaptchaToken): only visible if
+   Cloudflare asks for a click. */
+.captcha-floating {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    z-index: 3000;
+    transform: translateX(-50%);
+}
+
+.captcha-floating:not(:empty) {
+    padding: 6px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 16px 40px -16px rgba(10, 20, 40, 0.5);
+}

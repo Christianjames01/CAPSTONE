@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getCaptchaToken } from './captcha'
 import { supabase } from './supabase'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -22,6 +23,7 @@ export async function createEmployeeAccount({
         email,
         password,
         options: {
+            captchaToken: await getCaptchaToken(),
             data: {
                 role: 'employee',
                 first_name: firstName,

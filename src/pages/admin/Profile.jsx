@@ -9,6 +9,7 @@ import PasswordRequirements from '../../components/PasswordRequirements'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import '../auth/Auth.css'
 import './AdminPages.css'
+import { getCaptchaToken } from '../../lib/captcha'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -148,6 +149,7 @@ function Profile() {
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: authEmail,
                 password: currentPassword,
+                options: { captchaToken: await getCaptchaToken() },
             })
 
             if (signInError) {
@@ -201,6 +203,7 @@ function Profile() {
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: authEmail,
                 password: emailCurrentPassword,
+                options: { captchaToken: await getCaptchaToken() },
             })
 
             if (signInError) {

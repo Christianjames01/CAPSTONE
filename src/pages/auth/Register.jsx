@@ -10,6 +10,8 @@ import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
 import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError, isPhoneNumberTaken, phoneNumberTakenMessage } from '../../lib/studentNumberCheck'
+import CaptchaCheck from '../../components/CaptchaCheck'
+import { captchaEnabled } from '../../lib/captcha'
 
 // Graduation years offered to alumni, newest first.
 const GRADUATION_YEARS = Array.from({ length: new Date().getFullYear() - 1959 }, (_, i) => new Date().getFullYear() - i)
@@ -61,6 +63,14 @@ function Register() {
     const [status, setStatus] = useState('idle')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
+    // Turnstile token for Supabase Auth (see lib/captcha.js); single-use, so
+    // the check is remounted (captchaKey) after every attempt.
+    const [captchaToken, setCaptchaToken] = useState(null)
+    const [captchaKey, setCaptchaKey] = useState(0)
+    const resetCaptcha = () => {
+        setCaptchaToken(null)
+        setCaptchaKey((k) => k + 1)
+    }
     const [agreedToTerms, setAgreedToTerms] = useState(false)
     const [showTermsModal, setShowTermsModal] = useState(false)
     useScrollLock(showTermsModal)
@@ -220,6 +230,12 @@ function Register() {
     }
 
     const submitRegistration = async () => {
+        if (captchaEnabled && !captchaToken) {
+            setStatus('error')
+            setMessage('Please complete the security check ("Verify you are human") above the Create account button.')
+            return
+        }
+
         setLoading(true)
         setMessage('')
         setStatus('idle')
@@ -228,6 +244,7 @@ function Register() {
             email,
             password,
             options: {
+                captchaToken: captchaToken || undefined,
                 emailRedirectTo: `${window.location.origin}/login`,
                 data: {
                     first_name: firstName.trim(),
@@ -238,6 +255,7 @@ function Register() {
                 },
             },
         })
+        resetCaptcha()
 
         if (error) {
             setStatus('error')
@@ -683,6 +701,8 @@ function Register() {
                     Before your account is created, you'll be asked to review and agree to CertiChain's{' '}
                     Terms of Service and Privacy Policy.
                 </p>
+
+                <CaptchaCheck key={captchaKey} onToken={setCaptchaToken} />
 
                 <button type="submit" className="auth-submit" disabled={loading}>
                     {loading && <span className="auth-spinner" />}
