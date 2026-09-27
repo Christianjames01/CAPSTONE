@@ -17,6 +17,7 @@ import RepresentativeStaffCard from '../../components/RepresentativeStaffCard'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
 import { loadStudentsById } from '../../lib/studentNames'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
@@ -66,6 +67,8 @@ function EmployeeRequestDetails() {
     const [claimSchedule, setClaimSchedule] = useState(null)
     const [rating, setRating] = useState(null)
 
+    useLiveRefresh(['document_requests', 'request_requirements', 'official_receipts', 'claim_schedules', 'credentials', 'request_ratings'], (options) => loadRequest(options))
+
     useEffect(() => {
         if (!requestId) {
             setErrorMessage('Request ID is missing.')
@@ -76,9 +79,9 @@ function EmployeeRequestDetails() {
         loadRequest()
     }, [requestId])
 
-    const loadRequest = async () => {
+    const loadRequest = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setErrorMessage('')
             setReceiptUrl('')
             setRequirementUrls({})
@@ -145,7 +148,7 @@ function EmployeeRequestDetails() {
             }
 
             setRequest(requestData)
-            setManualStatus(requestData.status)
+            if (!silent) setManualStatus(requestData.status)
 
             if (requestData.document_type_id) {
                 const { data: doc } = await supabase

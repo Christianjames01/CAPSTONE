@@ -7,6 +7,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconCalendarCheck, IconCheckCircle, IconXCircle } from '../admin/icons'
 import './StudentPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function ClaimSchedule() {
     const navigate = useNavigate()
@@ -16,13 +17,15 @@ function ClaimSchedule() {
     const [error, setError] = useState('')
     const [requestingRescheduleId, setRequestingRescheduleId] = useState(null)
 
+    useLiveRefresh(['claim_schedules', 'document_requests'], (options) => loadSchedules(options))
+
     useEffect(() => {
         loadSchedules()
     }, [])
 
-    const loadSchedules = async () => {
+    const loadSchedules = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {

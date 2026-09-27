@@ -8,6 +8,7 @@ import CalendarBoard from '../../components/officeCalendar/CalendarBoard'
 import DayModal from '../../components/officeCalendar/DayModal'
 import RangeModal from '../../components/officeCalendar/RangeModal'
 import './EmployeePages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function OfficeCalendar() {
     const navigate = useNavigate()
@@ -38,13 +39,15 @@ function OfficeCalendar() {
     const [rangeNote, setRangeNote] = useState('')
     const [addingRange, setAddingRange] = useState(false)
 
+    useLiveRefresh(['office_events', 'office_open_days', 'claim_schedules'], (options) => loadAll(options))
+
     useEffect(() => {
         loadAll()
     }, [])
 
-    const loadAll = async () => {
+    const loadAll = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             // Fetch all open days/events, not just today-and-future, so

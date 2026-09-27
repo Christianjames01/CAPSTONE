@@ -9,6 +9,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
 import { HEAD_TOUR } from '../../lib/tourSteps'
 import './AdminLayout.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const NAV_ITEMS = [
     { to: '/admin/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
@@ -40,6 +41,8 @@ function AdminLayout() {
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
+
+    useLiveRefresh(['notifications', 'messages'], () => loadBadgeCounts())
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''

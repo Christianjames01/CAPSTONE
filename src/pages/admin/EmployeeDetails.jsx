@@ -13,6 +13,7 @@ import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function EmployeeDetails() {
     const { employeeId } = useParams()
@@ -42,13 +43,15 @@ function EmployeeDetails() {
     const [message, setMessage] = useState('')
     const [resettingPassword, setResettingPassword] = useState(false)
 
+    useLiveRefresh(['employees', 'employee_assignments', 'document_requests'], (options) => loadEmployee(options))
+
     useEffect(() => {
         loadEmployee()
     }, [employeeId])
 
-    const loadEmployee = async () => {
+    const loadEmployee = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: employeeData, error: employeeError } = await supabase
@@ -68,10 +71,10 @@ function EmployeeDetails() {
                 .single()
 
             setEmployee({ ...employeeData, ...profile })
-            setEmployeeNumber(employeeData.employee_number)
-            setPositionTitle(employeeData.position_title)
-            setDisplayName(employeeData.display_name || '')
-            setAssignedCollegeId(employeeData.assigned_college_id || '')
+            if (!silent) setEmployeeNumber(employeeData.employee_number)
+            if (!silent) setPositionTitle(employeeData.position_title)
+            if (!silent) setDisplayName(employeeData.display_name || '')
+            if (!silent) setAssignedCollegeId(employeeData.assigned_college_id || '')
 
             const { data: collegeRows } = await supabase.from('colleges').select('college_id, college_name').order('college_name')
             setColleges(collegeRows || [])

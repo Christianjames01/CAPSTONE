@@ -7,6 +7,7 @@ import { SkeletonPageHeader, SkeletonStatGrid } from '../../components/Skeleton'
 import './AdminPages.css'
 import '../../components/DashboardStats.css'
 import './Reports.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const turnaroundDays = (r) => {
     if (!r.completed_at || !r.requested_at) return null
@@ -75,13 +76,15 @@ function Reports() {
     const [customMonth, setCustomMonth] = useState(currentMonthKey())
     const [exporting, setExporting] = useState(false)
 
+    useLiveRefresh(['document_requests', 'claim_schedules', 'request_ratings'], (options) => loadReports(options))
+
     useEffect(() => {
         loadReports()
     }, [])
 
-    const loadReports = async () => {
+    const loadReports = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: requestRows, error: requestError } = await supabase

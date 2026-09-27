@@ -5,6 +5,7 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function UploadReceipt() {
     const { requestId } = useParams()
@@ -25,6 +26,8 @@ function UploadReceipt() {
     const [siblings, setSiblings] = useState([])
     const [includeIds, setIncludeIds] = useState(() => new Set())
 
+    useLiveRefresh(['official_receipts', 'document_requests'], (options) => loadRequest(options))
+
     useEffect(() => {
         if (!requestId) {
             setError('Request ID is missing.')
@@ -35,9 +38,9 @@ function UploadReceipt() {
         loadRequest()
     }, [requestId])
 
-    const loadRequest = async () => {
+    const loadRequest = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {
@@ -168,10 +171,10 @@ function UploadReceipt() {
 
                 const list = (siblingRows || []).map((r) => ({ ...r, documentName: nameById[r.document_type_id] || 'Document' }))
                 setSiblings(list)
-                setIncludeIds(new Set(list.map((r) => r.request_id)))
+                if (!silent) setIncludeIds(new Set(list.map((r) => r.request_id)))
             } else {
                 setSiblings([])
-                setIncludeIds(new Set())
+                if (!silent) setIncludeIds(new Set())
             }
 
         } catch (error) {

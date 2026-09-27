@@ -10,6 +10,7 @@ import Modal from '../../components/Modal'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import '../auth/Auth.css'
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const PREVIEW_IMAGE_BUCKET = 'document-previews'
 
@@ -67,6 +68,8 @@ function Documents() {
     const [newRequirement, setNewRequirement] = useState({ requirement_name: '', description: '', is_required: true, accepted_file_types: '', max_file_size_mb: 5 })
 
     const [currentRole, setCurrentRole] = useState('')
+
+    useLiveRefresh(['document_types', 'document_requirements'], (options) => loadDocuments(options))
 
     useEffect(() => {
         loadDocuments()

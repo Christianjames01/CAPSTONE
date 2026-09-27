@@ -17,6 +17,7 @@ import RequestNotes from '../../components/RequestNotes'
 import RepresentativeStaffCard from '../../components/RepresentativeStaffCard'
 import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons'
 import '../../components/ReceiptActions.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
@@ -90,13 +91,15 @@ function AdminRequestDetails() {
     const [showReject, setShowReject] = useState(false)
     const [selectedRequirement, setSelectedRequirement] = useState(null)
 
+    useLiveRefresh(['document_requests', 'request_requirements', 'official_receipts', 'claim_schedules', 'credentials', 'request_ratings'], (options) => loadRequest(options))
+
     useEffect(() => {
         loadRequest()
     }, [requestId])
 
-    const loadRequest = async () => {
+    const loadRequest = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: requestData, error: requestError } = await supabase
@@ -110,8 +113,8 @@ function AdminRequestDetails() {
             }
 
             setRequest(requestData)
-            setNewStatus(requestData.status)
-            setReassignTo(requestData.assigned_employee_id || '')
+            if (!silent) setNewStatus(requestData.status)
+            if (!silent) setReassignTo(requestData.assigned_employee_id || '')
 
             const { data: studentData } = await supabase
                 .from('students')

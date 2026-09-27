@@ -10,6 +10,7 @@ import PageStats from '../../components/PageStats'
 import { IconBuilding, IconLayers, IconBan } from './icons'
 import '../auth/Auth.css'
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 // programs.duration_years is always stored in years -- these just let the
 // admin type/read a short vocational course's length in whichever unit
@@ -64,6 +65,8 @@ function CollegesPrograms() {
     const [customDurationUnit, setCustomDurationUnit] = useState('years')
 
     const [currentRole, setCurrentRole] = useState('')
+
+    useLiveRefresh(['colleges', 'programs'], (options) => loadData(options))
 
     useEffect(() => {
         loadData()

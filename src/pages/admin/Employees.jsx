@@ -9,6 +9,7 @@ import Modal from '../../components/Modal'
 import PageStats from '../../components/PageStats'
 import { IconUsers, IconHourglass, IconFileStack, IconBuilding } from './icons'
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
@@ -43,13 +44,15 @@ function Employees() {
     const [addError, setAddError] = useState('')
     const [addMessage, setAddMessage] = useState('')
 
+    useLiveRefresh(['employees', 'employee_assignments', 'profiles'], (options) => loadEmployees(options))
+
     useEffect(() => {
         loadEmployees()
     }, [])
 
-    const loadEmployees = async () => {
+    const loadEmployees = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: employeeRows, error: employeeError } = await supabase

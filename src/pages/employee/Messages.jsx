@@ -7,6 +7,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import MessageBubble from '../../components/MessageBubble'
 import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted, isSameSend } from '../../lib/messageActions'
 import './EmployeePages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function Messages() {
     const [userId, setUserId] = useState(null)
@@ -20,13 +21,15 @@ function Messages() {
     const [senderNames, setSenderNames] = useState({})
     const [busy, setBusy] = useState(false)
 
+    useLiveRefresh(['messages'], (options) => loadMessages(options))
+
     useEffect(() => {
         loadMessages()
     }, [])
 
-    const loadMessages = async () => {
+    const loadMessages = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {

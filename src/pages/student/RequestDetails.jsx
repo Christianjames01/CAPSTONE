@@ -10,6 +10,7 @@ import CredentialQr from '../../components/CredentialQr'
 import RepresentativeStudentCard from '../../components/RepresentativeStudentCard'
 import '../auth/Auth.css'
 import './StudentPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const STATUS_META = {
     pending: {
@@ -128,6 +129,8 @@ function RequestDetails() {
     const [ratingComment, setRatingComment] = useState('')
     const [submittingRating, setSubmittingRating] = useState(false)
 
+    useLiveRefresh(['document_requests', 'request_requirements', 'official_receipts', 'claim_schedules', 'credentials'], (options) => loadRequest(options))
+
     useEffect(() => {
         console.log('URL REQUEST ID:', requestId)
 
@@ -142,9 +145,9 @@ function RequestDetails() {
         loadRequest()
     }, [requestId])
 
-    const loadRequest = async () => {
+    const loadRequest = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setErrorMessage('')
 
             console.log('================================')

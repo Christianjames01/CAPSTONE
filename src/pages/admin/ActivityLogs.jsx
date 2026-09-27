@@ -9,6 +9,7 @@ import { IconCalendarCheck, IconUsers, IconBarChart } from './icons'
 const initialsOf = (name) =>
     (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function ActivityLogs() {
     const [logs, setLogs] = useState([])
@@ -17,14 +18,16 @@ function ActivityLogs() {
     const [search, setSearch] = useState('')
     const [filterDate, setFilterDate] = useState('')
 
+    useLiveRefresh(['activity_logs'], (options) => loadLogs(options))
+
     useEffect(() => {
         loadLogs()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterDate])
 
-    const loadLogs = async () => {
+    const loadLogs = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             // With no date picked, show the 200 most recent entries -- a

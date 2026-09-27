@@ -6,19 +6,22 @@ import PageStats from '../../components/PageStats'
 import { IconHistory } from './icons'
 import { IconCalendarCheck, IconBarChart } from '../admin/icons'
 import './EmployeePages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function ActivityLogs() {
     const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
+    useLiveRefresh(['activity_logs'], (options) => loadLogs(options))
+
     useEffect(() => {
         loadLogs()
     }, [])
 
-    const loadLogs = async () => {
+    const loadLogs = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {

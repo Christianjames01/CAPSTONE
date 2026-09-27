@@ -13,6 +13,7 @@ import { IconMegaphone, IconCheckCircle, IconCalendarCheck, IconBan } from './ic
 import PageStats from '../../components/PageStats'
 import './AdminPages.css'
 import './Announcements.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const EMPTY_FORM = {
     announcement_id: null,
@@ -75,6 +76,8 @@ function Announcements() {
     const [filter, setFilter] = useState('all')
     const [search, setSearch] = useState('')
     const [expandedIds, setExpandedIds] = useState(() => new Set())
+
+    useLiveRefresh(['announcements'], (options) => loadAnnouncements(options))
 
     useEffect(() => {
         loadAnnouncements()

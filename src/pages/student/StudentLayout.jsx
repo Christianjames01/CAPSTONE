@@ -26,6 +26,7 @@ import '../../components/DashboardStats.css'
 import '../../components/PortalUi.css'
 import { STUDENT_TOUR } from '../../lib/tourSteps'
 import './StudentLayout.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const NAV_ITEMS = [
     { to: '/student/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
@@ -50,6 +51,8 @@ function StudentLayout() {
     const [unreadMessageCount, setUnreadMessageCount] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
+
+    useLiveRefresh(['notifications', 'messages'], () => { loadUnreadCount(); loadUnreadMessageCount() })
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''

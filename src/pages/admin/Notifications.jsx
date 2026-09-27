@@ -9,6 +9,7 @@ import { IconBell, IconMessage } from '../student/icons'
 // Icon per notification type.
 const TYPE_ICONS = { request_update: IconFileStack, message: IconMessage, announcement: IconMegaphone, system: IconUsers }
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function Notifications() {
     const navigate = useNavigate()
@@ -19,13 +20,15 @@ function Notifications() {
     const [error, setError] = useState('')
     const [userId, setUserId] = useState(null)
 
+    useLiveRefresh(['notifications'], (options) => loadNotifications(options))
+
     useEffect(() => {
         loadNotifications()
     }, [])
 
-    const loadNotifications = async () => {
+    const loadNotifications = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {

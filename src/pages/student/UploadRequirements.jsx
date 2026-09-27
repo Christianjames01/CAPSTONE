@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { notifyWarning, notifyError } from '../../lib/notify'
 import { SkeletonPage } from '../../components/Skeleton'
 import './StudentPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function UploadRequirements() {
     const { requestId } = useParams()
@@ -17,13 +18,15 @@ function UploadRequirements() {
     const [uploadingId, setUploadingId] = useState(null)
     const [files, setFiles] = useState({})
 
+    useLiveRefresh(['request_requirements', 'document_requests'], (options) => loadRequirements(options))
+
     useEffect(() => {
         loadRequirements()
     }, [requestId])
 
-    const loadRequirements = async () => {
+    const loadRequirements = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {

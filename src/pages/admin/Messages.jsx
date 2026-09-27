@@ -13,6 +13,7 @@ import MessageBubble from '../../components/MessageBubble'
 import { loadHiddenMessageIds, hideMessagesForMe, editOwnMessage, deleteOwnMessage, markSendDeleted, siblingMessageIds, isSameSend } from '../../lib/messageActions'
 import './AdminPages.css'
 import AvatarFace from '../../components/AvatarFace'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -41,13 +42,15 @@ function Messages() {
     const [studentResults, setStudentResults] = useState([])
     const [searchingStudents, setSearchingStudents] = useState(false)
 
+    useLiveRefresh(['messages'], (options) => loadMessages(options))
+
     useEffect(() => {
         loadMessages()
     }, [])
 
-    const loadMessages = async () => {
+    const loadMessages = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {

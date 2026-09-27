@@ -10,6 +10,7 @@ import { useScrollLock } from '../../lib/useScrollLock'
 import { useDraftState, clearDraft } from '../../lib/useDraftState'
 import '../auth/Auth.css'
 import './StudentPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 // Alphabetical order puts "Fourth Year" right after "First Year" (both
 // start with "F"), so year_level needs an explicit chronological order
@@ -35,6 +36,8 @@ function NewRequest() {
     const [loadingRequirements, setLoadingRequirements] = useState(false)
     const [previewZoomed, setPreviewZoomed] = useState(false)
     useScrollLock(previewZoomed)
+
+    useLiveRefresh(['document_types', 'document_requirements'], (options) => loadDocuments(options))
 
     useEffect(() => {
         loadDocuments()
@@ -151,7 +154,7 @@ function NewRequest() {
         }
     }
 
-    const loadDocuments = async () => {
+    const loadDocuments = async ({ silent = false } = {}) => {
         const { data, error } = await supabase
             .from('document_types')
             .select(`
@@ -179,11 +182,11 @@ function NewRequest() {
 
             const requestedTypeId = searchParams.get('document')
             if (requestedTypeId && (data || []).some((d) => d.document_type_id === requestedTypeId)) {
-                setSelectedDocument(requestedTypeId)
+                if (!silent) setSelectedDocument(requestedTypeId)
             }
         }
 
-        setLoadingDocuments(false)
+        if (!silent) setLoadingDocuments(false)
     }
 
     const selectedDocumentDetails = documents.find(

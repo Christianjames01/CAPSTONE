@@ -13,6 +13,7 @@ import Modal from '../../components/Modal'
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './AdminPages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -47,6 +48,8 @@ function StudentDetails() {
     const [changingEmail, setChangingEmail] = useState(false)
     const [currentRole, setCurrentRole] = useState('')
 
+    useLiveRefresh(['students', 'profiles', 'document_requests', 'request_requirements'], (options) => loadDetails(options))
+
     useEffect(() => {
         loadDetails()
         loadCurrentRole()
@@ -65,9 +68,9 @@ function StudentDetails() {
         setCurrentRole(profile?.role || '')
     }
 
-    const loadDetails = async () => {
+    const loadDetails = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: studentData, error: studentError } = await supabase

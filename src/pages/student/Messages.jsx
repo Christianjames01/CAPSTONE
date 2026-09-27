@@ -11,6 +11,7 @@ import { loadHiddenMessageIds, editOwnMessage, deleteOwnMessage, markSendDeleted
 import '../auth/Auth.css'
 import './StudentPages.css'
 import './StudentMessages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const DEFAULT_MESSAGE =
     "Hi, I'd like to ask about my document request. Please let me know if you need anything " +
@@ -46,11 +47,13 @@ function Messages() {
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
+    useLiveRefresh(['messages'], (options) => loadMessages(options))
+
     useEffect(() => {
         loadMessages()
     }, [])
 
-    const loadMessages = async () => {
+    const loadMessages = async ({ silent = false } = {}) => {
         try {
             setError('')
 
@@ -181,7 +184,7 @@ function Messages() {
             setThreadOf(assigned)
             setLabels(labels)
 
-            setSelectedUserId((current) => {
+            if (!silent) setSelectedUserId((current) => {
                 if (current && list.some((c) => c.userId === current)) return current
                 const requested = requestedEmployeeId && list.find((c) => c.employeeId === requestedEmployeeId)
                 return (requested || list[0])?.userId || null

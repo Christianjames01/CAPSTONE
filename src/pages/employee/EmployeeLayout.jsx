@@ -12,6 +12,7 @@ import '../../components/DashboardStats.css'
 import '../../components/PortalUi.css'
 import { EMPLOYEE_TOUR } from '../../lib/tourSteps'
 import './EmployeeLayout.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const NAV_ITEMS = [
     { to: '/employee/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
@@ -39,6 +40,8 @@ function EmployeeLayout() {
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
+
+    useLiveRefresh(['notifications', 'messages'], () => loadBadgeCounts())
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''

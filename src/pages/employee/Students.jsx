@@ -7,6 +7,7 @@ import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 import AvatarFace from '../../components/AvatarFace'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students
@@ -27,6 +28,8 @@ function Students() {
     const [pendingVerifications, setPendingVerifications] = useState([])
     const [reviewingId, setReviewingId] = useState(null)
     const [selectedProgramKey, setSelectedProgramKey] = useState(null)
+
+    useLiveRefresh(['students', 'profiles'], () => { loadPendingVerifications(); if (!term.trim()) loadAllStudents({ silent: true }) })
 
     useEffect(() => {
         loadAllStudents()
@@ -186,9 +189,9 @@ function Students() {
         })
     }
 
-    const loadAllStudents = async () => {
+    const loadAllStudents = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: rows, error: studentsError } = await supabase

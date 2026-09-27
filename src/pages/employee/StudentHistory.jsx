@@ -12,6 +12,7 @@ import { SkeletonPage } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './EmployeePages.css'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -35,13 +36,15 @@ function StudentHistory() {
     const [resettingPassword, setResettingPassword] = useState(false)
     const [changingEmail, setChangingEmail] = useState(false)
 
+    useLiveRefresh(['students', 'profiles', 'document_requests'], (options) => loadHistory(options))
+
     useEffect(() => {
         loadHistory()
     }, [studentId])
 
-    const loadHistory = async () => {
+    const loadHistory = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const { data: studentData, error: studentError } = await supabase
