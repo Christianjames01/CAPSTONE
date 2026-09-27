@@ -56,7 +56,7 @@ function Students() {
 
             const { data: pending } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, created_at')
+                .select('*')
                 .eq('verification_status', 'pending')
                 .order('created_at', { ascending: true })
 
@@ -191,7 +191,7 @@ function Students() {
 
             const { data: rows, error: studentsError } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
+                .select('*')
                 .order('student_number', { ascending: true })
 
             if (studentsError) {
@@ -229,7 +229,7 @@ function Students() {
 
             const { data: byNumber } = await supabase
                 .from('students')
-                .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
+                .select('*')
                 .ilike('student_number', `%${query}%`)
                 .limit(20)
 
@@ -244,7 +244,7 @@ function Students() {
             const { data: byName } = matchingUserIds.length
                 ? await supabase
                     .from('students')
-                    .select('student_id, user_id, student_number, college_id, program_id, year_level, status, verification_status')
+                    .select('*')
                     .in('user_id', matchingUserIds)
                 : { data: [] }
 
@@ -290,12 +290,18 @@ function Students() {
         ? groupedResults.find((g) => g.key === selectedProgramKey)
         : null
 
+    const initialsOf = (name) =>
+        (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
+
     const renderStudentCard = (student) => (
         <div className="employee-list-card" key={student.student_id}>
             <div className="employee-list-card-header">
-                <div>
-                    <h3>{student.fullName}</h3>
-                    <p>{student.student_number} · {student.email}</p>
+                <div className="ui-card-title" style={{ alignItems: 'center' }}>
+                    <span className={`ui-avatar${student.status === 'active' ? '' : ' is-muted'}`} aria-hidden="true">{initialsOf(student.fullName)}</span>
+                    <div>
+                        <h3>{student.fullName}</h3>
+                        <p>{student.student_number} · {student.email}</p>
+                    </div>
                 </div>
 
                 <span className={`employee-status-pill status-${student.status}`}>{student.status}</span>
@@ -313,17 +319,19 @@ function Students() {
                 </div>
 
                 <div className="employee-info-field">
-                    <span>Year Level</span>
-                    <strong>{student.year_level || 'N/A'}</strong>
+                    <span>{student.student_type === 'alumni' ? 'Alumni' : 'Year Level'}</span>
+                    <strong>{student.student_type === 'alumni' ? `Class of ${student.graduation_year || '—'}` : student.year_level || 'N/A'}</strong>
                 </div>
             </div>
 
-            <button
-                className="employee-link-button"
-                onClick={() => navigate(`/employee/students/${student.student_id}`)}
-            >
-                View request history →
-            </button>
+            <div className="ui-card-actions">
+                <button
+                    className="employee-link-button"
+                    onClick={() => navigate(`/employee/students/${student.student_id}`)}
+                >
+                    View request history →
+                </button>
+            </div>
         </div>
     )
 
@@ -336,7 +344,7 @@ function Students() {
 
             {pendingVerifications.length > 0 && (
                 <>
-                    <h2 style={{ fontSize: 17, marginBottom: 6 }}>Pending Verification</h2>
+                    <h2 className="ui-section-title" style={{ marginBottom: 6 }}>Pending Verification <span className="ui-chip-count">{pendingVerifications.length}</span></h2>
                     <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
                         New registrations in your assigned program(s), waiting for you to confirm enrollment.
                     </p>
@@ -344,9 +352,12 @@ function Students() {
                     {pendingVerifications.map((student) => (
                         <div className="employee-list-card" key={student.student_id}>
                             <div className="employee-list-card-header">
-                                <div>
-                                    <h3>{student.fullName}</h3>
-                                    <p>{student.student_number} · {student.email}</p>
+                                <div className="ui-card-title" style={{ alignItems: 'center' }}>
+                                    <span className="ui-avatar" aria-hidden="true">{initialsOf(student.fullName)}</span>
+                                    <div>
+                                        <h3>{student.fullName}</h3>
+                                        <p>{student.student_number} · {student.email}</p>
+                                    </div>
                                 </div>
                                 <span className="employee-status-pill status-pending">pending</span>
                             </div>
@@ -361,12 +372,12 @@ function Students() {
                                     <strong>{student.programName || 'N/A'}</strong>
                                 </div>
                                 <div className="employee-info-field">
-                                    <span>Year Level</span>
-                                    <strong>{student.year_level || 'N/A'}</strong>
+                                    <span>{student.student_type === 'alumni' ? 'Alumni' : 'Year Level'}</span>
+                                    <strong>{student.student_type === 'alumni' ? `Class of ${student.graduation_year || '—'}` : student.year_level || 'N/A'}</strong>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: 16 }}>
+                            <div className="ui-card-actions">
                                 <button
                                     className="employee-link-button"
                                     onClick={() => navigate(`/employee/students/${student.student_id}`)}
@@ -375,8 +386,7 @@ function Students() {
                                 </button>
 
                                 <button
-                                    className="employee-link-button"
-                                    style={{ color: '#1e8a5f' }}
+                                    className="employee-link-button is-success"
                                     onClick={() => approveStudent(student)}
                                     disabled={reviewingId === student.student_id}
                                 >
@@ -384,8 +394,7 @@ function Students() {
                                 </button>
 
                                 <button
-                                    className="employee-link-button"
-                                    style={{ color: 'var(--red)' }}
+                                    className="employee-link-button is-danger"
                                     onClick={() => rejectStudent(student)}
                                     disabled={reviewingId === student.student_id}
                                 >
@@ -401,7 +410,7 @@ function Students() {
 
             <form onSubmit={search} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
                 <input
-                    className="employee-search-input"
+                    className="employee-search-input ui-search-field"
                     type="text"
                     value={term}
                     onChange={(e) => setTerm(e.target.value)}

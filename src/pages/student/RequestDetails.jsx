@@ -564,28 +564,23 @@ function RequestDetails() {
                 ← Back to My Requests
             </button>
 
-            <div className="student-page-header">
-                <h1>{documentName || 'Request Details'}</h1>
-                <p>View the status and details of your document request.</p>
+            <div className="ui-detail-hero">
+                <DocumentThumb url={documentPreview} name={documentName} size={64} />
+                <div className="ui-detail-main" style={{ flex: 1 }}>
+                    <span className="ui-detail-eyebrow">Your request · {request.request_number}</span>
+                    <h1>{documentName || 'Request Details'}</h1>
+                    <p>{statusMeta(request.status).title}</p>
+                    <div className="ui-detail-tags">
+                        <span>₱{Number(request.total_amount || 0).toFixed(2)}</span>
+                        {request.requested_at && <span>Requested {new Date(request.requested_at).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                    </div>
+                </div>
+                <span className={`student-status-pill status-${request.status}`} style={{ alignSelf: 'flex-start' }}>
+                    {statusMeta(request.status).label}
+                </span>
             </div>
 
             <div className="student-card">
-                <div className="student-list-card-header" style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-                        <DocumentThumb url={documentPreview} name={documentName} size={56} />
-                        <div>
-                            <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
-                            <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
-                        </div>
-                    </div>
-
-                    <span className={`student-status-pill status-${request.status}`}>
-                        {statusMeta(request.status).label}
-                    </span>
-                </div>
-
-                <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '16px 0' }} />
-
                 <div className="student-info-grid">
                     <div className="student-info-field">
                         <span>Document Requested</span>

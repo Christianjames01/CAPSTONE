@@ -1323,12 +1323,20 @@ function EmployeeRequestDetails() {
                 ← Back to Dashboard
             </button>
 
-            <div className="employee-page-header">
-                <h1>{documentName || 'Request Details'}</h1>
-                <p>
-                    {student?.name ? <><strong style={{ color: 'var(--ink)' }}>{student.name}</strong> · </> : null}
-                    Review the student's document request, payment, and requirements.
-                </p>
+            <div className="ui-detail-hero">
+                <DocumentThumb url={documentPreview} name={documentName} size={64} />
+                <div className="ui-detail-main" style={{ flex: 1 }}>
+                    <span className="ui-detail-eyebrow">Document request · {request.request_number}</span>
+                    <h1>{documentName || 'Request Details'}</h1>
+                    <p>{student?.name || 'Student'}{student?.student_number ? ` (${student.student_number})` : ''}</p>
+                    <div className="ui-detail-tags">
+                        <span>₱{Number(request.total_amount || 0).toFixed(2)}</span>
+                        {request.requested_at && <span>Requested {new Date(request.requested_at).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                    </div>
+                </div>
+                <span className={`employee-status-pill status-${request.status}`} style={{ alignSelf: 'flex-start' }}>
+                    {request.status.replace(/_/g, ' ')}
+                </span>
             </div>
 
             {isOverdue && (
@@ -1349,22 +1357,6 @@ function EmployeeRequestDetails() {
             )}
 
             <div className="employee-card">
-                <div className="employee-list-card-header" style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-                        <DocumentThumb url={documentPreview} name={documentName} size={56} />
-                        <div>
-                            <p style={{ fontSize: 12, color: 'var(--slate)', marginBottom: 4 }}>Request Number</p>
-                            <h2 style={{ fontSize: 18 }}>{request.request_number}</h2>
-                        </div>
-                    </div>
-
-                    <span className={`employee-status-pill status-${request.status}`}>
-                        {request.status.replace(/_/g, ' ')}
-                    </span>
-                </div>
-
-                <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '16px 0' }} />
-
                 <h3 style={{ fontSize: 15, marginBottom: 14 }}>Student Information</h3>
 
                 <div className="employee-info-grid">

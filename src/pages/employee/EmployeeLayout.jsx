@@ -8,6 +8,8 @@ import { IconClipboardList, IconShieldCheck, IconGear, IconMessage, IconHistory 
 import { IconIdCard, IconTicket } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
+import '../../components/DashboardStats.css'
+import '../../components/PortalUi.css'
 import { EMPLOYEE_TOUR } from '../../lib/tourSteps'
 import './EmployeeLayout.css'
 

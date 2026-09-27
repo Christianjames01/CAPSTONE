@@ -395,34 +395,24 @@ function StudentHistory() {
                 ← Back to Students
             </button>
 
-            <div className="employee-page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    background: 'var(--red)',
-                    color: 'var(--white)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 20,
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                }}>
+            <div className="ui-detail-hero">
+                <div className="ui-detail-avatar">
                     {student.photoUrl ? (
-                        <img
-                            src={student.photoUrl}
-                            alt={student.fullName}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
+                        <img src={student.photoUrl} alt={student.fullName} />
                     ) : (
                         student.initials || 'ST'
                     )}
                 </div>
-                <div>
-                    <h1 style={{ marginBottom: 2 }}>{student.fullName}</h1>
+                <div className="ui-detail-main">
+                    <span className="ui-detail-eyebrow">{(!student.year_level && student.graduation_year) ? 'Alumni record' : 'Student record'}</span>
+                    <h1>{student.fullName}</h1>
                     <p>{student.student_number} · {student.email}</p>
+                    <div className="ui-detail-tags">
+                        {student.programName && <span>{student.programName}</span>}
+                        {(!student.year_level && student.graduation_year)
+                            ? student.graduation_year && <span>Class of {student.graduation_year}</span>
+                            : student.year_level && <span>Year {student.year_level}</span>}
+                    </div>
                 </div>
             </div>
 

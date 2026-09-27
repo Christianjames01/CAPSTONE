@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import PageStats from '../../components/PageStats'
+import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle } from '../admin/icons'
 import DocumentThumb from '../../components/DocumentThumb'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -166,6 +168,11 @@ function MyRequest() {
             )
         })
 
+    const countOf = (statuses) => requests.filter((r) => statuses.includes(r.status)).length
+    const chipCount = (key) => (key === 'all' ? requests.length : countOf(key.split(',')))
+    const ACTIVE = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
+    const NEEDS_ACTION = ['payment_pending', 'lacking_requirements', 'rejected']
+
     const batchSizes = {}
     for (const r of requests) {
         if (r.batch_id) batchSizes[r.batch_id] = (batchSizes[r.batch_id] || 0) + 1
@@ -208,8 +215,19 @@ function MyRequest() {
                 </div>
             )}
 
+            {!loading && requests.length > 0 && (
+                <PageStats
+                    stats={[
+                        { label: 'Active requests', value: countOf(ACTIVE), note: 'Not yet claimed', Icon: IconFileStack, onClick: () => setChip('all') },
+                        { label: 'Needs your action', value: countOf(NEEDS_ACTION), note: countOf(NEEDS_ACTION) ? 'Pay, upload a receipt or requirements' : 'Nothing to do right now', Icon: IconHourglass, warn: countOf(NEEDS_ACTION) > 0, onClick: () => setChip(NEEDS_ACTION.join(',')) },
+                        { label: 'Ready to claim', value: countOf(['ready_for_claiming']), note: 'See your claiming schedule', Icon: IconPackage, onClick: () => setChip('ready_for_claiming') },
+                        { label: 'Completed', value: countOf(['completed']), note: 'Documents you received', Icon: IconCheckCircle, onClick: () => setChip('completed') },
+                    ]}
+                />
+            )}
+
             <input
-                className="student-search-input"
+                className="student-search-input ui-search-field"
                 style={{ marginBottom: 16 }}
                 type="text"
                 value={search}
@@ -224,7 +242,7 @@ function MyRequest() {
                         className={`student-filter-chip${activeChip === chip.key ? ' active' : ''}`}
                         onClick={() => setChip(chip.key)}
                     >
-                        {chip.label}
+                        {chip.label}<span className="ui-chip-count">{chipCount(chip.key)}</span>
                     </button>
                 ))}
             </div>
@@ -308,12 +326,14 @@ function MyRequest() {
                             </div>
                         )}
 
-                        <button
-                            className="student-link-button"
-                            onClick={() => navigate(`/student/request/${request.request_id}`)}
-                        >
-                            View request details →
-                        </button>
+                        <div className="ui-card-actions">
+                            <button
+                                className="student-link-button"
+                                onClick={() => navigate(`/student/request/${request.request_id}`)}
+                            >
+                                View request details →
+                            </button>
+                        </div>
 
                     </div>
                 ))

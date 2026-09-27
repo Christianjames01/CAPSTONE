@@ -6,6 +6,8 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadStudentsById } from '../../lib/studentNames'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle } from '../admin/icons'
 import './EmployeePages.css'
 
 const STATUS_CHIPS = [
@@ -156,6 +158,9 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
             )
         }))
 
+    const countOf = (statuses) => requests.filter((r) => statuses.includes(r.status)).length
+    const chipCount = (key) => (key === 'all' ? requests.length : countOf(key.split(',')))
+
     return (
         <div>
             <div className="employee-page-header">
@@ -163,8 +168,20 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                 <p>{releasingOnly ? 'All requests ready for claiming, scheduled, claimed, or completed — across all staff.' : subtitle}</p>
             </div>
 
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Requests', value: requests.length, note: releasingOnly ? 'For claiming, office-wide' : 'In this list', Icon: IconFileStack, onClick: showFilterChips ? () => setChip('all') : undefined },
+                        { label: 'To verify', value: countOf(['pending', 'payment_pending', 'receipt_uploaded']), note: 'Payment or requirements', Icon: IconHourglass, warn: countOf(['receipt_uploaded']) > 0 },
+                        { label: 'In progress', value: countOf(['receipt_verified', 'processing', 'lacking_requirements']), note: 'Being prepared', Icon: IconHourglass },
+                        { label: 'Ready for claiming', value: countOf(['ready_for_claiming']), note: 'Waiting for the student', Icon: IconPackage },
+                        { label: 'Completed', value: countOf(['completed']), note: 'Released', Icon: IconCheckCircle },
+                    ]}
+                />
+            )}
+
             <input
-                className="employee-search-input"
+                className="employee-search-input ui-search-field"
                 style={{ marginBottom: 16 }}
                 type="text"
                 value={search}
@@ -180,7 +197,7 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                             className={`employee-filter-chip${activeChip === chip.key ? ' active' : ''}`}
                             onClick={() => setChip(chip.key)}
                         >
-                            {chip.label}
+                            {chip.label}<span className="ui-chip-count">{chipCount(chip.key)}</span>
                         </button>
                     ))}
                 </div>
@@ -233,12 +250,14 @@ function EmployeeRequestList({ title, subtitle, statusFilter, showFilterChips, e
                             </div>
                         </div>
 
-                        <button
-                            className="employee-link-button"
-                            onClick={() => navigate(`/employee/requests/${request.request_id}`)}
-                        >
-                            Open request →
-                        </button>
+                        <div className="ui-card-actions">
+                            <button
+                                className="employee-link-button"
+                                onClick={() => navigate(`/employee/requests/${request.request_id}`)}
+                            >
+                                Open request →
+                            </button>
+                        </div>
                     </div>
                 ))
             )}

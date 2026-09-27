@@ -4,6 +4,9 @@ import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconHourglass, IconCheckCircle, IconXCircle } from '../admin/icons'
+import { IconReceipt } from './icons'
 import './StudentPages.css'
 
 function UploadReceiptList() {
@@ -118,6 +121,17 @@ function UploadReceiptList() {
 
             {error && <div className="student-error-box">{error}</div>}
 
+            {!loading && requests.length > 0 && (
+                <PageStats
+                    stats={[
+                        { label: 'To upload', value: requests.filter((r) => !r.receipt).length, note: 'Pay at the Finance Office first', Icon: IconReceipt, warn: requests.some((r) => !r.receipt) },
+                        { label: 'Waiting for verification', value: requests.filter((r) => r.receipt?.status === 'uploaded').length, note: 'Uploaded receipts', Icon: IconHourglass },
+                        { label: 'Needs a new photo', value: requests.filter((r) => r.receipt?.status === 'rejected').length, note: 'Receipt was not accepted', Icon: IconXCircle, warn: requests.some((r) => r.receipt?.status === 'rejected') },
+                        { label: 'Amount due', value: `₱${requests.filter((r) => !r.receipt || r.receipt.status === 'rejected').reduce((sum, r) => sum + Number(r.total_amount || 0), 0).toFixed(2)}`, note: 'Not yet uploaded', Icon: IconCheckCircle },
+                    ]}
+                />
+            )}
+
             {loading ? (
                 <SkeletonList count={3} />
             ) : requests.length === 0 ? (
@@ -130,10 +144,13 @@ function UploadReceiptList() {
                     <div className="student-list-card" key={request.request_id}>
 
                         <div className="student-list-card-header">
+                            <div className="ui-card-title">
+                            <span className={`ui-avatar is-square${request.receipt?.status === 'verified' ? '' : request.receipt ? '' : ' is-muted'}`} aria-hidden="true"><IconReceipt /></span>
                             <div>
                                 <h3>{request.documentName}</h3>
                                 <p>Request {request.request_number}</p>
                                 {request.requested_at && <p>Requested {formatDisplayDateTime(request.requested_at)}</p>}
+                            </div>
                             </div>
 
                             <span className={`student-status-pill status-${request.receipt?.status || 'not_uploaded'}`}>
@@ -151,7 +168,7 @@ function UploadReceiptList() {
 
                             <div className="student-info-field">
                                 <span>Request Status</span>
-                                <strong style={{ textTransform: 'capitalize' }}>{request.status}</strong>
+                                <strong style={{ textTransform: 'capitalize' }}>{request.status.replace(/_/g, ' ')}</strong>
                             </div>
                         </div>
 
@@ -161,12 +178,14 @@ function UploadReceiptList() {
                             </div>
                         )}
 
-                        <button
-                            className="student-link-button"
-                            onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
-                        >
-                            {request.receipt ? 'Update receipt →' : 'Upload receipt →'}
-                        </button>
+                        <div className="ui-card-actions">
+                            <button
+                                className="student-link-button"
+                                onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
+                            >
+                                {request.receipt ? 'Update receipt →' : 'Upload receipt →'}
+                            </button>
+                        </div>
 
                     </div>
                 ))

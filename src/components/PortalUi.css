@@ -1,0 +1,372 @@
+/* Shared list-page look for the employee and student portals, matching the
+   Registrar Head's pages (see admin/AdminPages.css): summary tiles, cards
+   with hover and tiled details, avatars, footer actions, search with an
+   icon, chip counts and section titles. Uses each portal's theme tokens. */
+
+/* ---- Summary tiles (components/PageStats.jsx) ---------------------- */
+.page-stats {
+    margin-bottom: 22px;
+}
+
+.page-stats .dash-stat-tile.is-static {
+    cursor: default;
+}
+
+.page-stats .dash-stat-tile.is-static:hover {
+    border-color: var(--line);
+    box-shadow: none;
+    transform: none;
+}
+
+/* ---- List cards ------------------------------------------------------ */
+.employee-list-card,
+.student-list-card {
+    border-radius: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.employee-list-card:hover,
+.student-list-card:hover {
+    border-color: color-mix(in srgb, var(--blue-accent, var(--blue)) 28%, var(--line));
+    box-shadow: 0 16px 34px -28px rgba(10, 36, 80, 0.45);
+}
+
+.employee-list-card .employee-info-grid,
+.student-list-card .student-info-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.employee-list-card .employee-info-field,
+.student-list-card .student-info-field {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--paper);
+}
+
+.employee-list-card .employee-info-field span,
+.student-list-card .student-info-field span {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* ---- Title row with an avatar / icon --------------------------------- */
+.ui-card-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+}
+
+.ui-card-title > div {
+    min-width: 0;
+}
+
+.ui-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--blue-tint);
+    color: var(--blue-accent, var(--blue));
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ui-avatar.is-square {
+    border-radius: 10px;
+}
+
+.ui-avatar.is-muted {
+    background: var(--paper);
+    color: var(--slate);
+}
+
+.ui-avatar svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ---- Footer actions --------------------------------------------------- */
+.ui-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.ui-card-actions .employee-link-button,
+.ui-card-actions .student-link-button {
+    align-self: auto;
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.ui-card-actions .employee-link-button:hover:not(:disabled),
+.ui-card-actions .student-link-button:hover:not(:disabled) {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.ui-card-actions .is-danger {
+    color: var(--danger-text, var(--red)) !important;
+}
+
+.ui-card-actions .is-success {
+    color: var(--success-text, #1e8a5f) !important;
+}
+
+.ui-card-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ---- Toolbar: search with icon + chips -------------------------------- */
+.ui-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ui-toolbar .employee-filter-row,
+.ui-toolbar .student-filter-row {
+    margin-bottom: 0;
+}
+
+.ui-search-field {
+    padding-left: 38px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357616F' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M19.5 19.5 15 15'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 17px;
+}
+
+.ui-chip-count {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 11px;
+    color: var(--slate);
+}
+
+.active > .ui-chip-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+}
+
+.ui-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 26px 0 12px;
+    font-size: 17px;
+}
+
+.ui-section-title .ui-chip-count {
+    margin-left: 0;
+    padding: 2px 9px;
+    background: var(--blue-tint);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+/* ---- Walk-in queue number badge ---------------------------------------- */
+.ui-queue-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 64px;
+    height: 44px;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: var(--blue-tint);
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+.ui-queue-badge.status-called,
+.ui-queue-badge.status-serving {
+    background: var(--blue);
+    color: var(--white);
+}
+
+.ui-queue-badge.status-completed {
+    background: var(--success-bg, rgba(30, 138, 95, 0.12));
+    color: var(--success-text, #1e8a5f);
+}
+
+.ui-queue-badge.status-no_show,
+.ui-queue-badge.status-cancelled {
+    background: var(--paper);
+    color: var(--slate);
+}
+
+/* ---- Activity log rows ------------------------------------------------ */
+.ui-log-action {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--blue-accent, var(--blue));
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+/* ---- Header card on detail pages ---------------------------------------- */
+.ui-detail-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding: 22px 24px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.ui-detail-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--red));
+}
+
+.ui-detail-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.ui-detail-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ui-detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ui-detail-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--blue-accent, var(--blue));
+}
+
+.ui-detail-main h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.ui-detail-main p {
+    font-size: 13.5px;
+    overflow-wrap: anywhere;
+}
+
+.ui-detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.ui-detail-tags span {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+}
+
+@media (max-width: 560px) {
+    .ui-detail-hero {
+        align-items: flex-start;
+        padding: 18px;
+    }
+
+    .ui-detail-avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+    }
+}
+
+/* ---- Date badge ("SEP / 29") on claiming cards ---------------------------- */
+.ui-date-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 48px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.ui-date-badge span {
+    width: 100%;
+    padding: 2px 0;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: center;
+}
+
+.ui-date-badge strong {
+    padding: 2px 0 4px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    line-height: 1.2;
+    color: var(--ink);
+}
+
+.ui-date-badge.status-missed span,
+.ui-date-badge.status-cancelled span {
+    background: var(--red);
+}
+
+.ui-date-badge.status-claimed span {
+    background: var(--success-text, #1e8a5f);
+}

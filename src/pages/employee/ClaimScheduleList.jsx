@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import PageStats from '../../components/PageStats'
+import { IconCalendarCheck, IconCheckCircle, IconHourglass, IconSwap } from '../admin/icons'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import RepresentativeBadge from '../../components/RepresentativeBadge'
@@ -306,7 +308,18 @@ function ClaimScheduleList() {
 
             {error && <div className="employee-error-box">{error}</div>}
 
-            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Today's Appointments</h2>
+            {!loading && (
+                <PageStats
+                    stats={[
+                        { label: 'Today', value: todayAppointments.length, note: 'Claiming appointments', Icon: IconCalendarCheck },
+                        { label: 'Claimed today', value: todayAppointments.filter((a) => a.status === 'claimed').length, note: 'Released', Icon: IconCheckCircle },
+                        { label: 'Needs a schedule', value: needsScheduling.filter((r) => !r.schedule).length, note: 'Ready, not scheduled yet', Icon: IconHourglass, warn: needsScheduling.some((r) => !r.schedule) },
+                        { label: 'Reschedule requests', value: needsScheduling.filter((r) => r.schedule?.reschedule_requested_at).length, note: 'Asked by students', Icon: IconSwap, warn: needsScheduling.some((r) => r.schedule?.reschedule_requested_at) },
+                    ]}
+                />
+            )}
+
+            <h2 className="ui-section-title" style={{ marginTop: 0 }}>Today's Appointments <span className="ui-chip-count">{todayAppointments.length}</span></h2>
 
             {loading ? (
                 <SkeletonList count={3} />
@@ -319,6 +332,8 @@ function ClaimScheduleList() {
                     {todayAppointments.map((appt) => (
                         <div className="employee-list-card" key={appt.claim_schedule_id}>
                             <div className="employee-list-card-header">
+                                <div className="ui-card-title">
+                                <span className={`ui-queue-badge status-${appt.status === 'claimed' ? 'completed' : 'called'}`} style={{ fontSize: 14 }}>{formatTime(appt.claim_time || appt.scheduled_time)}</span>
                                 <div>
                                     <p className="request-student-name">{appt.studentName}</p>
                                     <h3>{appt.documentName}</h3>
@@ -327,6 +342,7 @@ function ClaimScheduleList() {
                                         {appt.requestedAt && ` · Requested ${formatDisplayDateTime(appt.requestedAt)}`}
                                     </p>
                                     <RepresentativeBadge representative={representatives[appt.request_id]} />
+                                </div>
                                 </div>
 
                                 <span className={`employee-status-pill status-${appt.status}`}>{appt.status}</span>
@@ -340,20 +356,22 @@ function ClaimScheduleList() {
                             </div>
 
                             {appt.status !== 'claimed' && (
-                                <button
-                                    className="employee-link-button"
-                                    onClick={() => markAsClaimed(appt)}
-                                    disabled={marking === appt.claim_schedule_id}
-                                >
-                                    {marking === appt.claim_schedule_id ? 'Marking...' : 'Mark as claimed →'}
-                                </button>
+                                <div className="ui-card-actions">
+                                    <button
+                                        className="employee-link-button is-success"
+                                        onClick={() => markAsClaimed(appt)}
+                                        disabled={marking === appt.claim_schedule_id}
+                                    >
+                                        {marking === appt.claim_schedule_id ? 'Marking...' : 'Mark as claimed'}
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ))}
                 </div>
             )}
 
-            <h2 style={{ fontSize: 17, marginBottom: 14 }}>Ready to Schedule</h2>
+            <h2 className="ui-section-title">Ready to Schedule <span className="ui-chip-count">{needsScheduling.length}</span></h2>
 
             {!loading && needsScheduling.length === 0 ? (
                 <div className="employee-empty">No requests are currently ready for claim scheduling.</div>
@@ -361,11 +379,14 @@ function ClaimScheduleList() {
                 needsScheduling.map((request) => (
                     <div className="employee-list-card" key={request.request_id}>
                         <div className="employee-list-card-header">
+                            <div className="ui-card-title">
+                            <span className="ui-avatar is-square" aria-hidden="true"><IconHourglass /></span>
                             <div>
                                 <p className="request-student-name">{request.studentName}</p>
                                 <h3>{request.documentName}</h3>
                                 <p>{request.request_number} · Student {request.studentNumber}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
                                 <RepresentativeBadge representative={representatives[request.request_id]} />
+                            </div>
                             </div>
 
                             <span className={`employee-status-pill status-${request.schedule ? request.schedule.status : 'ready_for_claiming'}`}>
@@ -380,12 +401,14 @@ function ClaimScheduleList() {
                             </div>
                         )}
 
-                        <button
-                            className="employee-link-button"
-                            onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
-                        >
-                            {request.schedule ? 'Reschedule →' : 'Create schedule →'}
-                        </button>
+                        <div className="ui-card-actions">
+                            <button
+                                className="employee-link-button"
+                                onClick={() => navigate(`/employee/requests/${request.request_id}/claim-schedule`)}
+                            >
+                                {request.schedule ? 'Reschedule →' : 'Create schedule →'}
+                            </button>
+                        </div>
                     </div>
                 ))
             )}

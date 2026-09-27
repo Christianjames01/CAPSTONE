@@ -2,11 +2,18 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconFileStack, IconMegaphone, IconUsers, IconCalendarCheck } from '../admin/icons'
+import { IconBell, IconMessage } from '../student/icons'
+
+// Icon per notification type.
+const TYPE_ICONS = { request_update: IconFileStack, message: IconMessage, announcement: IconMegaphone, system: IconUsers, schedule: IconCalendarCheck }
 import './EmployeePages.css'
 
 function Notifications() {
     const navigate = useNavigate()
 
+    const [showFilter, setShowFilter] = useState('all')
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -121,12 +128,41 @@ function Notifications() {
 
             {error && <div className="employee-error-box">{error}</div>}
 
+            {!loading && notifications.length > 0 && (
+                <>
+                    <PageStats
+                        stats={[
+                            { label: 'Unread', value: unreadCount, note: unreadCount ? 'Need your attention' : 'All caught up', Icon: IconBell, warn: unreadCount > 0, onClick: () => setShowFilter('unread') },
+                            { label: 'Today', value: notifications.filter((n) => new Date(n.created_at).toDateString() === new Date().toDateString()).length, note: 'Received today', Icon: IconFileStack },
+                            { label: 'All notifications', value: notifications.length, note: 'Most recent first', Icon: IconMegaphone, onClick: () => setShowFilter('all') },
+                        ]}
+                    />
+
+                    <div className="employee-filter-row">
+                        {[
+                            { key: 'all', label: 'All', count: notifications.length },
+                            { key: 'unread', label: 'Unread', count: unreadCount },
+                        ].map((chip) => (
+                            <button
+                                key={chip.key}
+                                className={`employee-filter-chip${showFilter === chip.key ? ' active' : ''}`}
+                                onClick={() => setShowFilter(chip.key)}
+                            >
+                                {chip.label}<span className="ui-chip-count">{chip.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+
             {loading ? (
                 <SkeletonList count={3} />
+            ) : showFilter === 'unread' && unreadCount === 0 && notifications.length > 0 ? (
+                <div className="employee-empty">No unread notifications.</div>
             ) : notifications.length === 0 ? (
                 <div className="employee-empty">You have no notifications yet.</div>
             ) : (
-                notifications.map((notification) => (
+                notifications.filter((n) => showFilter === 'all' || !n.is_read).map((notification) => (
                     <button
                         key={notification.notification_id}
                         onClick={() => handleClick(notification)}
@@ -135,14 +171,21 @@ function Notifications() {
                             textAlign: 'left',
                             width: '100%',
                             cursor: 'pointer',
-                            borderColor: notification.is_read ? 'var(--line)' : 'var(--blue-accent, var(--blue))',
+                            borderLeft: notification.is_read ? undefined : '4px solid var(--blue-accent, var(--blue))',
                             background: notification.is_read ? 'var(--surface)' : 'var(--blue-tint)',
                         }}
                     >
                         <div className="employee-list-card-header">
-                            <div>
-                                <h3>{notification.title}</h3>
-                                <p>{notification.message}</p>
+                            <div className="ui-card-title">
+                                {(() => {
+                                    const TypeIcon = TYPE_ICONS[notification.notification_type] || IconBell
+                                    return <span className={`ui-avatar is-square${notification.is_read ? ' is-muted' : ''}`} aria-hidden="true"><TypeIcon /></span>
+                                })()}
+                                <div>
+                                    <h3>{notification.title}</h3>
+                                    <p>{notification.message}</p>
+                                    <span style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>{formatDate(notification.created_at)}</span>
+                                </div>
                             </div>
 
                             {!notification.is_read && (
@@ -150,9 +193,6 @@ function Notifications() {
                             )}
                         </div>
 
-                        <span style={{ fontSize: 12, color: 'var(--slate)' }}>
-                            {formatDate(notification.created_at)}
-                        </span>
                     </button>
                 ))
             )}

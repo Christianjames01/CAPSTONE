@@ -4,6 +4,8 @@ import { logActivity } from '../../lib/activityLog'
 import { createQueueTicket, createQueueTicketBatch, formatQueueNumber, todayStr } from '../../lib/queue'
 import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconTicket, IconHourglass, IconCheckCircle, IconXCircle } from '../admin/icons'
 import './EmployeePages.css'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
@@ -240,18 +242,33 @@ function EmployeeQueue() {
 
             {error && <div className="employee-error-box" style={{ marginTop: 16 }}>{error}</div>}
 
+            {!loading && (
+                <div style={{ marginTop: 20 }}>
+                    <PageStats
+                        stats={[
+                            { label: 'Now serving', value: active.length ? formatQueueNumber(active[0].queue_number) : '—', note: active.length > 1 ? `+${active.length - 1} more at the counter` : active.length ? 'At the counter' : 'No one called yet', Icon: IconTicket },
+                            { label: 'Waiting', value: waiting.length, note: waiting.length ? `Next: ${formatQueueNumber(waiting[0].queue_number)}` : 'No one in line', Icon: IconHourglass, warn: waiting.length > 5 },
+                            { label: 'Served today', value: tickets.filter((t) => t.status === 'completed').length, note: 'Completed', Icon: IconCheckCircle },
+                            { label: 'No-shows', value: tickets.filter((t) => t.status === 'no_show').length, note: 'Called but not present', Icon: IconXCircle },
+                        ]}
+                    />
+                </div>
+            )}
+
             {loading ? (
                 <SkeletonList count={3} />
             ) : (
                 <>
                     {active.length > 0 && (
                         <div style={{ marginTop: 20 }}>
-                            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Now Serving</h2>
+                            <h2 className="ui-section-title" style={{ marginTop: 0 }}>Now Serving <span className="ui-chip-count">{active.length}</span></h2>
                             {active.map((t) => (
                                 <div className="employee-list-card" key={t.queue_id}>
                                     <div className="employee-list-card-header">
+                                        <div className="ui-card-title" style={{ alignItems: 'center' }}>
+                                        <span className={`ui-queue-badge status-${t.status}`}>{formatQueueNumber(t.queue_number)}</span>
                                         <div>
-                                            <h3>{formatQueueNumber(t.queue_number)}{t.displayName ? ` — ${t.displayName}` : ''}</h3>
+                                            <h3>{t.displayName || (t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in')}</h3>
                                             <p>
                                                 {t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in'}
                                                 {t.requestNumber ? ` · ${t.requestNumber}` : ''}
@@ -259,10 +276,11 @@ function EmployeeQueue() {
                                                 {t.called_at ? ` · Called ${formatTime(t.called_at)}` : ''}
                                             </p>
                                         </div>
+                                        </div>
                                         <span className={`employee-status-pill status-${t.status}`}>{t.status}</span>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                    <div className="ui-card-actions">
                                         {t.status === 'called' && (
                                             <>
                                                 <button className="employee-link-button" onClick={() => markServing(t)} disabled={acting === t.queue_id}>
@@ -273,10 +291,10 @@ function EmployeeQueue() {
                                                 </button>
                                             </>
                                         )}
-                                        <button className="employee-link-button" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
+                                        <button className="employee-link-button is-success" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
                                             Mark completed
                                         </button>
-                                        <button className="employee-link-button" style={{ color: 'var(--red)' }} onClick={() => markNoShow(t)} disabled={acting === t.queue_id}>
+                                        <button className="employee-link-button is-danger" onClick={() => markNoShow(t)} disabled={acting === t.queue_id}>
                                             No-show
                                         </button>
                                     </div>
@@ -286,29 +304,32 @@ function EmployeeQueue() {
                     )}
 
                     <div style={{ marginTop: 20 }}>
-                        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Waiting ({waiting.length})</h2>
+                        <h2 className="ui-section-title" style={{ marginTop: 0 }}>Waiting <span className="ui-chip-count">{waiting.length}</span></h2>
                         {waiting.length === 0 ? (
                             <div className="employee-empty">No one is currently waiting.</div>
                         ) : (
                             waiting.map((t) => (
                                 <div className="employee-list-card" key={t.queue_id}>
                                     <div className="employee-list-card-header">
+                                        <div className="ui-card-title" style={{ alignItems: 'center' }}>
+                                        <span className={`ui-queue-badge status-${t.status}`}>{formatQueueNumber(t.queue_number)}</span>
                                         <div>
-                                            <h3>{formatQueueNumber(t.queue_number)}{t.displayName ? ` — ${t.displayName}` : ''}</h3>
+                                            <h3>{t.displayName || (t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in')}</h3>
                                             <p>
                                                 {t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in'}
                                                 {t.requestNumber ? ` · ${t.requestNumber}` : ''}
                                                 {t.purpose ? ` · ${t.purpose}` : ''}
                                             </p>
                                         </div>
+                                        </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: 16 }}>
+                                    <div className="ui-card-actions">
                                         <button className="employee-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id}>
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
                                         <button
-                                            className="employee-danger-button"
+                                            className="employee-link-button is-danger"
                                             onClick={() => cancelTicket(t)}
                                             disabled={acting === t.queue_id}
                                         >
@@ -322,13 +343,16 @@ function EmployeeQueue() {
 
                     {history.length > 0 && (
                         <div style={{ marginTop: 20 }}>
-                            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Earlier Today ({history.length})</h2>
+                            <h2 className="ui-section-title" style={{ marginTop: 0 }}>Earlier Today <span className="ui-chip-count">{history.length}</span></h2>
                             {history.map((t) => (
                                 <div className="employee-list-card" key={t.queue_id} style={{ opacity: 0.7 }}>
                                     <div className="employee-list-card-header">
+                                        <div className="ui-card-title" style={{ alignItems: 'center' }}>
+                                        <span className={`ui-queue-badge status-${t.status}`}>{formatQueueNumber(t.queue_number)}</span>
                                         <div>
-                                            <h3>{formatQueueNumber(t.queue_number)}{t.displayName ? ` — ${t.displayName}` : ''}</h3>
+                                            <h3>{t.displayName || (t.studentNumber ? `Student ${t.studentNumber}` : 'Walk-in')}</h3>
                                             {t.studentNumber && <p>Student {t.studentNumber}</p>}
+                                        </div>
                                         </div>
                                         <span className={`employee-status-pill status-${t.status}`}>{t.status.replace('_', ' ')}</span>
                                     </div>

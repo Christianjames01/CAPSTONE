@@ -4,6 +4,8 @@ import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, notifySuccess } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
+import PageStats from '../../components/PageStats'
+import { IconCalendarCheck, IconCheckCircle, IconXCircle } from '../admin/icons'
 import './StudentPages.css'
 
 function ClaimSchedule() {
@@ -216,6 +218,16 @@ function ClaimSchedule() {
 
             {error && <div className="student-error-box">{error}</div>}
 
+            {!loading && schedules.length > 0 && (
+                <PageStats
+                    stats={[
+                        { label: 'Upcoming', value: schedules.filter((sc) => sc.status === 'scheduled').length, note: 'Bring a valid ID and your receipt', Icon: IconCalendarCheck },
+                        { label: 'Claimed', value: schedules.filter((sc) => sc.status === 'claimed').length, note: 'Documents received', Icon: IconCheckCircle },
+                        { label: 'Missed', value: schedules.filter((sc) => sc.status === 'missed').length, note: 'Contact the Registrar to reschedule', Icon: IconXCircle, warn: schedules.some((sc) => sc.status === 'missed') },
+                    ]}
+                />
+            )}
+
             {loading ? (
                 <SkeletonList count={3} />
             ) : schedules.length === 0 ? (
@@ -229,9 +241,21 @@ function ClaimSchedule() {
                         <div className="student-list-card" key={schedule.claim_schedule_id}>
 
                             <div className="student-list-card-header">
-                                <div>
-                                    <h3>{schedule.documentName}</h3>
-                                    <p>Request {schedule.requestNumber}</p>
+                                <div className="ui-card-title" style={{ alignItems: 'center' }}>
+                                    {(() => {
+                                        const d = new Date(`${schedule.claim_date || schedule.scheduled_date}T00:00:00`)
+                                        const valid = !Number.isNaN(d.getTime())
+                                        return (
+                                            <span className={`ui-date-badge status-${schedule.status}`} aria-hidden="true">
+                                                <span>{valid ? d.toLocaleDateString('en-PH', { month: 'short' }).toUpperCase() : '—'}</span>
+                                                <strong>{valid ? d.getDate() : ''}</strong>
+                                            </span>
+                                        )
+                                    })()}
+                                    <div>
+                                        <h3>{schedule.documentName}</h3>
+                                        <p>Request {schedule.requestNumber}</p>
+                                    </div>
                                 </div>
 
                                 <span className={`student-status-pill status-${schedule.status}`}>
