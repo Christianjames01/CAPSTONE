@@ -60,7 +60,7 @@ function Dashboard() {
     }, [])
 
     // Update in place when requests change -- no manual refresh needed.
-    useLiveRefresh(['document_requests', 'claim_schedules'], loadDashboard)
+    useLiveRefresh(['document_requests', 'claim_schedules', 'announcements'], loadDashboard)
 
     async function loadDashboard() {
         try {
