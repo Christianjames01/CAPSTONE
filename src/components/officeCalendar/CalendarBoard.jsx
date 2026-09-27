@@ -375,19 +375,22 @@ function CalendarBoard({
 
             <section className="ocal-main" aria-label="Month view">
                 <div className="ocal-toolbar">
+                    <h2 className="ocal-month-label" aria-live="polite" aria-label={monthLabel}>
+                        {viewDate.toLocaleDateString('en-PH', { month: 'long' })}
+                        <span>{viewDate.getFullYear()}</span>
+                    </h2>
+
                     <div className="ocal-nav">
                         <button type="button" className="ocal-icon-button is-bordered" onClick={() => onMonthChange(-1)} aria-label="Previous month">
                             <ChevronLeft />
                         </button>
+                        <button type="button" className="ocal-today-button" onClick={onToday} disabled={isCurrentMonth}>
+                            Today
+                        </button>
                         <button type="button" className="ocal-icon-button is-bordered" onClick={() => onMonthChange(1)} aria-label="Next month">
                             <ChevronRight />
                         </button>
-                        <h2 className="ocal-month-label" aria-live="polite">{monthLabel}</h2>
                     </div>
-
-                    <button type="button" className="ocal-today-button" onClick={onToday} disabled={isCurrentMonth}>
-                        Today
-                    </button>
                 </div>
 
                 {error && <div className="ocal-error" role="alert">{error}</div>}
