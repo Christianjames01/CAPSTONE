@@ -34,6 +34,14 @@ export function hoursOf(row) {
     return formatHours(row?.open_time, row?.close_time) || row?.note?.match(NOTE_HOURS)?.[1]?.trim() || ''
 }
 
+// Compact hours for tight spots like a calendar cell: "8AM–5PM".
+export function shortHours(row) {
+    return hoursOf(row)
+        .replace(/:00/g, '')
+        .replace(/\s+(AM|PM|NN)/g, '$1')
+        .replace(/\s*–\s*/, '–')
+}
+
 export function noteWithoutHours(note) {
     return (note || '').replace(NOTE_HOURS, '').trim()
 }
