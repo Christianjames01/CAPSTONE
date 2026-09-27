@@ -108,7 +108,7 @@ export function ProfileFields({ fields }) {
 }
 
 // One row in the "Sign-in & security" card.
-export function SecurityRow({ icon: Icon, title, text, actionLabel, onAction, children }) {
+export function SecurityRow({ icon: Icon, title, text, actionLabel, onAction, actionDisabled = false, children }) {
     return (
         <div className="pf-row">
             {Icon && <span className="pf-row-icon"><Icon /></span>}
@@ -118,7 +118,7 @@ export function SecurityRow({ icon: Icon, title, text, actionLabel, onAction, ch
                 {children}
             </div>
             {actionLabel && (
-                <button type="button" className="pf-action" onClick={onAction}>
+                <button type="button" className="pf-action" onClick={onAction} disabled={actionDisabled}>
                     {actionLabel}
                 </button>
             )}

@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { IconIdCard } from './icons'
+import { IconIdCard, IconFileStack, IconHourglass, IconCheckCircle, IconClipboardCheck } from './icons'
+import { IconUserCircle, IconMail } from '../student/icons'
+import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconKey } from '../../components/ProfileParts'
+import PageStats from '../../components/PageStats'
+import DocumentThumb from '../../components/DocumentThumb'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
@@ -142,10 +146,11 @@ function StudentDetails() {
             const documentTypeIds = [...new Set(rows.map((r) => r.document_type_id).filter(Boolean))]
 
             const { data: documentTypes } = documentTypeIds.length
-                ? await supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', documentTypeIds)
+                ? await supabase.from('document_types').select('document_type_id, document_name, preview_image_url').in('document_type_id', documentTypeIds)
                 : { data: [] }
 
             const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
+            const documentPreviewById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.preview_image_url || null]))
 
             const requestIds = rows.map((r) => r.request_id)
 
@@ -170,6 +175,7 @@ function StudentDetails() {
             setRequests(rows.map((r) => ({
                 ...r,
                 documentName: documentNameById[r.document_type_id] || 'Document',
+                documentPreview: documentPreviewById[r.document_type_id] || null,
                 claimSchedule: claimScheduleByRequestId[r.request_id] || null,
             })))
 
@@ -441,7 +447,7 @@ function StudentDetails() {
     )
 
     const editActions = (
-        <div className="admin-edit-actions">
+        <div className="app-modal-actions" style={{ marginTop: 18 }}>
             <button type="button" className="admin-secondary-button" onClick={cancelEditing} disabled={saving}>
                 Cancel
             </button>
@@ -471,75 +477,111 @@ function StudentDetails() {
         return <div className="admin-error-box">{error}</div>
     }
 
+    const activeRequests = requests.filter((r) => !['completed', 'cancelled', 'rejected'].includes(r.status)).length
+    const completedRequests = requests.filter((r) => r.status === 'completed').length
+    const pendingRequirements = requirements.filter((r) => !['verified', 'approved'].includes(r.status)).length
+    const isAlumni = student.student_type === 'alumni'
+
     return (
         <div>
             <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/admin/students')}>
                 ← Back to Students
             </button>
 
-            <div className="admin-detail-hero">
-                <div className="admin-detail-avatar">
-                    {student.photoUrl ? (
-                        <img
-                            src={student.photoUrl}
-                            alt={student.fullName}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    ) : (
-                        student.initials || 'ST'
-                    )}
-                </div>
-                <div className="admin-detail-main">
-                    <span className="admin-detail-eyebrow">{student.student_type === 'alumni' ? 'Alumni' : 'Student'}</span>
-                    <h1>{student.fullName}</h1>
-                    <p>{student.student_number} · {student.email}</p>
-                    <div className="admin-detail-tags">
-                        {student.programName && <span>{student.programName}</span>}
-                        {student.student_type === 'alumni'
-                            ? <span>Class of {student.graduation_year || '—'}</span>
-                            : student.year_level && <span>Year {student.year_level}</span>}
+            <div className="pf-page">
+                <ProfileHero
+                    photoUrl={student.photoUrl}
+                    name={student.fullName}
+                    initials={student.initials || 'ST'}
+                    eyebrow={isAlumni ? 'Alumni' : 'Student'}
+                    subtitle={[student.student_number, student.email].filter(Boolean).join(' · ')}
+                    tags={[
+                        student.programName,
+                        isAlumni ? `Class of ${student.graduation_year || '—'}` : student.year_level && `Year ${student.year_level}`,
+                        student.status && student.status.charAt(0).toUpperCase() + student.status.slice(1),
+                    ]}
+                />
+
+                <PageStats
+                    stats={[
+                        { label: 'Requests', value: requests.length, note: 'All time', Icon: IconFileStack },
+                        { label: 'In progress', value: activeRequests, note: activeRequests ? 'Not yet completed' : 'Nothing pending', Icon: IconHourglass, warn: activeRequests > 0 },
+                        { label: 'Completed', value: completedRequests, note: 'Claimed documents', Icon: IconCheckCircle },
+                        { label: 'Requirements', value: requirements.length, note: pendingRequirements ? `${pendingRequirements} to review` : 'All reviewed', Icon: IconClipboardCheck },
+                    ]}
+                />
+
+                <div className="pf-layout">
+                    <div className="pf-column">
+                        <ProfileSection
+                            icon={IconUserCircle}
+                            title="Personal Information"
+                            subtitle="Name, birth date and email addresses."
+                            actionLabel="Edit"
+                            onAction={() => startEditing('personal')}
+                        >
+                            <ProfileFields
+                                fields={[
+                                    { label: 'First Name', value: student.firstName },
+                                    { label: 'Middle Name', value: student.middleName },
+                                    { label: 'Last Name', value: student.lastName },
+                                    { label: 'Suffix', value: student.suffix },
+                                    { label: 'Birth Date', value: student.birth_date ? formatDate(student.birth_date) : '' },
+                                    { label: 'Phone Number', value: student.phoneNumber },
+                                    { label: 'Login Email', value: student.email, wide: true },
+                                    { label: 'Personal Email', value: student.alternate_email, wide: true },
+                                ]}
+                            />
+                        </ProfileSection>
+
+                        <ProfileSection
+                            icon={IconIdCard}
+                            title="Student Information"
+                            subtitle="School record and contact details."
+                            actionLabel="Edit"
+                            onAction={() => startEditing('student')}
+                        >
+                            <ProfileFields
+                                fields={[
+                                    { label: 'Student Number', value: student.student_number },
+                                    { label: 'Status', value: student.status, capitalize: true },
+                                    { label: 'College', value: student.collegeName, wide: true },
+                                    { label: 'Program', value: student.programName, wide: true },
+                                    { label: 'Year Level', value: student.year_level },
+                                    { label: 'Graduation Year', value: student.graduation_year },
+                                    { label: 'Address', value: student.address, wide: true },
+                                    { label: 'Alternate Phone', value: student.alternate_phone_number },
+                                    { label: 'Emergency Contact', value: [student.emergency_contact_name, student.emergency_contact_number].filter(Boolean).join(' · ') },
+                                ]}
+                            />
+                        </ProfileSection>
                     </div>
-                </div>
-            </div>
 
-            <div className="admin-card">
-                <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
-                    <h2 style={{ fontSize: 16 }}>Personal Information</h2>
-                    <button className="admin-link-button" onClick={() => startEditing('personal')}>
-                        Edit →
-                    </button>
-                </div>
+                    <div className="pf-column">
+                        <ProfileSection icon={IconShield} title="Account" subtitle="Help this student sign in.">
+                            <div className="pf-rows">
+                                <SecurityRow
+                                    icon={IconKey}
+                                    title="Reset password"
+                                    text="Sets a new temporary password when the student can't use Forgot Password."
+                                    actionLabel={resettingPassword ? 'Resetting...' : 'Reset'}
+                                    onAction={handleResetPassword}
+                                    actionDisabled={resettingPassword}
+                                />
 
-                <div className="admin-info-grid">
-                    <div className="admin-info-field"><span>First Name</span><strong>{student.firstName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Middle Name</span><strong>{student.middleName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Last Name</span><strong>{student.lastName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Suffix</span><strong>{student.suffix || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Birth Date</span><strong>{formatDate(student.birth_date)}</strong></div>
-                    <div className="admin-info-field"><span>Login Email</span><strong>{student.email || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Personal Email</span><strong>{student.alternate_email || 'N/A'}</strong></div>
-                </div>
-            </div>
-
-            <div className="admin-card">
-                <div className="admin-page-header-row" style={{ marginBottom: 16 }}>
-                    <h2 style={{ fontSize: 16 }}>Student Information</h2>
-                    <button className="admin-link-button" onClick={() => startEditing('student')}>
-                        Edit →
-                    </button>
-                </div>
-
-                <div className="admin-info-grid">
-                    <div className="admin-info-field"><span>Student Number</span><strong>{student.student_number}</strong></div>
-                    <div className="admin-info-field"><span>College</span><strong>{student.collegeName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Program</span><strong>{student.programName || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Year Level</span><strong>{student.year_level || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Graduation Year</span><strong>{student.graduation_year || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Phone Number</span><strong>{student.phoneNumber || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
-                    <div className="admin-info-field"><span>Address</span><strong>{student.address || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Alternate Phone Number</span><strong>{student.alternate_phone_number || 'N/A'}</strong></div>
-                    <div className="admin-info-field"><span>Emergency Contact</span><strong>{student.emergency_contact_name || 'N/A'} {student.emergency_contact_number ? `(${student.emergency_contact_number})` : ''}</strong></div>
+                                {currentRole === 'registrar_head' && (
+                                    <SecurityRow
+                                        icon={IconMail}
+                                        title="Login email"
+                                        text={`${student.email || 'No email'}. Change it only if the student's HCDC account was deactivated (e.g. after graduation).`}
+                                        actionLabel={changingEmail ? 'Changing...' : 'Change'}
+                                        onAction={handleChangeLoginEmail}
+                                        actionDisabled={changingEmail}
+                                    />
+                                )}
+                            </div>
+                        </ProfileSection>
+                    </div>
                 </div>
             </div>
 
@@ -610,94 +652,84 @@ function StudentDetails() {
                 </Modal>
             )}
 
-            <div className="admin-card">
-                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Account</h2>
-                <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 14 }}>
-                    Set a new login password for this student if they can't use the email-based Forgot Password link.
-                </p>
-                <button
-                    className="admin-primary-button"
-                    onClick={handleResetPassword}
-                    disabled={resettingPassword}
-                >
-                    {resettingPassword ? 'Resetting...' : 'Reset Password'}
-                </button>
-
-                {currentRole === 'registrar_head' && (
-                    <>
-                        <p style={{ fontSize: 13, color: 'var(--slate)', margin: '18px 0 14px' }}>
-                            Current login email: <strong>{student.email || 'N/A'}</strong>. Change it if this student's HCDC
-                            account has been deactivated (e.g. after graduation) and they can no longer log in or
-                            self-serve the change themselves.
-                        </p>
-                        <button
-                            className="admin-primary-button"
-                            onClick={handleChangeLoginEmail}
-                            disabled={changingEmail}
-                        >
-                            {changingEmail ? 'Changing...' : 'Change Login Email'}
-                        </button>
-                    </>
-                )}
-            </div>
-
-            <h2 style={{ fontSize: 17, margin: '24px 0 14px' }}>Request History</h2>
+            <h2 className="admin-section-title">
+                Request History
+                <span className="admin-chip-count">{requests.length}</span>
+            </h2>
 
             {requests.length === 0 ? (
                 <div className="admin-empty">This student has no document requests yet.</div>
             ) : (
-                requests.map((request) => (
-                    <div className="admin-list-card" key={request.request_id}>
-                        <div className="admin-list-card-header">
-                            <div>
-                                <h3>{request.documentName}</h3>
-                                <p>{request.request_number}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
-                                {request.claimSchedule && (
-                                    <p>
-                                        Claiming: {formatDate(request.claimSchedule.claim_date || request.claimSchedule.scheduled_date)}
-                                        {(request.claimSchedule.claim_time || request.claimSchedule.scheduled_time) &&
-                                            ` · ${formatTime(request.claimSchedule.claim_time || request.claimSchedule.scheduled_time)}`}
-                                    </p>
+                requests.map((request) => {
+                    const claim = request.claimSchedule
+                    const claimTime = claim && (claim.claim_time || claim.scheduled_time)
+                    return (
+                        <div className="admin-list-card" key={request.request_id}>
+                            <div className="admin-list-card-header">
+                                <div className="admin-card-title">
+                                    <DocumentThumb url={request.documentPreview} name={request.documentName} size={46} />
+                                    <div>
+                                        <h3>{request.documentName}</h3>
+                                        <p>{request.request_number}</p>
+                                    </div>
+                                </div>
+                                <span className={`admin-status-pill status-${request.status}`}>
+                                    {request.status.replace(/_/g, ' ')}
+                                </span>
+                            </div>
+
+                            <div className="admin-info-grid">
+                                <div className="admin-info-field">
+                                    <span>Total</span>
+                                    <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
+                                </div>
+                                <div className="admin-info-field">
+                                    <span>Requested</span>
+                                    <strong>{formatDisplayDateTime(request.requested_at) || '-'}</strong>
+                                </div>
+                                {claim && (
+                                    <div className="admin-info-field">
+                                        <span>Claiming</span>
+                                        <strong>
+                                            {formatDate(claim.claim_date || claim.scheduled_date)}
+                                            {claimTime && ` · ${formatTime(claimTime)}`}
+                                        </strong>
+                                    </div>
                                 )}
                             </div>
-                            <span className={`admin-status-pill status-${request.status}`}>
-                                {request.status.replace(/_/g, ' ')}
-                            </span>
-                        </div>
 
-                        <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${request.request_id}`)}>
-                            Open request →
-                        </button>
-                    </div>
-                ))
+                            <div className="admin-card-actions">
+                                <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${request.request_id}`)}>
+                                    Open request →
+                                </button>
+                            </div>
+                        </div>
+                    )
+                })
             )}
 
-            <h2 style={{ fontSize: 17, margin: '24px 0 14px' }}>Submitted Requirements</h2>
+            <h2 className="admin-section-title">
+                Submitted Requirements
+                <span className="admin-chip-count">{requirements.length}</span>
+            </h2>
 
             {requirements.length === 0 ? (
                 <div className="admin-empty">No requirements have been submitted by this student.</div>
             ) : (
-                <div className="admin-table-wrapper">
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Requirement</th>
-                                <th>Request</th>
-                                <th>Status</th>
-                                <th>Uploaded</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {requirements.map((r) => (
-                                <tr key={r.request_requirement_id}>
-                                    <td>{r.document_requirements?.requirement_name || 'Requirement'}</td>
-                                    <td>{r.requestNumber}</td>
-                                    <td style={{ textTransform: 'capitalize' }}>{r.status}</td>
-                                    <td>{formatDisplayDateTime(r.uploaded_at) || '-'}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="admin-card sd-requirements">
+                    {requirements.map((r) => (
+                        <div className="sd-requirement" key={r.request_requirement_id}>
+                            <span className="admin-avatar" aria-hidden="true"><IconClipboardCheck /></span>
+                            <div className="sd-requirement-main">
+                                <strong>{r.document_requirements?.requirement_name || 'Requirement'}</strong>
+                                <span>
+                                    {r.requestNumber}
+                                    {r.uploaded_at && ` · Uploaded ${formatDisplayDateTime(r.uploaded_at)}`}
+                                </span>
+                            </div>
+                            <span className={`admin-status-pill status-${r.status}`}>{r.status.replace(/_/g, ' ')}</span>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

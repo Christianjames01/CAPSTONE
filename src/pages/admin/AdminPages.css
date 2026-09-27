@@ -949,3 +949,73 @@
         overflow-wrap: anywhere;
     }
 }
+
+
+/* ---- Student details: submitted requirements -------------------------- */
+.pf-page + .admin-section-title,
+.pf-page ~ .admin-section-title {
+    margin-top: 28px;
+}
+
+.sd-requirements {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 20px;
+}
+
+.sd-requirement {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+}
+
+.sd-requirement:first-child {
+    border-top: none;
+}
+
+.sd-requirement .admin-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+}
+
+.sd-requirement .admin-avatar svg {
+    width: 19px;
+    height: 19px;
+}
+
+.sd-requirement-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.sd-requirement-main strong {
+    display: block;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.sd-requirement-main span {
+    font-size: 12.5px;
+    color: var(--slate);
+}
+
+@media (max-width: 560px) {
+    .sd-requirements {
+        padding: 4px 14px;
+    }
+
+    .sd-requirement {
+        flex-wrap: wrap;
+    }
+
+    .sd-requirement-main {
+        flex-basis: calc(100% - 50px);
+    }
+
+    .sd-requirement > .admin-status-pill {
+        margin-left: 50px;
+    }
+}

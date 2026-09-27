@@ -8,6 +8,13 @@
     gap: 20px;
 }
 
+/* Let wide children (e.g. the stat tiles, which scroll sideways on phones)
+   shrink instead of stretching the page. */
+.pf-page > *,
+.pf-column > * {
+    min-width: 0;
+}
+
 .pf-layout {
     display: grid;
     gap: 20px;
@@ -342,6 +349,7 @@
 }
 
 .pf-row-main > p {
+    overflow-wrap: anywhere;
     margin-top: 3px;
     font-size: 12.5px;
     line-height: 1.5;
