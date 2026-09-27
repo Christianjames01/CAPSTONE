@@ -225,7 +225,7 @@ function NewRequest() {
 
         const maxQuantity = selectedDocumentDetails.max_quantity_per_request || 2
 
-        if (quantity < 1 || quantity > maxQuantity) {
+        if (!Number(quantity) || Number(quantity) > maxQuantity) {
             setError(`Quantity must be between 1 and ${maxQuantity}.`)
             return
         }
@@ -545,15 +545,13 @@ function NewRequest() {
                             inputMode="numeric"
                             autoComplete="off"
                             placeholder="1"
+                            maxLength={3}
                             value={quantity}
-                            onChange={(e) => {
-                                const typed = digitsOnly(e.target.value)
-                                setQuantity(typed === '' ? '' : Math.min(selectedDocumentDetails?.max_quantity_per_request || 2, Number(typed)))
-                            }}
-                            onBlur={() => { if (!Number(quantity)) setQuantity(1) }}
+                            onChange={(e) => setQuantity(digitsOnly(e.target.value))}
+                            aria-invalid={quantity !== '' && (!Number(quantity) || Number(quantity) > (selectedDocumentDetails?.max_quantity_per_request || 2))}
                             disabled={loading}
                         />
-                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
+                        <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: quantity !== '' && (!Number(quantity) || Number(quantity) > (selectedDocumentDetails?.max_quantity_per_request || 2)) ? '#dc2626' : 'var(--slate)' }}>
                             Up to {selectedDocumentDetails?.max_quantity_per_request || 2} {(selectedDocumentDetails?.max_quantity_per_request || 2) === 1 ? 'copy' : 'copies'} per request.
                         </small>
                     </div>
