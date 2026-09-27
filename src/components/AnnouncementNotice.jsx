@@ -1,6 +1,7 @@
 import { sanitizeAnnouncementHtml } from '../lib/sanitizeHtml'
 import { announcementTone, formatAnnouncementDate } from '../lib/announcements'
 import AnnouncementToneIcon from './AnnouncementToneIcon'
+import { hoursOf } from '../lib/officeHours'
 import './AnnouncementNotice.css'
 
 const TONE_LABEL = {
@@ -16,6 +17,7 @@ function AnnouncementNotice({ announcement, titleFallback, messageFallback }) {
     const tone = announcementTone(announcement)
     const titleHtml = sanitizeAnnouncementHtml(announcement.title) || titleFallback || ''
     const messageHtml = sanitizeAnnouncementHtml(announcement.message) || messageFallback || ''
+    const hours = tone === 'open' ? hoursOf(announcement) : ''
 
     return (
         <article className={`announcement-notice tone-${tone}`}>
@@ -29,6 +31,7 @@ function AnnouncementNotice({ announcement, titleFallback, messageFallback }) {
                             {formatAnnouncementDate(announcement.announcement_date)}
                         </time>
                     )}
+                    {hours && <span className="announcement-notice-hours">Office hours: {hours}</span>}
                 </div>
 
                 <h3 className="announcement-notice-title" dangerouslySetInnerHTML={{ __html: titleHtml }} />

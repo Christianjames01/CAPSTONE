@@ -9,6 +9,7 @@ import DayModal from '../../components/officeCalendar/DayModal'
 import RangeModal from '../../components/officeCalendar/RangeModal'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { formatHours, writeWithHours } from '../../lib/officeHours'
 
 function OfficeCalendar() {
     const navigate = useNavigate()
@@ -59,7 +60,7 @@ function OfficeCalendar() {
             const [openDaysRes, eventsRes, claimSchedulesRes] = await Promise.all([
                 supabase
                     .from('office_open_days')
-                    .select('open_day_id, open_date, note')
+                    .select('*')
                     .order('open_date', { ascending: true }),
                 supabase
                     .from('office_events')
@@ -140,7 +141,7 @@ function OfficeCalendar() {
         setShowDayModal(true)
     }
 
-    const toggleOpenDay = async () => {
+    const toggleOpenDay = async (hours) => {
         if (!isWeekendDate(dayModalDate)) return
 
         const existing = openDaysByDate[dayModalDate]
@@ -173,9 +174,11 @@ function OfficeCalendar() {
 
                 notifySuccess('Open status removed.')
             } else {
-                const { error: insertError } = await supabase
-                    .from('office_open_days')
-                    .insert({ open_date: dayModalDate, created_by: user.id })
+                const { error: insertError, hoursSaved } = await writeWithHours(
+                    (row) => supabase.from('office_open_days').insert(row),
+                    { open_date: dayModalDate, created_by: user.id },
+                    hours
+                )
 
                 if (insertError) throw new Error(insertError.message)
 
@@ -184,7 +187,7 @@ function OfficeCalendar() {
                     action: 'add_office_open_day',
                     tableName: 'office_open_days',
                     recordId: null,
-                    description: `Marked ${formatDate(dayModalDate)} as an office open day.`,
+                    description: `Marked ${formatDate(dayModalDate)} as an office open day${hoursSaved ? ` (${formatHours(hours.open, hours.close)})` : ''}.`,
                 })
 
                 notifySuccess('Marked as open for claiming.')
@@ -195,6 +198,46 @@ function OfficeCalendar() {
         } catch (err) {
             console.error('TOGGLE OPEN DAY ERROR:', err)
             notifyError(err.message || 'Failed to update open status.')
+        } finally {
+            setTogglingOpen(false)
+        }
+    }
+
+    // Change the hours of a day already marked open. Returns true on success.
+    const saveOpenDayHours = async (hours) => {
+        const existing = openDaysByDate[dayModalDate]
+        if (!existing) return false
+
+        try {
+            setTogglingOpen(true)
+            const { data: { user } } = await supabase.auth.getUser()
+
+            const { error: updateError } = await supabase
+                .from('office_open_days')
+                .update({ open_time: hours.open, close_time: hours.close })
+                .eq('open_day_id', existing.open_day_id)
+
+            if (updateError) {
+                throw new Error(/open_time|close_time/i.test(updateError.message)
+                    ? 'Office hours need a database update first (migration 20260928020000_office_hours).'
+                    : updateError.message)
+            }
+
+            await logActivity({
+                userId: user?.id,
+                action: 'update_office_open_day',
+                tableName: 'office_open_days',
+                recordId: null,
+                description: `Set office hours on ${formatDate(dayModalDate)} to ${formatHours(hours.open, hours.close)}.`,
+            })
+
+            notifySuccess('Office hours saved.')
+            await loadAll()
+            return true
+        } catch (err) {
+            console.error('SAVE OPEN DAY HOURS ERROR:', err)
+            notifyError(err.message || 'Failed to save office hours.')
+            return false
         } finally {
             setTogglingOpen(false)
         }
@@ -451,6 +494,7 @@ function OfficeCalendar() {
                     openEntry={isWeekendDate(dayModalDate) ? openDaysByDate[dayModalDate] : null}
                     onClose={closeDayModal}
                     onToggleOpen={toggleOpenDay}
+                    onSaveHours={saveOpenDayHours}
                     togglingOpen={togglingOpen}
                     onRemoveEvent={removeEvent}
                     removingEventId={removingEventId}

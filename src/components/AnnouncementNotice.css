@@ -126,3 +126,14 @@
         height: 17px;
     }
 }
+
+.announcement-notice-hours {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(30, 138, 95, 0.12);
+    color: var(--success-text, #1e8a5f);
+    font-size: 12px;
+    font-weight: 700;
+}

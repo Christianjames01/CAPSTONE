@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import Modal from '../Modal'
+import HoursPicker from './HoursPicker'
+import { DEFAULT_HOURS, hoursOf, validHours } from '../../lib/officeHours'
 import { EVENT_PRESETS, claimTime, formatDate, formatTime, getToday, isWeekendDate, weekdayName } from '../../lib/officeCalendar'
 import './OfficeCalendar.css'
 
@@ -19,6 +22,7 @@ function DayModal({
     openEntry,
     onClose,
     onToggleOpen,
+    onSaveHours,
     togglingOpen,
     onRemoveEvent,
     removingEventId,
@@ -31,12 +35,17 @@ function DayModal({
     saving,
 }) {
     const isWeekend = isWeekendDate(date)
+    const openHours = hoursOf(openEntry)
+    const [hours, setHours] = useState(() => (openEntry?.open_time
+        ? { open: openEntry.open_time.slice(0, 5), close: openEntry.close_time.slice(0, 5) }
+        : DEFAULT_HOURS))
+    const [editingHours, setEditingHours] = useState(false)
     const isPast = date < getToday()
     const isToday = date === getToday()
 
     const status = isWeekend
         ? openEntry
-            ? { tone: 'open', label: 'Open for claiming' }
+            ? { tone: 'open', label: openHours ? `Open · ${openHours}` : 'Open for claiming' }
             : { tone: 'closed', label: `${weekdayName(date)} · closed` }
         : { tone: 'workday', label: 'Regular office day' }
 
@@ -57,7 +66,7 @@ function DayModal({
                 {isWeekend && (
                     <div className={`ocal-status-card${openEntry ? ' is-open' : ''}`}>
                         <div>
-                            <strong>{openEntry ? 'Office is open for claiming' : 'Office closed by default'}</strong>
+                            <strong>{openEntry ? (openHours ? `Office open · ${openHours}` : 'Office is open for claiming') : 'Office closed by default'}</strong>
                             <p>
                                 {isPast
                                     ? openEntry
@@ -71,12 +80,41 @@ function DayModal({
                         <button
                             type="button"
                             className={openEntry ? `${portal}-secondary-button` : `${portal}-primary-button`}
-                            onClick={onToggleOpen}
-                            disabled={togglingOpen}
+                            onClick={() => (openEntry ? onToggleOpen() : onToggleOpen(hours))}
+                            disabled={togglingOpen || (!openEntry && !validHours(hours))}
                         >
                             {togglingOpen ? 'Saving...' : openEntry ? 'Mark closed again' : 'Mark office open'}
                         </button>
                     </div>
+                )}
+
+                {isWeekend && !openEntry && !isPast && (
+                    <HoursPicker value={hours} onChange={setHours} disabled={togglingOpen} label="Office hours on this day" />
+                )}
+
+                {isWeekend && openEntry && onSaveHours && (
+                    editingHours ? (
+                        <div className="hours-edit">
+                            <HoursPicker value={hours} onChange={setHours} disabled={togglingOpen} />
+                            <div className="hours-edit-actions">
+                                <button type="button" className={`${portal}-secondary-button`} onClick={() => setEditingHours(false)} disabled={togglingOpen}>
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`${portal}-primary-button`}
+                                    onClick={async () => { if (await onSaveHours(hours)) setEditingHours(false) }}
+                                    disabled={togglingOpen || !validHours(hours)}
+                                >
+                                    {togglingOpen ? 'Saving...' : 'Save hours'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button type="button" className={`${portal}-link-button hours-edit-link`} onClick={() => setEditingHours(true)}>
+                            {openHours ? 'Change office hours' : 'Set office hours'}
+                        </button>
+                    )
                 )}
 
                 <section className="ocal-day-section">

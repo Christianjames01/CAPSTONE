@@ -14,6 +14,8 @@ import PageStats from '../../components/PageStats'
 import './AdminPages.css'
 import './Announcements.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import HoursPicker from '../../components/officeCalendar/HoursPicker'
+import { hoursOf, validHours, writeWithHours } from '../../lib/officeHours'
 
 const EMPTY_FORM = {
     announcement_id: null,
@@ -21,6 +23,8 @@ const EMPTY_FORM = {
     message: '',
     announcement_date: '',
     is_closed: false,
+    open_time: '',
+    close_time: '',
     is_active: true,
 }
 
@@ -90,7 +94,7 @@ function Announcements() {
 
             const { data, error: loadError } = await supabase
                 .from('announcements')
-                .select('announcement_id, title, message, announcement_date, is_closed, is_active, created_at')
+                .select('*')
                 .order('created_at', { ascending: false })
 
             if (loadError) {
@@ -141,6 +145,8 @@ function Announcements() {
             message: a.message,
             announcement_date: a.announcement_date || '',
             is_closed: a.is_closed,
+            open_time: a.open_time ? a.open_time.slice(0, 5) : '',
+            close_time: a.close_time ? a.close_time.slice(0, 5) : '',
             is_active: a.is_active,
         })
         setShowForm(true)
@@ -170,6 +176,12 @@ function Announcements() {
         try {
             setSaving(true)
 
+            if (form.announcement_date && !form.is_closed && (form.open_time || form.close_time) && !validHours({ open: form.open_time, close: form.close_time })) {
+                notifyWarning('Set both office hours, with the closing time after the opening time.')
+                return
+            }
+
+            const hoursSet = !!(form.announcement_date && !form.is_closed && form.open_time && form.close_time)
             const payload = {
                 title: sanitizeAnnouncementHtml(form.title),
                 message: sanitizeAnnouncementHtml(form.message),
@@ -180,11 +192,15 @@ function Announcements() {
                 updated_at: new Date().toISOString(),
             }
 
+            // Office hours only apply to an "office open" date; cleared otherwise.
+            const hours = hoursSet ? { open: form.open_time, close: form.close_time } : null
+            const clearHours = { open_time: null, close_time: null }
+
             if (form.announcement_id) {
-                const { error: updateError } = await supabase
-                    .from('announcements')
-                    .update(payload)
-                    .eq('announcement_id', form.announcement_id)
+                const run = (row) => supabase.from('announcements').update(row).eq('announcement_id', form.announcement_id)
+                let { error: updateError } = await run({ ...payload, ...(hours ? { open_time: hours.open, close_time: hours.close } : clearHours) })
+                // Before the office-hours migration, save without them.
+                if (updateError && /open_time|close_time/i.test(updateError.message)) ({ error: updateError } = await run(payload))
 
                 if (updateError) throw new Error(updateError.message)
 
@@ -192,11 +208,11 @@ function Announcements() {
             } else {
                 const { data: { user } } = await supabase.auth.getUser()
 
-                const { data, error: insertError } = await supabase
-                    .from('announcements')
-                    .insert({ ...payload, created_by: user?.id || null })
-                    .select()
-                    .single()
+                const { data, error: insertError } = await writeWithHours(
+                    (row) => supabase.from('announcements').insert(row).select().single(),
+                    { ...payload, created_by: user?.id || null },
+                    hours
+                )
 
                 if (insertError) throw new Error(insertError.message)
 
@@ -292,7 +308,7 @@ function Announcements() {
                         <div className="ann-card-pills">
                             {a.announcement_date && (
                                 <span className={`admin-status-pill status-${a.is_closed ? 'rejected' : 'active'}`}>
-                                    {a.is_closed ? 'Closed' : 'Open'}
+                                    {a.is_closed ? 'Closed' : hoursOf(a) ? `Open · ${hoursOf(a)}` : 'Open'}
                                 </span>
                             )}
                             <span className={`admin-status-pill ann-visibility-pill${a.is_active ? ' is-live' : ''}`}>
@@ -464,6 +480,15 @@ function Announcements() {
                                         </button>
                                     </div>
                                 </div>
+                            )}
+
+                            {form.announcement_date && !form.is_closed && (
+                                <HoursPicker
+                                    label="Office hours on this date (optional)"
+                                    value={{ open: form.open_time, close: form.close_time }}
+                                    onChange={(h) => setForm({ ...form, open_time: h.open, close_time: h.close })}
+                                    disabled={saving}
+                                />
                             )}
                         </section>
 
