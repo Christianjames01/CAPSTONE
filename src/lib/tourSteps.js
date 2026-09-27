@@ -2,7 +2,9 @@
 // sidebar item has a step, in sidebar order (the student tour follows the
 // request process instead).
 //
-// target: CSS selector to highlight (a sidebar link); null = no highlight.
+// target: the sidebar link; the tour opens its page (or step.route) and
+// spotlights the real section there -- step.area, else the page's main
+// section (see ProductTour.jsx). null = no page (a picture is shown).
 // optional: skip when the target isn't on the page (links hidden for
 // limited-access employees). preview: mock-up shown in the card
 // (components/TourPreview.jsx). action: button on the last step.
@@ -27,18 +29,21 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/dashboard'),
+        area: '.student-stat-grid',
         preview: 'dashboard',
         title: 'Your dashboard',
         body: 'See your active requests, what to do next, your most recent message from the Registrar, and announcements — including office days (Tuesday to Friday) and the hours when a Monday or weekend is opened.',
     },
     {
         target: link('student-nav', '/student/new-request'),
+        area: '.student-request-grid',
         preview: 'request',
         title: '1. Request a document',
         body: 'Choose the document, type how many copies you need, and add a purpose — you can add several documents to one submission. A sample preview shows what each document looks like.',
     },
     {
         target: link('student-nav', '/student/upload-receipt'),
+        area: '.page-stats',
         preview: 'payment',
         title: '2. Pay, then upload your receipt',
         body: 'Pay in person at the HCDC Finance Office — there’s no online payment. Then enter the receipt number and upload a clear photo. If one receipt paid for several documents, tick them all: they’re checked together, and each receipt can only be used once.',
@@ -57,6 +62,7 @@ export const STUDENT_TOUR = [
     },
     {
         target: link('student-nav', '/student/messages'),
+        area: '.chat-app',
         preview: 'messages',
         title: 'Message the Registrar',
         body: 'Chat like in Messenger: see when staff are typing, and long-press a message to reply, edit or delete. Use “Ask about a request” to get the status of one — or all — of your requests right away.',
@@ -141,6 +147,7 @@ export const EMPLOYEE_TOUR = [
     },
     {
         target: link('employee-nav', '/employee/office-calendar'),
+        area: '.ocal-layout',
         preview: 'calendar',
         title: 'Office calendar',
         body: 'The office is closed on Mondays and weekends by default. Tap one to mark it open and set the office hours (like 8 AM – 5 PM) — students see them on their dashboard.',
@@ -161,6 +168,7 @@ export const EMPLOYEE_TOUR = [
     },
     {
         target: link('employee-nav', '/employee/messages'),
+        area: '.chat-app',
         optional: true,
         preview: 'staffMessages',
         title: 'Messages',
@@ -269,6 +277,7 @@ export const HEAD_TOUR = [
     },
     {
         target: link('admin-nav', '/admin/office-calendar'),
+        area: '.ocal-layout',
         preview: 'calendar',
         title: 'Office calendar',
         body: 'Mondays and weekends are closed by default. Mark a day open with its office hours, and add holidays and events, so claiming is only scheduled when the office is open.',
@@ -287,6 +296,7 @@ export const HEAD_TOUR = [
     },
     {
         target: link('admin-nav', '/admin/messages'),
+        area: '.chat-app',
         preview: 'staffMessages',
         title: 'Messages',
         body: 'Message a student directly (their own conversation with you), oversee student–staff chats and reply in them, with typing, replies and quick status answers.',

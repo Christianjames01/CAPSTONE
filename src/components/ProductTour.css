@@ -189,3 +189,60 @@
         animation: none;
     }
 }
+
+/* Card beside the spotlit section of a real page (position set inline);
+   a sheet at the bottom on phones. */
+.tour-card.is-floating {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+}
+
+@media (max-width: 699px) {
+    .tour-card.is-floating {
+        max-height: 48vh;
+        max-height: 48dvh;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .tour-card.is-floating h3 {
+        font-size: 16px;
+    }
+
+    .tour-card.is-floating p {
+        font-size: 13px;
+    }
+}
+
+.tour-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: #57616F;
+}
+
+.tour-loading-bar {
+    position: relative;
+    width: 60px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #EAF1FB;
+}
+
+.tour-loading-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    border-radius: 4px;
+    background: #123B78;
+    animation: tour-loading 0.9s ease-in-out infinite;
+}
+
+@keyframes tour-loading {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(250%); }
+}
