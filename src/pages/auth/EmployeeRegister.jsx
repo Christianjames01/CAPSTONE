@@ -5,7 +5,10 @@ import { useScrollLock } from '../../lib/useScrollLock'
 import AuthLayout from './AuthLayout'
 import PasswordRequirements from '../../components/PasswordRequirements'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
-import { captchaEnabled, getCaptchaToken } from '../../lib/captcha'
+import { captchaEnabled, getCaptchaToken, preloadCaptcha } from '../../lib/captcha'
+
+// Get the security check ready while the form is being filled in.
+preloadCaptcha()
 
 function EmployeeRegister() {
     const [firstName, setFirstName] = useState('')

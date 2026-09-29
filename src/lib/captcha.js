@@ -19,20 +19,28 @@ export function loadTurnstile() {
     if (window.turnstile) return Promise.resolve(window.turnstile)
 
     scriptPromise ||= new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        let settled = false
         const fail = () => {
+            if (settled) return
+            settled = true
             scriptPromise = null
             script.remove()
             reject(new Error('The security check could not load. Check your connection, or turn off any ad blocker or privacy shield for this site, then try again.'))
         }
+        // Gives up after 15 s instead of waiting forever when the request
+        // hangs (some networks/blockers never answer).
         const timer = setTimeout(fail, 15000)
-        const script = document.createElement('script')
-        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-        script.async = true
-        script.onload = () => {
+        // Cloudflare calls this once turnstile is ready -- the script's own
+        // load event can fire a moment before that.
+        window.__certichainTurnstileReady = () => {
+            if (settled) return
+            settled = true
             clearTimeout(timer)
-            if (window.turnstile) resolve(window.turnstile)
-            else fail()
+            resolve(window.turnstile)
         }
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__certichainTurnstileReady'
+        script.async = true
         script.onerror = () => {
             clearTimeout(timer)
             fail()
@@ -41,6 +49,14 @@ export function loadTurnstile() {
     })
 
     return scriptPromise
+}
+
+// Called when a sign-in / sign-up page loads: fetch Cloudflare's script and
+// the pop-up's code early, so the check is ready the moment it's needed.
+export function preloadCaptcha() {
+    if (!captchaEnabled || typeof window === 'undefined') return
+    loadTurnstile().catch(() => { /* retried when the check opens */ })
+    import('./captchaPrompt.jsx').catch(() => { /* loaded on demand */ })
 }
 
 // Asks the user to pass the security check (slide puzzle, then Cloudflare)

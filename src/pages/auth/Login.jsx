@@ -8,7 +8,10 @@ import { getInactiveAccountMessage, getEmployeeAccountIssue, employeeIssueMessag
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
 import PasswordToggleButton from './PasswordToggleButton'
-import { captchaEnabled, getCaptchaToken } from '../../lib/captcha'
+import { captchaEnabled, getCaptchaToken, preloadCaptcha } from '../../lib/captcha'
+
+// Get the security check ready while the form is being filled in.
+preloadCaptcha()
 
 function Login() {
     const navigate = useNavigate()

@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import AuthLayout from './AuthLayout'
-import { captchaEnabled, getCaptchaToken } from '../../lib/captcha'
+import { captchaEnabled, getCaptchaToken, preloadCaptcha } from '../../lib/captcha'
+
+// Get the security check ready while the form is being filled in.
+preloadCaptcha()
 
 function ForgotPassword() {
     const [email, setEmail] = useState('')

@@ -10,7 +10,10 @@ import PasswordToggleButton from './PasswordToggleButton'
 import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib/passwordStrength'
 import { SUFFIX_NONE, SUFFIX_OPTIONS, validateRegistrationDetails } from '../../lib/registrationValidation'
 import { isStudentNumberTaken, studentNumberTakenMessage, isDuplicateStudentNumberError, isPhoneNumberTaken, phoneNumberTakenMessage } from '../../lib/studentNumberCheck'
-import { captchaEnabled, getCaptchaToken } from '../../lib/captcha'
+import { captchaEnabled, getCaptchaToken, preloadCaptcha } from '../../lib/captcha'
+
+// Get the security check ready while the form is being filled in.
+preloadCaptcha()
 
 // Graduation years offered to alumni, newest first.
 const GRADUATION_YEARS = Array.from({ length: new Date().getFullYear() - 1959 }, (_, i) => new Date().getFullYear() - i)

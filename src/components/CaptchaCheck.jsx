@@ -7,9 +7,10 @@ import './CaptchaCheck.css'
 // drag the slider until the piece fits the gap in the campus photo.
 //
 // The puzzle is the part people see; the real bot check is Cloudflare
-// Turnstile, which only runs once the puzzle is solved (execution:
-// 'execute') and whose token Supabase verifies on the server. Cloudflare's
-// own widget only appears if it needs an extra step.
+// Turnstile, whose token Supabase verifies on the server. It starts in the
+// background as soon as the check opens (it can take several seconds), so
+// the check usually passes the moment the puzzle is solved. Cloudflare's own
+// widget only appears if it needs an extra step.
 //
 // Some browsers (strict privacy settings, incognito, VPNs, school networks)
 // get an extra Cloudflare checkbox: the page says "tick the box below". If
@@ -25,7 +26,7 @@ const WIDTH = 300
 const HEIGHT = 150
 const PIECE = 46
 const TOLERANCE = 6
-const CHECK_TIMEOUT_MS = 20000
+const CHECK_TIMEOUT_MS = 45000
 
 // Shown after a failure; after two, suggest what usually causes it.
 const failureMessage = (count, base) => count >= 2
@@ -46,8 +47,18 @@ function CaptchaCheck({ onToken }) {
 
     const [puzzle, setPuzzle] = useState(newPuzzle)
     const [offset, setOffset] = useState(0)
-    const [state, setState] = useState('idle') // idle | dragging | wrong | checking | interactive | done | error
+    const [state, setState] = useState('idle') // idle | dragging | wrong | checking | done | error
     const [error, setError] = useState('')
+    // Cloudflare asked for its own tick (shown under the puzzle).
+    const [needsTick, setNeedsTick] = useState(false)
+
+    // Cloudflare runs in the background from the moment the check opens, so
+    // it's usually finished by the time the puzzle is solved.
+    const tokenRef = useRef(null) // Cloudflare's answer, waiting for the puzzle
+    const solvedRef = useRef(false) // puzzle solved, waiting for Cloudflare
+    const runningRef = useRef(false)
+    const pendingErrorRef = useRef(null) // Cloudflare failed before the puzzle was solved
+    const autoRetriesRef = useRef(0)
     const watchdog = useRef(null)
     const failures = useRef(0)
 
@@ -56,13 +67,55 @@ function CaptchaCheck({ onToken }) {
         watchdog.current = null
     }
 
+    // Start (or restart) Cloudflare's check in the background.
+    const runCloudflare = useCallback(() => {
+        const turnstile = window.turnstile
+        if (!turnstile || widgetRef.current === null || runningRef.current) return
+        tokenRef.current = null
+        pendingErrorRef.current = null
+        runningRef.current = true
+        try {
+            turnstile.reset(widgetRef.current)
+            turnstile.execute(widgetRef.current)
+        } catch {
+            runningRef.current = false
+        }
+    }, [])
+
+    const finish = useCallback((token) => {
+        stopWatchdog()
+        failures.current = 0
+        setNeedsTick(false)
+        setState('done')
+        setError('')
+        onTokenRef.current?.(token)
+    }, [])
+
+    // Show a failure, and get a fresh Cloudflare check going for the next try.
     const fail = useCallback((base) => {
         stopWatchdog()
         failures.current += 1
+        solvedRef.current = false
+        runningRef.current = false
+        setNeedsTick(false)
         setState('error')
         setError(failureMessage(failures.current, base))
         onTokenRef.current?.(null)
-    }, [])
+        runCloudflare()
+    }, [runCloudflare])
+
+    // A Cloudflare failure: silently start over once while the student is
+    // still on the puzzle; otherwise (or the second time) report it.
+    const cloudflareFailed = useCallback((message) => {
+        runningRef.current = false
+        if (!solvedRef.current && autoRetriesRef.current < 1) {
+            autoRetriesRef.current += 1
+            runCloudflare()
+            return
+        }
+        if (solvedRef.current) fail(message)
+        else pendingErrorRef.current = message
+    }, [fail, runCloudflare])
 
     useEffect(() => {
         onTokenRef.current = onToken
@@ -80,42 +133,49 @@ function CaptchaCheck({ onToken }) {
                     execution: 'execute',
                     appearance: 'interaction-only',
                     theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
-                    // Report failures at once instead of retrying silently
-                    // behind a spinner.
+                    // Report failures instead of retrying silently behind a
+                    // spinner (cloudflareFailed decides what to do).
                     retry: 'never',
                     callback: (token) => {
-                        stopWatchdog()
-                        failures.current = 0
-                        setState('done')
-                        setError('')
-                        onTokenRef.current?.(token)
+                        runningRef.current = false
+                        tokenRef.current = token
+                        if (solvedRef.current) finish(token)
                     },
                     'expired-callback': () => {
-                        onTokenRef.current?.(null)
-                        try { turnstile.reset(widgetRef.current) } catch { /* gone */ }
-                        setPuzzle(newPuzzle())
-                        setOffset(0)
-                        setState('idle')
+                        runningRef.current = false
+                        tokenRef.current = null
+                        if (solvedRef.current) {
+                            // Passed but not used in time: start over.
+                            solvedRef.current = false
+                            onTokenRef.current?.(null)
+                            setPuzzle(newPuzzle())
+                            setOffset(0)
+                            setState('idle')
+                        }
+                        runCloudflare()
                     },
                     'error-callback': (code) => {
-                        fail(`Verification failed${code ? ` (code ${code})` : ''}.`)
+                        cloudflareFailed(`Verification failed${code ? ` (code ${code})` : ''}.`)
                         return true
                     },
                     'timeout-callback': () => {
-                        fail('Verification timed out.')
+                        cloudflareFailed('Verification timed out.')
                     },
-                    // Cloudflare wants a tick: stop the time limit and say so.
+                    // Cloudflare wants a tick: no time limit while it waits.
                     'before-interactive-callback': () => {
                         stopWatchdog()
-                        setState('interactive')
+                        setNeedsTick(true)
                     },
                     'after-interactive-callback': () => {
-                        setState('checking')
+                        setNeedsTick(false)
                     },
                     'unsupported-callback': () => {
-                        fail('This browser isn’t supported by the security check. Please update it, or use Chrome, Edge, Safari or Firefox.')
+                        runningRef.current = false
+                        pendingErrorRef.current = 'This browser isn’t supported by the security check. Please update it, or use Chrome, Edge, Safari or Firefox.'
+                        if (solvedRef.current) fail(pendingErrorRef.current)
                     },
                 })
+                runCloudflare()
             })
             .catch((err) => {
                 setState('error')
@@ -129,21 +189,24 @@ function CaptchaCheck({ onToken }) {
             widgetRef.current = null
             onTokenRef.current?.(null)
         }
-    }, [fail])
+    }, [cloudflareFailed, fail, finish, runCloudflare])
 
     const maxOffset = WIDTH - PIECE
-    const locked = state === 'checking' || state === 'interactive' || state === 'done'
+    const locked = state === 'checking' || state === 'done'
 
     const reset = useCallback(() => {
         stopWatchdog()
+        solvedRef.current = false
         setPuzzle(newPuzzle())
         setOffset(0)
         setState('idle')
         setError('')
-        try { if (widgetRef.current !== null) window.turnstile?.reset(widgetRef.current) } catch { /* gone */ }
-    }, [])
+        // Keep a Cloudflare answer that's already in; otherwise make sure a
+        // check is running.
+        if (!tokenRef.current) runCloudflare()
+    }, [runCloudflare])
 
-    // Solved: now run the Cloudflare check.
+    // Puzzle solved: use Cloudflare's answer if it's in, else wait for it.
     const check = (finalOffset) => {
         if (Math.abs(finalOffset - puzzle.x) > TOLERANCE) {
             setState('wrong')
@@ -156,25 +219,28 @@ function CaptchaCheck({ onToken }) {
         }
 
         setOffset(puzzle.x)
-        const turnstile = window.turnstile
-        if (!turnstile || widgetRef.current === null) {
+        if (!window.turnstile || widgetRef.current === null) {
             setState('error')
             setError('The security check is still loading. Please try again in a moment.')
             return
         }
-        setState('checking')
-        try {
-            turnstile.execute(widgetRef.current)
-            // No answer from Cloudflare (blocked, or a stuck network): give
-            // up with a clear message rather than spinning forever.
-            stopWatchdog()
-            watchdog.current = setTimeout(() => {
-                try { turnstile.reset(widgetRef.current) } catch { /* gone */ }
-                fail('The security check is taking too long.')
-            }, CHECK_TIMEOUT_MS)
-        } catch {
-            fail('Verification failed.')
+
+        solvedRef.current = true
+        if (tokenRef.current) {
+            finish(tokenRef.current)
+            return
         }
+        if (pendingErrorRef.current) {
+            fail(pendingErrorRef.current)
+            return
+        }
+
+        setState('checking')
+        if (!runningRef.current) runCloudflare()
+        // No answer from Cloudflare (blocked, or a very slow network): give
+        // up with a clear message rather than spinning forever.
+        stopWatchdog()
+        watchdog.current = setTimeout(() => fail('The security check is taking too long.'), CHECK_TIMEOUT_MS)
     }
 
     const moveTo = (clientX) => {
@@ -221,8 +287,8 @@ function CaptchaCheck({ onToken }) {
     return (
         <div className={`captcha-puzzle is-${state}`} style={{ '--puzzle-w': `${WIDTH}px` }}>
             <div className="captcha-puzzle-head">
-                <strong>{state === 'done' ? 'Verified' : state === 'interactive' ? 'One more step' : state === 'checking' ? 'Verifying…' : 'Security check'}</strong>
-                <span>{state === 'done' ? 'You can continue.' : state === 'interactive' ? 'Tick the Cloudflare box below.' : 'Slide the piece into the gap.'}</span>
+                <strong>{state === 'done' ? 'Verified' : needsTick ? 'One more step' : state === 'checking' ? 'Verifying…' : 'Security check'}</strong>
+                <span>{state === 'done' ? 'You can continue.' : needsTick ? 'Tick the Cloudflare box below.' : 'Slide the piece into the gap.'}</span>
                 {!locked && (
                     <button type="button" className="captcha-puzzle-refresh" onClick={reset} aria-label="New puzzle" title="New puzzle">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 5v6h-6" /></svg>
@@ -269,7 +335,7 @@ function CaptchaCheck({ onToken }) {
                     aria-valuemax={maxOffset}
                     aria-valuenow={offset}
                 >
-                    {state === 'checking' || state === 'interactive' ? <span className="captcha-spinner" /> : state === 'done' ? (
+                    {state === 'checking' ? <span className="captcha-spinner" /> : state === 'done' ? (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                     ) : (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -278,7 +344,7 @@ function CaptchaCheck({ onToken }) {
             </div>
 
             <span className="captcha-puzzle-brand">Protected by Cloudflare</span>
-            {state === 'interactive' && <p className="captcha-check-hint" role="status">Cloudflare needs one more check — tick the box below.</p>}
+            {needsTick && state !== 'done' && <p className="captcha-check-hint" role="status">Cloudflare needs one more check — tick the box below.</p>}
             <div ref={hostRef} className="captcha-host" />
             {error && <p className="captcha-check-error" role="alert">{error}</p>}
         </div>

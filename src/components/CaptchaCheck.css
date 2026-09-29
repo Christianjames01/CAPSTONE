@@ -312,7 +312,7 @@ html[data-theme="dark"] .captcha-puzzle-hint {
     font-weight: 600;
 }
 
-.captcha-puzzle.is-interactive .captcha-host {
+.captcha-check-hint + .captcha-host {
     display: flex;
     justify-content: center;
     min-height: 65px;
