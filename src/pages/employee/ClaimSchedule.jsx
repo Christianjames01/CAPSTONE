@@ -453,10 +453,16 @@ function ClaimSchedule() {
                     description: `Updated claiming schedule for request "${request?.request_number || requestId}".${scheduleChanges ? ' ' + scheduleChanges + '.' : ''}`,
                 })
 
+                // Tell the student the remarks too (new or changed).
+                const newRemarks = remarks.trim()
+                const remarksChanged = newRemarks !== (existingSchedule.remarks || '').trim()
+                const slotChanged = existingSchedule.scheduled_date !== scheduledDate
+                    || (existingSchedule.scheduled_time || '').slice(0, 5) !== (scheduledTime || '').slice(0, 5)
                 await notifyStudentByStudentId({
                     studentId: request.student_id,
-                    title: 'Claiming schedule updated',
-                    message: `Your updated claiming date for request ${request.request_number} is ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}.`,
+                    title: remarksChanged && !slotChanged ? 'New remarks on your claiming schedule' : 'Claiming schedule updated',
+                    message: `Your ${slotChanged ? 'updated ' : ''}claiming date for request ${request.request_number} is ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}.`
+                        + (newRemarks ? ` ${remarksChanged ? 'New remarks' : 'Remarks'}: ${newRemarks}` : ''),
                     notificationType: 'claim_schedule',
                     relatedRequestId: requestId,
                 })
@@ -574,7 +580,8 @@ function ClaimSchedule() {
                 await notifyStudentByStudentId({
                     studentId: request.student_id,
                     title: 'Claiming scheduled',
-                    message: `Your document for request ${request.request_number} is ready to claim on ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}. Bring your official receipt and a valid ID.`,
+                    message: `Your document for request ${request.request_number} is ready to claim on ${formatDate(scheduledDate)} at ${formatTime(scheduledTime)}.`
+                        + (remarks.trim() ? ` Remarks: ${remarks.trim()}` : ' Bring your official receipt and a valid ID.'),
                     notificationType: 'claim_schedule',
                     relatedRequestId: requestId,
                 })

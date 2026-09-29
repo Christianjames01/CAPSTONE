@@ -1051,6 +1051,14 @@ function EmployeeRequestDetails() {
                 description: `Started document processing for request "${request?.request_number || requestId}".`,
             })
 
+            await notifyStudentByStudentId({
+                studentId: request.student_id,
+                title: 'Document processing started',
+                message: `Your request ${request.request_number} is now being processed.`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
+
             notifySuccess(
                 'Document processing has started.'
             )
