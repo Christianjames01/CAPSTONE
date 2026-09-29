@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconCheck as UiCheck } from '../../components/UiIcons'
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase";
 import { REGISTRAR_CONTACT } from "../../lib/registrarContact";
 import { DocumentSample } from "../../components/DocumentSample";
 import { useScrollLock } from "../../lib/useScrollLock";
+import HeroVisual from "./HeroVisual";
+import ExplainerPlayer from "./ExplainerPlayer";
+import { useCountUp, useInView, useMagnetic, useReveal, useScrollProgress } from "./motion";
 import "./Landing.css";
+import "./LandingMotion.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
 import dpoRegisteredBadge from "../../assets/dpo-registered-badge.png";
 import dataPrivacyBadge from "../../assets/data-privacy-badge.png";
@@ -229,6 +233,212 @@ const LANDING_FAQ = [
 ];
 
 
+// Headline words that rise in one after another.
+const Words = ({ text, start = 0 }) =>
+    text.split(" ").map((word, i) => (
+        <span className="lpm-word" style={{ "--w": start + i }} key={`${word}-${i}`}>
+            {word}{" "}
+        </span>
+    ));
+
+// Thin progress bar under the navbar: how far down the page you are. Its
+// own component so scrolling doesn't re-render the whole page.
+function PageProgress() {
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        let frame = null;
+        const measure = () => {
+            frame = null;
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+        };
+        const onScroll = () => { if (frame === null) frame = requestAnimationFrame(measure); };
+        measure();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+            if (frame !== null) cancelAnimationFrame(frame);
+        };
+    }, []);
+
+    return <span className="lpm-progress" style={{ transform: `scaleX(${progress})` }} aria-hidden="true" />;
+}
+
+// "How it works": a rail of numbered dots fills as the section scrolls by,
+// lighting each step card as it's reached.
+function ProcessSteps() {
+    const ref = useRef(null);
+    const progress = useScrollProgress(ref);
+    const lit = (i) => progress >= (i + 0.35) / PROCESS_STEPS.length;
+
+    return (
+        <div className="lpm-process-wrap" ref={ref} style={{ "--p": progress }}>
+            <div className="lpm-rail" aria-hidden="true">
+                <b />
+                {PROCESS_STEPS.map((step, i) => (
+                    <span key={step.title} className={`${lit(i) ? "is-lit" : ""}${step.badge ? " is-red" : ""}`}>
+                        {String(i + 1).padStart(2, "0")}
+                    </span>
+                ))}
+            </div>
+
+            <ol className="process-grid">
+                {PROCESS_STEPS.map((step, index) => (
+                    <li
+                        className={`process-step${step.badge ? " is-highlight" : ""}${lit(index) ? " is-lit" : ""}`}
+                        key={step.title}
+                        data-reveal
+                        style={{ "--d": `${(index % 3) * 110}ms` }}
+                    >
+                        <div className="process-step-top">
+                            <span className="step-number">{String(index + 1).padStart(2, "0")}</span>
+                            {step.badge && <span className="step-badge">{step.badge}</span>}
+                        </div>
+                        <div className="step-icon"><step.Icon /></div>
+                        <h3>{step.title}</h3>
+                        <p>{step.body}</p>
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+}
+
+// Results: numbers that count up, then the old way vs CertiChain.
+function Benefits({ documentCount }) {
+    const ref = useRef(null);
+    const inView = useInView(ref, { threshold: 0.3 });
+    const docs = useCountUp(documentCount, inView);
+    const steps = useCountUp(6, inView, 900);
+    const hours = useCountUp(24, inView, 1200);
+    const scan = useCountUp(1, inView, 600);
+
+    const before = [
+        "Queue at the Registrar counter just to file a request",
+        "Come back again and again to ask if it’s ready",
+        "No way to know where your request is",
+        "Paper documents are hard to check for forgery",
+    ];
+    const after = [
+        "Request online from home, any time of day",
+        "Live status with a notification at every step",
+        "A set claiming date, time and window",
+        "A signed credential and QR code anyone can verify",
+    ];
+
+    return (
+        <section className="lpm-benefits" id="benefits" ref={ref}>
+            <div className="section-container">
+                <div className="section-heading" data-reveal>
+                    <span className="section-label">Why it matters</span>
+                    <h2>Less waiting, <br /><span>more certainty.</span></h2>
+                    <p>
+                        Most of the trips to the office are gone. You only go in person
+                        to pay at the Finance Office and to claim your document.
+                    </p>
+                </div>
+
+                <div className="lpm-stats">
+                    <div className="lpm-stat" data-reveal style={{ "--d": "0ms" }}>
+                        <strong>{docs}<sup>+</sup></strong>
+                        <span>registrar documents you can request online</span>
+                    </div>
+                    <div className="lpm-stat" data-reveal style={{ "--d": "100ms" }}>
+                        <strong>{steps}</strong>
+                        <span>clear steps from request to verified credential</span>
+                    </div>
+                    <div className="lpm-stat" data-reveal style={{ "--d": "200ms" }}>
+                        <strong>{hours}/7</strong>
+                        <span>request and track from any device, day or night</span>
+                    </div>
+                    <div className="lpm-stat" data-reveal style={{ "--d": "300ms" }}>
+                        <strong>{scan}</strong>
+                        <span>QR scan to prove a document is genuine</span>
+                    </div>
+                </div>
+
+                <div className="lpm-compare">
+                    <div className="lpm-compare-card is-before" data-reveal="left">
+                        <h3><span>Before</span> The counter line</h3>
+                        <ul>
+                            {before.map((item, i) => (
+                                <li key={item} className="is-in-list" style={{ "--d": `${200 + i * 120}ms` }}><i>×</i>{item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="lpm-compare-card is-after" data-reveal="right">
+                        <h3><span>Now</span> With CertiChain</h3>
+                        <ul>
+                            {after.map((item, i) => (
+                                <li key={item} className="is-in-list" style={{ "--d": `${350 + i * 120}ms` }}><i>✓</i>{item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// Final call to action: buttons lean toward the cursor.
+function FinalCta() {
+    const primary = useRef(null);
+    const secondary = useRef(null);
+    useMagnetic(primary, 0.3);
+    useMagnetic(secondary, 0.2);
+
+    return (
+        <section className="cta-section">
+            <div className="cta-container" data-reveal="scale">
+                <div className="cta-icon">
+                    <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                </div>
+                <span className="cta-label">HCDC Registrar Services</span>
+                <h2>Ready to request <br /><span>your document?</span></h2>
+                <p>
+                    Create your CertiChain account and manage your academic
+                    document requests through a secure, verified, and convenient
+                    online platform.
+                </p>
+
+                <div className="lpm-cta-steps" aria-label="What happens next">
+                    <span><b>1</b>Create account</span>
+                    <span><b>2</b>Request</span>
+                    <span><b>3</b>Track &amp; claim</span>
+                </div>
+
+                <div className="cta-buttons">
+                    <button ref={primary} className="cta-primary" onClick={() => window.location.href = "/register"}>
+                        Create an account
+                        <span>→</span>
+                    </button>
+                    <button ref={secondary} className="cta-secondary" onClick={() => window.location.href = "/login"}>
+                        Already have an account?
+                        <span>Log in</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+const IconShieldCheck = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3 5 6v5.5c0 4.2 2.9 7.8 7 9.5 4.1-1.7 7-5.3 7-9.5V6Z" />
+        <path d="m9 12 2 2 4-4" />
+    </svg>
+);
+
+// Social proof: facts about the system, not invented reviews.
+const TRUST_POINTS = [
+    { quote: "The official online registrar service of Holy Cross of Davao College — requests go straight to the Registrar’s staff.", who: "Office of Registration & Records Management", role: "Holy Cross of Davao College", logo: true },
+    { quote: "Your personal data is handled under the Data Privacy Act, by an institution registered with the National Privacy Commission.", who: "Data privacy", role: "NPC-registered DPO", Icon: IconShieldCheck },
+    { quote: "Every released document carries a signed credential number and QR code — schools and employers can check it free, no account needed.", who: "Verifiable credentials", role: "Signed and QR-verified", Icon: IconQr },
+];
+
 // Available document types, alphabetical, straight from the database.
 function useDocumentCatalog() {
     const [documents, setDocuments] = useState(FALLBACK_DOCUMENTS);
@@ -282,6 +492,8 @@ const DocumentPreviewContent = ({ doc }) => (
 
 const LandingPage = () => {
     const DOCUMENTS = useDocumentCatalog();
+    const pageRef = useRef(null);
+    useReveal(pageRef, [DOCUMENTS.length]);
     // Large floating preview while hovering a document (mouse only), and the
     // full-size preview modal opened by clicking/tapping one.
     const [hoverPreview, setHoverPreview] = useState(null);
@@ -411,9 +623,10 @@ const LandingPage = () => {
     };
 
     return (
-        <div className="landing-page">
+        <div className="landing-page" ref={pageRef}>
 
             <header className="landing-navbar">
+                <PageProgress />
                 <div className="navbar-container">
 
                     <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
@@ -427,6 +640,7 @@ const LandingPage = () => {
                     </a>
 
                     <nav className="desktop-nav">
+                        <a href="#watch" onClick={(e) => { e.preventDefault(); scrollToSection("watch"); }}>Watch</a>
                         <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection("services"); }}>Services</a>
                         <a href="#documents" onClick={(e) => { e.preventDefault(); scrollToSection("documents"); }}>Documents</a>
                         <a href="#process" onClick={(e) => { e.preventDefault(); scrollToSection("process"); }}>How it works</a>
@@ -450,35 +664,35 @@ const LandingPage = () => {
 
                         <div className="hero-content">
 
-                            <div className="hero-eyebrow">
+                            <div className="hero-eyebrow lpm-fade-up" style={{ "--d": "0ms" }}>
                                 <span className="eyebrow-mark" />
                                 The Office of Registration &amp; Records Management
                             </div>
 
-                            <h1>
-                                Your records,
+                            <h1 className="lpm-headline" aria-label="Your records, verified and provable.">
+                                <Words text="Your records," />
                                 <br />
-                                <span>verified and provable.</span>
+                                <span><Words text="verified and provable." start={2} /></span>
                             </h1>
 
-                            <p className="hero-description">
+                            <p className="hero-description lpm-fade-up" style={{ "--d": "520ms" }}>
                                 Request transcripts, certificates, and diplomas from
                                 Holy Cross of Davao College without a single trip to the
                                 counter. Submit, pay for, and track every request from
                                 one account.
                             </p>
 
-                            <div className="hero-buttons">
+                            <div className="hero-buttons lpm-fade-up" style={{ "--d": "680ms" }}>
                                 <button className="primary-button" onClick={() => window.location.href = "/register"}>
                                     Request a document
                                     <span>→</span>
                                 </button>
-                                <button className="secondary-button" onClick={() => scrollToSection("process")}>
-                                    See how it works
+                                <button className="secondary-button" onClick={() => scrollToSection("watch")}>
+                                    ▶&nbsp; Watch how it works
                                 </button>
                             </div>
 
-                            <div className="hero-trust">
+                            <div className="hero-trust lpm-fade-up" style={{ "--d": "840ms" }}>
                                 <div className="trust-item">
                                     <strong>{DOCUMENTS.length}</strong>
                                     <span>Document types online</span>
@@ -493,58 +707,33 @@ const LandingPage = () => {
                         </div>
 
                         <div className="hero-visual">
-                            <div className="hero-card">
-
-                                <div className="hero-card-header">
-                                    <div className="mini-brand">
-                                        <div className="mini-logo">
-                                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
-                                        </div>
-                                        <div>
-                                            <strong>CertiChain</strong>
-                                            <span>Academic Credential</span>
-                                        </div>
-                                    </div>
-                                    <div className="secure-indicator">
-                                        <span />
-                                        VERIFIED
-                                    </div>
-                                </div>
-
-                                <div className="credential-preview">
-                                    <div className="credential-top">
-                                        <span>HOLY CROSS OF DAVAO COLLEGE</span>
-                                        <div className="credential-seal">
-                                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
-                                        </div>
-                                    </div>
-
-                                    <h3>Certificate</h3>
-                                    <p>Official Academic Credential</p>
-
-                                    <div className="credential-lines">
-                                        <span /><span /><span />
-                                    </div>
-
-                                    <div className="credential-footer">
-                                        <div>
-                                            <small>Credential status</small>
-                                            <strong>Verified by registrar</strong>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
+                            <HeroVisual />
                         </div>
 
                     </div>
 
                 </section>
 
+                <section id="watch" className="lpx-section">
+                    <div className="section-container">
+                        <div className="section-heading" data-reveal>
+                            <span className="section-label">See it in action</span>
+                            <h2>One minute, <br /><span>start to finish.</span></h2>
+                            <p>
+                                Watch a request go from sign-up to a verified document —
+                                the same screens you’ll use. Pick any chapter to jump ahead.
+                            </p>
+                        </div>
+                        <div data-reveal="scale" style={{ "--d": "120ms" }}>
+                            <ExplainerPlayer />
+                        </div>
+                    </div>
+                </section>
+
                 <section id="services" className="section services-section">
                     <div className="section-container">
 
-                        <div className="section-heading">
+                        <div className="section-heading" data-reveal>
                             <span className="section-label">Registrar Services</span>
                             <h2>Everything you need, <br /><span>without the counter line.</span></h2>
                             <p>
@@ -556,7 +745,7 @@ const LandingPage = () => {
 
                         <div className="services-grid">
                             {SERVICES.map((service, index) => (
-                                <article className="service-card" key={service.title}>
+                                <article className="service-card" key={service.title} data-reveal style={{ "--d": `${(index % 3) * 110}ms` }}>
                                     <div className="service-card-top">
                                         <div className="service-icon"><service.Icon /></div>
                                         <span className="service-tag">{service.tag}</span>
@@ -574,7 +763,7 @@ const LandingPage = () => {
                             ))}
                         </div>
 
-                        <div className="services-highlights">
+                        <div className="services-highlights" data-reveal>
                             <div>
                                 <strong>{DOCUMENTS.length}+</strong>
                                 <span>documents you can request online</span>
@@ -599,7 +788,7 @@ const LandingPage = () => {
                     <div className="section-container">
                         <div className="documents-layout">
 
-                            <div className="documents-content">
+                            <div className="documents-content" data-reveal="left">
                                 <span className="section-label">Document Catalog</span>
                                 <h2>Request your <br /><span>academic documents.</span></h2>
                                 <p>
@@ -613,7 +802,7 @@ const LandingPage = () => {
                                 </button>
                             </div>
 
-                            <div className="document-list">
+                            <div className="document-list" data-reveal="right" style={{ "--d": "120ms" }}>
                                 {DOCUMENTS.map((doc) => {
                                     const key = `${doc.code}-${doc.name}`;
 
@@ -656,7 +845,7 @@ const LandingPage = () => {
                 <section id="process" className="section process-section">
                     <div className="section-container">
 
-                        <div className="section-heading">
+                        <div className="section-heading" data-reveal>
                             <span className="section-label">How It Works</span>
                             <h2>From request <br /><span>to verified credential.</span></h2>
                             <p>
@@ -666,21 +855,9 @@ const LandingPage = () => {
                             </p>
                         </div>
 
-                        <ol className="process-grid">
-                            {PROCESS_STEPS.map((step, index) => (
-                                <li className={`process-step${step.badge ? " is-highlight" : ""}`} key={step.title}>
-                                    <div className="process-step-top">
-                                        <span className="step-number">{String(index + 1).padStart(2, "0")}</span>
-                                        {step.badge && <span className="step-badge">{step.badge}</span>}
-                                    </div>
-                                    <div className="step-icon"><step.Icon /></div>
-                                    <h3>{step.title}</h3>
-                                    <p>{step.body}</p>
-                                </li>
-                            ))}
-                        </ol>
+                        <ProcessSteps />
 
-                        <div className="payment-note">
+                        <div className="payment-note" data-reveal>
                             <div className="payment-note-icon"><IconCash /></div>
                             <div>
                                 <strong>Payments are made in person at the HCDC Finance Office.</strong>
@@ -695,9 +872,11 @@ const LandingPage = () => {
                     </div>
                 </section>
 
+                <Benefits documentCount={DOCUMENTS.length} />
+
                 <section id="about" className="section about-section">
                     <div className="section-container">
-                        <div className="about-card">
+                        <div className="about-card" data-reveal>
 
                             <div className="about-content">
                                 <span className="section-label">About CertiChain</span>
@@ -746,7 +925,7 @@ const LandingPage = () => {
                 <section id="verify" className="section verify-section">
                     <div className="section-container">
 
-                        <div className="section-heading">
+                        <div className="section-heading" data-reveal>
                             <span className="section-label">Verification</span>
                             <h2>Every credential, <br /><span>verified.</span></h2>
                             <p>
@@ -757,7 +936,7 @@ const LandingPage = () => {
                         </div>
 
                         <div className="verify-layout">
-                            <div className="verify-card">
+                            <div className="verify-card" data-reveal="left">
                                 <div className="verify-card-head">
                                     <span className="verify-card-icon"><IconQr /></span>
                                     <div>
@@ -791,7 +970,7 @@ const LandingPage = () => {
                                 </ol>
                             </div>
 
-                            <div className="verify-sample" aria-label="Example of a verification result">
+                            <div className="verify-sample" aria-label="Example of a verification result" data-reveal="right" style={{ "--d": "140ms" }}>
                                 <span className="verify-sample-label">Sample result</span>
 
                                 <div className="verify-sample-card">
@@ -823,10 +1002,33 @@ const LandingPage = () => {
                     </div>
                 </section>
 
+                <section className="lpm-trust" aria-label="Why you can trust CertiChain">
+                    <div className="section-container">
+                        <div className="section-heading" data-reveal>
+                            <span className="section-label">Trusted &amp; official</span>
+                            <h2>Built by the Registrar, <br /><span>for the HCDC community.</span></h2>
+                        </div>
+                        <div className="lpm-trust-grid">
+                            {TRUST_POINTS.map((point, i) => (
+                                <figure className="lpm-trust-card" key={point.who} data-reveal style={{ "--d": `${i * 120}ms` }}>
+                                    <blockquote>{point.quote}</blockquote>
+                                    <figcaption className="lpm-trust-by">
+                                        <span>{point.logo ? <img src={hcdcLogo} alt="" /> : <point.Icon />}</span>
+                                        <div>
+                                            <strong>{point.who}</strong>
+                                            <small>{point.role}</small>
+                                        </div>
+                                    </figcaption>
+                                </figure>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 <section id="faq" className="section faq-section">
                     <div className="section-container">
 
-                        <div className="section-heading">
+                        <div className="section-heading" data-reveal>
                             <span className="section-label">FAQ</span>
                             <h2>Frequently asked <br /><span>questions.</span></h2>
                             <p>Quick answers about requesting, paying, claiming and verifying documents.</p>
@@ -834,15 +1036,15 @@ const LandingPage = () => {
 
                         <div className="faq-layout">
                             <div className="faq-list">
-                                {LANDING_FAQ.map(([question, answer]) => (
-                                    <details className="faq-item" key={question}>
+                                {LANDING_FAQ.map(([question, answer], i) => (
+                                    <details className="faq-item" key={question} data-reveal style={{ "--d": `${Math.min(i, 5) * 60}ms` }}>
                                         <summary>{question}</summary>
                                         <p>{answer}</p>
                                     </details>
                                 ))}
                             </div>
 
-                            <aside className="faq-contact">
+                            <aside className="faq-contact" data-reveal="right">
                                 <span className="faq-contact-label">Still have questions?</span>
                                 <h3>Contact the Registrar</h3>
                                 <p>{REGISTRAR_CONTACT.office}</p>
@@ -860,31 +1062,7 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                <section className="cta-section">
-                    <div className="cta-container">
-                        <div className="cta-icon">
-                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
-                        </div>
-                        <span className="cta-label">HCDC Registrar Services</span>
-                        <h2>Ready to request <br /><span>your document?</span></h2>
-                        <p>
-                            Create your CertiChain account and manage your academic
-                            document requests through a secure, verified, and convenient
-                            online platform.
-                        </p>
-
-                        <div className="cta-buttons">
-                            <button className="cta-primary" onClick={() => window.location.href = "/register"}>
-                                Create an account
-                                <span>→</span>
-                            </button>
-                            <button className="cta-secondary" onClick={() => window.location.href = "/login"}>
-                                Already have an account?
-                                <span>Log in</span>
-                            </button>
-                        </div>
-                    </div>
-                </section>
+                <FinalCta />
 
             </main>
 
