@@ -14,6 +14,20 @@ export function publishTourState(next) {
     window.dispatchEvent(new CustomEvent(TOUR_STATE_EVENT, { detail: current }))
 }
 
+// True while the guided demo is open anywhere (e.g. the walkthrough video
+// on the User Guide pauses so the two don't play over each other).
+export function useTourOpen() {
+    const [open, setOpen] = useState(current.open)
+
+    useEffect(() => {
+        const onChange = (e) => setOpen(!!e.detail.open)
+        window.addEventListener(TOUR_STATE_EVENT, onChange)
+        return () => window.removeEventListener(TOUR_STATE_EVENT, onChange)
+    }, [])
+
+    return open
+}
+
 // { active, session }: active while the demo is on `path`; session changes
 // with every new demo run (so a page can drop what it changed last time).
 export function useTourOnPage(path) {

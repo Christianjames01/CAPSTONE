@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon } from './icons'
 import { narrationSupported, readSoundPref, say, speaking, stopSpeaking, writeSoundPref } from '../../lib/narration'
+import { useTourOpen } from '../../lib/tourState'
 import './Explainer.css'
 
 // A video-style motion walkthrough (no video file): animated copies of the
@@ -45,7 +46,9 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     // null until the viewer presses play/pause: until then it autoplays the
     // first time the player is on screen.
     const [choice, setChoice] = useState(null)
-    const playing = !clock.ended && (choice === null ? autoplay && inView && !reducedMotion() : choice)
+    // Paused (and quiet) while the guided demo is open on top of the page.
+    const tourOpen = useTourOpen()
+    const playing = !tourOpen && !clock.ended && (choice === null ? autoplay && inView && !reducedMotion() : choice)
     const { scene, elapsed, ended, run } = clock
 
     // Voice-over: each scene waits for the narrator to finish.
@@ -88,28 +91,29 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     // Whether this player is the one talking (another player on the page
     // mustn't cut it off).
     const talkingRef = useRef(false)
+    const [owner] = useState(() => Symbol('explainer'))
     useEffect(() => {
         if (!soundOn || !playing) return
         const replay = spokenRunRef.current !== run
         spokenRunRef.current = run
         talkingRef.current = true
-        say(narration, { interrupt: true, force: replay })
-    }, [soundOn, playing, narration, run])
+        say(narration, { interrupt: true, force: replay, owner })
+    }, [soundOn, playing, narration, run, owner])
 
     // Quiet when paused or the sound is turned off, and when leaving.
     useEffect(() => {
         if ((!soundOn || !playing) && talkingRef.current) {
             talkingRef.current = false
-            stopSpeaking()
+            stopSpeaking(owner)
         }
-    }, [soundOn, playing])
-    useEffect(() => () => { if (talkingRef.current) stopSpeaking() }, [])
+    }, [soundOn, playing, owner])
+    useEffect(() => () => { if (talkingRef.current) stopSpeaking(owner) }, [owner])
 
     const toggleSound = () => {
         const next = !soundOn
         setSoundOn(next)
         writeSoundPref(soundKey, next)
-        if (!next) stopSpeaking()
+        if (!next) stopSpeaking(owner)
     }
 
     const goTo = useCallback((i) => {

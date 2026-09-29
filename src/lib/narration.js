@@ -54,11 +54,15 @@ function forSpeech(text) {
 // Lines already said (or queued) for the current scene/step. The players
 // can ask for the same line again when they re-render; it's only said once.
 let saidLines = new Set()
+// Who asked for what is being said (so one player stopping doesn't cut off
+// another's voice).
+let currentOwner = null
 
 // interrupt: stop whatever is being said first (a new scene or step);
 // otherwise it's queued after it (captions within a step).
 // force: say it again even if it was already said (the viewer replayed it).
-export function say(text, { interrupt = false, force = false } = {}) {
+// owner: who is talking, for stopSpeaking(owner).
+export function say(text, { interrupt = false, force = false, owner = null } = {}) {
     if (!narrationSupported() || !text) return
     const line = forSpeech(text)
     if (!line) return
@@ -70,6 +74,7 @@ export function say(text, { interrupt = false, force = false } = {}) {
         saidLines = new Set()
     }
     saidLines.add(line)
+    currentOwner = owner
 
     const u = new SpeechSynthesisUtterance(line)
     const voice = pickVoice()
@@ -81,7 +86,10 @@ export function say(text, { interrupt = false, force = false } = {}) {
 }
 
 // Pause / sound off / leaving: stop, and let the lines be said again later.
-export function stopSpeaking() {
+// With an owner, only if that owner is the one talking.
+export function stopSpeaking(owner) {
+    if (owner !== undefined && owner !== currentOwner) return
+    currentOwner = null
     saidLines = new Set()
     if (narrationSupported()) window.speechSynthesis.cancel()
 }
