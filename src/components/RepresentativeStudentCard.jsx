@@ -82,6 +82,10 @@ function RepresentativeStudentCard({ request }) {
     const submit = async (e) => {
         e.preventDefault()
 
+        if (representative && representative.status !== 'rejected') {
+            setEditing(false)
+            return notifyWarning('Your representative can be changed only after the Registrar rejects it.')
+        }
         if (fullName.trim().length < 2) return notifyWarning("Please enter the representative's full name.")
         if (!relationship) return notifyWarning('Please choose their relationship to you.')
         if (!representative && (!letterFile || !idFile)) {
@@ -243,15 +247,20 @@ function RepresentativeStudentCard({ request }) {
                         </p>
                     )}
                     {representative.status === 'pending' && (
-                        <p className="rep-callout">The Registrar is reviewing the letter and ID. You’ll be notified once it’s checked.</p>
+                        <p className="rep-callout">
+                            The Registrar is reviewing the letter and ID. You’ll be notified once it’s checked. Your
+                            representative can’t be changed while it’s under review.
+                        </p>
                     )}
                     {representative.status === 'rejected' && (
                         <p className="rep-callout is-rejected">
-                            Not approved yet — replace the rejected file above. The other file keeps its approval.
+                            Not approved yet — replace the rejected file above, or change your representative. An
+                            approved file keeps its approval.
                         </p>
                     )}
 
-                    {!closed && (
+                    {/* Locked while under review and once approved; only a rejection opens it again. */}
+                    {!closed && representative.status === 'rejected' && (
                         <div className="rep-actions">
                             <button type="button" className="rep-link" onClick={startForm}>Change details or files</button>
                             <button type="button" className="rep-link is-danger" onClick={remove}>Remove representative</button>
