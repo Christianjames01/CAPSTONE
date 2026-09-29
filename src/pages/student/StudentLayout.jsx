@@ -24,7 +24,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
 import '../../components/DashboardStats.css'
 import '../../components/PortalUi.css'
-import { START_TOUR_EVENT, STUDENT_TOUR } from '../../lib/tourSteps'
+import { STUDENT_TOUR } from '../../lib/tourSteps'
 import './StudentLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
@@ -162,15 +162,6 @@ function StudentLayout() {
         <div className="student-layout">
 
             <ThemeToggle />
-
-            <button
-                type="button"
-                className="demo-fab"
-                onClick={() => window.dispatchEvent(new Event(START_TOUR_EVENT))}
-                title="Start the guided demo"
-            >
-                <span aria-hidden="true">▶</span><em>Start </em>demo
-            </button>
 
             <header className="student-mobile-topbar">
                 <button
