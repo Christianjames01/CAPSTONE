@@ -3,10 +3,22 @@ import { supabase } from '../lib/supabase'
 import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../lib/shrinkImage'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../lib/notify'
 import {
-    ACCEPTED_TYPES, CLOSED_STATUSES, MAX_FILE_MB, RELATIONSHIPS, REPRESENTATIVE_BUCKET, REPRESENTATIVE_STATUS,
-    loadRepresentative,
+    ACCEPTED_TYPES, CLOSED_STATUSES, FILE_STATUS, MAX_FILE_MB, RELATIONSHIPS, REPRESENTATIVE_BUCKET, REPRESENTATIVE_FILES,
+    REPRESENTATIVE_STATUS, fileNoteOf, fileStatusOf, loadRepresentative,
 } from '../lib/claimRepresentatives'
 import './Representative.css'
+
+// Upload one representative file (photos are shrunk first; PDFs go up as
+// they are) and return its storage path.
+async function uploadRepresentativeFile(original, kind, studentId, requestId) {
+    const file = await shrinkImage(original)
+    if (file.size > MAX_FILE_MB * 1024 * 1024) throw new Error(`Files must not exceed ${MAX_FILE_MB} MB.`)
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const path = `${studentId}/${requestId}/${kind}-${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from(REPRESENTATIVE_BUCKET).upload(path, file, { upsert: false })
+    if (error) throw new Error(`Could not upload the ${kind === 'letter' ? 'authorization letter' : 'valid ID'}: ${error.message}`)
+    return path
+}
 
 // Student side: authorize someone else to claim this request's document.
 function RepresentativeStudentCard({ request }) {
@@ -21,6 +33,8 @@ function RepresentativeStudentCard({ request }) {
     const [contact, setContact] = useState('')
     const [letterFile, setLetterFile] = useState(null)
     const [idFile, setIdFile] = useState(null)
+    // Replacing one rejected file straight from its row.
+    const [replacing, setReplacing] = useState(null) // file key being uploaded
 
     const requestId = request?.request_id
     const closed = CLOSED_STATUSES.includes(request?.status)
@@ -63,16 +77,7 @@ function RepresentativeStudentCard({ request }) {
         setter(file)
     }
 
-    const upload = async (original, kind) => {
-        // Photos are shrunk before upload; PDFs go up as they are.
-        const file = await shrinkImage(original)
-        if (file.size > MAX_FILE_MB * 1024 * 1024) throw new Error(`Files must not exceed ${MAX_FILE_MB} MB.`)
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-        const path = `${request.student_id}/${requestId}/${kind}-${Date.now()}.${ext}`
-        const { error } = await supabase.storage.from(REPRESENTATIVE_BUCKET).upload(path, file, { upsert: false })
-        if (error) throw new Error(`Could not upload the ${kind === 'letter' ? 'authorization letter' : 'valid ID'}: ${error.message}`)
-        return path
-    }
+    const upload = (original, kind) => uploadRepresentativeFile(original, kind, request.student_id, requestId)
 
     const submit = async (e) => {
         e.preventDefault()
@@ -124,6 +129,34 @@ function RepresentativeStudentCard({ request }) {
         }
     }
 
+    // Upload a new picture for one file (e.g. the rejected valid ID); the
+    // other file keeps its review.
+    const replaceFile = async (fileDef, picked) => {
+        if (!picked) return
+        const limitMb = isShrinkable(picked) ? Math.max(MAX_FILE_MB, MAX_ORIGINAL_IMAGE_MB) : MAX_FILE_MB
+        if (picked.size > limitMb * 1024 * 1024) return notifyWarning(`Files must not exceed ${limitMb} MB.`)
+
+        let newPath = null
+        try {
+            setReplacing(fileDef.key)
+            newPath = await upload(picked, fileDef.key)
+            const oldPath = representative[fileDef.pathKey]
+            const { error } = await supabase
+                .from('claim_representatives')
+                .update({ [fileDef.pathKey]: newPath })
+                .eq('representative_id', representative.representative_id)
+            if (error) throw new Error(error.message)
+            if (oldPath) await supabase.storage.from(REPRESENTATIVE_BUCKET).remove([oldPath])
+            notifySuccess(`New ${fileDef.short} submitted. The Registrar will review it.`)
+            await refresh()
+        } catch (err) {
+            if (newPath) await supabase.storage.from(REPRESENTATIVE_BUCKET).remove([newPath])
+            notifyError(err.message || `Could not upload the ${fileDef.short}.`)
+        } finally {
+            setReplacing(null)
+        }
+    }
+
     const remove = async () => {
         const confirmed = await confirmModal(
             `Remove ${representative.full_name} as your representative? You'll need to claim in person.`,
@@ -171,6 +204,38 @@ function RepresentativeStudentCard({ request }) {
                         <div><span>Contact</span><strong>{representative.contact_number || '—'}</strong></div>
                     </div>
 
+                    <ul className="rep-file-list">
+                        {REPRESENTATIVE_FILES.map((fileDef) => {
+                            const fileStatus = fileStatusOf(representative, fileDef)
+                            const note = fileNoteOf(representative, fileDef)
+                            const pill = FILE_STATUS[fileStatus] || FILE_STATUS.pending
+                            return (
+                                <li key={fileDef.key} className={`rep-file-row is-${pill.tone}`}>
+                                    <div className="rep-file-main">
+                                        <strong>{fileDef.label}</strong>
+                                        <span className={`rep-status is-${pill.tone}`}>{pill.label}</span>
+                                        {fileStatus === 'rejected' && (
+                                            <p className="rep-file-note">
+                                                {note ? `Why: ${note}` : 'The Registrar could not accept this file.'} Upload a clearer or corrected picture.
+                                            </p>
+                                        )}
+                                    </div>
+                                    {fileStatus === 'rejected' && !closed && (
+                                        <label className={`rep-replace${replacing === fileDef.key ? ' is-busy' : ''}`}>
+                                            {replacing === fileDef.key ? 'Uploading…' : `Upload new ${fileDef.key === 'id' ? 'ID' : 'letter'}`}
+                                            <input
+                                                type="file"
+                                                accept={ACCEPTED_TYPES}
+                                                disabled={!!replacing}
+                                                onChange={(e) => { replaceFile(fileDef, e.target.files?.[0]); e.target.value = '' }}
+                                            />
+                                        </label>
+                                    )}
+                                </li>
+                            )
+                        })}
+                    </ul>
+
                     {representative.status === 'approved' && (
                         <p className="rep-callout is-approved">
                             {representative.full_name} may claim this document for you. They must bring the original signed
@@ -182,7 +247,7 @@ function RepresentativeStudentCard({ request }) {
                     )}
                     {representative.status === 'rejected' && (
                         <p className="rep-callout is-rejected">
-                            Not approved{representative.review_note ? `: ${representative.review_note}` : '.'} Update the details or files and submit again.
+                            Not approved yet — replace the rejected file above. The other file keeps its approval.
                         </p>
                     )}
 

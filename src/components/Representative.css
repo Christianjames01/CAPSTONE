@@ -225,3 +225,89 @@
     background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
     color: var(--danger-text, var(--red, #C8102E));
 }
+
+/* ---- Per-file review (letter and valid ID) -------------------------------- */
+.rep-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rep-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.rep-file-row.is-approved { border-left-color: var(--success-text, #1e8a5f); }
+.rep-file-row.is-rejected { border-left-color: var(--danger-text, #C8102E); background: var(--danger-bg-soft, rgba(200, 16, 46, 0.05)); }
+.rep-file-row.is-pending { border-left-color: var(--blue-accent, var(--blue)); }
+
+.rep-file-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.rep-file-main strong {
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.rep-file-note {
+    flex-basis: 100%;
+    margin: 2px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--danger-text, #C8102E);
+}
+
+.rep-file-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.rep-file-actions .rep-file {
+    margin: 0;
+}
+
+/* Student: replace a rejected file. */
+.rep-replace {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.rep-replace input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.rep-replace.is-busy {
+    opacity: 0.7;
+    cursor: wait;
+}

@@ -5,12 +5,16 @@ import { logActivity } from '../lib/activityLog'
 import { notifyError, confirmModal } from '../lib/notify'
 import { formatDisplayDateTime } from '../lib/formatDate'
 import { useLiveRefresh } from '../lib/useLiveRefresh'
-import { REPRESENTATIVE_STATUS, loadRepresentative, signedFileUrl } from '../lib/claimRepresentatives'
+import {
+    FILE_STATUS, REPRESENTATIVE_FILES, REPRESENTATIVE_STATUS, fileNoteOf, fileStatusOf, hasFileReview,
+    loadRepresentative, signedFileUrl,
+} from '../lib/claimRepresentatives'
 import DocumentPreviewModal from './DocumentPreviewModal'
 import './Representative.css'
 
 // Staff side (head and employees): review the student's authorized
-// representative and see who is allowed to claim.
+// representative -- the signed letter and the valid ID each approved or
+// rejected on their own -- and see who is allowed to claim.
 function RepresentativeStaffCard({ request, cardClassName }) {
     const [representative, setRepresentative] = useState(null)
     const [loaded, setLoaded] = useState(false)
@@ -38,6 +42,8 @@ function RepresentativeStaffCard({ request, cardClassName }) {
 
     if (!loaded || !representative) return null
 
+    const perFile = hasFileReview(representative)
+
     const openFile = async (path, name) => {
         try {
             setPreview({ url: await signedFileUrl(path), name })
@@ -46,36 +52,12 @@ function RepresentativeStaffCard({ request, cardClassName }) {
         }
     }
 
-    const review = async (status) => {
-        let note = null
-
-        if (status === 'rejected') {
-            const { value, isConfirmed } = await Swal.fire({
-                title: 'Not approve this representative?',
-                input: 'textarea',
-                inputLabel: 'Reason (shown to the student)',
-                inputPlaceholder: 'e.g. The letter is not signed / the ID is unreadable',
-                inputAttributes: { maxlength: 500 },
-                showCancelButton: true,
-                confirmButtonText: 'Not approve',
-                confirmButtonColor: '#C8102E',
-                inputValidator: (v) => (!v || !v.trim() ? 'Please give a reason.' : undefined),
-            })
-            if (!isConfirmed) return
-            note = value.trim()
-        } else {
-            const confirmed = await confirmModal(
-                `Approve ${representative.full_name} to claim ${request.request_number}? Make sure the letter is signed by the student and the ID is valid.`,
-                { title: 'Approve representative?', confirmButtonText: 'Approve', icon: 'question' }
-            )
-            if (!confirmed) return
-        }
-
+    const save = async (changes, action, description) => {
         try {
             setSaving(true)
             const { data, error } = await supabase
                 .from('claim_representatives')
-                .update({ status, review_note: note })
+                .update(changes)
                 .eq('representative_id', representative.representative_id)
                 .select('representative_id')
 
@@ -84,10 +66,10 @@ function RepresentativeStaffCard({ request, cardClassName }) {
             const { data: { user } } = await supabase.auth.getUser()
             await logActivity({
                 userId: user?.id,
-                action: status === 'approved' ? 'approve_representative' : 'reject_representative',
+                action,
                 tableName: 'claim_representatives',
                 recordId: requestId,
-                description: `${status === 'approved' ? 'Approved' : 'Did not approve'} ${representative.full_name} as representative for "${request.request_number}".`,
+                description,
             })
 
             await refresh()
@@ -98,7 +80,67 @@ function RepresentativeStaffCard({ request, cardClassName }) {
         }
     }
 
+    const askReason = async (what) => {
+        const { value, isConfirmed } = await Swal.fire({
+            title: `Reject the ${what}?`,
+            input: 'textarea',
+            inputLabel: 'Reason (shown to the student)',
+            inputPlaceholder: 'e.g. The letter is not signed / the ID photo is blurry',
+            inputAttributes: { maxlength: 500 },
+            showCancelButton: true,
+            confirmButtonText: 'Reject',
+            confirmButtonColor: '#C8102E',
+            inputValidator: (v) => (!v || !v.trim() ? 'Please give a reason.' : undefined),
+        })
+        return isConfirmed ? value.trim() : null
+    }
+
+    // One file: approve, or reject with a reason.
+    const reviewFile = async (file, status) => {
+        let note = null
+        if (status === 'rejected') {
+            note = await askReason(file.short)
+            if (!note) return
+        } else {
+            const confirmed = await confirmModal(
+                file.key === 'letter'
+                    ? 'Approve the authorization letter? Make sure it is signed by the student and names this representative and document.'
+                    : `Approve ${representative.full_name}’s valid ID? Make sure it is readable and matches the name.`,
+                { title: `Approve the ${file.short}?`, confirmButtonText: 'Approve', icon: 'question' }
+            )
+            if (!confirmed) return
+        }
+
+        await save(
+            { [file.statusKey]: status, [file.noteKey]: note },
+            status === 'approved' ? `approve_representative_${file.key}` : `reject_representative_${file.key}`,
+            `${status === 'approved' ? 'Approved' : 'Rejected'} the ${file.short} of ${representative.full_name} (representative) for "${request.request_number}".${note ? ` Reason: ${note}` : ''}`
+        )
+    }
+
+    const approveBoth = async () => {
+        const confirmed = await confirmModal(
+            `Approve ${representative.full_name} to claim ${request.request_number}? Make sure the letter is signed by the student and the ID is valid.`,
+            { title: 'Approve both files?', confirmButtonText: 'Approve', icon: 'question' }
+        )
+        if (!confirmed) return
+        await save(
+            perFile ? { letter_status: 'approved', letter_note: null, id_status: 'approved', id_note: null } : { status: 'approved', review_note: null },
+            'approve_representative',
+            `Approved ${representative.full_name} as representative for "${request.request_number}".`
+        )
+    }
+
+    // Before the per-file migration: the old whole-representative review.
+    const rejectWhole = async () => {
+        const note = await askReason('representative')
+        if (!note) return
+        await save({ status: 'rejected', review_note: note }, 'reject_representative',
+            `Did not approve ${representative.full_name} as representative for "${request.request_number}". Reason: ${note}`)
+    }
+
     const status = REPRESENTATIVE_STATUS[representative.status] || REPRESENTATIVE_STATUS.pending
+    const allApproved = REPRESENTATIVE_FILES.every((f) => fileStatusOf(representative, f) === 'approved')
 
     return (
         <div className={`${cardClassName} rep-card${representative.status === 'approved' ? ' is-approved' : ''}`}>
@@ -119,14 +161,41 @@ function RepresentativeStaffCard({ request, cardClassName }) {
                 <div><span>Contact</span><strong>{representative.contact_number || '—'}</strong></div>
             </div>
 
-            <div className="rep-files">
-                <button type="button" className="rep-file" onClick={() => openFile(representative.authorization_letter_path, 'Authorization letter')}>
-                    View authorization letter
-                </button>
-                <button type="button" className="rep-file" onClick={() => openFile(representative.valid_id_path, `${representative.full_name} — valid ID`)}>
-                    View valid ID
-                </button>
-            </div>
+            <ul className="rep-file-list">
+                {REPRESENTATIVE_FILES.map((file) => {
+                    const fileStatus = fileStatusOf(representative, file)
+                    const note = fileNoteOf(representative, file)
+                    const pill = FILE_STATUS[fileStatus] || FILE_STATUS.pending
+                    return (
+                        <li key={file.key} className={`rep-file-row is-${pill.tone}`}>
+                            <div className="rep-file-main">
+                                <strong>{file.label}</strong>
+                                <span className={`rep-status is-${pill.tone}`}>{pill.label}</span>
+                                {fileStatus === 'rejected' && note && <p className="rep-file-note">Reason: {note}</p>}
+                            </div>
+                            <div className="rep-file-actions">
+                                <button
+                                    type="button"
+                                    className="rep-file"
+                                    onClick={() => openFile(representative[file.pathKey], file.key === 'id' ? `${representative.full_name} — valid ID` : 'Authorization letter')}
+                                >
+                                    View
+                                </button>
+                                {perFile && fileStatus !== 'approved' && (
+                                    <button type="button" className="rep-approve" onClick={() => reviewFile(file, 'approved')} disabled={saving}>
+                                        Approve
+                                    </button>
+                                )}
+                                {perFile && fileStatus !== 'rejected' && (
+                                    <button type="button" className="rep-link is-danger" onClick={() => reviewFile(file, 'rejected')} disabled={saving}>
+                                        {fileStatus === 'approved' ? 'Revoke' : 'Reject'}
+                                    </button>
+                                )}
+                            </div>
+                        </li>
+                    )
+                })}
+            </ul>
 
             {representative.status === 'approved' && (
                 <p className="rep-callout is-approved">
@@ -134,18 +203,20 @@ function RepresentativeStaffCard({ request, cardClassName }) {
                     letter and that their valid ID matches.
                 </p>
             )}
-            {representative.status === 'rejected' && representative.review_note && (
-                <p className="rep-callout is-rejected">Not approved: {representative.review_note}</p>
+            {representative.status === 'rejected' && (
+                <p className="rep-callout is-rejected">
+                    Waiting for the student to replace the rejected {REPRESENTATIVE_FILES.filter((f) => fileStatusOf(representative, f) === 'rejected').map((f) => f.short).join(' and ') || 'file'}.
+                </p>
             )}
 
             <div className="rep-actions">
-                {representative.status !== 'approved' && (
-                    <button type="button" className="rep-approve" onClick={() => review('approved')} disabled={saving}>
-                        Approve
+                {(perFile ? REPRESENTATIVE_FILES.every((f) => fileStatusOf(representative, f) === 'pending') : !allApproved) && (
+                    <button type="button" className="rep-approve" onClick={approveBoth} disabled={saving}>
+                        {perFile ? 'Approve both' : 'Approve'}
                     </button>
                 )}
-                {representative.status !== 'rejected' && (
-                    <button type="button" className="rep-link is-danger" onClick={() => review('rejected')} disabled={saving}>
+                {!perFile && representative.status !== 'rejected' && (
+                    <button type="button" className="rep-link is-danger" onClick={rejectWhole} disabled={saving}>
                         {representative.status === 'approved' ? 'Revoke approval' : 'Not approve'}
                     </button>
                 )}
