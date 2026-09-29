@@ -1171,3 +1171,505 @@
         animation: none !important;
     }
 }
+
+/* ---- Hero: a copy of the real student portal (HeroVisual.jsx) ------------- */
+.lpm-hero-visual {
+    max-width: 580px;
+}
+
+.lpv-app {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: #fff;
+    font-family: var(--font-body);
+    line-height: 1.35;
+    box-shadow: 0 50px 90px -50px rgba(10, 36, 80, 0.55), 0 2px 6px rgba(16, 24, 39, 0.06);
+    transform: perspective(1400px) rotateY(-7deg) rotateX(3deg);
+    animation: lpm-float 7s ease-in-out infinite;
+}
+
+.lpv-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+}
+
+.lpv-bar > span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #D8DEE9;
+}
+
+.lpv-bar > span:first-child { background: #F0596E; }
+
+.lpv-url {
+    flex: 1;
+    margin-left: 8px;
+    overflow: hidden;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #fff;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--slate);
+}
+
+.lpv-body {
+    display: grid;
+    grid-template-columns: 34% 1fr;
+    min-height: 300px;
+}
+
+/* Navy sidebar, like the portal's. */
+.lpv-side {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 8px;
+    background: var(--navy, #0A2450);
+    color: #fff;
+}
+
+.lpv-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 4px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.lpv-brand img {
+    width: 24px;
+    height: 24px;
+    padding: 1px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.lpv-brand strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 11.5px;
+    color: #fff;
+}
+
+.lpv-brand small {
+    display: block;
+    font-size: 8.5px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.lpv-side nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.lpv-nav {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 7px;
+    border-radius: 6px;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.lpv-nav svg {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+}
+
+.lpv-nav em {
+    flex: 1;
+    overflow: hidden;
+    font-style: normal;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.lpv-nav.is-active {
+    background: var(--red);
+    color: #fff;
+}
+
+.lpv-badge {
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    border-radius: 7px;
+    background: var(--red);
+    color: #fff;
+    font-size: 8px;
+    line-height: 14px;
+    text-align: center;
+    animation: lpv-badge 0.5s var(--ease-spring) both;
+}
+
+@keyframes lpv-badge {
+    0% { transform: scale(0.3); }
+    60% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+.lpv-user {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    padding: 8px 4px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.lpv-user > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 8.5px;
+    font-weight: 800;
+}
+
+.lpv-user strong {
+    display: block;
+    font-size: 9px;
+    color: #fff;
+}
+
+.lpv-user small {
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Main area */
+.lpv-main {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+    padding: 13px;
+    background: var(--bg);
+}
+
+.lpv-head strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--ink);
+}
+
+.lpv-head small {
+    font-size: 9px;
+    color: var(--slate);
+}
+
+.lpv-announce {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.lpv-announce > span svg {
+    width: 14px;
+    height: 14px;
+    color: var(--red);
+}
+
+.lpv-announce strong {
+    display: block;
+    font-size: 9.5px;
+}
+
+.lpv-announce small {
+    font-size: 8.5px;
+    color: var(--slate);
+}
+
+.lpv-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.lpv-stats > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #fff;
+}
+
+.lpv-stats span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--t);
+    color: var(--c);
+}
+
+.lpv-stats span svg {
+    width: 12px;
+    height: 12px;
+}
+
+.lpv-stats strong {
+    font-size: 15px;
+    line-height: 1.1;
+    color: var(--ink);
+    animation: lpv-count 0.5s var(--ease-spring) both;
+}
+
+@keyframes lpv-count {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: none; }
+}
+
+.lpv-stats small {
+    overflow: hidden;
+    font-size: 8px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--slate);
+}
+
+/* Request card with the portal's stepper */
+.lpv-card {
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 0 10px 24px -20px rgba(10, 36, 80, 0.5);
+}
+
+.lpv-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lpv-card-head > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.lpv-card-head strong {
+    display: block;
+    font-size: 11px;
+}
+
+.lpv-card-head small {
+    display: block;
+    white-space: nowrap;
+}
+
+.lpv-card-head small {
+    font-size: 8.5px;
+    color: var(--slate);
+}
+
+.lpv-doc {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--blue-tint);
+    color: var(--blue);
+}
+
+.lpv-doc svg {
+    width: 14px;
+    height: 14px;
+}
+
+.lpv-pill {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 8.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    animation: lpm-pill-in 0.5s var(--ease-spring);
+}
+
+.lpv-pill.is-blue { background: var(--blue-tint); color: var(--blue); }
+.lpv-pill.is-green { background: var(--green-tint); color: var(--green); }
+
+.lpv-stepper {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 10px;
+}
+
+.lpv-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.lpv-step-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 12px;
+}
+
+.lpv-step-row > i {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    width: 100%;
+    height: 2px;
+    margin-top: -1px;
+    background: #D8DEE9;
+}
+
+.lpv-step-row > i::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--blue);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.7s var(--ease-out);
+}
+
+.lpv-step-row > i.is-on::after {
+    transform: scaleX(1);
+}
+
+.lpv-step-row > b {
+    position: relative;
+    z-index: 1;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #D8DEE9;
+    border-radius: 50%;
+    background: #fff;
+    transition: border-color 0.4s ease 0.4s, background 0.4s ease 0.4s, transform 0.4s var(--ease-spring) 0.4s;
+}
+
+.lpv-step.is-on .lpv-step-row > b {
+    border-color: var(--blue);
+    background: var(--blue);
+}
+
+.lpv-step.is-now .lpv-step-row > b {
+    transform: scale(1.35);
+    box-shadow: 0 0 0 3px rgba(18, 59, 120, 0.15);
+}
+
+.lpv-step small {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--slate);
+    transition: color 0.3s ease 0.4s;
+}
+
+.lpv-step.is-on small {
+    color: var(--blue);
+}
+
+/* Toast and credential sit over the corners of the portal. */
+.lpm-hero-visual .lpm-toast {
+    top: 2px;
+    right: -14px;
+}
+
+.lpm-hero-visual .lpm-cred {
+    right: -18px;
+    bottom: -22px;
+}
+
+@media (max-width: 620px) {
+    .lpv-app {
+        transform: none;
+        animation: none;
+    }
+
+    .lpv-body {
+        grid-template-columns: 44px 1fr;
+    }
+
+    .lpv-brand div,
+    .lpv-nav em,
+    .lpv-user div {
+        display: none;
+    }
+
+    .lpv-brand,
+    .lpv-user {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .lpv-nav {
+        position: relative;
+        justify-content: center;
+        padding: 6px 0;
+    }
+
+    .lpv-nav .lpv-badge {
+        position: absolute;
+        top: 0;
+        right: 3px;
+        min-width: 11px;
+        height: 11px;
+        padding: 0 2px;
+        font-size: 7px;
+        line-height: 11px;
+    }
+
+    .lpv-stats small {
+        font-size: 7.5px;
+    }
+
+    .lpm-hero-visual .lpm-toast {
+        right: 0;
+    }
+
+    .lpm-hero-visual .lpm-cred {
+        right: 2px;
+        bottom: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lpv-app,
+    .lpv-badge,
+    .lpv-stats strong,
+    .lpv-pill {
+        animation: none;
+    }
+}

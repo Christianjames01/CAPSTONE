@@ -1,120 +1,147 @@
 import { useRef } from "react";
 import hcdcLogo from "../../assets/hcdc-logo.png";
+import { QrMark } from "../../components/explainer/parts";
 import { prefersReducedMotion, useInView, useTicker } from "./motion";
 
-// The hero's product visualization: a small copy of the student portal
-// with one request moving through its real statuses, the notification the
-// student gets at each step, and the QR-verified credential it ends in.
+// The hero's product visualization: a small copy of the real student portal
+// (navy sidebar with the menu, "Welcome back", announcement, stat cards and
+// a request card with the Submitted -> Completed stepper). One request moves
+// through its real statuses, with the notification the student gets at each
+// step and the QR-verified credential it ends in.
 
 const STAGES = [
-    { status: "Pending", tone: "blue", note: "Request submitted — pay at the Finance Office." },
-    { status: "Receipt verified", tone: "blue", note: "Your official receipt was verified." },
-    { status: "Processing", tone: "blue", note: "The Registrar is preparing your document." },
-    { status: "Ready for claiming", tone: "green", note: "Claim on Oct 2 · 9:00 AM with a valid ID." },
-    { status: "Completed", tone: "green", note: "Claimed. Your credential is QR-verifiable." },
+    { status: "Receipt uploaded", tone: "blue", step: 0, note: "Your receipt was uploaded and is waiting for verification." },
+    { status: "Payment verified", tone: "blue", step: 0, note: "Your official receipt was verified." },
+    { status: "Processing", tone: "blue", step: 1, note: "The Registrar is preparing your document." },
+    { status: "Ready for claiming", tone: "green", step: 2, note: "Claim on Oct 2 · 9:00 AM with a valid ID." },
+    { status: "Completed", tone: "green", step: 3, note: "Claimed. Your credential is QR-verifiable." },
 ];
 
-// A decorative, QR-looking pattern: three finder squares plus a fixed
-// pseudo-random fill (same every render).
-const QR_N = 21;
-const QR_CELLS = (() => {
-    const finder = (x, y) => {
-        for (const [fx, fy] of [[0, 0], [QR_N - 7, 0], [0, QR_N - 7]]) {
-            const dx = x - fx;
-            const dy = y - fy;
-            if (dx >= 0 && dx < 7 && dy >= 0 && dy < 7) {
-                const ring = Math.min(dx, dy, 6 - dx, 6 - dy);
-                return ring === 0 || ring >= 2 ? 1 : 0;
-            }
-            if (dx >= -1 && dx <= 7 && dy >= -1 && dy <= 7) return 0;
-        }
-        return null;
-    };
-    let seed = 7;
-    const cells = [];
-    for (let y = 0; y < QR_N; y++) {
-        for (let x = 0; x < QR_N; x++) {
-            const f = finder(x, y);
-            seed = (seed * 16807) % 2147483647;
-            if (f === 1 || (f === null && seed % 100 < 46)) cells.push([x, y]);
-        }
-    }
-    return cells;
-})();
+const STEPS = ["Submitted", "Processing", "Ready", "Completed"];
 
-export function QrMark({ size = 64 }) {
-    return (
-        <svg className="lpm-qr" viewBox={`-1 -1 ${QR_N + 2} ${QR_N + 2}`} width={size} height={size} aria-hidden="true" shapeRendering="crispEdges">
-            <rect x="-1" y="-1" width={QR_N + 2} height={QR_N + 2} fill="#fff" />
-            {QR_CELLS.map(([x, y]) => <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#0A2450" />)}
-        </svg>
-    );
-}
+const Svg = ({ children }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
+);
+
+const I = {
+    home: <Svg><path d="M4 11.5 12 4l8 7.5" /><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" /></Svg>,
+    plus: <Svg><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M12 12.5v5M9.5 15h5" /></Svg>,
+    list: <Svg><path d="M9 6h10M9 12h10M9 18h10" /><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" /></Svg>,
+    cal: <Svg><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></Svg>,
+    receipt: <Svg><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z" /><path d="M9 8h6M9 11.5h6" /></Svg>,
+    msg: <Svg><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17H9l-4 3.5V6.5A1.5 1.5 0 0 1 5 5Z" /></Svg>,
+    bell: <Svg><path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></Svg>,
+    clock: <Svg><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>,
+    check: <Svg><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12.2 2.4 2.4 4.6-4.8" /></Svg>,
+    doc: <Svg><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4M9 12h6M9 15.5h6" /></Svg>,
+    megaphone: <Svg><path d="M4 10v4h3l7 4V6L7 10Z" /><path d="M17.5 9a4 4 0 0 1 0 6" /></Svg>,
+};
+
+const NAV = [
+    { icon: I.home, label: "Dashboard", active: true },
+    { icon: I.plus, label: "Request a Document" },
+    { icon: I.list, label: "My Requests" },
+    { icon: I.cal, label: "Claim Schedule" },
+    { icon: I.receipt, label: "Upload Receipt" },
+    { icon: I.msg, label: "Messages", badge: "msg" },
+    { icon: I.bell, label: "Notifications", badge: "notif" },
+];
 
 function HeroVisual() {
     const ref = useRef(null);
     const inView = useInView(ref, { threshold: 0.2, once: false });
-    const tick = useTicker(inView && !prefersReducedMotion(), 2400);
+    const tick = useTicker(inView && !prefersReducedMotion(), 2600);
     const stage = prefersReducedMotion() ? STAGES.length - 1 : tick % STAGES.length;
     const current = STAGES[stage];
     const done = stage === STAGES.length - 1;
+    const ready = current.step === 2;
+    // One new notification per status change.
+    const unread = stage + 1;
 
     return (
         <div className="lpm-hero-visual" ref={ref} aria-hidden="true">
             <div className="lpm-orbit lpm-orbit-a" />
             <div className="lpm-orbit lpm-orbit-b" />
 
-            <div className="lpm-app">
-                <div className="lpm-app-bar">
+            <div className="lpv-app">
+                <div className="lpv-bar">
                     <span /><span /><span />
-                    <div className="lpm-app-url">onlineregistrar.vercel.app/student</div>
+                    <div className="lpv-url">onlineregistrar.vercel.app/student/dashboard</div>
                 </div>
 
-                <div className="lpm-app-body">
-                    <aside className="lpm-app-side">
-                        <img src={hcdcLogo} alt="" />
-                        <i className="is-active" /><i /><i /><i /><i />
+                <div className="lpv-body">
+                    <aside className="lpv-side">
+                        <div className="lpv-brand">
+                            <img src={hcdcLogo} alt="" />
+                            <div><strong>CertiChain</strong><small>Student Portal</small></div>
+                        </div>
+                        <nav>
+                            {NAV.map((n) => (
+                                <span key={n.label} className={`lpv-nav${n.active ? " is-active" : ""}`}>
+                                    {n.icon}
+                                    <em>{n.label}</em>
+                                    {n.badge === "notif" && <b key={unread} className="lpv-badge">{unread}</b>}
+                                    {n.badge === "msg" && ready && <b className="lpv-badge">1</b>}
+                                </span>
+                            ))}
+                        </nav>
+                        <div className="lpv-user">
+                            <span>JD</span>
+                            <div><strong>Juan Dela Cruz</strong><small>Student Account</small></div>
+                        </div>
                     </aside>
 
-                    <div className="lpm-app-main">
-                        <div className="lpm-app-greet">
-                            <small>Good morning,</small>
-                            <strong>Juan Dela Cruz</strong>
+                    <main className="lpv-main">
+                        <div className="lpv-head">
+                            <strong>Welcome back, Juan</strong>
+                            <small>Here’s what you can do with your CertiChain account today.</small>
                         </div>
 
-                        <div className="lpm-req-card">
-                            <div className="lpm-req-head">
-                                <span className="lpm-doc-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4M9 12h6M9 15.5h6" /></svg>
-                                </span>
+                        <div className="lpv-announce">
+                            <span>{I.megaphone}</span>
+                            <div><strong>Office open on Monday</strong><small>8:00 AM – 5:00 PM</small></div>
+                        </div>
+
+                        <div className="lpv-stats">
+                            <div style={{ "--c": "#123B78", "--t": "#EAF1FB" }}>
+                                <span>{I.list}</span><strong>3</strong><small>Total Requests</small>
+                            </div>
+                            <div style={{ "--c": "#B45309", "--t": "#FFF4DB" }}>
+                                <span>{I.clock}</span><strong key={`p-${done}`}>{done || ready ? 0 : 1}</strong><small>In Progress</small>
+                            </div>
+                            <div style={{ "--c": "#1E8A5F", "--t": "#E7F4EE" }}>
+                                <span>{I.check}</span><strong key={`r-${ready}`}>{ready ? 1 : 0}</strong><small>Ready for Claiming</small>
+                            </div>
+                        </div>
+
+                        <div className="lpv-card">
+                            <div className="lpv-card-head">
+                                <span className="lpv-doc">{I.doc}</span>
                                 <div>
                                     <strong>Transcript of Records</strong>
                                     <small>REQ-000124 · 2 copies</small>
                                 </div>
-                                <span key={current.status} className={`lpm-pill is-${current.tone}`}>{current.status}</span>
+                                <span key={current.status} className={`lpv-pill is-${current.tone}`}>{current.status}</span>
                             </div>
 
-                            <div className="lpm-stepper">
-                                {STAGES.map((s, i) => (
-                                    <span key={s.status} className={i < stage ? "is-done" : i === stage ? "is-now" : ""} />
+                            <div className="lpv-stepper">
+                                {STEPS.map((label, i) => (
+                                    <div key={label} className={`lpv-step${i <= current.step ? " is-on" : ""}${i === current.step ? " is-now" : ""}`}>
+                                        <div className="lpv-step-row">
+                                            {i > 0 && <i className={i <= current.step ? "is-on" : ""} />}
+                                            <b />
+                                        </div>
+                                        <small>{label}</small>
+                                    </div>
                                 ))}
-                                <b style={{ width: `${(stage / (STAGES.length - 1)) * 100}%` }} />
                             </div>
                         </div>
-
-                        <div className="lpm-mini-row">
-                            <div><small>Requests</small><strong>3</strong></div>
-                            <div><small>In progress</small><strong>{done ? 0 : 1}</strong></div>
-                            <div><small>Completed</small><strong>{done ? 3 : 2}</strong></div>
-                        </div>
-                    </div>
+                    </main>
                 </div>
             </div>
 
             <div key={`n-${stage}`} className="lpm-toast">
-                <span className="lpm-toast-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
-                </span>
+                <span className="lpm-toast-icon">{I.bell}</span>
                 <div>
                     <strong>{current.status}</strong>
                     <small>{current.note}</small>
@@ -131,10 +158,6 @@ function HeroVisual() {
                     </span>
                 </div>
             </div>
-
-            <svg className="lpm-connector" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M78 58 C 92 70, 88 84, 70 92" />
-            </svg>
         </div>
     );
 }
