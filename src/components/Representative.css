@@ -311,3 +311,32 @@
     opacity: 0.7;
     cursor: wait;
 }
+
+/* ---- Removed representatives (history) ---------------------------------- */
+.rep-removals-block {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+}
+
+.rep-removals-block > span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted, #6b7280);
+}
+
+.rep-removals {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted, #6b7280);
+}
+
+.rep-removals-block .rep-removals {
+    margin-top: 0;
+}

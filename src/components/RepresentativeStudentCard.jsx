@@ -5,8 +5,9 @@ import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../lib/shrinkI
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../lib/notify'
 import {
     ACCEPTED_TYPES, CLOSED_STATUSES, FILE_STATUS, MAX_FILE_MB, RELATIONSHIPS, REPRESENTATIVE_BUCKET, REPRESENTATIVE_FILES,
-    REPRESENTATIVE_STATUS, fileNoteOf, fileStatusOf, loadRepresentative,
+    REPRESENTATIVE_STATUS, fileNoteOf, fileStatusOf, loadRepresentative, loadRepresentativeRemovals,
 } from '../lib/claimRepresentatives'
+import { formatDisplayDateTime } from '../lib/formatDate'
 import './Representative.css'
 
 // Upload one representative file (photos are shrunk first; PDFs go up as
@@ -24,6 +25,7 @@ async function uploadRepresentativeFile(original, kind, studentId, requestId) {
 // Student side: authorize someone else to claim this request's document.
 function RepresentativeStudentCard({ request }) {
     const [representative, setRepresentative] = useState(null)
+    const [lastRemoval, setLastRemoval] = useState(null)
     const [unavailable, setUnavailable] = useState(false)
     const [loaded, setLoaded] = useState(false)
     const [editing, setEditing] = useState(false)
@@ -42,9 +44,13 @@ function RepresentativeStudentCard({ request }) {
 
     const refresh = async () => {
         try {
-            const result = await loadRepresentative(requestId)
+            const [result, removed] = await Promise.all([
+                loadRepresentative(requestId),
+                loadRepresentativeRemovals(requestId),
+            ])
             setUnavailable(result.unavailable)
             setRepresentative(result.representative)
+            setLastRemoval(removed[0] || null)
         } catch (err) {
             console.error('LOAD REPRESENTATIVE ERROR:', err)
         } finally {
@@ -57,7 +63,7 @@ function RepresentativeStudentCard({ request }) {
     }, [requestId])
 
     // Staff approving/rejecting a file shows up here without a reload.
-    useLiveRefresh(['claim_representatives'], () => { if (requestId) refresh() })
+    useLiveRefresh(['claim_representatives', 'claim_representative_removals'], () => { if (requestId) refresh() })
 
     if (!loaded || unavailable) return null
     if (closed && !representative) return null
@@ -177,6 +183,7 @@ function RepresentativeStudentCard({ request }) {
 
         await supabase.storage.from(REPRESENTATIVE_BUCKET).remove([representative.authorization_letter_path, representative.valid_id_path])
         setRepresentative(null)
+        await refresh()
     }
 
     const status = representative ? REPRESENTATIVE_STATUS[representative.status] || REPRESENTATIVE_STATUS.pending : null
@@ -193,6 +200,12 @@ function RepresentativeStudentCard({ request }) {
 
             {!editing && !representative && (
                 <>
+                    {lastRemoval && (
+                        <p className="rep-callout">
+                            You removed <strong>{lastRemoval.full_name}</strong> as your representative on{' '}
+                            {formatDisplayDateTime(lastRemoval.removed_at)}. The Registrar can see this.
+                        </p>
+                    )}
                     <ul className="rep-steps">
                         <li>Write an <strong>authorization letter</strong> naming your representative and this document, and sign it.</li>
                         <li>Upload a photo or scan of the letter and of your representative’s <strong>valid ID</strong>.</li>

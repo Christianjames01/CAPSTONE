@@ -7,7 +7,7 @@ import { formatDisplayDateTime } from '../lib/formatDate'
 import { useLiveRefresh } from '../lib/useLiveRefresh'
 import {
     FILE_STATUS, REPRESENTATIVE_FILES, REPRESENTATIVE_STATUS, fileNoteOf, fileStatusOf, hasFileReview,
-    loadRepresentative, signedFileUrl,
+    loadRepresentative, loadRepresentativeRemovals, signedFileUrl,
 } from '../lib/claimRepresentatives'
 import DocumentPreviewModal from './DocumentPreviewModal'
 import './Representative.css'
@@ -17,6 +17,8 @@ import './Representative.css'
 // rejected on their own -- and see who is allowed to claim.
 function RepresentativeStaffCard({ request, cardClassName }) {
     const [representative, setRepresentative] = useState(null)
+    // Representatives the student removed (newest first).
+    const [removals, setRemovals] = useState([])
     const [loaded, setLoaded] = useState(false)
     const [saving, setSaving] = useState(false)
     const [preview, setPreview] = useState({ url: null, name: '' })
@@ -25,8 +27,12 @@ function RepresentativeStaffCard({ request, cardClassName }) {
 
     const refresh = async () => {
         try {
-            const result = await loadRepresentative(requestId)
+            const [result, removed] = await Promise.all([
+                loadRepresentative(requestId),
+                loadRepresentativeRemovals(requestId),
+            ])
             setRepresentative(result.representative)
+            setRemovals(removed)
         } catch (err) {
             console.error('LOAD REPRESENTATIVE ERROR:', err)
         } finally {
@@ -38,9 +44,41 @@ function RepresentativeStaffCard({ request, cardClassName }) {
         if (requestId) refresh()
     }, [requestId])
 
-    useLiveRefresh(['claim_representatives'], refresh)
+    useLiveRefresh(['claim_representatives', 'claim_representative_removals'], refresh)
 
-    if (!loaded || !representative) return null
+    if (!loaded) return null
+
+    const removedLine = (removal) => (
+        <>
+            The student removed <strong>{removal.full_name}</strong>
+            {removal.relationship ? ` (${removal.relationship})` : ''} as their representative on{' '}
+            {formatDisplayDateTime(removal.removed_at)}.
+        </>
+    )
+
+    // No representative now, but the student removed one: say so.
+    if (!representative) {
+        if (removals.length === 0) return null
+        return (
+            <div className={`${cardClassName} rep-card`}>
+                <div className="rep-head">
+                    <div>
+                        <h2 style={{ fontSize: 16, marginBottom: 4 }}>Authorized Representative</h2>
+                        <p className="rep-sub">The student no longer has a representative for this request.</p>
+                    </div>
+                    <span className="rep-status is-rejected">Removed</span>
+                </div>
+                <p className="rep-callout is-rejected">
+                    {removedLine(removals[0])} Only the student can claim this document unless they add a new representative.
+                </p>
+                {removals.length > 1 && (
+                    <ul className="rep-removals">
+                        {removals.slice(1).map((removal) => <li key={removal.removal_id}>{removedLine(removal)}</li>)}
+                    </ul>
+                )}
+            </div>
+        )
+    }
 
     const perFile = hasFileReview(representative)
 
@@ -221,6 +259,15 @@ function RepresentativeStaffCard({ request, cardClassName }) {
                     </button>
                 )}
             </div>
+
+            {removals.length > 0 && (
+                <div className="rep-removals-block">
+                    <span>Earlier removed by the student</span>
+                    <ul className="rep-removals">
+                        {removals.map((removal) => <li key={removal.removal_id}>{removedLine(removal)}</li>)}
+                    </ul>
+                </div>
+            )}
 
             <DocumentPreviewModal url={preview.url} fileName={preview.name} onClose={() => setPreview({ url: null, name: '' })} />
         </div>

@@ -58,6 +58,22 @@ export async function loadRepresentative(requestId) {
     return { unavailable: false, representative: data }
 }
 
+// Representatives the student removed from this request, newest first
+// (20260929060000_representative_removals). [] until that migration is applied.
+export async function loadRepresentativeRemovals(requestId) {
+    const { data, error } = await supabase
+        .from('claim_representative_removals')
+        .select('removal_id, full_name, relationship, previous_status, removed_at')
+        .eq('request_id', requestId)
+        .order('removed_at', { ascending: false })
+
+    if (error) {
+        if (!isMissingTable(error)) console.error('LOAD REPRESENTATIVE REMOVALS ERROR:', error)
+        return []
+    }
+    return data || []
+}
+
 // request_id -> representative, for release-window lists.
 export async function loadRepresentativesByRequestIds(requestIds) {
     const ids = [...new Set((requestIds || []).filter(Boolean))]
