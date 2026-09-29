@@ -1,11 +1,38 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js'
 import { getCaptchaToken } from './captcha'
 import { supabase } from './supabase'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-export async function createEmployeeAccount({
+// The head adds an employee through the create-employee-account function
+// (server side, so no Cloudflare security check). Until that function is
+// deployed, it falls back to the old sign-up, which does need the check.
+export async function createEmployeeAccount(fields) {
+    const { data, error } = await supabase.functions.invoke('create-employee-account', { body: fields })
+
+    if (!error && data?.user) return data.user
+
+    // The function answered with its own error (e.g. email already used).
+    if (error instanceof FunctionsHttpError && error.context?.status !== 404) {
+        let message = error.message
+        try {
+            message = (await error.context.json())?.error || message
+        } catch {
+            // keep the generic message
+        }
+        throw new Error(message)
+    }
+
+    // Not deployed yet (404) or unreachable: use the old way.
+    if (error instanceof FunctionsHttpError || error instanceof FunctionsFetchError || error instanceof FunctionsRelayError) {
+        return createBySignUp(fields)
+    }
+
+    throw new Error(error?.message || 'The account could not be created.')
+}
+
+async function createBySignUp({
     email,
     password,
     firstName,

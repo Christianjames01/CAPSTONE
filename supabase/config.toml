@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.admin-update-student-email]
 verify_jwt = true
+
+[functions.create-employee-account]
+verify_jwt = true
