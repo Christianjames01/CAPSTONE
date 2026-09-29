@@ -19,13 +19,23 @@ export function loadTurnstile() {
     if (window.turnstile) return Promise.resolve(window.turnstile)
 
     scriptPromise ||= new Promise((resolve, reject) => {
+        const fail = () => {
+            scriptPromise = null
+            script.remove()
+            reject(new Error('The security check could not load. Check your connection, or turn off any ad blocker or privacy shield for this site, then try again.'))
+        }
+        const timer = setTimeout(fail, 15000)
         const script = document.createElement('script')
         script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
         script.async = true
-        script.onload = () => resolve(window.turnstile)
+        script.onload = () => {
+            clearTimeout(timer)
+            if (window.turnstile) resolve(window.turnstile)
+            else fail()
+        }
         script.onerror = () => {
-            scriptPromise = null
-            reject(new Error('The security check could not load. Check your connection and try again.'))
+            clearTimeout(timer)
+            fail()
         }
         document.head.appendChild(script)
     })
