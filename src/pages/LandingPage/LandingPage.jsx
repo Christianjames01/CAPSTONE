@@ -272,6 +272,9 @@ function PageProgress() {
 function ProcessSteps() {
     const ref = useRef(null);
     const progress = useScrollProgress(ref);
+    // The cards re-render as the rail fills, which would wipe a class added
+    // from outside React -- so their reveal ("is-in") is set here instead.
+    const shown = useInView(ref, { threshold: 0.1 });
     const lit = (i) => progress >= (i + 0.35) / PROCESS_STEPS.length;
 
     return (
@@ -288,7 +291,7 @@ function ProcessSteps() {
             <ol className="process-grid">
                 {PROCESS_STEPS.map((step, index) => (
                     <li
-                        className={`process-step${step.badge ? " is-highlight" : ""}${lit(index) ? " is-lit" : ""}`}
+                        className={`process-step${step.badge ? " is-highlight" : ""}${lit(index) ? " is-lit" : ""}${shown ? " is-in" : ""}`}
                         key={step.title}
                         data-reveal
                         style={{ "--d": `${(index % 3) * 110}ms` }}
