@@ -15,6 +15,8 @@ const POLL_MS = 4000
 // brings the full queue back at once. ?nodemo on the URL turns this off.
 const QUEUE_BEFORE_DEMO_MS = 60000
 const DEMO_ENABLED = typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('nodemo')
+// ?demoaudio also reads the walkthrough aloud on the TV.
+const DEMO_AUDIO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demoaudio')
 const TV_CTA = {
     title: <>Request online at <em>onlineregistrar.vercel.app</em></>,
     caption: 'Create a free CertiChain account on your phone and request your documents without queuing.',
@@ -61,6 +63,9 @@ function announce(queueNumber, ctx) {
     if (ctx) playChime(ctx)
 
     if (!window.speechSynthesis) return
+
+    // Cut off the walkthrough's voice-over, if any, before announcing.
+    window.speechSynthesis.cancel()
 
     const utterance = new SpeechSynthesisUtterance(
         `Now serving number ${queueNumber}. Please proceed to the counter.`
@@ -258,7 +263,7 @@ function QueueDisplay() {
                             <span className="qd-demo-badge">While you wait</span>
                             <strong>How to request your documents online</strong>
                         </div>
-                        <ExplainerPlayer key={demoRun} scenes={STUDENT_SCENES} cta={TV_CTA} label="How to request documents online" onEnd={endDemo} />
+                        <ExplainerPlayer key={demoRun} scenes={STUDENT_SCENES} cta={TV_CTA} label="How to request documents online" onEnd={endDemo} soundKey="tv" defaultSound={DEMO_AUDIO} />
                     </section>
                 )}
 

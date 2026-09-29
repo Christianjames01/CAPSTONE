@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { START_TOUR_EVENT } from '../lib/tourSteps'
 import { publishTourState } from '../lib/tourState'
+import { narrationSupported, readSoundPref, say, speaking, stopSpeaking, writeSoundPref } from '../lib/narration'
 import TourPreview from './TourPreview'
 import { useScrollLock } from '../lib/useScrollLock'
 import hcdcLogo from '../assets/hcdc-logo.png'
@@ -180,6 +181,11 @@ function ProductTour({ role, steps: allSteps }) {
     const [pointer, setPointer] = useState(null) // { x, y, rect, text }
     const [attempt, setAttempt] = useState(0) // re-looks for parts while a page loads
     const [intro, setIntro] = useState(false) // opening countdown
+    // Voice-over: reads each step and each part's caption; the demo waits
+    // for it before moving on.
+    const [soundOn, setSoundOn] = useState(() => narrationSupported() && readSoundPref('tour', false))
+    const soundRef = useRef(soundOn)
+    useEffect(() => { soundRef.current = soundOn })
     const areaEl = useRef(null)
     const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < MOBILE)
 
@@ -348,6 +354,7 @@ function ProductTour({ role, steps: allSteps }) {
         setIndex(-1)
         setPointer(null)
         setIntro(false)
+        stopSpeaking()
         if (key) writeDone(key)
     }, [key])
 
@@ -426,11 +433,16 @@ function ProductTour({ role, steps: allSteps }) {
         } else if (playing && !intro) {
             const isLastStep = index === steps.length - 1
             const wait = part ? DWELL_MS : route ? PAGE_ONLY_MS : PICTURE_MS
-            timer = setTimeout(() => {
+            const advance = () => {
+                if (soundRef.current && speaking()) {
+                    timer = setTimeout(advance, 250)
+                    return
+                }
                 if (part && hl + 1 < parts.length) setHl(hl + 1)
                 else if (!isLastStep) goTo(index + 1)
                 else setPlaying(false)
-            }, wait)
+            }
+            timer = setTimeout(advance, wait)
         }
 
         return () => {
@@ -441,6 +453,33 @@ function ProductTour({ role, steps: allSteps }) {
             window.removeEventListener('resize', place)
         }
     }, [ready, pageReady, route, step, portal, hl, playing, intro, index, steps.length, goTo, attempt])
+
+    // Read the step when it opens, then each part's caption as the pointer
+    // reaches it (queued after the step).
+    const pointerText = pointer?.text || null
+    useEffect(() => {
+        if (!open || !soundOn || intro || !playing || !ready) return
+        say(`${step.title.replace(/^\d+\.\s*/, '')}. ${step.body}`, { interrupt: true })
+    }, [open, soundOn, intro, playing, ready, step])
+
+    useEffect(() => {
+        if (open && soundOn && !intro && playing && pointerText) say(pointerText)
+    }, [open, soundOn, intro, playing, pointerText, hl])
+
+    useEffect(() => {
+        if (!playing) stopSpeaking()
+    }, [playing])
+
+    useEffect(() => {
+        if (open && intro && soundOn) say('Guided demo. A quick tour of your portal.', { interrupt: true })
+    }, [open, intro, soundOn])
+
+    const toggleSound = () => {
+        const next = !soundOn
+        setSoundOn(next)
+        writeSoundPref('tour', next)
+        if (!next) stopSpeaking()
+    }
 
     useEffect(() => {
         if (!open) return undefined
@@ -584,6 +623,22 @@ function ProductTour({ role, steps: allSteps }) {
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
                         )}
                     </button>
+                    {narrationSupported() && (
+                        <button
+                            type="button"
+                            className={`tour-sound${soundOn ? ' is-on' : ''}`}
+                            onClick={toggleSound}
+                            aria-pressed={soundOn}
+                            aria-label={soundOn ? 'Turn the voice-over off' : 'Turn the voice-over on'}
+                            title={soundOn ? 'Sound on' : 'Sound off'}
+                        >
+                            {soundOn ? (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z" /><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></svg>
+                            ) : (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z" /><path d="m16 9.5 5 5M21 9.5l-5 5" /></svg>
+                            )}
+                        </button>
+                    )}
                     <span className="tour-actions-spacer" />
                     {index > 0 && (
                         <button type="button" className="tour-back" onClick={back}>Back</button>

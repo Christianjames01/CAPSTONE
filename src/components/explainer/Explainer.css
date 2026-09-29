@@ -2101,3 +2101,45 @@
 .lpx-inbox {
     min-width: 12em;
 }
+
+/* Voice-over toggle beside the play button. */
+.lpx-sound {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.14));
+    border-radius: 50%;
+    background: transparent;
+    color: var(--slate, #57616F);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.lpx-sound svg {
+    width: 19px;
+    height: 19px;
+}
+
+.lpx-sound:hover {
+    border-color: var(--blue-accent, var(--blue, #123B78));
+    color: var(--blue-accent, var(--blue, #123B78));
+}
+
+.lpx-sound.is-on {
+    border-color: transparent;
+    background: var(--blue-tint, #EAF1FB);
+    color: var(--blue-accent, var(--blue, #123B78));
+}
+
+.lpx-sound.is-on svg path:last-child {
+    animation: lpx-waves 1.2s ease-in-out infinite;
+}
+
+@keyframes lpx-waves {
+    50% { opacity: 0.35; }
+}

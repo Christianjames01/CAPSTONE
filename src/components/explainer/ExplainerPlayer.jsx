@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon } from './icons'
+import { narrationSupported, readSoundPref, say, speaking, stopSpeaking, writeSoundPref } from '../../lib/narration'
 import './Explainer.css'
 
 // A video-style motion walkthrough (no video file): animated copies of the
@@ -10,6 +11,7 @@ import './Explainer.css'
 //
 // scenes: [{ key, chapter, title, text, ms, View }] -- View receives `cta`.
 // onEnd: called when the last scene finishes.
+// soundKey / defaultSound: the voice-over (Sound button) -- remembered per key.
 // cta: { title?, caption?, primary: { label, href | onClick }, secondary? } for
 // the last scene (key "cta").
 
@@ -35,7 +37,7 @@ function useSeen(ref, threshold) {
     return seen || typeof IntersectionObserver === 'undefined'
 }
 
-function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', onEnd }) {
+function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', onEnd, soundKey = 'walkthrough', defaultSound = false }) {
     const rootRef = useRef(null)
     const inView = useSeen(rootRef, 0.45)
     // One clock: which scene, how far into it, and whether the end was reached.
@@ -45,6 +47,11 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     const [choice, setChoice] = useState(null)
     const playing = !clock.ended && (choice === null ? autoplay && inView && !reducedMotion() : choice)
     const { scene, elapsed, ended, run } = clock
+
+    // Voice-over: each scene waits for the narrator to finish.
+    const [soundOn, setSoundOn] = useState(() => narrationSupported() && readSoundPref(soundKey, defaultSound))
+    const soundRef = useRef(soundOn)
+    useEffect(() => { soundRef.current = soundOn })
 
     useEffect(() => {
         if (!playing) return undefined
@@ -56,6 +63,7 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
             setClock((c) => {
                 const next = c.elapsed + delta
                 if (next < scenes[c.scene].ms) return { ...c, elapsed: next }
+                if (soundRef.current && speaking()) return { ...c, elapsed: scenes[c.scene].ms }
                 if (c.scene < scenes.length - 1) return { ...c, scene: c.scene + 1, elapsed: 0 }
                 return { ...c, elapsed: scenes[c.scene].ms, ended: true }
             })
@@ -71,6 +79,22 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     useEffect(() => { onEndRef.current = onEnd })
     useEffect(() => { if (ended) onEndRef.current?.() }, [ended])
 
+    const current = scenes[scene]
+    const narration = `${current.title}. ${current.key === 'cta' && cta?.caption ? cta.caption : current.text}`
+
+    useEffect(() => {
+        if (!soundOn || !playing) return undefined
+        say(narration, { interrupt: true })
+        return () => stopSpeaking()
+    }, [soundOn, playing, narration, run])
+
+    const toggleSound = () => {
+        const next = !soundOn
+        setSoundOn(next)
+        writeSoundPref(soundKey, next)
+        if (!next) stopSpeaking()
+    }
+
     const goTo = useCallback((i) => {
         setClock((c) => ({ scene: i, elapsed: 0, ended: false, run: c.run + 1 }))
         setChoice(!reducedMotion())
@@ -81,7 +105,6 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
         else setChoice(!playing)
     }
 
-    const current = scenes[scene]
     const View = current.View
     const sceneProgress = Math.min(1, elapsed / current.ms)
 
@@ -113,6 +136,19 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
                 <button type="button" className="lpx-play" onClick={togglePlay} aria-label={ended ? 'Replay' : playing ? 'Pause' : 'Play'}>
                     {ended ? Icon.replay : playing ? Icon.pause : Icon.play}
                 </button>
+
+                {narrationSupported() && (
+                    <button
+                        type="button"
+                        className={`lpx-sound${soundOn ? ' is-on' : ''}`}
+                        onClick={toggleSound}
+                        aria-pressed={soundOn}
+                        aria-label={soundOn ? 'Turn the voice-over off' : 'Turn the voice-over on'}
+                        title={soundOn ? 'Sound on' : 'Sound off'}
+                    >
+                        {soundOn ? Icon.volume : Icon.mute}
+                    </button>
+                )}
 
                 <div className="lpx-chapters" role="tablist" aria-label="Chapters">
                     {scenes.map((s, i) => (
