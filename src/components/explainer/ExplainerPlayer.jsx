@@ -9,6 +9,7 @@ import './Explainer.css'
 // can step through.
 //
 // scenes: [{ key, chapter, title, text, ms, View }] -- View receives `cta`.
+// onEnd: called when the last scene finishes.
 // cta: { title?, caption?, primary: { label, href | onClick }, secondary? } for
 // the last scene (key "cta").
 
@@ -34,7 +35,7 @@ function useSeen(ref, threshold) {
     return seen || typeof IntersectionObserver === 'undefined'
 }
 
-function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough' }) {
+function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', onEnd }) {
     const rootRef = useRef(null)
     const inView = useSeen(rootRef, 0.45)
     // One clock: which scene, how far into it, and whether the end was reached.
@@ -63,6 +64,12 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough' }
         frame = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(frame)
     }, [playing, scenes])
+
+    // Tell the page when the last scene has finished (e.g. the lobby TV
+    // goes back to the queue).
+    const onEndRef = useRef(onEnd)
+    useEffect(() => { onEndRef.current = onEnd })
+    useEffect(() => { if (ended) onEndRef.current?.() }, [ended])
 
     const goTo = useCallback((i) => {
         setClock((c) => ({ scene: i, elapsed: 0, ended: false, run: c.run + 1 }))

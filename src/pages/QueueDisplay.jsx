@@ -4,9 +4,21 @@ import { supabase } from '../lib/supabase'
 import { formatQueueNumber, todayStr } from '../lib/queue'
 import hcdcLogo from '../assets/hcdc-logo.png'
 import hcdcBackground from '../assets/footer-building.jpg'
+import ExplainerPlayer from '../components/explainer/ExplainerPlayer'
+import { STUDENT_SCENES } from '../components/explainer/sceneLists'
 import './QueueDisplay.css'
 
 const POLL_MS = 4000
+
+// Between calls the TV plays the student walkthrough (how to request
+// documents online) with the queue shrunk into a side panel; a new call
+// brings the full queue back at once. ?nodemo on the URL turns this off.
+const QUEUE_BEFORE_DEMO_MS = 60000
+const DEMO_ENABLED = typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('nodemo')
+const TV_CTA = {
+    title: <>Request online at <em>onlineregistrar.vercel.app</em></>,
+    caption: 'Create a free CertiChain account on your phone and request your documents without queuing.',
+}
 
 // Rotated through instead of repeating one line back-to-back, so the
 // footer ticker reads as a handful of distinct announcements rather than
@@ -65,6 +77,9 @@ function QueueDisplay() {
     const [clock, setClock] = useState(new Date())
     const [justCalled, setJustCalled] = useState(false)
     const [soundReady, setSoundReady] = useState(false)
+    const [demo, setDemo] = useState(false) // walkthrough on, queue in the side panel
+    const [demoRun, setDemoRun] = useState(0)
+    const [back, setBack] = useState(false) // the queue growing back to full size
     const lastAnnouncedKey = useRef(null)
     const audioCtxRef = useRef(null)
     const wakeLockRef = useRef(null)
@@ -137,6 +152,23 @@ function QueueDisplay() {
         }
     }
 
+    // After a quiet minute on the queue, play the walkthrough (restarts
+    // whenever the number being served changes).
+    useEffect(() => {
+        if (!DEMO_ENABLED || !soundReady || demo || justCalled) return undefined
+        const t = setTimeout(() => {
+            setDemo(true)
+            setDemoRun((r) => r + 1)
+        }, QUEUE_BEFORE_DEMO_MS)
+        return () => clearTimeout(t)
+    }, [soundReady, demo, justCalled, nowServing])
+
+    const endDemo = () => {
+        setDemo(false)
+        setBack(true)
+        setTimeout(() => setBack(false), 1200)
+    }
+
     const loadQueue = async () => {
         const today = todayStr()
 
@@ -160,6 +192,7 @@ function QueueDisplay() {
             if (key !== lastAnnouncedKey.current) {
                 lastAnnouncedKey.current = key
                 if (!isFirstCheck) {
+                    setDemo(false)
                     announce(current.queue_number, audioCtxRef.current)
                     setJustCalled(true)
                     setTimeout(() => setJustCalled(false), 6000)
@@ -218,7 +251,17 @@ function QueueDisplay() {
                 </div>
             </header>
 
-            <main className="qd-main">
+            <main className={`qd-main${demo ? ' is-demo' : ''}${back ? ' is-back' : ''}`}>
+                {demo && (
+                    <section className="qd-demo" aria-label="How to request documents online">
+                        <div className="qd-demo-head">
+                            <span className="qd-demo-badge">While you wait</span>
+                            <strong>How to request your documents online</strong>
+                        </div>
+                        <ExplainerPlayer key={demoRun} scenes={STUDENT_SCENES} cta={TV_CTA} label="How to request documents online" onEnd={endDemo} />
+                    </section>
+                )}
+
                 <section className={`qd-now-card${justCalled ? ' is-flash' : ''}${nowServing ? '' : ' is-idle'}`} aria-live="polite">
                     <div className="qd-now-head">
                         <span className="qd-live">

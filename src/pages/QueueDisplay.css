@@ -677,3 +677,213 @@
         animation: none;
     }
 }
+
+/* ---- Demo mode: the walkthrough plays, the queue shrinks to a side panel -- */
+.qd-main {
+    grid-template-areas: "now next";
+}
+
+.qd-now-card { grid-area: now; }
+.qd-upnext { grid-area: next; }
+.qd-demo { grid-area: demo; }
+
+.qd-main.is-demo {
+    grid-template-columns: minmax(0, 1fr) clamp(260px, 22vw, 380px);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+        "demo now"
+        "demo next";
+}
+
+.qd-demo {
+    /* The page tokens the walkthrough's controls and caption use. */
+    --paper: #F1F4FA;
+    --ink: #101827;
+    --slate: #5B6678;
+    --line: rgba(16, 24, 39, 0.12);
+    --blue: #123B78;
+    --blue-dark: #0A2450;
+    --blue-accent: #123B78;
+    --red: #C8102E;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 0;
+    overflow: hidden;
+    padding: clamp(14px, 2vh, 24px) clamp(16px, 2vw, 28px);
+    border-radius: 32px;
+    background: var(--qd-card);
+    color: var(--qd-ink);
+    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.6);
+    animation: qd-demo-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.qd-demo-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: clamp(8px, 1.4vh, 16px);
+}
+
+.qd-demo-head strong {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(18px, 2.6vh, 28px);
+    font-weight: 700;
+}
+
+.qd-demo-badge {
+    flex-shrink: 0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--qd-red);
+    color: #fff;
+    font-size: clamp(11px, 1.4vh, 14px);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Fit the 16:9 stage, its controls and caption in the screen height. */
+.qd-demo .lpx-player {
+    width: 100%;
+    max-width: calc((100vh - 480px) * 16 / 9);
+    margin: 0 auto;
+}
+
+.qd-demo .lpx-caption {
+    margin-top: clamp(8px, 1.2vh, 16px);
+}
+
+.qd-demo .lpx-caption strong {
+    font-size: clamp(16px, 2.2vh, 24px);
+}
+
+.qd-demo .lpx-caption p {
+    font-size: clamp(13px, 1.7vh, 18px);
+    color: var(--qd-slate);
+}
+
+@keyframes qd-demo-in {
+    from { opacity: 0; transform: translateX(-4%) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+/* The queue shrinks into the side panel... */
+.qd-main.is-demo .qd-now-card,
+.qd-main.is-demo .qd-upnext {
+    border-radius: 24px;
+    animation: qd-shrink 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.qd-main.is-demo .qd-upnext {
+    animation-delay: 0.08s;
+}
+
+@keyframes qd-shrink {
+    from { opacity: 0.4; transform: translateX(-30%) scale(1.35); }
+    to { opacity: 1; transform: none; }
+}
+
+.qd-main.is-demo .qd-now-head {
+    padding-top: clamp(14px, 2vh, 22px);
+}
+
+.qd-main.is-demo .qd-live {
+    padding: 6px 14px;
+    font-size: clamp(11px, 1.4vh, 14px);
+}
+
+.qd-main.is-demo .qd-now-body {
+    padding: clamp(6px, 1vh, 12px) 12px;
+}
+
+.qd-main.is-demo .qd-now-number {
+    font-size: min(6vw, 11vh, 120px);
+}
+
+.qd-main.is-demo .qd-idle-icon-wrap {
+    width: clamp(70px, 10vh, 110px);
+    height: clamp(70px, 10vh, 110px);
+}
+
+.qd-main.is-demo .qd-now-sub {
+    margin: 0 14px 14px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: clamp(12px, 1.6vh, 16px);
+}
+
+.qd-main.is-demo .qd-now-watermark {
+    display: none;
+}
+
+.qd-main.is-demo .qd-upnext {
+    padding: clamp(14px, 2vh, 20px);
+}
+
+.qd-main.is-demo .qd-upnext-head h2 {
+    font-size: clamp(18px, 2.4vh, 24px);
+}
+
+.qd-main.is-demo .qd-ticket {
+    padding: clamp(8px, 1.1vh, 12px) 14px;
+}
+
+.qd-main.is-demo .qd-ticket-num {
+    font-size: clamp(20px, 3vh, 30px);
+}
+
+.qd-main.is-demo .qd-ticket:nth-child(n + 4),
+.qd-main.is-demo .qd-upnext-hint {
+    display: none;
+}
+
+/* ...and grows back when the walkthrough ends or a number is called. */
+.qd-main.is-back .qd-now-card,
+.qd-main.is-back .qd-upnext {
+    animation: qd-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes qd-grow {
+    from { opacity: 0.5; transform: translateX(20%) scale(0.75); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Portrait screens: walkthrough first, then the queue under it. */
+@media (max-width: 900px), (orientation: portrait) {
+    .qd-main,
+    .qd-main.is-demo {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        grid-template-areas: "now" "next";
+    }
+
+    .qd-main.is-demo {
+        grid-template-areas: "demo" "now" "next";
+    }
+
+    .qd-demo .lpx-player {
+        max-width: none;
+    }
+
+    .qd-main.is-demo .qd-now-card {
+        min-height: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .qd-demo,
+    .qd-main.is-demo .qd-now-card,
+    .qd-main.is-demo .qd-upnext,
+    .qd-main.is-back .qd-now-card,
+    .qd-main.is-back .qd-upnext {
+        animation: none;
+    }
+}
+
+.qd-demo button {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
