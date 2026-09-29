@@ -6,7 +6,8 @@ import { REGISTRAR_CONTACT } from "../../lib/registrarContact";
 import { DocumentSample } from "../../components/DocumentSample";
 import { useScrollLock } from "../../lib/useScrollLock";
 import HeroVisual from "./HeroVisual";
-import ExplainerPlayer from "./ExplainerPlayer";
+import ExplainerPlayer from "../../components/explainer/ExplainerPlayer";
+import { STUDENT_SCENES } from "../../components/explainer/sceneLists";
 import { useCountUp, useInView, useMagnetic, useReveal, useScrollProgress } from "./motion";
 import "./Landing.css";
 import "./LandingMotion.css";
@@ -232,6 +233,12 @@ const LANDING_FAQ = [
     ["How do I know a document is genuine?", "Every document CertiChain issues carries a unique credential number and QR code. Anyone — an employer, another school — can scan it or enter the number on the Verify page, no account required."],
 ];
 
+
+// The walkthrough ends with sign-up / log-in.
+const LANDING_CTA = {
+    primary: { label: "Create an account →", href: "/register" },
+    secondary: { label: "Log in", href: "/login" },
+};
 
 // Headline words that rise in one after another.
 const Words = ({ text, start = 0 }) =>
@@ -728,7 +735,7 @@ const LandingPage = () => {
                             </p>
                         </div>
                         <div data-reveal="scale" style={{ "--d": "120ms" }}>
-                            <ExplainerPlayer />
+                            <ExplainerPlayer scenes={STUDENT_SCENES} cta={LANDING_CTA} label="How CertiChain works" />
                         </div>
                     </div>
                 </section>

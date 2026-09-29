@@ -8,6 +8,7 @@ function StudentUserGuide() {
             intro="How to request, pay for, track and claim your documents."
             sections={STUDENT_GUIDE}
             cardClassName="student-card"
+            walkthrough="student"
         />
     )
 }

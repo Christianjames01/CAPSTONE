@@ -1,12 +1,25 @@
 import { useState } from 'react'
 import { START_TOUR_EVENT } from '../lib/tourSteps'
+import ExplainerPlayer from './explainer/ExplainerPlayer'
+import { EMPLOYEE_SCENES, HEAD_SCENES, STUDENT_SCENES } from './explainer/sceneLists'
 import './UserGuide.css'
 
-// In-app user manual: searchable, collapsible sections with numbered steps.
-// Content lives in lib/userGuideContent.js; each portal passes its own.
-function UserGuide({ title, intro, sections, cardClassName }) {
+// In-app user manual: a short motion walkthrough for the role, then
+// searchable, collapsible sections with numbered steps. Content lives in
+// lib/userGuideContent.js; each portal passes its own.
+
+const WALKTHROUGHS = {
+    student: { scenes: STUDENT_SCENES, label: 'How requesting a document works' },
+    employee: { scenes: EMPLOYEE_SCENES, label: 'How handling a request works' },
+    head: { scenes: HEAD_SCENES, label: 'How running the office works' },
+}
+
+const startDemo = () => window.dispatchEvent(new Event(START_TOUR_EVENT))
+
+function UserGuide({ title, intro, sections, cardClassName, walkthrough }) {
     const [query, setQuery] = useState('')
     const [open, setOpen] = useState(() => new Set(sections.slice(0, 1).map((s) => s.id)))
+    const video = WALKTHROUGHS[walkthrough]
 
     const q = query.trim().toLowerCase()
     const visible = q
@@ -28,19 +41,42 @@ function UserGuide({ title, intro, sections, cardClassName }) {
         requestAnimationFrame(() => document.getElementById(`guide-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     }
 
+    const cta = {
+        title: 'Now try it on the real pages',
+        caption: 'Start the guided demo to walk through each page of your portal, or read the guide below.',
+        primary: { label: '▶ Start the guided demo', onClick: startDemo },
+        secondary: {
+            label: 'Read the guide',
+            onClick: () => document.getElementById('guide-sections')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+        },
+    }
+
     return (
         <div className="ug">
             <div className="ug-header">
-                <div>
+                <div className="ug-anim" style={{ '--i': 0 }}>
                     <h1>{title}</h1>
                     <p>{intro}</p>
                 </div>
-                <button type="button" className="ug-demo" onClick={() => window.dispatchEvent(new Event(START_TOUR_EVENT))}>
+                <button type="button" className="ug-demo ug-anim" style={{ '--i': 1 }} onClick={startDemo}>
                     <span aria-hidden="true">▶</span> Start demo
                 </button>
             </div>
 
-            <div className={`${cardClassName} ug-toolbar`}>
+            {video && (
+                <section className={`${cardClassName} ug-watch ug-anim`} style={{ '--i': 2 }} aria-label={video.label}>
+                    <div className="ug-watch-head">
+                        <span className="ug-watch-badge"><i /> Watch</span>
+                        <div>
+                            <strong>{video.label}</strong>
+                            <span>About a minute. Pick any chapter to jump ahead, or start the guided demo at the end.</span>
+                        </div>
+                    </div>
+                    <ExplainerPlayer scenes={video.scenes} cta={cta} label={video.label} />
+                </section>
+            )}
+
+            <div id="guide-sections" className={`${cardClassName} ug-toolbar ug-anim`} style={{ '--i': 3 }}>
                 <input
                     type="search"
                     className="ug-search"
@@ -51,7 +87,7 @@ function UserGuide({ title, intro, sections, cardClassName }) {
                 />
                 <div className="ug-toc">
                     {sections.map((s, i) => (
-                        <button key={s.id} type="button" className="ug-toc-item" onClick={() => jumpTo(s.id)}>
+                        <button key={s.id} type="button" className="ug-toc-item" style={{ '--i': i }} onClick={() => jumpTo(s.id)}>
                             <span>{i + 1}</span>{s.title}
                         </button>
                     ))}
@@ -64,12 +100,17 @@ function UserGuide({ title, intro, sections, cardClassName }) {
 
             {visible.length === 0 && <p className="ug-empty">Nothing in the guide matches “{query}”.</p>}
 
-            {visible.map((section) => {
+            {visible.map((section, index) => {
                 const number = sections.indexOf(section) + 1
                 const isOpen = q ? true : open.has(section.id)
 
                 return (
-                    <section key={section.id} id={`guide-${section.id}`} className={`${cardClassName} ug-section`}>
+                    <section
+                        key={section.id}
+                        id={`guide-${section.id}`}
+                        className={`${cardClassName} ug-section ug-anim${isOpen ? ' is-open' : ''}`}
+                        style={{ '--i': Math.min(index, 8) + 4 }}
+                    >
                         <button type="button" className="ug-section-head" onClick={() => toggle(section.id)} aria-expanded={isOpen}>
                             <span className="ug-number">{number}</span>
                             <span className="ug-section-title">
@@ -82,7 +123,7 @@ function UserGuide({ title, intro, sections, cardClassName }) {
                         {isOpen && (
                             <div className="ug-body">
                                 <ol className="ug-steps">
-                                    {section.steps.map((step) => <li key={step}>{step}</li>)}
+                                    {section.steps.map((step, i) => <li key={step} style={{ '--i': i }}>{step}</li>)}
                                 </ol>
                                 {section.tips?.map((tip) => (
                                     <p key={tip} className="ug-tip"><strong>Tip:</strong> {tip}</p>

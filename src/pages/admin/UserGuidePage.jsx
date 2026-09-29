@@ -8,6 +8,7 @@ function AdminUserGuide() {
             intro="How to run the Registrar’s Office in CertiChain as Registrar Head."
             sections={HEAD_GUIDE}
             cardClassName="admin-card"
+            walkthrough="head"
         />
     )
 }

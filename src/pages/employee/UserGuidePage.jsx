@@ -8,6 +8,7 @@ function EmployeeUserGuide() {
             intro="How to handle assigned requests, from verification to release."
             sections={EMPLOYEE_GUIDE}
             cardClassName="employee-card"
+            walkthrough="employee"
         />
     )
 }

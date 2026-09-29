@@ -231,3 +231,223 @@
         padding: 14px 16px;
     }
 }
+
+/* ---- Motion -------------------------------------------------------------- */
+.ug {
+    --ug-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ug-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+/* Header, walkthrough, toolbar and sections come in one after another. */
+.ug-anim {
+    animation: ug-rise 0.7s var(--ug-ease) calc(var(--i, 0) * 70ms) both;
+}
+
+@keyframes ug-rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+}
+
+.ug-demo {
+    position: relative;
+    border-radius: 999px;
+    box-shadow: 0 12px 24px -14px var(--blue);
+    transition: transform 0.2s var(--ug-spring), background 0.2s ease;
+}
+
+.ug-demo:hover {
+    transform: translateY(-2px);
+}
+
+.ug-demo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 0 var(--blue-accent, var(--blue));
+    animation: ug-pulse 2.4s ease-out 1.2s infinite;
+    pointer-events: none;
+}
+
+@keyframes ug-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(18, 59, 120, 0.45); }
+    70%, 100% { box-shadow: 0 0 0 12px rgba(18, 59, 120, 0); }
+}
+
+/* Walkthrough card */
+.ug-watch {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.ug-watch::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--red));
+}
+
+.ug-watch-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ug-watch-head strong {
+    display: block;
+    font-size: 16px;
+    color: var(--ink);
+}
+
+.ug-watch-head span {
+    font-size: 13px;
+    color: var(--slate);
+}
+
+.ug-watch-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.1));
+    color: var(--red) !important;
+    font-size: 11.5px !important;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.ug-watch-badge i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: ug-live 1.4s ease-in-out infinite;
+}
+
+@keyframes ug-live {
+    50% { opacity: 0.3; transform: scale(0.8); }
+}
+
+.ug-watch .lpx-caption strong {
+    font-size: 19px;
+}
+
+.ug-watch .lpx-caption p {
+    font-size: 14px;
+    color: var(--slate);
+}
+
+/* Table of contents chips pop in; hover lifts them. */
+.ug-toc-item {
+    animation: ug-chip 0.45s var(--ug-spring) calc(var(--i, 0) * 45ms + 300ms) both;
+    transition: transform 0.2s var(--ug-spring), border-color 0.15s ease, background 0.15s ease;
+}
+
+.ug-toc-item:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes ug-chip {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Sections: a side bar when open; steps slide in one by one. */
+.ug-section {
+    position: relative;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.ug-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--blue), var(--red));
+    transform: scaleY(0);
+    transform-origin: top center;
+    transition: transform 0.4s var(--ug-ease);
+}
+
+.ug-section.is-open::before {
+    transform: scaleY(1);
+}
+
+.ug-section.is-open {
+    box-shadow: 0 18px 36px -30px rgba(10, 36, 80, 0.55);
+}
+
+.ug-number {
+    transition: transform 0.3s var(--ug-spring), background 0.2s ease;
+}
+
+.ug-section.is-open .ug-number {
+    background: var(--red);
+    transform: scale(1.08);
+}
+
+.ug-chevron {
+    transition: transform 0.25s var(--ug-spring);
+}
+
+.ug-body {
+    animation: ug-open 0.35s var(--ug-ease) both;
+}
+
+@keyframes ug-open {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.ug-steps li {
+    animation: ug-step 0.45s var(--ug-ease) calc(var(--i, 0) * 60ms + 80ms) both;
+}
+
+@keyframes ug-step {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: none; }
+}
+
+.ug-tip {
+    animation: ug-open 0.4s var(--ug-ease) 0.3s both;
+}
+
+@media (max-width: 620px) {
+    /* The walkthrough uses the full card width on phones. */
+    .ug-watch {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    .ug-watch-head {
+        padding: 0 6px;
+    }
+
+    .ug-watch-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ug-anim,
+    .ug-toc-item,
+    .ug-body,
+    .ug-steps li,
+    .ug-tip,
+    .ug-demo::after,
+    .ug-watch-badge i {
+        animation: none;
+    }
+}
