@@ -82,11 +82,28 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     const current = scenes[scene]
     const narration = `${current.title}. ${current.key === 'cta' && cta?.caption ? cta.caption : current.text}`
 
+    // Say each scene once. Only a replay (run changes) says it again; a
+    // re-render doesn't restart it.
+    const spokenRunRef = useRef(run)
+    // Whether this player is the one talking (another player on the page
+    // mustn't cut it off).
+    const talkingRef = useRef(false)
     useEffect(() => {
-        if (!soundOn || !playing) return undefined
-        say(narration, { interrupt: true })
-        return () => stopSpeaking()
+        if (!soundOn || !playing) return
+        const replay = spokenRunRef.current !== run
+        spokenRunRef.current = run
+        talkingRef.current = true
+        say(narration, { interrupt: true, force: replay })
     }, [soundOn, playing, narration, run])
+
+    // Quiet when paused or the sound is turned off, and when leaving.
+    useEffect(() => {
+        if ((!soundOn || !playing) && talkingRef.current) {
+            talkingRef.current = false
+            stopSpeaking()
+        }
+    }, [soundOn, playing])
+    useEffect(() => () => { if (talkingRef.current) stopSpeaking() }, [])
 
     const toggleSound = () => {
         const next = !soundOn

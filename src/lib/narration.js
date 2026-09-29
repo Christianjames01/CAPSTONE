@@ -51,13 +51,27 @@ function forSpeech(text) {
         .trim()
 }
 
+// Lines already said (or queued) for the current scene/step. The players
+// can ask for the same line again when they re-render; it's only said once.
+let saidLines = new Set()
+
 // interrupt: stop whatever is being said first (a new scene or step);
 // otherwise it's queued after it (captions within a step).
-export function say(text, { interrupt = false } = {}) {
+// force: say it again even if it was already said (the viewer replayed it).
+export function say(text, { interrupt = false, force = false } = {}) {
     if (!narrationSupported() || !text) return
+    const line = forSpeech(text)
+    if (!line) return
+    if (saidLines.has(line) && !force) return
+
     const synth = window.speechSynthesis
-    if (interrupt) synth.cancel()
-    const u = new SpeechSynthesisUtterance(forSpeech(text))
+    if (interrupt) {
+        synth.cancel()
+        saidLines = new Set()
+    }
+    saidLines.add(line)
+
+    const u = new SpeechSynthesisUtterance(line)
     const voice = pickVoice()
     if (voice) u.voice = voice
     u.lang = voice?.lang || 'en-US'
@@ -66,7 +80,9 @@ export function say(text, { interrupt = false } = {}) {
     synth.speak(u)
 }
 
+// Pause / sound off / leaving: stop, and let the lines be said again later.
 export function stopSpeaking() {
+    saidLines = new Set()
     if (narrationSupported()) window.speechSynthesis.cancel()
 }
 
