@@ -30,6 +30,9 @@ async function saveWithSafeguards(run, safeguards) {
     return result
 }
 
+// Request statuses after the payment was verified.
+const PAID_STATUSES = ['receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming', 'completed']
+
 function UploadReceipt() {
     const { requestId } = useParams()
     const navigate = useNavigate()
@@ -172,6 +175,12 @@ function UploadReceipt() {
 
             setCurrentReceipt(existingReceipt || null)
 
+            // Rejected: keep the same receipt number -- only a clearer photo
+            // is needed.
+            if (!silent && existingReceipt?.status === 'rejected' && existingReceipt.receipt_number) {
+                setReceiptNumber(existingReceipt.receipt_number)
+            }
+
             // Requests submitted together (batch_id; the column may not
             // exist before its migration -- then there are no siblings).
             const { data: batchRow } = await supabase
@@ -219,11 +228,27 @@ function UploadReceipt() {
         }
     }
 
+    // One receipt at a time: once uploaded it waits for the Registrar. A new
+    // one can be uploaded only if that one is rejected (and never after it's
+    // verified or the request is cancelled).
+    const receiptStatus = currentReceipt?.status || null
+    const verified = receiptStatus === 'verified' || PAID_STATUSES.includes(request?.status)
+    const awaitingReview = !!currentReceipt && receiptStatus !== 'rejected' && !verified
+    const cancelled = request?.status === 'cancelled'
+    const canUpload = !awaitingReview && !verified && !cancelled
+
     const handleUpload = async (e) => {
         e.preventDefault()
 
         setError('')
         setMessage('')
+
+        if (!canUpload) {
+            setError(awaitingReview
+                ? 'Your receipt is still waiting for the Registrar. You can upload a new one only if it is rejected.'
+                : 'A receipt can no longer be uploaded for this request.')
+            return
+        }
 
         if (!receiptNumber.trim()) {
             setError('Please enter the receipt number printed on your official receipt.')
@@ -281,6 +306,22 @@ function UploadReceipt() {
 
         try {
             setUploading(true)
+
+            // Check the latest state first (another tab or device may have
+            // uploaded one in the meantime).
+            const { data: latest } = await supabase
+                .from('official_receipts')
+                .select('status')
+                .eq('request_id', requestId)
+                .eq('student_id', student.student_id)
+                .maybeSingle()
+
+            if (latest && latest.status !== 'rejected') {
+                await loadRequest({ silent: true })
+                throw new Error(latest.status === 'verified'
+                    ? 'Your payment is already verified.'
+                    : 'A receipt was already uploaded and is waiting for the Registrar. You can upload a new one only if it is rejected.')
+            }
 
             // Photos are shrunk before upload (a few hundred KB instead of
             // several MB); PDFs go up as they are.
@@ -518,6 +559,15 @@ function UploadReceipt() {
                 setSiblings((prev) => prev.filter((sib) => !includeIds.has(sib.request_id) || failed.includes(sib.request_number)))
             }
 
+            // Lock the form: this receipt now waits for the Registrar.
+            setCurrentReceipt({
+                ...(currentReceipt || {}),
+                status: 'uploaded',
+                receipt_number: safeguards.receipt_number,
+                receipt_file_name: receiptFile.name,
+                uploaded_at: new Date().toISOString(),
+                rejection_reason: null,
+            })
             setReceiptFile(null)
             setReceiptNumber('')
 
@@ -638,6 +688,49 @@ function UploadReceipt() {
                 {error && <div className="student-error-box">{error}</div>}
                 {message && <div className="student-success-box">{message}</div>}
 
+                {!canUpload ? (
+                    <div className={`receipt-lock is-${verified ? 'verified' : cancelled ? 'cancelled' : 'waiting'}`}>
+                        <span className="receipt-lock-icon" aria-hidden="true">
+                            {verified ? '✓' : cancelled ? '×' : <i />}
+                        </span>
+                        <div>
+                            <strong>
+                                {verified
+                                    ? 'Payment verified'
+                                    : cancelled
+                                        ? 'This request was cancelled'
+                                        : 'Waiting for the Registrar to verify your receipt'}
+                            </strong>
+                            <p>
+                                {verified
+                                    ? 'Your receipt was accepted. Nothing more to upload for this request.'
+                                    : cancelled
+                                        ? 'Receipts can no longer be uploaded for it.'
+                                        : 'You can’t upload another receipt while this one is being checked. If the Registrar rejects it, you’ll be notified with the reason and can upload a clearer photo here.'}
+                            </p>
+                            {currentReceipt && (
+                                <dl className="receipt-lock-details">
+                                    {currentReceipt.receipt_number && <div><dt>Receipt no.</dt><dd>{currentReceipt.receipt_number}</dd></div>}
+                                    {currentReceipt.receipt_file_name && <div><dt>File</dt><dd>{currentReceipt.receipt_file_name}</dd></div>}
+                                    {currentReceipt.uploaded_at && <div><dt>Uploaded</dt><dd>{formatDisplayDateTime(currentReceipt.uploaded_at)}</dd></div>}
+                                </dl>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                <>
+                {receiptStatus === 'rejected' && (
+                    <div className="student-notice tone-danger" style={{ marginTop: 0, marginBottom: 16 }}>
+                        <strong>Upload a clearer photo of the same receipt</strong>
+                        <p>
+                            {currentReceipt.rejection_reason
+                                ? `The Registrar rejected your last upload: ${currentReceipt.rejection_reason}`
+                                : 'The Registrar rejected your last upload.'}
+                            {' '}You don’t need to pay again — make sure the whole receipt, its number and the amount are clear.
+                        </p>
+                    </div>
+                )}
+
                 <form onSubmit={handleUpload}>
                     <div className="form-group">
                         <label className="form-label" htmlFor="receipt-number">Receipt Number</label>
@@ -671,7 +764,7 @@ function UploadReceipt() {
                         />
 
                         <small style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--slate)' }}>
-                            Accepted: JPG, PNG, WEBP, PDF. Maximum 5 MB.
+                            Accepted: JPG, PNG, WEBP, PDF. Photos are resized automatically; PDFs up to 5 MB.
                         </small>
 
                         {receiptFile && (
@@ -722,9 +815,11 @@ function UploadReceipt() {
                             ? 'Uploading...'
                             : includeIds.size > 0 && siblings.length > 0
                                 ? `Upload for ${1 + siblings.filter((sib) => includeIds.has(sib.request_id)).length} requests`
-                                : 'Upload Official Receipt'}
+                                : receiptStatus === 'rejected' ? 'Upload New Receipt' : 'Upload Official Receipt'}
                     </button>
                 </form>
+                </>
+                )}
             </div>
         </div>
     )

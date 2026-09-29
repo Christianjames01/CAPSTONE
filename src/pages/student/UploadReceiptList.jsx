@@ -183,7 +183,11 @@ function UploadReceiptList() {
                                 className="student-link-button"
                                 onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
                             >
-                                {request.receipt ? 'Update receipt →' : 'Upload receipt →'}
+                                {!request.receipt
+                                    ? 'Upload receipt →'
+                                    : request.receipt.status === 'rejected'
+                                        ? 'Upload a clearer receipt →'
+                                        : 'View receipt →'}
                             </button>
                         </div>
 

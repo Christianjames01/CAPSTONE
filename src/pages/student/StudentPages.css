@@ -693,3 +693,100 @@
 .rq-cover-total strong {
     font-size: 16px;
 }
+
+/* ---- Upload receipt: locked while the Registrar checks it --------------- */
+.receipt-lock {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--blue-accent, var(--blue));
+    border-radius: 14px;
+    background: var(--blue-tint);
+}
+
+.receipt-lock.is-verified {
+    border-left-color: var(--success-text, #1e8a5f);
+    background: var(--success-bg, rgba(30, 138, 95, 0.1));
+}
+
+.receipt-lock.is-cancelled {
+    border-left-color: var(--slate);
+    background: var(--paper);
+}
+
+.receipt-lock-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--blue-accent, var(--blue));
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.receipt-lock.is-verified .receipt-lock-icon {
+    background: var(--success-text, #1e8a5f);
+}
+
+.receipt-lock.is-cancelled .receipt-lock-icon {
+    background: var(--slate);
+}
+
+/* Waiting: a small spinner. */
+.receipt-lock-icon i {
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: receipt-lock-spin 1s linear infinite;
+}
+
+@keyframes receipt-lock-spin {
+    to { transform: rotate(360deg); }
+}
+
+.receipt-lock strong {
+    display: block;
+    font-size: 15px;
+    color: var(--ink);
+}
+
+.receipt-lock p {
+    margin-top: 4px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--slate);
+}
+
+.receipt-lock-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 12px 0 0;
+}
+
+.receipt-lock-details dt {
+    font-size: 11.5px;
+    color: var(--slate);
+}
+
+.receipt-lock-details dd {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .receipt-lock-icon i {
+        animation: none;
+    }
+}

@@ -922,16 +922,15 @@ function RequestDetails() {
                         <h3 style={{ fontSize: 15, marginBottom: 10 }}>Official Receipt Uploaded</h3>
 
                         <p style={{ color: 'var(--slate)', fontSize: 13.5, marginBottom: 12 }}>
-                            Your receipt is waiting for the Registrar to verify your payment. Uploaded the wrong
-                            file? You can replace it until it's verified.
+                            Your receipt is waiting for the Registrar to verify your payment. You can upload
+                            another one only if this one is rejected — you'll be notified with the reason.
                         </p>
 
                         <button
-                            className="auth-submit"
-                            style={{ width: 'auto', padding: '11px 20px' }}
+                            className="student-link-button"
                             onClick={() => navigate(`/student/request/${request.request_id}/upload-receipt`)}
                         >
-                            View or Replace Receipt
+                            View receipt →
                         </button>
                     </div>
                 )}
