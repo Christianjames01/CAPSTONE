@@ -69,7 +69,7 @@ function areaCandidates(step, portal) {
 // Parts of a typical list page, used when a step has no highlights of its own.
 function genericHighlights(portal) {
     return [
-        { selector: `.${portal}-page-header h1, .${portal}-page-header-row h1, .${portal}-dashboard-header h1`, text: 'This is the page — here’s what’s on it.' },
+        { selector: `.${portal}-page-header h1, .${portal}-page-header-row h1, .${portal}-dashboard-header h1`, text: 'The page you’re on.', pageName: true, silent: true },
         { selector: '.page-stats, .dash-overview-grid', text: 'A quick summary at the top. Tap a tile to filter.' },
         { selector: `.ui-search-field, .${portal}-search-field, .chat-search`, text: 'Search the list.' },
         { selector: `.${portal}-filter-row, .chat-tabs`, text: 'Filter by status.' },
@@ -120,7 +120,14 @@ function findPart(selector) {
 // list only keeps what's there.
 function resolveHighlights(step, portal) {
     if (step.highlights) return step.highlights.map((h) => ({ ...h, el: findPart(h.selector) }))
-    return genericHighlights(portal).map((h) => ({ ...h, el: findPart(h.selector) })).filter((h) => h.el)
+    return genericHighlights(portal)
+        .map((h) => ({ ...h, el: findPart(h.selector) }))
+        .filter((h) => h.el)
+        // Name the actual page; not read aloud (the step was just introduced).
+        .map((h) => {
+            const name = h.pageName ? h.el.textContent.replace(/\s+/g, ' ').trim() : ''
+            return name ? { ...h, text: name + ' — the page you’re on.' } : h
+        })
 }
 
 // The sidebar link's box if it's actually on screen (it's off-canvas on
@@ -393,6 +400,7 @@ function ProductTour({ role, steps: allSteps }) {
                 y: r.top + Math.min(r.height * 0.62, 34),
                 rect: r,
                 text: part.text,
+                silent: !!part.silent,
             })
         }
 
@@ -456,7 +464,7 @@ function ProductTour({ role, steps: allSteps }) {
 
     // Read the step when it opens, then each part's caption as the pointer
     // reaches it (queued after the step).
-    const pointerText = pointer?.text || null
+    const pointerText = (!pointer?.silent && pointer?.text) || null
     useEffect(() => {
         if (!open || !soundOn || intro || !playing || !ready) return
         say(`${step.title.replace(/^\d+\.\s*/, '')}. ${step.body}`, { interrupt: true })
