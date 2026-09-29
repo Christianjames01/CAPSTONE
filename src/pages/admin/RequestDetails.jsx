@@ -31,6 +31,15 @@ const OVERDUE_ELIGIBLE_STATUSES = [
 ]
 const OVERDUE_DAYS = 2
 
+// What a request with no required uploads is waiting on, for the overdue reminder.
+const NO_REQUIREMENT_NEXT_STEP = {
+    pending: 'It needs no requirements, so it is only waiting for the student to pay.',
+    payment_pending: 'It needs no requirements, so it is only waiting for the student to pay.',
+    receipt_uploaded: 'It needs no requirements. Check the uploaded receipt so it can move forward.',
+    receipt_verified: 'It needs no requirements and payment is verified. Start processing the document.',
+    processing: 'It needs no requirements. Finish the document and mark it Ready for Claiming.',
+}
+
 function formatDate(dateStr) {
     if (!dateStr) return ''
     return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-PH', {
@@ -1021,6 +1030,8 @@ function AdminRequestDetails() {
         : 0
 
     const isOverdue = daysSinceRequested >= OVERDUE_DAYS && OVERDUE_ELIGIBLE_STATUSES.includes(request.status)
+    // No required uploads: nothing can be "lacking", so don't offer that flag.
+    const needsRequirements = requirements.some((requirement) => requirement.document_requirements?.is_required === true)
 
     return (
         <div>
@@ -1048,17 +1059,25 @@ function AdminRequestDetails() {
             {isOverdue && (
                 <div className="admin-notice tone-warning" style={{ marginTop: 16 }}>
                     <strong>Pending for {daysSinceRequested} days</strong>
-                    <p style={{ marginBottom: 12 }}>
-                        This request hasn't moved in {daysSinceRequested} days. If the student is missing something, flag it as Lacking Requirements to let them know what's needed.
-                    </p>
-                    <button
-                        className="admin-primary-button"
-                        style={{ background: '#856404' }}
-                        onClick={flagLackingRequirements}
-                        disabled={saving}
-                    >
-                        Flag as Lacking Requirements
-                    </button>
+                    {needsRequirements ? (
+                        <>
+                            <p style={{ marginBottom: 12 }}>
+                                This request hasn't moved in {daysSinceRequested} days. If the student is missing something, flag it as Lacking Requirements to let them know what's needed.
+                            </p>
+                            <button
+                                className="admin-primary-button"
+                                style={{ background: '#856404' }}
+                                onClick={flagLackingRequirements}
+                                disabled={saving}
+                            >
+                                Flag as Lacking Requirements
+                            </button>
+                        </>
+                    ) : (
+                        <p style={{ margin: 0 }}>
+                            This request hasn't moved in {daysSinceRequested} days. {NO_REQUIREMENT_NEXT_STEP[request.status]}
+                        </p>
+                    )}
                 </div>
             )}
 
