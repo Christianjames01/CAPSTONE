@@ -11,6 +11,8 @@ import RepresentativeStudentCard from '../../components/RepresentativeStudentCar
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { autoRejectDates } from '../../lib/autoReject'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadDirectoryProfiles } from '../../lib/directoryProfiles'
 
 const STATUS_META = {
@@ -665,6 +667,20 @@ function RequestDetails() {
                     <div className="student-notice tone-danger">
                         <strong>Rejection Reason</strong>
                         <p>{request.rejection_reason}</p>
+                    </div>
+                )}
+
+                {autoRejectDates(request).rejectOn && (
+                    <div className="student-notice tone-warning">
+                        <strong>Upload the missing requirements by {formatDisplayDateTime(autoRejectDates(request).rejectOn)}</strong>
+                        <p>If nothing is uploaded by then, this request will be rejected automatically.</p>
+                    </div>
+                )}
+
+                {autoRejectDates(request).deleteOn && (
+                    <div className="student-notice tone-danger">
+                        <strong>This request will be removed on {formatDisplayDateTime(autoRejectDates(request).deleteOn)}</strong>
+                        <p>It was rejected automatically. You can submit a new request anytime.</p>
                     </div>
                 )}
 

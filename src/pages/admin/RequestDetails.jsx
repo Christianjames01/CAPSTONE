@@ -5,6 +5,8 @@ import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from 
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { autoRejectDates } from '../../lib/autoReject'
+import { formatDisplayDateTime } from '../../lib/formatDate'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
@@ -1055,6 +1057,23 @@ function AdminRequestDetails() {
                     {request.status.replace(/_/g, ' ')}
                 </span>
             </div>
+
+            {autoRejectDates(request).rejectOn && (
+                <div className="admin-notice tone-warning" style={{ marginTop: 16 }}>
+                    <strong>Auto-reject on {formatDisplayDateTime(autoRejectDates(request).rejectOn)}</strong>
+                    <p style={{ margin: 0 }}>
+                        Flagged {formatDisplayDateTime(request.flagged_at)}. If the student uploads no receipt and no
+                        requirements by then, the request is rejected automatically and removed 7 days later.
+                    </p>
+                </div>
+            )}
+
+            {autoRejectDates(request).deleteOn && (
+                <div className="admin-notice tone-danger" style={{ marginTop: 16 }}>
+                    <strong>Rejected automatically — will be removed on {formatDisplayDateTime(autoRejectDates(request).deleteOn)}</strong>
+                    <p style={{ margin: 0 }}>Nothing was uploaded within 7 days after it was flagged.</p>
+                </div>
+            )}
 
             {isOverdue && (
                 <div className="admin-notice tone-warning" style={{ marginTop: 16 }}>

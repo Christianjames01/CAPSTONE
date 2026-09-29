@@ -4,6 +4,7 @@ import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from 
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { autoRejectDates } from '../../lib/autoReject'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
@@ -1356,6 +1357,23 @@ function EmployeeRequestDetails() {
                     {request.status.replace(/_/g, ' ')}
                 </span>
             </div>
+
+            {autoRejectDates(request).rejectOn && (
+                <div className="employee-notice tone-warning" style={{ marginBottom: 20 }}>
+                    <strong>Auto-reject on {formatDisplayDateTime(autoRejectDates(request).rejectOn)}</strong>
+                    <p style={{ margin: 0 }}>
+                        Flagged {formatDisplayDateTime(request.flagged_at)}. If the student uploads no receipt and no
+                        requirements by then, the request is rejected automatically and removed 7 days later.
+                    </p>
+                </div>
+            )}
+
+            {autoRejectDates(request).deleteOn && (
+                <div className="employee-notice tone-danger" style={{ marginBottom: 20 }}>
+                    <strong>Rejected automatically — will be removed on {formatDisplayDateTime(autoRejectDates(request).deleteOn)}</strong>
+                    <p style={{ margin: 0 }}>Nothing was uploaded within 7 days after it was flagged.</p>
+                </div>
+            )}
 
             {isOverdue && (
                 <div className="employee-notice tone-warning" style={{ marginBottom: 20 }}>
