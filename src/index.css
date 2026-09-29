@@ -447,3 +447,51 @@ html {
     overflow: hidden;
     padding: 0;
 }
+
+/* ---- Walk-in queue: demo button, sample note, moving tickets ------------- */
+.queue-demo-button span {
+  font-size: 10px;
+}
+
+.queue-demo-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border: 1px dashed rgba(245, 179, 1, 0.8);
+  border-radius: 12px;
+  background: rgba(245, 179, 1, 0.12);
+  font-size: 13px;
+  color: var(--ink);
+  animation: queue-card-in 0.5s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+}
+
+.queue-demo-note strong {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #F5B301;
+  color: #101827;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* A ticket slides in when it lands in a section (e.g. called -> Now Serving). */
+[data-demo="serving"] > [class$="-list-card"],
+[data-demo="waiting"] > [class$="-list-card"],
+[data-demo="history"] > [class$="-list-card"] {
+  animation: queue-card-in 0.5s cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+}
+
+@keyframes queue-card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queue-demo-note,
+  [data-demo] > [class$="-list-card"] {
+    animation: none;
+  }
+}

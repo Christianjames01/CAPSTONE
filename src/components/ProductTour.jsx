@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { START_TOUR_EVENT } from '../lib/tourSteps'
+import { publishTourState } from '../lib/tourState'
 import TourPreview from './TourPreview'
 import { useScrollLock } from '../lib/useScrollLock'
 import hcdcLogo from '../assets/hcdc-logo.png'
@@ -112,10 +113,13 @@ function findPart(selector) {
     return null
 }
 
-// The parts to point at on this page, in order (only those on screen).
+// The parts to point at on this page, in order. A step's own highlights keep
+// their places (el is null for one not on screen yet, and it's skipped), so
+// a click that changes the page doesn't shift the ones after it; the generic
+// list only keeps what's there.
 function resolveHighlights(step, portal) {
-    const list = step.highlights || genericHighlights(portal)
-    return list.map((h) => ({ ...h, el: findPart(h.selector) })).filter((h) => h.el)
+    if (step.highlights) return step.highlights.map((h) => ({ ...h, el: findPart(h.selector) }))
+    return genericHighlights(portal).map((h) => ({ ...h, el: findPart(h.selector) })).filter((h) => h.el)
 }
 
 // The sidebar link's box if it's actually on screen (it's off-canvas on
@@ -202,10 +206,13 @@ function ProductTour({ role, steps: allSteps }) {
         setPointer(null)
     }, [])
 
-    const start = useCallback(() => {
+    // steps: a custom list (e.g. the Queue page's own demo), else the role's.
+    const start = useCallback((custom) => {
         // Drop optional steps whose target isn't in this portal (e.g. links
         // hidden for limited-access employees).
-        setSteps(allSteps.filter((s) => !s.optional || document.querySelector(s.target)))
+        const list = Array.isArray(custom) ? custom : allSteps
+        setSteps(list.filter((s) => !s.optional || document.querySelector(s.target)))
+        publishTourState({ session: Date.now() })
         setPlaying(true)
         setIntro(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
         goTo(0)
@@ -241,10 +248,17 @@ function ProductTour({ role, steps: allSteps }) {
 
     // Manual start (User Guide "Start demo").
     useEffect(() => {
-        const onStart = () => start()
+        const onStart = (e) => start(e.detail?.steps)
         window.addEventListener(START_TOUR_EVENT, onStart)
         return () => window.removeEventListener(START_TOUR_EVENT, onStart)
     }, [start])
+
+    // Tell pages which one the demo is showing (see lib/tourState.js).
+    useEffect(() => {
+        publishTourState({ open, route: open ? route : null })
+    }, [open, route])
+
+    useEffect(() => () => publishTourState({ open: false, route: null }), [])
 
     // Go to the step's page.
     useEffect(() => {
@@ -351,11 +365,17 @@ function ProductTour({ role, steps: allSteps }) {
     useEffect(() => {
         if (!ready) return undefined
         const parts = route && pageReady ? resolveHighlights(step, portal) : []
-        const part = parts[hl]
+        const anyFound = parts.some((p) => p.el)
+        const part = anyFound ? parts[hl] : null
+        const missing = !!part && !part.el
         let frame = 0
 
+        // After a click the part may move (e.g. a called ticket jumps to Now
+        // Serving): stop following it and let the ring fade.
+        let clicked = false
+
         const place = () => {
-            if (!part) return
+            if (!part || missing || clicked) return
             // The page may have re-rendered the part: find it again.
             if (!part.el.isConnected) part.el = findPart(part.selector)
             if (!part.el) return
@@ -369,13 +389,13 @@ function ProductTour({ role, steps: allSteps }) {
             })
         }
 
-        if (part) {
+        if (part && !missing) {
             bringPartIntoView(part.el)
             frame = requestAnimationFrame(place)
         }
         frame = requestAnimationFrame(() => {
-            setPartCount(parts.length)
-            if (!part) setPointer(null)
+            setPartCount(anyFound ? parts.length : 0)
+            if (!part || missing) setPointer(null)
             place()
         })
 
@@ -384,12 +404,23 @@ function ProductTour({ role, steps: allSteps }) {
 
         // "click" parts are pressed once the pointer arrives (e.g. picking a
         // document so its preview shows).
-        const clickTimer = part?.click
-            ? setTimeout(() => { const el = part.el?.isConnected ? part.el : findPart(part.selector); el?.click() }, 1100)
+        const clickTimer = part?.click && !missing
+            ? setTimeout(() => {
+                const el = part.el?.isConnected ? part.el : findPart(part.selector)
+                el?.click()
+                clicked = true
+                setPointer((p) => (p ? { ...p, clicked: true } : p))
+            }, 1100)
             : null
 
         let timer = null
-        if (route && !part && attempt < PART_RETRIES) {
+        if (missing) {
+            // Not on this page (right now): go straight to the next part.
+            timer = setTimeout(() => {
+                if (hl + 1 < parts.length) setHl(hl + 1)
+                else if (index < steps.length - 1) goTo(index + 1)
+            }, 0)
+        } else if (route && !part && attempt < PART_RETRIES) {
             // Still loading: look for the parts again shortly.
             timer = setTimeout(() => setAttempt((a) => a + 1), PART_RETRY_MS)
         } else if (playing && !intro) {
@@ -482,7 +513,7 @@ function ProductTour({ role, steps: allSteps }) {
             {pointer && (
                 <>
                     <div
-                        className="tour-focus"
+                        className={`tour-focus${pointer.clicked ? ' is-clicked' : ''}`}
                         style={{ left: pointer.rect.left - 5, top: pointer.rect.top - 5, width: pointer.rect.width + 10, height: pointer.rect.height + 10 }}
                     />
                     <div className="tour-pointer" style={{ transform: `translate(${pointer.x}px, ${pointer.y}px)` }} aria-hidden="true">

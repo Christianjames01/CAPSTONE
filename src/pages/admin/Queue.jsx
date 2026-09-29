@@ -8,6 +8,8 @@ import PageStats from '../../components/PageStats'
 import { IconTicket, IconHourglass, IconCheckCircle, IconXCircle } from './icons'
 import './AdminPages.css'
 import { digitsOnly } from '../../lib/typedNumber'
+import { useQueueDemo } from '../../lib/queueDemo'
+import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -23,6 +25,9 @@ function AdminQueue() {
     const [acting, setActing] = useState(null)
     const [issuing, setIssuing] = useState(false)
     const [batchCount, setBatchCount] = useState(1)
+    // While the guided demo is on this page it shows sample tickets, and
+    // the actions below change only those (nothing is saved).
+    const queueDemo = useQueueDemo('/admin/queue')
 
     useEffect(() => {
         loadQueue()
@@ -97,6 +102,11 @@ function AdminQueue() {
     }
 
     const updateTicket = async (ticket, changes, description) => {
+        if (queueDemo.demo) {
+            queueDemo.update(ticket, changes)
+            return
+        }
+
         try {
             setActing(ticket.queue_id)
 
@@ -119,6 +129,11 @@ function AdminQueue() {
     }
 
     const callTicket = async (ticket) => {
+        if (queueDemo.demo) {
+            queueDemo.update(ticket, { status: 'called', called_at: new Date().toISOString() })
+            return
+        }
+
         const { data: { user } } = await supabase.auth.getUser()
         const { data: employee } = await supabase.from('employees').select('employee_id').eq('user_id', user.id).maybeSingle()
 
@@ -137,8 +152,10 @@ function AdminQueue() {
         )
 
     const markCompleted = async (ticket) => {
-        const confirmed = await confirmModal(`Mark ${formatQueueNumber(ticket.queue_number)} as completed?`)
-        if (!confirmed) return
+        if (!queueDemo.demo) {
+            const confirmed = await confirmModal(`Mark ${formatQueueNumber(ticket.queue_number)} as completed?`)
+            if (!confirmed) return
+        }
         await updateTicket(ticket, { status: 'completed' }, `Completed ${formatQueueNumber(ticket.queue_number)}.`)
     }
 
@@ -162,6 +179,11 @@ function AdminQueue() {
     // per ticket.
     const issueTicket = async () => {
         const count = Math.max(1, Math.min(100, Number(batchCount) || 1))
+
+        if (queueDemo.demo) {
+            queueDemo.issue(count)
+            return
+        }
 
         try {
             setIssuing(true)
@@ -206,9 +228,11 @@ function AdminQueue() {
         }
     }
 
-    const waiting = tickets.filter((t) => t.status === 'waiting')
-    const active = tickets.filter((t) => t.status === 'called' || t.status === 'serving')
-    const history = tickets.filter((t) => HISTORY_STATUSES.includes(t.status))
+    const shown = queueDemo.tickets(tickets)
+    const waiting = shown.filter((t) => t.status === 'waiting')
+    const active = shown.filter((t) => t.status === 'called' || t.status === 'serving')
+    const history = shown.filter((t) => HISTORY_STATUSES.includes(t.status))
+    const startQueueDemo = () => window.dispatchEvent(new CustomEvent(START_TOUR_EVENT, { detail: { steps: QUEUE_TOUR.head } }))
 
     return (
         <div>
@@ -219,7 +243,11 @@ function AdminQueue() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <a className="admin-secondary-button" href="/queue-display" target="_blank" rel="noopener noreferrer">
+                    <button type="button" className="admin-secondary-button queue-demo-button" onClick={startQueueDemo}>
+                        <span aria-hidden="true">▶</span> Demo
+                    </button>
+
+                    <a className="admin-secondary-button" href="/queue-display" target="_blank" rel="noopener noreferrer" data-demo="display">
                         Open Queue Display →
                     </a>
 
@@ -238,7 +266,7 @@ function AdminQueue() {
                         />
                     </label>
 
-                    <button className="admin-primary-button" onClick={issueTicket} disabled={issuing}>
+                    <button className="admin-primary-button" onClick={issueTicket} disabled={issuing} data-demo="issue">
                         {issuing
                             ? 'Issuing...'
                             : Number(batchCount) > 1
@@ -250,25 +278,31 @@ function AdminQueue() {
 
             {error && <div className="admin-error-box" style={{ marginTop: 16 }}>{error}</div>}
 
-            {!loading && (
+            {queueDemo.demo && (
+                <div className="queue-demo-note" role="status">
+                    <strong>Demo</strong> Sample numbers — nothing here is saved. Your real queue comes back when the demo ends.
+                </div>
+            )}
+
+            {(!loading || queueDemo.demo) && (
                 <div style={{ marginTop: 20 }}>
                     <PageStats
                         stats={[
                             { label: 'Now serving', value: active.length ? formatQueueNumber(active[0].queue_number) : '—', note: active.length > 1 ? `+${active.length - 1} more at the counter` : active.length ? 'At the counter' : 'No one called yet', Icon: IconTicket },
                             { label: 'Waiting', value: waiting.length, note: waiting.length ? `Next: ${formatQueueNumber(waiting[0].queue_number)}` : 'No one in line', Icon: IconHourglass, warn: waiting.length > 5 },
-                            { label: 'Served today', value: tickets.filter((t) => t.status === 'completed').length, note: 'Completed', Icon: IconCheckCircle },
-                            { label: 'No-shows', value: tickets.filter((t) => t.status === 'no_show').length, note: 'Called but not present', Icon: IconXCircle },
+                            { label: 'Served today', value: shown.filter((t) => t.status === 'completed').length, note: 'Completed', Icon: IconCheckCircle },
+                            { label: 'No-shows', value: shown.filter((t) => t.status === 'no_show').length, note: 'Called but not present', Icon: IconXCircle },
                         ]}
                     />
                 </div>
             )}
 
-            {loading ? (
+            {loading && !queueDemo.demo ? (
                 <SkeletonList count={3} />
             ) : (
                 <>
                     {active.length > 0 && (
-                        <div style={{ marginTop: 20 }}>
+                        <div style={{ marginTop: 20 }} data-demo="serving">
                             <h2 className="admin-section-title" style={{ marginTop: 0 }}>Now Serving <span className="admin-chip-count">{active.length}</span></h2>
                             {active.map((t) => (
                                 <div className="admin-list-card" key={t.queue_id}>
@@ -290,11 +324,11 @@ function AdminQueue() {
 
                                     <div className="admin-card-actions">
                                         {t.status === 'called' && (
-                                            <button className="admin-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id}>
+                                            <button className="admin-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id} data-demo="recall">
                                                 Recall (announce again)
                                             </button>
                                         )}
-                                        <button className="admin-link-button is-success" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
+                                        <button className="admin-link-button is-success" onClick={() => markCompleted(t)} disabled={acting === t.queue_id} data-demo="complete">
                                             Mark completed
                                         </button>
                                         <button className="admin-link-button is-danger" onClick={() => markNoShow(t)} disabled={acting === t.queue_id}>
@@ -306,7 +340,7 @@ function AdminQueue() {
                         </div>
                     )}
 
-                    <div style={{ marginTop: 20 }}>
+                    <div style={{ marginTop: 20 }} data-demo="waiting">
                         <h2 className="admin-section-title" style={{ marginTop: 0 }}>Waiting <span className="admin-chip-count">{waiting.length}</span></h2>
                         {waiting.length === 0 ? (
                             <div className="admin-empty">No one is currently waiting.</div>
@@ -328,7 +362,7 @@ function AdminQueue() {
                                     </div>
 
                                     <div className="admin-card-actions">
-                                        <button className="admin-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id}>
+                                        <button className="admin-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id} data-demo="call">
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
                                         <button
@@ -345,7 +379,7 @@ function AdminQueue() {
                     </div>
 
                     {history.length > 0 && (
-                        <div style={{ marginTop: 20 }}>
+                        <div style={{ marginTop: 20 }} data-demo="history">
                             <h2 className="admin-section-title" style={{ marginTop: 0 }}>Earlier Today <span className="admin-chip-count">{history.length}</span></h2>
                             {history.map((t) => (
                                 <div className="admin-list-card" key={t.queue_id} style={{ opacity: 0.7 }}>

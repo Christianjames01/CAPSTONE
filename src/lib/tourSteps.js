@@ -12,6 +12,51 @@
 // Dispatched by the User Guide's "Start demo" button.
 export const START_TOUR_EVENT = 'certichain:start-tour'
 
+// The walk-in queue, part by part. While a demo is on the Queue page it shows
+// sample tickets (lib/queueDemo.js), and the Call / serving / completed
+// clicks below move those samples -- nothing is saved.
+const queueHighlights = () => [
+    { selector: '[data-demo="issue"]', text: 'Issue a number to each walk-in — type a count to print a whole block.' },
+    { selector: '.page-stats', text: 'Now serving, waiting, served and no-shows — updated live.' },
+    { selector: '[data-demo="waiting"]', text: 'Everyone waiting, in order.' },
+    { selector: '[data-demo="call"]', click: true, text: 'Call the next number — the lobby display shows it and announces it out loud.' },
+    { selector: '[data-demo="serving"]', text: 'Called numbers move to Now Serving.' },
+    { selector: '[data-demo="recall"]', text: 'Not here yet? Recall announces the number again.' },
+    { selector: '[data-demo="serve"]', click: true, text: 'Mark as serving once they reach the counter.' },
+    { selector: '[data-demo="complete"]', click: true, text: 'Mark completed when you’re done with them.' },
+    { selector: '[data-demo="history"]', text: 'Finished numbers and no-shows move to Earlier Today.' },
+    { selector: '[data-demo="display"]', text: 'Open the Queue Display on the lobby TV so walk-ins can see what’s next.' },
+]
+
+// The Queue page's own "Demo" button runs just this.
+export const QUEUE_TOUR = {
+    employee: queueTour('/employee/queue'),
+    head: queueTour('/admin/queue'),
+}
+
+function queueTour(route) {
+    return [
+        {
+            target: null,
+            preview: 'queue',
+            title: 'Walk-in queue demo',
+            body: 'How numbers go from the ticket to the counter: issue a number, call it, serve it, and finish — while the lobby display shows and announces who’s next. The demo uses sample numbers; nothing is saved.',
+        },
+        {
+            route,
+            highlights: queueHighlights(),
+            title: 'Running the queue',
+            body: 'Watch a walk-in go from waiting to served. These are sample numbers — your real queue comes back when the demo ends.',
+        },
+        {
+            target: null,
+            preview: 'queue',
+            title: 'On the lobby TV',
+            body: 'The Queue Display shows Now Serving and the next numbers, and chimes and announces each call. Open it once on the TV and tap Start.',
+        },
+    ]
+}
+
 const link = (nav, path) => `.${nav} a[href="${path}"]`
 
 export const STUDENT_TOUR = [
@@ -199,6 +244,7 @@ export const EMPLOYEE_TOUR = [
     },
     {
         target: link('employee-nav', '/employee/queue'),
+        highlights: queueHighlights(),
         optional: true,
         preview: 'queue',
         title: 'Walk-in queue',
@@ -338,6 +384,7 @@ export const HEAD_TOUR = [
     },
     {
         target: link('admin-nav', '/admin/queue'),
+        highlights: queueHighlights(),
         preview: 'queue',
         title: 'Walk-in queue',
         body: 'Issue queue numbers to walk-ins, call the next one, then mark them serving or completed. The Queue Display screen shows and announces the number being served.',

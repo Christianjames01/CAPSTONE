@@ -814,3 +814,9 @@
         display: none;
     }
 }
+
+/* After the demo clicks a part (it may move away), the ring fades. */
+.tour-focus.is-clicked {
+    opacity: 0;
+    transition: opacity 0.4s ease 0.3s;
+}
