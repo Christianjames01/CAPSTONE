@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { IconCalendar, IconCheck } from '../../components/UiIcons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
@@ -34,6 +35,9 @@ function ClaimSchedule() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+    // Version of the schedule the form was last filled from, so a live
+    // refresh doesn't wipe what's being typed unless the schedule changed.
+    const formVersionRef = useRef(null)
 
     useEffect(() => {
         if (!requestId) {
@@ -45,9 +49,9 @@ function ClaimSchedule() {
         loadData()
     }, [requestId])
 
-    const loadData = async () => {
+    const loadData = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setErrorMessage('')
 
             const {
@@ -189,7 +193,11 @@ function ClaimSchedule() {
                 )
             }
 
-            if (scheduleData) {
+            const scheduleVersion = scheduleData ? scheduleData.updated_at || scheduleData.created_at : null
+            if (scheduleData && silent && formVersionRef.current === scheduleVersion) {
+                setExistingSchedule(scheduleData)
+            } else if (scheduleData) {
+                formVersionRef.current = scheduleVersion
                 setExistingSchedule(scheduleData)
 
                 setScheduledDate(
@@ -209,7 +217,7 @@ function ClaimSchedule() {
                 setRemarks(
                     scheduleData.remarks || ''
                 )
-            } else {
+            } else if (!silent) {
                 setRemarks(DEFAULT_REMARKS)
             }
 
@@ -227,6 +235,12 @@ function ClaimSchedule() {
             setLoading(false)
         }
     }
+
+    // Live: the student asking to reschedule, another staff member saving a
+    // date, or the request's status changing.
+    useLiveRefresh(['claim_schedules', 'document_requests', 'claim_reschedule_requests'], (opts) => {
+        if (requestId) loadData(opts)
+    })
 
     const getCurrentEmployee = async () => {
         const {

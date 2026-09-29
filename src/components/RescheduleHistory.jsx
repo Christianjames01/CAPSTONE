@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useLiveRefresh } from '../lib/useLiveRefresh'
 import './RescheduleHistory.css'
 
 function formatDateTime(value) {
@@ -28,6 +29,9 @@ function formatClaimSlot(date, time) {
 // `reloadKey` re-fetches after staff save a new date.
 function RescheduleHistory({ scheduleId, pending, lastReason, lastUpdatedAt, lastSlot, reloadKey }) {
     const [rows, setRows] = useState([])
+    // Bumped when a reschedule request changes, to re-fetch live.
+    const [liveTick, setLiveTick] = useState(0)
+    useLiveRefresh(['claim_reschedule_requests'], () => setLiveTick((n) => n + 1))
 
     useEffect(() => {
         if (!scheduleId) return undefined
@@ -45,7 +49,7 @@ function RescheduleHistory({ scheduleId, pending, lastReason, lastUpdatedAt, las
             })
 
         return () => { cancelled = true }
-    }, [scheduleId, reloadKey])
+    }, [scheduleId, reloadKey, liveTick])
 
     const items = [...rows]
     if (pending?.requestedAt && !items.some((r) => !r.handled_at)) {

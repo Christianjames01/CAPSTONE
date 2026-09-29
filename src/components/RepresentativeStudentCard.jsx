@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useLiveRefresh } from '../lib/useLiveRefresh'
 import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../lib/shrinkImage'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../lib/notify'
 import {
@@ -54,6 +55,9 @@ function RepresentativeStudentCard({ request }) {
     useEffect(() => {
         if (requestId) refresh()
     }, [requestId])
+
+    // Staff approving/rejecting a file shows up here without a reload.
+    useLiveRefresh(['claim_representatives'], () => { if (requestId) refresh() })
 
     if (!loaded || unavailable) return null
     if (closed && !representative) return null
