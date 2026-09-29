@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
-import { notifyError, confirmModal } from '../../lib/notify'
+import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import PasswordRequirements from '../../components/PasswordRequirements'
@@ -232,8 +232,14 @@ function Employees() {
                 }
             }
 
-            setAddMessage(`Employee account created for ${form.email.trim()}.${assignmentNote}`)
+            // Done: close the modal and confirm with a toast.
+            const createdMessage = `Employee account created for ${form.email.trim()}.${assignmentNote}`
+            setShowAddForm(false)
             setForm(BLANK_FORM)
+            setAddError('')
+            setAddMessage('')
+            if (assignmentNote) notifyWarning(createdMessage)
+            else notifySuccess(createdMessage)
             await loadEmployees()
 
         } catch (err) {
