@@ -22,6 +22,28 @@ const supabaseAdmin = createClient(
 const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
+// Finds a login by email: profiles first, then the auth user list.
+async function findUserByEmail(email: string) {
+    const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id')
+        .ilike('email', email)
+        .maybeSingle()
+    if (profile?.user_id) {
+        const { data } = await supabaseAdmin.auth.admin.getUserById(profile.user_id)
+        if (data?.user && (data.user.email || '').toLowerCase() === email) return data.user
+    }
+
+    for (let page = 1; page <= 20; page++) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+        if (error) return null
+        const match = data.users.find((u) => (u.email || '').toLowerCase() === email)
+        if (match) return match
+        if (data.users.length < 1000) return null
+    }
+    return null
+}
+
 const text = (value: unknown, max: number) => (typeof value === 'string' ? value.trim().slice(0, max) : '')
 
 Deno.serve(async (req) => {
@@ -61,20 +83,62 @@ Deno.serve(async (req) => {
             return json({ error: 'Please fill in all required fields.' }, 400)
         }
 
+        const metadata = { role: 'employee', first_name: firstName, last_name: lastName }
+
         const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password,
             email_confirm: true,
-            user_metadata: { role: 'employee', first_name: firstName, last_name: lastName },
+            user_metadata: metadata,
         })
 
-        if (createError || !created?.user) {
-            const message = createError?.message || 'The account could not be created.'
-            const taken = /already (been )?registered|already exists/i.test(message)
-            return json({ error: taken ? 'An account with this email already exists.' : message }, taken ? 409 : 400)
-        }
+        let newUser = created?.user
+        // Whether this call made the login (so a failure below may delete it).
+        let madeLogin = !!newUser
 
-        const newUser = created.user
+        if (createError || !newUser) {
+            const message = createError?.message || 'The account could not be created.'
+            if (!/already (been )?registered|already exists/i.test(message)) return json({ error: message }, 400)
+
+            // The email already has a login. Finish it as an employee only if
+            // it's a leftover from an earlier failed Add Employee: not a
+            // student, head or admin, and not already an employee.
+            const existing = await findUserByEmail(email)
+            if (!existing) return json({ error: 'An account with this email already exists.' }, 409)
+
+            const [{ data: employeeRow }, { data: studentRow }, { data: profileRow }] = await Promise.all([
+                supabaseAdmin.from('employees').select('employee_id').eq('user_id', existing.id).maybeSingle(),
+                supabaseAdmin.from('students').select('student_id').eq('user_id', existing.id).maybeSingle(),
+                supabaseAdmin.from('profiles').select('role').eq('user_id', existing.id).maybeSingle(),
+            ])
+
+            if (employeeRow) return json({ error: 'This email already belongs to an employee.' }, 409)
+            if (studentRow || profileRow?.role === 'student') {
+                return json({ error: 'This email belongs to a student account. Use a different email for the employee.' }, 409)
+            }
+            if (profileRow && !['employee', null, ''].includes(profileRow.role)) {
+                return json({ error: 'This email belongs to a registrar head or admin account.' }, 409)
+            }
+
+            const { data: updated, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+                password,
+                email_confirm: true,
+                user_metadata: metadata,
+            })
+            if (updateError || !updated?.user) {
+                return json({ error: updateError?.message || 'The existing login could not be updated.' }, 400)
+            }
+
+            if (profileRow) {
+                await supabaseAdmin
+                    .from('profiles')
+                    .update({ role: 'employee', first_name: firstName, last_name: lastName })
+                    .eq('user_id', existing.id)
+            }
+
+            newUser = updated.user
+            madeLogin = false
+        }
 
         const { error: employeeError } = await supabaseAdmin
             .from('employees')
@@ -88,7 +152,7 @@ Deno.serve(async (req) => {
             })
 
         if (employeeError) {
-            await supabaseAdmin.auth.admin.deleteUser(newUser.id)
+            if (madeLogin) await supabaseAdmin.auth.admin.deleteUser(newUser.id)
             return json({ error: `The employee profile could not be saved: ${employeeError.message}` }, 400)
         }
 
