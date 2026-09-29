@@ -407,3 +407,410 @@
         display: none;
     }
 }
+
+/* ---- Motion (intro, chapters, card, countdown ring, finish) --------------- */
+.tour-root {
+    --tour-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --tour-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+/* Smoother, springier spotlight; a soft glow breathes around it. */
+.tour-spotlight {
+    border-radius: 14px;
+    transition:
+        left 0.7s var(--tour-ease),
+        top 0.7s var(--tour-ease),
+        width 0.7s var(--tour-ease),
+        height 0.7s var(--tour-ease);
+    animation: tour-spot-in 0.6s var(--tour-ease) both, tour-spot-glow 3s ease-in-out 0.6s infinite;
+}
+
+@keyframes tour-spot-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes tour-spot-glow {
+    0%, 100% { box-shadow: 0 0 0 9999px rgba(10, 15, 30, 0.6), 0 0 0 3px #fff, 0 0 0 6px #123B78, 0 0 0 6px rgba(200, 16, 46, 0); }
+    50% { box-shadow: 0 0 0 9999px rgba(10, 15, 30, 0.6), 0 0 0 3px #fff, 0 0 0 6px #123B78, 0 0 0 14px rgba(200, 16, 46, 0.18); }
+}
+
+.tour-focus {
+    transition:
+        left 0.8s var(--tour-ease),
+        top 0.8s var(--tour-ease),
+        width 0.8s var(--tour-ease),
+        height 0.8s var(--tour-ease);
+}
+
+.tour-pointer {
+    transition: transform 1s cubic-bezier(0.5, 0, 0.15, 1);
+}
+
+.tour-pointer svg {
+    animation: tour-pointer-bob 1.6s ease-in-out 1.2s infinite;
+}
+
+@keyframes tour-pointer-bob {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(2px, 3px); }
+}
+
+.tour-click {
+    box-shadow: 0 0 0 0 rgba(245, 179, 1, 0.55);
+    animation: tour-click 0.8s ease-out 1s 1 both;
+}
+
+@keyframes tour-click {
+    0% { opacity: 0.95; transform: scale(0.3); box-shadow: 0 0 0 0 rgba(245, 179, 1, 0.55); }
+    100% { opacity: 0; transform: scale(1.7); box-shadow: 0 0 0 14px rgba(245, 179, 1, 0); }
+}
+
+.tour-caption {
+    padding: 10px 14px 10px 16px;
+    border-left: 4px solid #F5B301;
+    animation: tour-caption-in 0.45s var(--tour-spring) 0.7s both;
+}
+
+@keyframes tour-caption-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Intro: a navy splash with the seal and a 3-2-1 countdown. */
+.tour-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    border: 0;
+    background:
+        radial-gradient(ellipse 60% 60% at 80% 10%, rgba(200, 16, 46, 0.35), transparent 60%),
+        radial-gradient(ellipse 60% 60% at 10% 90%, rgba(111, 168, 245, 0.3), transparent 60%),
+        linear-gradient(140deg, #0A2450, #123B78);
+    color: #fff;
+    font-family: 'Inter', -apple-system, sans-serif;
+    text-align: center;
+    cursor: pointer;
+    animation: tour-intro 2.6s var(--tour-ease) both;
+}
+
+@keyframes tour-intro {
+    0% { opacity: 0; }
+    10%, 82% { opacity: 1; transform: none; }
+    100% { opacity: 0; transform: scale(1.04); }
+}
+
+.tour-intro-seal {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    padding: 5px;
+    border-radius: 50%;
+    background: #fff;
+    animation: tour-seal-in 0.8s var(--tour-spring) 0.15s both;
+}
+
+.tour-intro-seal img {
+    width: 100%;
+    height: 100%;
+}
+
+.tour-intro-seal::before,
+.tour-intro-seal::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    animation: tour-ripple 2s ease-out infinite;
+}
+
+.tour-intro-seal::after {
+    animation-delay: 1s;
+}
+
+@keyframes tour-seal-in {
+    from { opacity: 0; transform: scale(0.6) rotate(-20deg); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes tour-ripple {
+    from { opacity: 0.9; transform: scale(0.9); }
+    to { opacity: 0; transform: scale(1.7); }
+}
+
+.tour-intro-eyebrow {
+    margin-top: 8px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: #C8102E;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    animation: tour-rise 0.6s var(--tour-ease) 0.35s both;
+}
+
+.tour-intro strong {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 600;
+    animation: tour-rise 0.6s var(--tour-ease) 0.5s both;
+}
+
+.tour-intro small {
+    max-width: 420px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.72);
+    animation: tour-rise 0.6s var(--tour-ease) 0.7s both;
+}
+
+@keyframes tour-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+}
+
+.tour-intro-count {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 6px 0;
+}
+
+.tour-intro-count svg {
+    position: absolute;
+    inset: 0;
+    transform: rotate(-90deg);
+}
+
+.tour-intro-count circle {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 107;
+    animation: tour-count-ring 2.1s linear 0.3s both;
+}
+
+@keyframes tour-count-ring {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: 107; }
+}
+
+.tour-intro-count i {
+    position: absolute;
+    font-size: 28px;
+    font-style: normal;
+    font-weight: 800;
+    opacity: 0;
+    animation: tour-count 0.7s var(--tour-spring) both;
+}
+
+.tour-intro-count i:nth-child(1) { animation-delay: 0.3s; }
+.tour-intro-count i:nth-child(2) { animation-delay: 1s; }
+.tour-intro-count i:nth-child(3) { animation-delay: 1.7s; }
+
+@keyframes tour-count {
+    0% { opacity: 0; transform: scale(1.8); }
+    30%, 70% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.6); }
+}
+
+/* Chapter banner at the top on every step change. */
+.tour-chapter {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+    padding: 8px 18px 8px 8px;
+    border-radius: 999px;
+    background: #101827;
+    color: #fff;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    transform: translateX(-50%);
+    animation: tour-chapter 2.2s var(--tour-ease) both;
+}
+
+.tour-chapter span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #123B78, #C8102E);
+    font-size: 12.5px;
+}
+
+@keyframes tour-chapter {
+    0% { opacity: 0; transform: translate(-50%, -24px) scale(0.9); }
+    15%, 75% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -12px); }
+}
+
+/* Card: brand bar, springy entrance, content that re-animates per step. */
+.tour-card {
+    overflow: hidden;
+    border-radius: 18px;
+    animation: tour-card-in 0.55s var(--tour-spring) both;
+}
+
+.tour-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #123B78, #C8102E);
+}
+
+.tour-card.is-centered {
+    animation: tour-card-center 0.55s var(--tour-spring) both;
+}
+
+.tour-card.is-waiting {
+    visibility: hidden;
+}
+
+@keyframes tour-card-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes tour-card-center {
+    from { opacity: 0; transform: translate(-50%, -46%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.tour-anim {
+    animation: tour-rise 0.5s var(--tour-ease) var(--d, 0ms) both;
+}
+
+.tour-timeline span.is-active {
+    background: rgba(18, 59, 120, 0.18);
+}
+
+.tour-timeline span i,
+.tour-timeline span.is-done {
+    background: linear-gradient(90deg, #123B78, #C8102E);
+}
+
+.tour-back,
+.tour-next {
+    border-radius: 999px;
+    transition: transform 0.2s var(--tour-spring), background 0.15s ease;
+}
+
+.tour-next {
+    box-shadow: 0 10px 20px -12px #123B78;
+}
+
+.tour-back:hover,
+.tour-next:hover {
+    transform: translateY(-1px);
+}
+
+/* Countdown ring around the play button: fills until the demo moves on. */
+.tour-play {
+    position: relative;
+}
+
+.tour-play .tour-ring {
+    position: absolute;
+    inset: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    transform: rotate(-90deg);
+    pointer-events: none;
+}
+
+.tour-ring circle {
+    fill: none;
+    stroke: #C8102E;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 113;
+    stroke-dashoffset: 113;
+    animation: tour-ring var(--wait, 3s) linear both;
+}
+
+@keyframes tour-ring {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Finish: a burst of confetti from the top of the card. */
+.tour-confetti {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.tour-confetti i {
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    background: #C8102E;
+    opacity: 0;
+    animation: tour-confetti 1.4s cubic-bezier(0.2, 0.7, 0.4, 1) calc(var(--i) * 25ms + 0.3s) both;
+    --a: calc(var(--i) * 22.5deg);
+}
+
+.tour-confetti i:nth-child(3n) { background: #123B78; }
+.tour-confetti i:nth-child(3n + 1) { background: #F5B301; width: 6px; height: 6px; border-radius: 50%; }
+
+@keyframes tour-confetti {
+    0% { opacity: 1; transform: rotate(var(--a)) translateY(0) rotate(0); }
+    100% { opacity: 0; transform: rotate(var(--a)) translateY(140px) rotate(540deg); }
+}
+
+@media (max-width: 699px) {
+    .tour-chapter {
+        top: 10px;
+        font-size: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tour-spotlight,
+    .tour-pointer svg,
+    .tour-chapter,
+    .tour-card,
+    .tour-anim,
+    .tour-ring circle,
+    .tour-confetti,
+    .tour-intro,
+    .tour-intro * {
+        animation: none !important;
+    }
+
+    .tour-chapter,
+    .tour-confetti,
+    .tour-ring {
+        display: none;
+    }
+}

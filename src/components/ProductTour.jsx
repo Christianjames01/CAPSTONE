@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { START_TOUR_EVENT } from '../lib/tourSteps'
 import TourPreview from './TourPreview'
 import { useScrollLock } from '../lib/useScrollLock'
+import hcdcLogo from '../assets/hcdc-logo.png'
 import './ProductTour.css'
 
 // Guided demo tour that plays like a short video. Each step opens its real
@@ -27,6 +28,7 @@ const PICTURE_MS = 6500 // welcome / security picture steps
 const PART_RETRY_MS = 300 // while a page is still loading its parts
 const PART_RETRIES = 10
 const MOBILE = 700
+const INTRO_MS = 2600 // the "Guided demo" countdown before step 1
 
 const storageKey = (role, userId) => `certichain_tour_done:${role}:${userId}`
 
@@ -164,6 +166,7 @@ function ProductTour({ role, steps: allSteps }) {
     const [partCount, setPartCount] = useState(0)
     const [pointer, setPointer] = useState(null) // { x, y, rect, text }
     const [attempt, setAttempt] = useState(0) // re-looks for parts while a page loads
+    const [intro, setIntro] = useState(false) // opening countdown
     const areaEl = useRef(null)
     const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < MOBILE)
 
@@ -195,8 +198,16 @@ function ProductTour({ role, steps: allSteps }) {
         // hidden for limited-access employees).
         setSteps(allSteps.filter((s) => !s.optional || document.querySelector(s.target)))
         setPlaying(true)
+        setIntro(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
         goTo(0)
     }, [allSteps, goTo])
+
+    // The countdown ends by itself (or on a tap).
+    useEffect(() => {
+        if (!intro) return undefined
+        const t = setTimeout(() => setIntro(false), INTRO_MS)
+        return () => clearTimeout(t)
+    }, [intro])
 
     // Auto-start for new accounts that haven't seen the tour.
     useEffect(() => {
@@ -313,6 +324,7 @@ function ProductTour({ role, steps: allSteps }) {
     const close = useCallback(() => {
         setIndex(-1)
         setPointer(null)
+        setIntro(false)
         if (key) writeDone(key)
     }, [key])
 
@@ -365,7 +377,7 @@ function ProductTour({ role, steps: allSteps }) {
         if (route && !part && attempt < PART_RETRIES) {
             // Still loading: look for the parts again shortly.
             timer = setTimeout(() => setAttempt((a) => a + 1), PART_RETRY_MS)
-        } else if (playing) {
+        } else if (playing && !intro) {
             const isLastStep = index === steps.length - 1
             const wait = part ? DWELL_MS : route ? PAGE_ONLY_MS : PICTURE_MS
             timer = setTimeout(() => {
@@ -381,7 +393,7 @@ function ProductTour({ role, steps: allSteps }) {
             window.removeEventListener('scroll', place, true)
             window.removeEventListener('resize', place)
         }
-    }, [ready, pageReady, route, step, portal, hl, playing, index, steps.length, goTo, attempt])
+    }, [ready, pageReady, route, step, portal, hl, playing, intro, index, steps.length, goTo, attempt])
 
     useEffect(() => {
         if (!open) return undefined
@@ -404,6 +416,10 @@ function ProductTour({ role, steps: allSteps }) {
     const onPage = !!area
     const spot = area?.rect || (!finding && rect)
     const partProgress = partCount > 0 ? Math.min(1, (hl + 1) / partCount) : 1
+    // How long until the demo moves on by itself -- drawn as a ring around
+    // the play button (same waits as the walkthrough effect).
+    const waitMs = pointer ? DWELL_MS : route ? PAGE_ONLY_MS : PICTURE_MS
+    const counting = playing && !intro && ready && !(isLast && !pointer && hl + 1 >= partCount)
 
     // Caption beside the pointed-at part (desktop); in the sheet on phones.
     const captionStyle = pointer && !isMobile
@@ -419,6 +435,25 @@ function ProductTour({ role, steps: allSteps }) {
 
     return (
         <div className="tour-root" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+            {intro && (
+                <button type="button" className="tour-intro" onClick={() => setIntro(false)} aria-label="Start the demo now">
+                    <span className="tour-intro-seal"><img src={hcdcLogo} alt="" /></span>
+                    <span className="tour-intro-eyebrow">Guided demo</span>
+                    <strong>A quick tour of your portal</strong>
+                    <span className="tour-intro-count" aria-hidden="true">
+                        <i>3</i><i>2</i><i>1</i>
+                        <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" /></svg>
+                    </span>
+                    <small>{steps.length} steps · pause, go back or skip anytime · tap to start now</small>
+                </button>
+            )}
+
+            {!intro && (
+                <div key={`chapter-${index}`} className="tour-chapter" aria-hidden="true">
+                    <span>{index + 1}</span>{step.title.replace(/^d+.s*/, '')}
+                </div>
+            )}
+
             {spot ? (
                 <div
                     className="tour-spotlight"
@@ -447,9 +482,16 @@ function ProductTour({ role, steps: allSteps }) {
             )}
 
             <div
-                className={`tour-card ${onPage ? 'is-floating' : 'is-centered'}`}
+                key={onPage ? 'floating' : 'centered'}
+                className={`tour-card ${onPage ? 'is-floating' : 'is-centered'}${intro ? ' is-waiting' : ''}`}
                 style={onPage ? (isMobile ? { left: 12, right: 12, bottom: 12 } : { right: 16, bottom: 16, width: Math.min(380, window.innerWidth - 24) }) : undefined}
             >
+                {isLast && (
+                    <div className="tour-confetti" aria-hidden="true">
+                        {Array.from({ length: 16 }, (_, i) => <i key={i} style={{ '--i': i }} />)}
+                    </div>
+                )}
+
                 <div className="tour-card-top">
                     <span className="tour-progress">Step {index + 1} of {steps.length}</span>
                     <button type="button" className="tour-skip" onClick={close}>Skip demo</button>
@@ -469,8 +511,8 @@ function ProductTour({ role, steps: allSteps }) {
                     <TourPreview key={index} name={step.preview} />
                 )}
 
-                <h3 id="tour-title">{step.title}</h3>
-                <p>{step.body}</p>
+                <h3 key={`t-${index}`} id="tour-title" className="tour-anim">{step.title}</h3>
+                <p key={`b-${index}`} className="tour-anim" style={{ '--d': '90ms' }}>{step.body}</p>
 
                 {pointer && isMobile && (
                     <p key={`m-${index}-${hl}`} className="tour-now"><span aria-hidden="true">▶</span> {pointer.text}</p>
@@ -484,6 +526,11 @@ function ProductTour({ role, steps: allSteps }) {
                         aria-label={playing ? 'Pause demo' : 'Play demo'}
                         title={playing ? 'Pause' : 'Play'}
                     >
+                        {counting && (
+                            <svg key={`ring-${index}-${hl}-${partCount}`} className="tour-ring" viewBox="0 0 40 40" style={{ '--wait': `${waitMs}ms` }} aria-hidden="true">
+                                <circle cx="20" cy="20" r="18" />
+                            </svg>
+                        )}
                         {playing ? (
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
                         ) : (
