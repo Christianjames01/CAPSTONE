@@ -4,6 +4,7 @@ import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from 
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifySuccess, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
@@ -1248,6 +1249,12 @@ function EmployeeRequestDetails() {
         if (!confirmed) {
             return
         }
+
+        // Manual changes skip the normal workflow: confirm who is making it.
+        const verified = await confirmWithPassword({
+            text: `Enter your password to change ${request.request_number} to "${manualStatus.replace(/_/g, ' ')}".`,
+        })
+        if (!verified) return
 
         await applyStatusChange(manualStatus, statusReason)
     }

@@ -5,6 +5,7 @@ import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from 
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
@@ -350,8 +351,10 @@ function AdminRequestDetails() {
             (requirement) => requirement.document_requirements?.is_required === true
         )
 
+        // A document with no required uploads is ready as soon as payment is
+        // verified -- same as the employee's page.
         if (requiredRequirements.length === 0) {
-            return { hasRequirements: false, allApproved: false, pending: false, rejected: false, uploaded: false }
+            return { hasRequirements: true, allApproved: true, pending: false, rejected: false, uploaded: false }
         }
 
         const pending = requiredRequirements.some((requirement) => requirement.status === 'pending')
@@ -902,6 +905,12 @@ function AdminRequestDetails() {
             `Override this request's status to "${newStatus.replace(/_/g, ' ')}"? This bypasses the normal workflow.`
         )
         if (!confirmed) return
+
+        // Manual changes skip the normal workflow: confirm who is making it.
+        const verified = await confirmWithPassword({
+            text: `Enter your password to change ${request.request_number} to "${newStatus.replace(/_/g, ' ')}".`,
+        })
+        if (!verified) return
 
         await applyOverride(newStatus, overrideReason)
     }
