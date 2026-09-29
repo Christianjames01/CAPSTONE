@@ -5,7 +5,7 @@ import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from 
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
-import { autoRejectDates } from '../../lib/autoReject'
+import { useAutoReject } from '../../lib/autoReject'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { logActivity } from '../../lib/activityLog'
@@ -105,6 +105,8 @@ function AdminRequestDetails() {
     const [selectedRequirement, setSelectedRequirement] = useState(null)
 
     useLiveRefresh(['document_requests', 'request_requirements', 'official_receipts', 'claim_schedules', 'credentials', 'request_ratings'], (options) => loadRequest(options))
+    // Deadline before the request is rejected automatically (if it applies).
+    const autoReject = useAutoReject(request)
 
     useEffect(() => {
         loadRequest()
@@ -1058,20 +1060,23 @@ function AdminRequestDetails() {
                 </span>
             </div>
 
-            {autoRejectDates(request).rejectOn && (
+            {autoReject.rejectOn && (
                 <div className="admin-notice tone-warning" style={{ marginTop: 16 }}>
-                    <strong>Auto-reject on {formatDisplayDateTime(autoRejectDates(request).rejectOn)}</strong>
+                    <strong>Auto-reject on {formatDisplayDateTime(autoReject.rejectOn)}</strong>
                     <p style={{ margin: 0 }}>
-                        Flagged {formatDisplayDateTime(request.flagged_at)}. If the student uploads no receipt and no
-                        requirements by then, the request is rejected automatically and removed 7 days later.
+                        {autoReject.kind === 'unpaid'
+                            ? `Waiting for payment since ${formatDisplayDateTime(autoReject.since)}.`
+                            : `Flagged ${formatDisplayDateTime(autoReject.since)}.`}
+                        {' '}If the student uploads no receipt and no requirements by then, the request is rejected
+                        automatically and removed 7 days later. The student has been told to act as soon as possible.
                     </p>
                 </div>
             )}
 
-            {autoRejectDates(request).deleteOn && (
+            {autoReject.deleteOn && (
                 <div className="admin-notice tone-danger" style={{ marginTop: 16 }}>
-                    <strong>Rejected automatically — will be removed on {formatDisplayDateTime(autoRejectDates(request).deleteOn)}</strong>
-                    <p style={{ margin: 0 }}>Nothing was uploaded within 7 days after it was flagged.</p>
+                    <strong>Rejected automatically — will be removed on {formatDisplayDateTime(autoReject.deleteOn)}</strong>
+                    <p style={{ margin: 0 }}>{request.rejection_reason || 'Nothing was uploaded within 7 days.'}</p>
                 </div>
             )}
 

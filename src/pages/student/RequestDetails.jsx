@@ -11,7 +11,7 @@ import RepresentativeStudentCard from '../../components/RepresentativeStudentCar
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
-import { autoRejectDates } from '../../lib/autoReject'
+import { useAutoReject } from '../../lib/autoReject'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadDirectoryProfiles } from '../../lib/directoryProfiles'
 
@@ -133,6 +133,8 @@ function RequestDetails() {
     const [submittingRating, setSubmittingRating] = useState(false)
 
     useLiveRefresh(['document_requests', 'request_requirements', 'official_receipts', 'claim_schedules', 'credentials'], (options) => loadRequest(options))
+    // Deadline before the request is rejected automatically (if it applies).
+    const autoReject = useAutoReject(request)
 
     useEffect(() => {
         console.log('URL REQUEST ID:', requestId)
@@ -670,16 +672,20 @@ function RequestDetails() {
                     </div>
                 )}
 
-                {autoRejectDates(request).rejectOn && (
+                {autoReject.rejectOn && (
                     <div className="student-notice tone-warning">
-                        <strong>Upload the missing requirements by {formatDisplayDateTime(autoRejectDates(request).rejectOn)}</strong>
-                        <p>If nothing is uploaded by then, this request will be rejected automatically.</p>
+                        <strong>
+                            {autoReject.kind === 'unpaid'
+                                ? `Pay and upload your official receipt by ${formatDisplayDateTime(autoReject.rejectOn)}`
+                                : `Upload the missing requirements by ${formatDisplayDateTime(autoReject.rejectOn)}`}
+                        </strong>
+                        <p>Please do it as soon as possible. If nothing is uploaded by then, this request will be rejected automatically and then deleted.</p>
                     </div>
                 )}
 
-                {autoRejectDates(request).deleteOn && (
+                {autoReject.deleteOn && (
                     <div className="student-notice tone-danger">
-                        <strong>This request will be removed on {formatDisplayDateTime(autoRejectDates(request).deleteOn)}</strong>
+                        <strong>This request will be removed on {formatDisplayDateTime(autoReject.deleteOn)}</strong>
                         <p>It was rejected automatically. You can submit a new request anytime.</p>
                     </div>
                 )}
