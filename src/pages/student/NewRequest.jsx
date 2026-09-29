@@ -461,6 +461,7 @@ function NewRequest() {
                                                     }}
                                                     onClick={() => setSelectedDocument(document.document_type_id)}
                                                     disabled={loading}
+                                                    data-has-preview={document.preview_image_url ? '1' : undefined}
                                                 >
                                                     <div className="student-list-card-header" style={{ gap: 10 }}>
                                                         <div>
@@ -654,7 +655,7 @@ function NewRequest() {
                 </section>
             </div>
 
-            <div className="student-card" style={{ position: 'sticky', top: 20 }}>
+            <div className="student-card rq-preview" style={{ position: 'sticky', top: 20 }}>
                 <h2 style={{ fontSize: 15, marginBottom: 4 }}>Sample Document Preview</h2>
                 <p style={{ fontSize: 12.5, color: 'var(--slate)', marginBottom: 14 }}>
                     {selectedDocumentDetails?.preview_image_url

@@ -44,7 +44,8 @@ export const STUDENT_TOUR = [
         target: link('student-nav', '/student/new-request'),
         highlights: [
             { selector: '.student-request-grid input.form-input', text: "Search for the document you need." },
-            { selector: '.student-request-grid button.student-list-card', text: "Pick a document — the fee is on the right." },
+            { selector: ['.student-request-grid button.student-list-card[data-has-preview]', '.student-request-grid button.student-list-card'], click: true, text: "Pick a document — the fee is on the right." },
+            { selector: '.rq-preview', text: "Its sample appears here — the Registrar’s own image of the document when one is posted. Tap it to enlarge." },
             { selector: '#request-quantity', text: "Type how many copies you need." },
             { selector: '.student-request-grid textarea', text: "Say what the document is for." },
             { selector: '.rq-add-button', text: "Add it to your list — you can add more documents." },

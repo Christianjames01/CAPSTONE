@@ -103,10 +103,19 @@ function findArea(step, portal) {
     return null
 }
 
+// A highlight's selector may be a list: the first one on screen wins.
+function findPart(selector) {
+    for (const s of [].concat(selector)) {
+        const el = firstShown(s)
+        if (el) return el
+    }
+    return null
+}
+
 // The parts to point at on this page, in order (only those on screen).
 function resolveHighlights(step, portal) {
     const list = step.highlights || genericHighlights(portal)
-    return list.map((h) => ({ ...h, el: firstShown(h.selector) })).filter((h) => h.el)
+    return list.map((h) => ({ ...h, el: findPart(h.selector) })).filter((h) => h.el)
 }
 
 // The sidebar link's box if it's actually on screen (it's off-canvas on
@@ -348,7 +357,7 @@ function ProductTour({ role, steps: allSteps }) {
         const place = () => {
             if (!part) return
             // The page may have re-rendered the part: find it again.
-            if (!part.el.isConnected) part.el = firstShown(part.selector)
+            if (!part.el.isConnected) part.el = findPart(part.selector)
             if (!part.el) return
             const r = clippedRect(part.el)
             if (!r) return
@@ -373,6 +382,12 @@ function ProductTour({ role, steps: allSteps }) {
         window.addEventListener('scroll', place, true)
         window.addEventListener('resize', place)
 
+        // "click" parts are pressed once the pointer arrives (e.g. picking a
+        // document so its preview shows).
+        const clickTimer = part?.click
+            ? setTimeout(() => { const el = part.el?.isConnected ? part.el : findPart(part.selector); el?.click() }, 1100)
+            : null
+
         let timer = null
         if (route && !part && attempt < PART_RETRIES) {
             // Still loading: look for the parts again shortly.
@@ -390,6 +405,7 @@ function ProductTour({ role, steps: allSteps }) {
         return () => {
             cancelAnimationFrame(frame)
             clearTimeout(timer)
+            clearTimeout(clickTimer)
             window.removeEventListener('scroll', place, true)
             window.removeEventListener('resize', place)
         }
