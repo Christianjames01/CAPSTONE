@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shrinkImage'
 import { IconLock } from '../../components/UiIcons'
 import { IconPhone, IconMail, IconBook, IconUserCircle } from './icons'
 import { supabase } from '../../lib/supabase'
@@ -156,9 +157,14 @@ function Profile() {
             return
         }
 
-        const maxSize = 2 * 1024 * 1024
+        if (file.size > MAX_ORIGINAL_IMAGE_MB * 1024 * 1024) {
+            setError(`Image must not exceed ${MAX_ORIGINAL_IMAGE_MB} MB.`)
+            return
+        }
 
-        if (file.size > maxSize) {
+        // Avatars are shown small: shrink to 600 px before upload.
+        const photo = await shrinkImage(file, { maxSide: 600, skipBelowBytes: 150 * 1024 })
+        if (photo.size > 2 * 1024 * 1024) {
             setError('Image must not exceed 2 MB.')
             return
         }
@@ -175,12 +181,12 @@ function Profile() {
                 throw new Error('You are not logged in.')
             }
 
-            const fileExtension = file.name.split('.').pop().toLowerCase()
+            const fileExtension = photo.name.split('.').pop().toLowerCase()
             const filePath = `${user.id}/avatar-${Date.now()}.${fileExtension}`
 
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
-                .upload(filePath, file, { cacheControl: '3600', upsert: false })
+                .upload(filePath, photo, { cacheControl: '3600', upsert: false })
 
             if (uploadError) {
                 throw new Error('Failed to upload photo: ' + uploadError.message)

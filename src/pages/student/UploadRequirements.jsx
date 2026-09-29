@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shrinkImage'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notifyWarning, notifyError } from '../../lib/notify'
@@ -112,21 +113,28 @@ function UploadRequirements() {
 
         const maxSize = (requirement.document_requirements?.max_file_size_mb || 5) * 1024 * 1024
 
-        if (file.size > maxSize) {
-            notifyWarning(`File must not exceed ${requirement.document_requirements?.max_file_size_mb || 5} MB.`)
+        const originalLimit = isShrinkable(file) ? Math.max(maxSize, MAX_ORIGINAL_IMAGE_MB * 1024 * 1024) : maxSize
+        if (file.size > originalLimit) {
+            notifyWarning(`File must not exceed ${Math.round(originalLimit / 1024 / 1024)} MB.`)
             return
         }
 
         try {
             setUploadingId(requirement.request_requirement_id)
 
-            const fileExtension = file.name.split('.').pop().toLowerCase()
+            // Photos are shrunk before upload; PDFs go up as they are.
+            const uploadFile = await shrinkImage(file)
+            if (uploadFile.size > maxSize) {
+                throw new Error(`File must not exceed ${requirement.document_requirements?.max_file_size_mb || 5} MB.`)
+            }
+
+            const fileExtension = uploadFile.name.split('.').pop().toLowerCase()
             const fileName = `${requirement.document_requirements.requirement_id}-${Date.now()}.${fileExtension}`
             const filePath = `${student.student_id}/${requestId}/${fileName}`
 
             const { error: uploadError } = await supabase.storage
                 .from('student-requirements')
-                .upload(filePath, file, { cacheControl: '3600', upsert: false })
+                .upload(filePath, uploadFile, { cacheControl: '3600', upsert: false })
 
             if (uploadError) {
                 throw new Error('File upload failed: ' + uploadError.message)

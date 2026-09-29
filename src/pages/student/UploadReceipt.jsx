@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shrinkImage'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -266,7 +267,12 @@ function UploadReceipt() {
         const maxSize =
             5 * 1024 * 1024
 
-        if (receiptFile.size > maxSize) {
+        if (isShrinkable(receiptFile) && receiptFile.size > MAX_ORIGINAL_IMAGE_MB * 1024 * 1024) {
+            setError(`Photos must not exceed ${MAX_ORIGINAL_IMAGE_MB} MB.`)
+            return
+        }
+
+        if (!isShrinkable(receiptFile) && receiptFile.size > maxSize) {
             setError(
                 'File size must not exceed 5 MB.'
             )
@@ -275,6 +281,13 @@ function UploadReceipt() {
 
         try {
             setUploading(true)
+
+            // Photos are shrunk before upload (a few hundred KB instead of
+            // several MB); PDFs go up as they are.
+            const uploadFile = await shrinkImage(receiptFile)
+            if (uploadFile.size > maxSize) {
+                throw new Error('File size must not exceed 5 MB.')
+            }
 
             // One upload = one receipt: link every request it pays for
             // (staff check them together), and fingerprint the file so a
@@ -285,7 +298,7 @@ function UploadReceipt() {
             const safeguards = { receipt_number: receiptNumber.trim().toUpperCase(), file_hash: fileHash, receipt_group_id: groupId }
 
             const fileExtension =
-                receiptFile.name
+                uploadFile.name
                     .split('.')
                     .pop()
                     .toLowerCase()
@@ -307,7 +320,7 @@ function UploadReceipt() {
                 .from('official-receipts')
                 .upload(
                     filePath,
-                    receiptFile,
+                    uploadFile,
                     {
                         cacheControl: '3600',
                         upsert: false

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../lib/shrinkImage'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../lib/notify'
 import {
     ACCEPTED_TYPES, CLOSED_STATUSES, MAX_FILE_MB, RELATIONSHIPS, REPRESENTATIVE_BUCKET, REPRESENTATIVE_STATUS,
@@ -54,14 +55,18 @@ function RepresentativeStudentCard({ request }) {
 
     const pickFile = (file, setter) => {
         if (!file) return setter(null)
-        if (file.size > MAX_FILE_MB * 1024 * 1024) {
-            notifyWarning(`Files must not exceed ${MAX_FILE_MB} MB.`)
+        const limitMb = isShrinkable(file) ? Math.max(MAX_FILE_MB, MAX_ORIGINAL_IMAGE_MB) : MAX_FILE_MB
+        if (file.size > limitMb * 1024 * 1024) {
+            notifyWarning(`Files must not exceed ${limitMb} MB.`)
             return setter(null)
         }
         setter(file)
     }
 
-    const upload = async (file, kind) => {
+    const upload = async (original, kind) => {
+        // Photos are shrunk before upload; PDFs go up as they are.
+        const file = await shrinkImage(original)
+        if (file.size > MAX_FILE_MB * 1024 * 1024) throw new Error(`Files must not exceed ${MAX_FILE_MB} MB.`)
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
         const path = `${request.student_id}/${requestId}/${kind}-${Date.now()}.${ext}`
         const { error } = await supabase.storage.from(REPRESENTATIVE_BUCKET).upload(path, file, { upsert: false })
