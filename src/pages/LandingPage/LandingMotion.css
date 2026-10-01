@@ -1717,3 +1717,30 @@
         animation: none;
     }
 }
+
+/* ---- 3D certificate (replaces the portal mock when WebGL is available) --- */
+.lpc-stage {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    aspect-ratio: 1.18;
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+    transition: opacity 0.9s ease, transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    cursor: grab;
+}
+
+.lpc-stage.is-ready {
+    opacity: 1;
+    transform: none;
+}
+
+.lpc-stage canvas {
+    display: block;
+}
+
+@media (max-width: 620px) {
+    .lpc-stage {
+        aspect-ratio: 1.3;
+    }
+}

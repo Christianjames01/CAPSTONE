@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import certichainLogo from "../../assets/certichain-logo.png";
 import { QrMark } from "../../components/explainer/parts";
 import { prefersReducedMotion, useInView, useTicker } from "./motion";
@@ -58,8 +58,22 @@ const RECENT = [
     { name: "Good Moral Certificate", no: "REQ-000112 · 1 copy", status: "Completed", tone: "green" },
 ];
 
+// The 3D certificate needs WebGL; without it the portal mock is shown.
+function webglAvailable() {
+    try {
+        const canvas = document.createElement("canvas");
+        return !!(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+    } catch {
+        return false;
+    }
+}
+
 function HeroVisual() {
     const ref = useRef(null);
+    const stageRef = useRef(null);
+    const sceneRef = useRef(null);
+    const [mode, setMode] = useState(() => (webglAvailable() ? "3d" : "mock"));
+    const [sceneReady, setSceneReady] = useState(false);
     const inView = useInView(ref, { threshold: 0.2, once: false });
     const tick = useTicker(inView && !prefersReducedMotion(), 2600);
     const stage = prefersReducedMotion() ? STAGES.length - 1 : tick % STAGES.length;
@@ -69,11 +83,39 @@ function HeroVisual() {
     // One new notification per status change.
     const unread = stage + 1;
 
+    // Load the 3D certificate separately (three.js is big) and mount it.
+    useEffect(() => {
+        if (mode !== "3d") return undefined;
+        let cancelled = false;
+        import("./heroCertificateScene")
+            .then(({ createHeroCertificate }) => {
+                if (cancelled || !stageRef.current) return;
+                sceneRef.current = createHeroCertificate(stageRef.current, { reducedMotion: prefersReducedMotion() });
+                setSceneReady(true);
+            })
+            .catch((err) => {
+                console.error("HERO 3D ERROR:", err);
+                if (!cancelled) setMode("mock");
+            });
+        return () => {
+            cancelled = true;
+            sceneRef.current?.dispose();
+            sceneRef.current = null;
+        };
+    }, [mode]);
+
+    // Follow the status cycle; pause when the hero is off screen.
+    useEffect(() => { sceneRef.current?.setStage(stage); }, [stage, sceneReady]);
+    useEffect(() => { sceneRef.current?.setActive(inView); }, [inView, sceneReady]);
+
     return (
         <div className="lpm-hero-visual" ref={ref} aria-hidden="true">
             <div className="lpm-orbit lpm-orbit-a" />
             <div className="lpm-orbit lpm-orbit-b" />
 
+            {mode === "3d" ? (
+                <div className={`lpc-stage${sceneReady ? " is-ready" : ""}`} ref={stageRef} />
+            ) : (
             <div className="lpv-app">
                 <div className="lpv-bar">
                     <span /><span /><span />
@@ -165,6 +207,7 @@ function HeroVisual() {
                     </main>
                 </div>
             </div>
+            )}
 
             <div key={`n-${stage}`} className="lpm-toast">
                 <span className="lpm-toast-icon">{I.bell}</span>
