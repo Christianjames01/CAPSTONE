@@ -27,6 +27,3 @@ verify_jwt = true
 
 [functions.create-employee-account]
 verify_jwt = true
-
-[functions.sync-facebook-videos]
-verify_jwt = false

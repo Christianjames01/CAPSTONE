@@ -10,7 +10,6 @@ import './AdminPages.css'
 import { digitsOnly } from '../../lib/typedNumber'
 import { useQueueDemo } from '../../lib/queueDemo'
 import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
-import LobbyVideosCard from '../../components/LobbyVideosCard'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -400,8 +399,6 @@ function AdminQueue() {
                     )}
                 </>
             )}
-
-            <LobbyVideosCard />
         </div>
     )
 }
