@@ -2,7 +2,9 @@ import certichainLogo from '../../assets/certichain-logo.png'
 import { Icon } from './icons'
 import { CtaButton, QrMark, Window } from './parts'
 
-// Student story scenes: from the counter line to a verified credential.
+// Student story scenes, following the real request journey:
+// Submitted -> Payment & requirements -> Registrar review -> Processing ->
+// Ready for release -> Completed (the same six steps the student portal shows).
 
 export function SceneIntro() {
     return (
@@ -61,14 +63,60 @@ export function SceneRequest() {
                     <div className="lpx-field"><small>Copies</small><span className="lpx-type" style={{ "--chars": 1, "--delay": "1.9s" }}>2</span></div>
                     <div className="lpx-field is-grow"><small>Purpose</small><span className="lpx-type" style={{ "--chars": 22, "--delay": "2.4s" }}>Scholarship application</span></div>
                 </div>
+                <div className="lpx-before" style={{ "--delay": "1.2s" }}>
+                    <small>Before you continue — you'll need:</small>
+                    <span>{Icon.check} Signed clearance form</span>
+                    <span>{Icon.check} Valid school ID</span>
+                </div>
                 <div className="lpx-btn lpx-press" style={{ "--delay": "3.9s" }}>Add to list</div>
             </Window>
-            <div className="lpx-cart" style={{ "--delay": "4.3s" }}>
-                <small>Your list</small>
-                <div><strong>Transcript of Records</strong><span>2 copies · ₱300.00</span></div>
-                <div className="lpx-btn is-red">Submit request</div>
+            <div className="lpx-side-stack">
+                <div className="lpx-cart" style={{ "--delay": "4.3s" }}>
+                    <small>Your list</small>
+                    <div><strong>Transcript of Records</strong><span>2 copies · ₱300.00</span></div>
+                    <div className="lpx-btn is-red">Submit Request</div>
+                </div>
+                <div className="lpx-badge-pop" style={{ "--delay": "5.4s" }}>
+                    <span>{Icon.check}</span>
+                    <div><strong>Request submitted</strong><small>REQ-000124 · next: requirements &amp; payment</small></div>
+                </div>
             </div>
             <span className="lpx-cursor" />
+        </div>
+    )
+}
+
+export function SceneRequirements() {
+    return (
+        <div className="lpx-scene lpx-requirements">
+            <Window title="Upload requirements" className="lpx-pop">
+                <div className="lpx-req">
+                    <div className="lpx-req-main">
+                        <strong>Signed clearance form</strong>
+                        <span className="lpx-reason-swap">
+                            <small className="lpx-req-reason">Rejected: the photo is blurry — please upload a clearer one.</small>
+                            <small className="lpx-req-sent">New file sent — waiting for review</small>
+                        </span>
+                    </div>
+                    <span className="lpx-chip-swap">
+                        <i className="lpx-chip is-bad">Rejected</i>
+                        <i className="lpx-chip is-wait">Under review</i>
+                    </span>
+                </div>
+                <div className="lpx-drop lpx-drop-small">
+                    <span>{Icon.upload}</span>
+                    <small>clearance-form.jpg · ready to upload</small>
+                    <div className="lpx-progress"><b /></div>
+                </div>
+                <div className="lpx-req">
+                    <div className="lpx-req-main"><strong>Valid school ID</strong><small>id-front.jpg</small></div>
+                    <span className="lpx-chip is-ok">Approved</span>
+                </div>
+            </Window>
+            <div className="lpx-badge-pop" style={{ "--delay": "4s" }}>
+                <span>{Icon.check}</span>
+                <div><strong>New file received</strong><small>The Registrar will check it again</small></div>
+            </div>
         </div>
     )
 }
@@ -91,30 +139,63 @@ export function ScenePayment() {
                     <div className="lpx-progress"><b /></div>
                 </div>
                 <div className="lpx-verified" style={{ "--delay": "3.8s" }}>
-                    <span>{Icon.check}</span> Receipt verified by the Registrar
+                    <span>{Icon.check}</span> Receipt received — the Registrar will check it
                 </div>
             </Window>
         </div>
     )
 }
 
+const JOURNEY = ['Submitted', 'Payment & requirements', 'Registrar review', 'Processing', 'Ready for release', 'Completed']
+
 export function SceneTracking() {
-    const steps = ["Submitted", "Receipt verified", "Processing", "Ready for claiming"];
     return (
         <div className="lpx-scene lpx-tracking">
-            <Window title="My requests" className="lpx-pop">
+            <Window title="My requests · REQ-000124" className="lpx-pop lpx-journey-win">
                 <div className="lpx-track-head">
                     <span className="lpx-doc-ic">{Icon.doc}</span>
-                    <div><strong>Transcript of Records</strong><small>REQ-000124</small></div>
-                    <span className="lpx-pill-cycle"><i>Receipt verified</i><i>Processing</i><i>Ready for claiming</i></span>
+                    <div><strong>Transcript of Records</strong><small>REQ-000124 · 2 copies</small></div>
+                    <span className="lpx-pill-cycle"><i>Under review</i><i>Processing</i><i>Ready</i></span>
                 </div>
-                <ol className="lpx-steps">
-                    {steps.map((s, i) => <li key={s} style={{ "--i": i }}><span>{Icon.check}</span>{s}</li>)}
+                <ol className="lpx-journey">
+                    {JOURNEY.map((label, i) => (
+                        <li key={label} style={{ "--i": i }}>
+                            <span>{i < 5 ? Icon.check : i + 1}</span>
+                            <small>{label}</small>
+                        </li>
+                    ))}
                 </ol>
+                <div className="lpx-now">
+                    <small>What's happening now?</small>
+                    <span className="lpx-now-cycle">
+                        <i>The Registrar is checking your receipt and requirements.</i>
+                        <i>The Registrar is preparing your document.</i>
+                        <i>Your document is ready — pickup on Oct 2, 9:00 AM.</i>
+                    </span>
+                </div>
             </Window>
             <div className="lpx-notes">
-                <div className="lpx-note" style={{ "--delay": "1.2s" }}><span>{Icon.bell}</span><div><strong>Processing</strong><small>The Registrar is preparing your document.</small></div></div>
-                <div className="lpx-note" style={{ "--delay": "3.2s" }}><span>{Icon.msg}</span><div><strong>Registrar</strong><small>Your document is ready for claiming.</small></div></div>
+                <div className="lpx-note" style={{ "--delay": "1.6s" }}><span>{Icon.bell}</span><div><strong>Payment verified</strong><small>Your request is now being processed.</small></div></div>
+                <div className="lpx-note" style={{ "--delay": "4.2s" }}><span>{Icon.bell}</span><div><strong>Ready for pickup</strong><small>Thu, Oct 2 · 9:00 AM · Window 2</small></div></div>
+            </div>
+        </div>
+    )
+}
+
+export function SceneSchedule() {
+    return (
+        <div className="lpx-scene lpx-claim">
+            <div className="lpx-date-card lpx-pop">
+                <span>{Icon.cal}</span>
+                <small>Pickup schedule</small>
+                <strong>Oct 2</strong>
+                <em>9:00 AM · Window 2</em>
+            </div>
+            <div className="lpx-bring" style={{ "--delay": "0.9s" }}>
+                <small>What to bring</small>
+                <span style={{ "--d": "1.4s" }}>{Icon.check} A valid ID</span>
+                <span style={{ "--d": "2s" }}>{Icon.check} Your Official Receipt</span>
+                <span style={{ "--d": "2.6s" }}>{Icon.user} Can't go? Add a representative — they bring your signed letter and their ID</span>
             </div>
         </div>
     )
@@ -123,11 +204,9 @@ export function SceneTracking() {
 export function SceneClaim() {
     return (
         <div className="lpx-scene lpx-claim">
-            <div className="lpx-date-card lpx-pop">
-                <span>{Icon.cal}</span>
-                <small>Claiming schedule</small>
-                <strong>Oct 2</strong>
-                <em>9:00 AM · bring a valid ID</em>
+            <div className="lpx-badge-pop" style={{ "--delay": "0.3s" }}>
+                <span>{Icon.check}</span>
+                <div><strong>Claimed · request completed</strong><small>Released at the Registrar's Office</small></div>
             </div>
 
             <div className="lpx-doc-final" style={{ "--delay": "1s" }}>
