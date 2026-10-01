@@ -2,6 +2,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
 
+// Constant-time comparison of the webhook secret.
+function sameSecret(given: string | null, expected: string): boolean {
+    if (!given) return false
+    const a = new TextEncoder().encode(given)
+    const b = new TextEncoder().encode(expected)
+    let diff = a.length ^ b.length
+    for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a[i] ?? 0) ^ (b[i] ?? 0)
+    return diff === 0
+}
+
 const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -15,7 +25,8 @@ const OPEN_STATUSES = [
 ]
 
 Deno.serve(async (req) => {
-    if (WEBHOOK_SECRET && req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+    // Fail closed: without the secret configured nobody may call this.
+    if (!WEBHOOK_SECRET || !sameSecret(req.headers.get('x-webhook-secret'), WEBHOOK_SECRET)) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 

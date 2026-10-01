@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { sanitizeAnnouncementHtml } from '../lib/sanitizeHtml'
 import './RichTextEditor.css'
 
 const COLORS = [
@@ -65,7 +66,8 @@ function RichTextEditor({ value, onChange, disabled, placeholder, editorKey, id,
     // position while typing.
     useEffect(() => {
         if (ref.current) {
-            ref.current.innerHTML = value || ''
+            // Cleaned like everywhere else announcements are shown.
+            ref.current.innerHTML = sanitizeAnnouncementHtml(value || '')
             setText(plainText(value))
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
