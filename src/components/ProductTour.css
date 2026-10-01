@@ -852,3 +852,41 @@
     background: #EAF1FB;
     color: #123B78;
 }
+
+/* Phones: a see-through step card so the highlighted part shows through it.
+   Press and hold the card to read it at full strength. */
+@media (max-width: 699px) {
+    .tour-card.is-see-through {
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        /* filter, not opacity: the entrance animation holds opacity at 1. */
+        filter: opacity(0.93);
+        transition: filter 0.25s ease, background 0.25s ease, top 0.3s ease, bottom 0.3s ease;
+    }
+
+    .tour-card.is-see-through.is-over-highlight {
+        background: rgba(255, 255, 255, 0.6);
+        filter: opacity(0.72);
+    }
+
+    /* :active only -- phones keep :hover on the last tapped element (Next),
+       which would keep the card solid. */
+    .tour-card.is-see-through:active {
+        background: #fff;
+        filter: none;
+    }
+
+    /* Keep the text readable on the lighter card. */
+    .tour-card.is-see-through h3,
+    .tour-card.is-see-through p {
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+    }
+}
+
+@media (max-width: 699px) and (prefers-reduced-transparency: reduce) {
+    .tour-card.is-see-through,
+    .tour-card.is-see-through.is-over-highlight {
+        background: #fff;
+        filter: none;
+    }
+}

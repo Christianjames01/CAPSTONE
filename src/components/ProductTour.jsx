@@ -516,6 +516,13 @@ function ProductTour({ role, steps: allSteps }) {
     const counting = playing && !intro && ready && !(isLast && !pointer && hl + 1 >= partCount)
 
     // Caption beside the pointed-at part (desktop); in the sheet on phones.
+    // Phones: the step card sits at the bottom, or at the top when the
+    // highlighted part is in the lower half, so it doesn't cover it; and it's
+    // see-through (more so when a tall highlight still sits under it).
+    const hlRect = pointer?.rect || null
+    const cardAtTop = isMobile && !!hlRect && hlRect.top + hlRect.height / 2 > window.innerHeight * 0.5
+    const cardOverHighlight = isMobile && !!hlRect && hlRect.height > window.innerHeight * 0.5
+
     const captionStyle = pointer && !isMobile
         ? (() => {
             const r = pointer.rect
@@ -577,8 +584,8 @@ function ProductTour({ role, steps: allSteps }) {
 
             <div
                 key={onPage ? 'floating' : 'centered'}
-                className={`tour-card ${onPage ? 'is-floating' : 'is-centered'}${intro ? ' is-waiting' : ''}`}
-                style={onPage ? (isMobile ? { left: 12, right: 12, bottom: 12 } : { right: 16, bottom: 16, width: Math.min(380, window.innerWidth - 24) }) : undefined}
+                className={`tour-card ${onPage ? 'is-floating' : 'is-centered'}${intro ? ' is-waiting' : ''}${onPage && isMobile ? ' is-see-through' : ''}${onPage && cardOverHighlight ? ' is-over-highlight' : ''}`}
+                style={onPage ? (isMobile ? (cardAtTop ? { left: 12, right: 12, top: 12 } : { left: 12, right: 12, bottom: 12 }) : { right: 16, bottom: 16, width: Math.min(380, window.innerWidth - 24) }) : undefined}
             >
                 {isLast && (
                     <div className="tour-confetti" aria-hidden="true">
