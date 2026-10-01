@@ -7,6 +7,8 @@ import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { SkeletonList } from '../../components/Skeleton'
+import { describeRequest } from '../../lib/studentProgress'
+import RequestProgress from './RequestProgress'
 import './StudentPages.css'
 
 const STATUS_LABELS = {
@@ -273,8 +275,10 @@ function MyRequest() {
             ) : visibleRequests.length === 0 && !errorMessage ? (
                 <div className="student-empty">No requests match this view.</div>
             ) : (
-                visibleRequests.map((request) => (
-                    <div className="student-list-card" key={request.request_id}>
+                visibleRequests.map((request) => {
+                    const info = describeRequest(request)
+                    return (
+                    <div className={`student-list-card${info.tone === 'action' ? ' rq-needs-action' : ''}`} key={request.request_id}>
 
                         <div className="student-list-card-header">
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
@@ -293,9 +297,16 @@ function MyRequest() {
                             </div>
                             </div>
 
-                            <span className={`student-status-pill status-${request.status}`}>
-                                {statusLabel(request.status)}
+                            <span className={`sd-status tone-${info.tone}`} title={statusLabel(request.status)}>
+                                {info.statusLabel}
                             </span>
+                        </div>
+
+                        <RequestProgress request={request} compact />
+
+                        <div className={`rq-next tone-${info.tone}`}>
+                            <span className="rq-next-label">{info.tone === 'action' ? 'Action required' : 'Next step'}</span>
+                            <p>{info.tone === 'action' ? info.todo : info.now}</p>
                         </div>
 
                         <div className="student-info-grid">
@@ -326,17 +337,24 @@ function MyRequest() {
                             </div>
                         )}
 
-                        <div className="ui-card-actions">
+                        <div className="ui-card-actions rq-card-actions">
+                            {info.tone === 'action' && info.action && (
+                                <button type="button" className="sd-action-btn" onClick={() => navigate(info.action.to)}>
+                                    {info.action.label}
+                                </button>
+                            )}
                             <button
-                                className="student-link-button"
+                                type="button"
+                                className="sd-view-btn"
                                 onClick={() => navigate(`/student/request/${request.request_id}`)}
                             >
-                                View request details →
+                                View Details
                             </button>
                         </div>
 
                     </div>
-                ))
+                    )
+                })
             )}
         </div>
     )

@@ -174,7 +174,7 @@ export const STUDENT_TOUR = [
     {
         target: link('student-nav', '/student/help'),
         preview: 'help',
-        title: 'Help / Support',
+        title: 'Help & Support',
         body: 'Common questions, processing times and fees, and the Registrar’s Office contact details.',
     },
     {

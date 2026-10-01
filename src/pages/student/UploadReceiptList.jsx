@@ -115,8 +115,8 @@ function UploadReceiptList() {
     return (
         <div>
             <div className="student-page-header">
-                <h1>Upload Receipt</h1>
-                <p>Upload your official receipt (OR) for requests that are awaiting payment verification.</p>
+                <h1>Payments &amp; Receipts</h1>
+                <p>Pay your fees at the HCDC Finance Office, then upload a clear photo of your Official Receipt here. The Registrar will check it and let you know.</p>
             </div>
 
             {error && <div className="student-error-box">{error}</div>}

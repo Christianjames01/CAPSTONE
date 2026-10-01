@@ -1,51 +1,32 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
-import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadHiddenMessageIds, readMessage } from '../../lib/messageActions'
 import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
 import { chatListTime } from '../../lib/chatTime'
 import { fetchActiveAnnouncements } from '../../lib/announcements'
 import { fetchOfficeScheduleNotices } from '../../lib/officeCalendar'
 import AnnouncementNotice from '../../components/AnnouncementNotice'
-import { IconDocumentPlus, IconList, IconBell, IconClock, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp, IconX } from './icons'
+import { IconDocumentPlus, IconList, IconCheckCircle, IconAlertCircle, IconMessage, IconHelp } from './icons'
+import { ACTIVE_STATUSES, describeRequest } from '../../lib/studentProgress'
 import { SkeletonStatGrid, SkeletonPage } from '../../components/Skeleton'
 import './StudentPages.css'
 import './Dashboard.css'
 
-const IN_PROGRESS_STATUSES = [
-    'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
-    'processing', 'lacking_requirements',
-]
+// Statuses where the student has to do something.
+const ACTION_STATUSES = ['pending', 'payment_pending', 'lacking_requirements']
 
-const ACTION_NEEDED = {
-    payment_pending: { label: 'Payment needed', cta: 'Upload receipt →', to: (id) => `/student/request/${id}/upload-receipt` },
-    lacking_requirements: { label: 'Requirement needs fixing', cta: 'Submit requirements →', to: (id) => `/student/request/${id}/requirements` },
+const greeting = () => {
+    const h = new Date().getHours()
+    return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }
-
-const STEPPER_STEPS = ['Submitted', 'Processing', 'Ready', 'Completed']
-
-const stepperStage = (status) => {
-    if (status === 'rejected' || status === 'cancelled') return null
-    if (status === 'completed') return 3
-    if (status === 'ready_for_claiming') return 2
-    if (status === 'processing' || status === 'lacking_requirements') return 1
-    return 0
-}
-
-const FAQ_ITEMS = [
-    ['What do I need to request a document?', "Requirements vary per document type. Once you pick one on the request form, it'll list exactly what's needed for that credential."],
-    ['How do I pay?', "In person at the HCDC Finance Office. Pay the amount shown on your request there, then upload a photo of your official receipt on the request's page. Registrar staff verify it before processing begins."],
-    ['How long does processing take?', "It varies by document type and current volume. You'll get a notification at every step, so there's no need to keep checking back."],
-    ["How will I know when it's ready?", 'You\'ll get a notification and it\'ll show as "Ready for Claiming" on your dashboard and My Requests.'],
-]
 
 function Dashboard() {
     const [name, setName] = useState('')
     const [requests, setRequests] = useState([])
-    const [unreadCount, setUnreadCount] = useState(0)
+    // Unread notifications show on the bell in the header.
+    const [, setUnreadCount] = useState(0)
     const [upcomingClaim, setUpcomingClaim] = useState(null)
     const [missedClaimCount, setMissedClaimCount] = useState(0)
     const [latestMessage, setLatestMessage] = useState(null)
@@ -132,7 +113,7 @@ function Dashboard() {
                 student
                     ? supabase
                         .from('document_requests')
-                        .select('request_id, request_number, document_type_id, status, requested_at, total_amount')
+                        .select('*')
                         .eq('student_id', student.student_id)
                         .order('requested_at', { ascending: false })
                     : Promise.resolve({ data: [] }),
@@ -195,14 +176,16 @@ function Dashboard() {
         setLoading(false)
     }
 
-    const totalCount = requests.length
-    const inProgressCount = requests.filter((r) => IN_PROGRESS_STATUSES.includes(r.status)).length
-    const readyCount = requests.filter((r) => r.status === 'ready_for_claiming').length
+    // A rejected request (not an automatic one) means the receipt must be re-uploaded.
+    const isActive = (r) => ACTIVE_STATUSES.includes(r.status) || (r.status === 'rejected' && !r.auto_rejected_at)
+    const activeRequests = requests
+        .filter(isActive)
+        // The upcoming pickup (when it's this request) gives its "Ready" row the date.
+        .map((r) => ({ ...r, info: describeRequest(r, { schedule: upcomingClaim?.request_id === r.request_id ? upcomingClaim : null }) }))
+        .sort((a, b) => (a.info.tone === 'action' ? 0 : 1) - (b.info.tone === 'action' ? 0 : 1))
+    const actionCount = activeRequests.filter((r) => r.info.tone === 'action').length
     const completedCount = requests.filter((r) => r.status === 'completed').length
-    const cancelledCount = requests.filter((r) => r.status === 'cancelled').length
-
-    const recentRequests = requests.slice(0, 3)
-    const actionableRequests = requests.filter((r) => ACTION_NEEDED[r.status])
+    const readyCount = requests.filter((r) => r.status === 'ready_for_claiming').length
 
     const formatClaimDate = (date) => {
         if (!date) return 'N/A'
@@ -217,47 +200,34 @@ function Dashboard() {
         return date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
     }
 
-    const openFaq = () => {
-        const items = FAQ_ITEMS.map(
-            ([q, a]) => `<li style="margin-bottom:12px;"><strong>${q}</strong><br/><span style="color:#57616F;font-size:13.5px;">${a}</span></li>`
-        ).join('')
-
-        Swal.fire({
-            title: 'Frequently Asked Questions',
-            html: `<ul style="text-align:left;list-style:none;padding:0;margin:0;">${items}</ul>`,
-            confirmButtonText: 'Got it',
-            confirmButtonColor: '#123B78',
-            width: 520,
-        })
-    }
+    const summary = [
+        { key: 'active', label: 'Active Requests', hint: 'In progress', value: activeRequests.length, icon: <IconList />, color: 'var(--blue-accent, var(--blue))', tint: 'var(--blue-tint)', to: `/student/my-requests?status=${ACTIVE_STATUSES.join(',')}` },
+        { key: 'action', label: 'Pending Actions', hint: actionCount ? 'Needs you' : 'All clear', value: actionCount, icon: <IconAlertCircle />, color: '#B45309', tint: 'rgba(180, 83, 9, 0.12)', to: `/student/my-requests?status=${[...ACTION_STATUSES, 'rejected'].join(',')}` },
+        { key: 'completed', label: 'Completed', hint: 'Released to you', value: completedCount, icon: <IconCheckCircle />, color: '#1e8a5f', tint: 'rgba(30, 138, 95, 0.12)', to: '/student/my-requests?status=completed' },
+        { key: 'ready', label: 'Ready for You', hint: 'Ready for pickup', value: readyCount, icon: <IconDocumentPlus />, color: '#9A7A1F', tint: 'rgba(201, 162, 58, 0.16)', to: '/student/claim-schedule' },
+    ]
 
     return (
-        <div>
-            <div className="student-dashboard-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-                <div>
-                    <h1>{!loading && name ? `Welcome back, ${name}` : 'Welcome back'}</h1>
-                    <p>Here's what you can do with your CertiChain account today.</p>
+        <div className="sd-page">
+            <section className="sd-hero">
+                <div className="sd-hero-text">
+                    <h1>{greeting()}{!loading && name ? `, ${name}` : ''}</h1>
+                    <p>Manage your academic document requests, requirements, and document releases in one place.</p>
                 </div>
-
-                <button
-                    onClick={openFaq}
-                    style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        fontSize: 13, fontWeight: 600, color: 'var(--blue-accent, var(--blue))',
-                    }}
-                >
-                    <IconHelp /> FAQs
-                </button>
-            </div>
+                <div className="sd-hero-actions">
+                    <button type="button" className="sd-primary-btn" onClick={() => navigate('/student/new-request')}>
+                        <IconDocumentPlus /> Request a Document
+                    </button>
+                    <button type="button" className="sd-secondary-btn" onClick={() => navigate('/student/guide')}>
+                        <IconHelp /> How it works
+                    </button>
+                </div>
+            </section>
 
             {loading && (
                 <>
-                    <SkeletonStatGrid
-                        count={6}
-                        gridClassName="student-stat-grid"
-                        cardClassName="student-stat-card"
-                    />
-                    <SkeletonPage portal="student" blocks={[{ type: 'list', count: 2, fields: 0, action: false }, { type: 'list', count: 3, fields: 0 }]} />
+                    <SkeletonStatGrid count={4} gridClassName="sd-summary" cardClassName="sd-summary-card" />
+                    <SkeletonPage portal="student" blocks={[{ type: 'list', count: 3, fields: 0 }]} />
                 </>
             )}
 
@@ -271,83 +241,28 @@ function Dashboard() {
                         </section>
                     )}
 
-                    <div className="student-stat-grid" style={{ marginBottom: 24 }}>
-                        <button
-                            className="student-stat-card"
-                            style={{ '--stat-color': 'var(--blue-accent, var(--blue))', '--stat-tint': 'var(--blue-tint)' }}
-                            onClick={() => navigate('/student/my-requests')}
-                        >
-                            <div className="student-stat-icon"><IconList /></div>
-                            <div>
-                                <span className="student-stat-value">{totalCount}</span>
-                                <span className="student-stat-label">Total Requests</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className="student-stat-card"
-                            style={{ '--stat-color': '#B45309', '--stat-tint': 'rgba(180, 83, 9, 0.14)' }}
-                            onClick={() => navigate(`/student/my-requests?status=${IN_PROGRESS_STATUSES.join(',')}`)}
-                        >
-                            <div className="student-stat-icon"><IconClock /></div>
-                            <div>
-                                <span className="student-stat-value">{inProgressCount}</span>
-                                <span className="student-stat-label">In Progress</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className="student-stat-card"
-                            style={{ '--stat-color': '#1e8a5f', '--stat-tint': 'rgba(30, 138, 95, 0.12)' }}
-                            onClick={() => navigate('/student/claim-schedule')}
-                        >
-                            <div className="student-stat-icon"><IconCheckCircle /></div>
-                            <div>
-                                <span className="student-stat-value">{readyCount}</span>
-                                <span className="student-stat-label">Ready for Claiming</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className="student-stat-card"
-                            style={{ '--stat-color': 'var(--blue-accent, var(--blue))', '--stat-tint': 'var(--paper)' }}
-                            onClick={() => navigate('/student/my-requests?status=completed')}
-                        >
-                            <div className="student-stat-icon"><IconDocumentPlus /></div>
-                            <div>
-                                <span className="student-stat-value">{completedCount}</span>
-                                <span className="student-stat-label">Completed</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className="student-stat-card"
-                            style={{ '--stat-color': '#8a94a6', '--stat-tint': 'rgba(138, 148, 166, 0.12)' }}
-                            onClick={() => navigate('/student/my-requests?status=cancelled')}
-                        >
-                            <div className="student-stat-icon"><IconX /></div>
-                            <div>
-                                <span className="student-stat-value">{cancelledCount}</span>
-                                <span className="student-stat-label">Cancelled</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className="student-stat-card"
-                            style={{ '--stat-color': 'var(--red)', '--stat-tint': 'rgba(200, 16, 46, 0.08)' }}
-                            onClick={() => navigate('/student/notifications')}
-                        >
-                            <div className="student-stat-icon"><IconBell /></div>
-                            <div>
-                                <span className="student-stat-value">{unreadCount}</span>
-                                <span className="student-stat-label">Unread Notifications</span>
-                            </div>
-                        </button>
+                    <div className="sd-summary">
+                        {summary.map((card) => (
+                            <button
+                                type="button"
+                                key={card.key}
+                                className={`sd-summary-card${card.key === 'action' && card.value > 0 ? ' is-alert' : ''}`}
+                                style={{ '--stat-color': card.color, '--stat-tint': card.tint }}
+                                onClick={() => navigate(card.to)}
+                            >
+                                <span className="sd-summary-icon">{card.icon}</span>
+                                <span className="sd-summary-body">
+                                    <span className="sd-summary-value">{card.value}</span>
+                                    <span className="sd-summary-label">{card.label}</span>
+                                    <span className="sd-summary-hint">{card.hint}</span>
+                                </span>
+                            </button>
+                        ))}
                     </div>
 
                     {missedClaimCount > 0 && (
-                        <div className="student-notice tone-danger" style={{ marginTop: 0, marginBottom: 24 }}>
-                            <strong>{missedClaimCount === 1 ? 'You missed a claiming appointment' : `You've missed ${missedClaimCount} claiming appointments`}</strong>
+                        <div className="student-notice tone-danger" style={{ marginTop: 0, marginBottom: 20 }}>
+                            <strong>{missedClaimCount === 1 ? 'You missed a pickup appointment' : `You've missed ${missedClaimCount} pickup appointments`}</strong>
                             <p>
                                 Please visit the Registrar's Office as soon as possible to claim your document(s).
                                 {missedClaimCount >= 2
@@ -358,77 +273,84 @@ function Dashboard() {
                     )}
 
                     {upcomingClaim && (
-                        <div className="student-notice tone-success" style={{ marginTop: 0, marginBottom: 24 }}>
-                            <strong>Document ready to claim</strong>
-                            <p>
-                                {upcomingClaim.documentName} ({upcomingClaim.requestNumber}) —{' '}
-                                {(upcomingClaim.claim_date || upcomingClaim.scheduled_date)
-                                    ? <>scheduled for {formatClaimDate(upcomingClaim.claim_date || upcomingClaim.scheduled_date)} at {formatClaimTime(upcomingClaim.claim_time || upcomingClaim.scheduled_time)}</>
-                                    : 'waiting to be scheduled by the Registrar.'}
-                            </p>
+                        <div className="sd-pickup">
+                            <span className="sd-pickup-icon"><IconCheckCircle /></span>
+                            <div>
+                                <strong>Your document is ready</strong>
+                                <p>
+                                    {upcomingClaim.documentName} ({upcomingClaim.requestNumber}) —{' '}
+                                    {(upcomingClaim.claim_date || upcomingClaim.scheduled_date)
+                                        ? <>pickup on <b>{formatClaimDate(upcomingClaim.claim_date || upcomingClaim.scheduled_date)}</b> at <b>{formatClaimTime(upcomingClaim.claim_time || upcomingClaim.scheduled_time)}</b>, Registrar's Office. Bring a valid ID and your Official Receipt.</>
+                                        : 'the Registrar will set your pickup date and time.'}
+                                </p>
+                            </div>
+                            <button type="button" className="sd-secondary-btn" onClick={() => navigate('/student/claim-schedule')}>View pickup</button>
                         </div>
                     )}
 
-                    {actionableRequests.length > 0 && (
-                        <div style={{ marginBottom: 24 }}>
-                            <h2 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ color: '#B45309', display: 'inline-flex' }}><IconAlertCircle /></span>
-                                Needs Your Attention
-                            </h2>
+                    <section className="sd-current" aria-labelledby="sd-current-title">
+                        <div className="sd-section-head">
+                            <h2 id="sd-current-title">Current Requests</h2>
+                            {requests.length > 0 && (
+                                <button type="button" className="student-link-button" onClick={() => navigate('/student/my-requests')}>
+                                    View all requests →
+                                </button>
+                            )}
+                        </div>
 
-                            {actionableRequests.map((request) => {
-                                const action = ACTION_NEEDED[request.status]
-
-                                return (
-                                    <div className="student-list-card" key={request.request_id}>
-                                        <div className="student-list-card-header">
-                                            <div>
-                                                <h3>{request.documentName}</h3>
-                                                <p>
-                                                    Request {request.request_number} · {action.label}
-                                                    {request.status === 'payment_pending' && request.total_amount
-                                                        ? ` · ₱${Number(request.total_amount).toFixed(2)} due`
-                                                        : ''}
-                                                </p>
-                                            </div>
-                                            <span className={`student-status-pill status-${request.status}`}>
-                                                {request.status.replace(/_/g, ' ')}
-                                            </span>
-                                        </div>
-
-                                        <button
-                                            className="student-link-button"
-                                            onClick={() => navigate(action.to(request.request_id))}
-                                        >
-                                            {action.cta}
-                                        </button>
+                        {activeRequests.length === 0 ? (
+                            <div className="sd-empty">
+                                <span className="sd-empty-icon"><IconList /></span>
+                                <strong>No active requests</strong>
+                                <p>You don't have any active document requests yet.</p>
+                                <button type="button" className="sd-primary-btn" onClick={() => navigate('/student/new-request')}>
+                                    <IconDocumentPlus /> Request a Document
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="sd-table" role="table" aria-label="Your current requests">
+                                <div className="sd-row sd-row-head" role="row">
+                                    <span role="columnheader">Document</span>
+                                    <span role="columnheader">Requested</span>
+                                    <span role="columnheader">Status</span>
+                                    <span role="columnheader">Next action</span>
+                                    <span role="columnheader"><span className="visually-hidden">Details</span></span>
+                                </div>
+                                {activeRequests.map((r) => (
+                                    <div key={r.request_id} className={`sd-row${r.info.tone === 'action' ? ' is-action' : ''}`} role="row">
+                                        <span role="cell" className="sd-cell-doc">
+                                            <strong>{r.documentName}</strong>
+                                            <small>{r.request_number}</small>
+                                        </span>
+                                        <span role="cell" className="sd-cell-date">
+                                            <small className="sd-cell-label">Requested</small>
+                                            {r.requested_at ? new Date(r.requested_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                        </span>
+                                        <span role="cell">
+                                            <span className={`sd-status tone-${r.info.tone}`}>{r.info.statusLabel}</span>
+                                        </span>
+                                        <span role="cell" className="sd-cell-next">
+                                            {r.info.tone === 'action' && r.info.action ? (
+                                                <button type="button" className="sd-action-btn" onClick={() => navigate(r.info.action.to)}>
+                                                    {r.info.action.label}
+                                                </button>
+                                            ) : (
+                                                <span className="sd-no-action">{r.info.todo.split('.')[0]}.</span>
+                                            )}
+                                        </span>
+                                        <span role="cell" className="sd-cell-view">
+                                            <button type="button" className="sd-view-btn" onClick={() => navigate(`/student/request/${r.request_id}`)}>
+                                                View Details
+                                            </button>
+                                        </span>
                                     </div>
-                                )
-                            })}
-                        </div>
-                    )}
-
-                    {totalCount === 0 && (
-                        <div className="student-notice tone-info" style={{ marginTop: 0, marginBottom: 24 }}>
-                            <strong>No requests yet</strong>
-                            <p style={{ marginBottom: 12 }}>
-                                Once you request your first document, you'll be able to track its
-                                status right here — from payment to claiming.
-                            </p>
-                            <button
-                                onClick={() => navigate('/student/new-request')}
-                                style={{
-                                    background: 'var(--blue)', color: 'var(--white)', fontWeight: 600,
-                                    fontSize: 13.5, padding: '10px 18px', borderRadius: 6,
-                                }}
-                            >
-                                Request your first document →
-                            </button>
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        )}
+                    </section>
 
                     {latestMessage && (
-                        <div className="student-list-card" style={{ marginBottom: 24 }}>
+                        <div className="student-list-card" style={{ marginTop: 24 }}>
                             <div className="student-list-card-header">
                                 <div>
                                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -460,66 +382,6 @@ function Dashboard() {
                             </button>
                         </div>
                     )}
-                </>
-            )}
-
-            {!loading && recentRequests.length > 0 && (
-                <>
-                    <div className="student-page-header-row" style={{ marginTop: 32, marginBottom: 16 }}>
-                        <h2 style={{ fontSize: 17 }}>Recent Requests</h2>
-                        <button className="student-link-button" onClick={() => navigate('/student/my-requests')}>
-                            View all →
-                        </button>
-                    </div>
-
-                    {recentRequests.map((request) => {
-                        const stage = stepperStage(request.status)
-
-                        return (
-                            <div className="student-list-card" key={request.request_id}>
-                                <div className="student-list-card-header">
-                                    <div>
-                                        <h3>{request.documentName}</h3>
-                                        <p>Request {request.request_number}</p>
-                                        {request.requested_at && <p>Requested {formatDisplayDateTime(request.requested_at)}</p>}
-                                    </div>
-                                    <span className={`student-status-pill status-${request.status}`}>
-                                        {request.status.replace(/_/g, ' ')}
-                                    </span>
-                                </div>
-
-                                {stage !== null && (
-                                    <div className="request-stepper">
-                                        {STEPPER_STEPS.map((label, i) => (
-                                            <div className={`request-stepper-step${i <= stage ? ' active' : ''}`} key={label}>
-                                                <div className="request-stepper-row">
-                                                    {i > 0 && <div className={`request-stepper-line${i <= stage ? ' active' : ''}`} />}
-                                                    <div className="request-stepper-dot" />
-                                                </div>
-                                                <span className="request-stepper-label">{label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                <div style={{ display: 'flex', gap: 16 }}>
-                                    <button
-                                        className="student-link-button"
-                                        onClick={() => navigate(`/student/request/${request.request_id}`)}
-                                    >
-                                        View details →
-                                    </button>
-
-                                    <button
-                                        className="student-link-button"
-                                        onClick={() => navigate(`/student/new-request?document=${request.document_type_id}`)}
-                                    >
-                                        Request again →
-                                    </button>
-                                </div>
-                            </div>
-                        )
-                    })}
                 </>
             )}
         </div>

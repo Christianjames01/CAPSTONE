@@ -215,8 +215,8 @@ function ClaimSchedule() {
     return (
         <div>
             <div className="student-page-header">
-                <h1>Claim Schedule</h1>
-                <p>View the date and time you're scheduled to claim your documents.</p>
+                <h1>Pickup Schedule</h1>
+                <p>When and where to claim your documents at the Registrar's Office. Bring a valid ID and your Official Receipt.</p>
             </div>
 
             {error && <div className="student-error-box">{error}</div>}

@@ -29,17 +29,18 @@ import './StudentLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
 
+// In the order a student uses them: see requests, request one, pay, pick up.
 const NAV_ITEMS = [
     { to: '/student/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
-    { to: '/student/new-request', label: 'Request a Document', icon: <IconDocumentPlus /> },
     { to: '/student/my-requests', label: 'My Requests', icon: <IconList /> },
-    { to: '/student/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
-    { to: '/student/upload-receipt', label: 'Upload Receipt', icon: <IconReceipt /> },
-    { to: '/student/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
+    { to: '/student/new-request', label: 'Request a Document', icon: <IconDocumentPlus /> },
+    { to: '/student/upload-receipt', label: 'Payments & Receipts', icon: <IconReceipt /> },
+    { to: '/student/claim-schedule', label: 'Pickup Schedule', icon: <IconCalendar /> },
     { to: '/student/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
+    { to: '/student/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/student/profile', label: 'Profile', icon: <IconUserCircle /> },
     { to: '/student/guide', label: 'User Guide', icon: <IconBook /> },
-    { to: '/student/help', label: 'Help / Support', icon: <IconHelp /> },
+    { to: '/student/help', label: 'Help & Support', icon: <IconHelp /> },
 ]
 
 function StudentLayout() {

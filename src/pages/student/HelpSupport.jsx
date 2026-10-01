@@ -77,7 +77,7 @@ function HelpSupport() {
     return (
         <div>
             <div className="student-page-header">
-                <h1>Help / Support</h1>
+                <h1>Help &amp; Support</h1>
                 <p>Frequently asked questions, processing times, and Registrar contact information.</p>
             </div>
 

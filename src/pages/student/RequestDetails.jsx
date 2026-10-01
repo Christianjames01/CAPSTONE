@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import DocumentThumb from '../../components/DocumentThumb'
 import { IconStar, StarRating } from '../../components/UiIcons'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, notifySuccess } from '../../lib/notify'
@@ -14,6 +14,7 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useAutoReject } from '../../lib/autoReject'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadDirectoryProfiles } from '../../lib/directoryProfiles'
+import RequestProgress from './RequestProgress'
 
 const STATUS_META = {
     pending: {
@@ -115,6 +116,7 @@ function formatDay(dateStr) {
 function RequestDetails() {
     const { requestId } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
 
     const [request, setRequest] = useState(null)
     const [documentName, setDocumentName] = useState('')
@@ -149,6 +151,13 @@ function RequestDetails() {
 
         loadRequest()
     }, [requestId])
+
+    // "View Digital Credential" links here with #credential: scroll to it.
+    useEffect(() => {
+        if (!loading && location.hash === '#credential') {
+            document.getElementById('credential')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+    }, [loading, location.hash])
 
     const loadRequest = async ({ silent = false } = {}) => {
         try {
@@ -594,6 +603,8 @@ function RequestDetails() {
                 </span>
             </div>
 
+            <RequestProgress request={request} requirements={requirements} schedule={claimSchedule} credential={credential} />
+
             <div className="student-card">
                 <div className="student-info-grid">
                     <div className="student-info-field">
@@ -722,7 +733,7 @@ function RequestDetails() {
                 )}
 
                 {credential && (
-                    <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
+                    <div id="credential" className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0, scrollMarginTop: 90 }}>
                         <h3 style={{ fontSize: 15, marginBottom: 6 }}>Digital Credential</h3>
                         <p style={{ fontSize: 13, color: 'var(--slate)', marginBottom: 4 }}>
                             Share this QR code or credential number so anyone can verify this document is genuine.
@@ -735,10 +746,6 @@ function RequestDetails() {
                     </div>
                 )}
 
-                <div className={`student-notice tone-${statusMeta(request.status).tone}`}>
-                    <strong>{statusMeta(request.status).title}</strong>
-                    <p>{statusMeta(request.status).message}</p>
-                </div>
 
                 {request.status === 'completed' && (
                     <div className="student-card" style={{ background: 'var(--paper)', marginTop: 16, marginBottom: 0 }}>
