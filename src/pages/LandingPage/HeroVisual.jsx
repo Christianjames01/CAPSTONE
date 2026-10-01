@@ -35,6 +35,9 @@ const I = {
     check: <Svg><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12.2 2.4 2.4 4.6-4.8" /></Svg>,
     doc: <Svg><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4M9 12h6M9 15.5h6" /></Svg>,
     megaphone: <Svg><path d="M4 10v4h3l7 4V6L7 10Z" /><path d="M17.5 9a4 4 0 0 1 0 6" /></Svg>,
+    user: <Svg><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="10" r="3" /><path d="M6.8 18.2a6 6 0 0 1 10.4 0" /></Svg>,
+    book: <Svg><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5Z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /></Svg>,
+    help: <Svg><circle cx="12" cy="12" r="8.5" /><path d="M9.8 9.5a2.3 2.3 0 0 1 4.4.9c0 1.6-2.2 2-2.2 3.4" /><path d="M12 16.8h.01" /></Svg>,
 };
 
 const NAV = [
@@ -45,6 +48,14 @@ const NAV = [
     { icon: I.receipt, label: "Upload Receipt" },
     { icon: I.msg, label: "Messages", badge: "msg" },
     { icon: I.bell, label: "Notifications", badge: "notif" },
+    { icon: I.user, label: "Profile" },
+    { icon: I.book, label: "User Guide" },
+    { icon: I.help, label: "Help / Support" },
+];
+
+const RECENT = [
+    { name: "Certificate of Enrollment", no: "REQ-000119 · 1 copy", status: "Completed", tone: "green" },
+    { name: "Good Moral Certificate", no: "REQ-000112 · 1 copy", status: "Completed", tone: "green" },
 ];
 
 function HeroVisual() {
@@ -135,6 +146,21 @@ function HeroVisual() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Like the real dashboard's Recent Requests list. */}
+                        <div className="lpv-card lpv-recent">
+                            <strong className="lpv-recent-title">Recent Requests</strong>
+                            {RECENT.map((r) => (
+                                <div key={r.no} className="lpv-recent-row">
+                                    <span className="lpv-doc">{I.doc}</span>
+                                    <div>
+                                        <strong>{r.name}</strong>
+                                        <small>{r.no}</small>
+                                    </div>
+                                    <span className={`lpv-pill is-${r.tone}`}>{r.status}</span>
+                                </div>
+                            ))}
                         </div>
                     </main>
                 </div>

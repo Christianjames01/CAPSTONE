@@ -1248,11 +1248,12 @@
 }
 
 .lpv-brand img {
-    width: 24px;
-    height: 24px;
-    padding: 1px;
+    width: 26px;
+    height: 26px;
+    padding: 2px;
     border-radius: 50%;
     background: #fff;
+    object-fit: contain;
 }
 
 .lpv-brand strong {
@@ -1521,6 +1522,49 @@
 
 .lpv-pill.is-blue { background: var(--blue-tint); color: var(--blue); }
 .lpv-pill.is-green { background: var(--green-tint); color: var(--green); }
+
+/* Recent Requests list under the request card. */
+.lpv-recent {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.lpv-recent-title {
+    font-size: 10px;
+    color: var(--ink, #0f1f38);
+}
+
+.lpv-recent-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 7px;
+    border-top: 1px solid var(--line, #e5e9f0);
+}
+
+.lpv-recent-row > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.lpv-recent-row strong {
+    display: block;
+    font-size: 9.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lpv-recent-row small {
+    display: block;
+    font-size: 8px;
+    color: var(--muted, #6b7280);
+}
+
+.lpv-recent-row .lpv-doc {
+    transform: scale(0.85);
+}
 
 .lpv-stepper {
     display: grid;
