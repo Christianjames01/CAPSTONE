@@ -1,0 +1,620 @@
+/* System Workflow presentation (/system-workflow). Always dark: it's a
+   full-screen cinematic presentation over a 3D scene. */
+
+.wf-root {
+    --wf-ink: #eaf2ff;
+    --wf-muted: rgba(214, 228, 248, 0.72);
+    --wf-glass: rgba(10, 22, 42, 0.62);
+    --wf-glass-strong: rgba(10, 22, 42, 0.82);
+    --wf-line: rgba(124, 196, 255, 0.28);
+    --wf-accent: #7cc4ff;
+    --wf-blue: #3b82f6;
+    --wf-navy: #123b78;
+    --wf-green: #22c55e;
+
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #0a1424;
+    color: var(--wf-ink);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.wf-stage {
+    position: absolute;
+    inset: 0;
+}
+
+.wf-stage canvas {
+    display: block;
+}
+
+.wf-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(4, 10, 20, 0.55) 100%),
+        linear-gradient(180deg, rgba(4, 10, 20, 0.45) 0%, transparent 18%, transparent 70%, rgba(4, 10, 20, 0.7) 100%);
+}
+
+.wf-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: min(520px, calc(100% - 32px));
+    padding: 18px 22px;
+    border-radius: 14px;
+    background: var(--wf-glass-strong);
+    border: 1px solid rgba(248, 113, 113, 0.5);
+    text-align: center;
+    z-index: 5;
+}
+
+/* ---- Top bar ---------------------------------------------------------------- */
+.wf-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 22px;
+    z-index: 3;
+    animation: wf-fade-down 0.8s ease both;
+}
+
+.wf-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.wf-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--wf-navy), var(--wf-blue));
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+    flex-shrink: 0;
+}
+
+.wf-brand strong {
+    display: block;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+}
+
+.wf-brand > div span {
+    display: block;
+    font-size: 12px;
+    color: var(--wf-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wf-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 999px;
+    background: var(--wf-glass);
+    border: 1px solid var(--wf-line);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.wf-controls button {
+    min-width: 36px;
+    height: 34px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--wf-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.wf-controls button:hover {
+    background: rgba(124, 196, 255, 0.14);
+    color: var(--wf-ink);
+}
+
+.wf-controls button.is-on {
+    color: var(--wf-ink);
+    background: rgba(59, 130, 246, 0.28);
+}
+
+.wf-controls .wf-play {
+    background: var(--wf-blue);
+    color: #fff;
+    font-size: 12px;
+}
+
+.wf-controls .wf-play:hover {
+    background: #2f6fe0;
+}
+
+.wf-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--wf-line);
+    margin: 0 2px;
+}
+
+/* ---- Caption ------------------------------------------------------------------ */
+.wf-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 104px;
+    transform: translateX(-50%);
+    width: min(860px, calc(100% - 32px));
+    padding: 18px 26px 20px;
+    border-radius: 18px;
+    background: var(--wf-glass);
+    border: 1px solid var(--wf-line);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    text-align: center;
+    z-index: 2;
+    animation: wf-caption-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.wf-caption-step {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.25);
+    color: var(--wf-accent);
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.wf-caption h2 {
+    margin: 0 0 6px;
+    font-size: clamp(20px, 2.4vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.wf-caption p {
+    margin: 0;
+    font-size: clamp(14px, 1.45vw, 17px);
+    line-height: 1.55;
+    color: var(--wf-muted);
+}
+
+/* ---- Timeline ------------------------------------------------------------------ */
+.wf-timeline {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    max-width: calc(100% - 32px);
+    padding: 6px;
+    border-radius: 999px;
+    background: var(--wf-glass);
+    border: 1px solid var(--wf-line);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    z-index: 2;
+}
+
+.wf-timeline::-webkit-scrollbar {
+    display: none;
+}
+
+.wf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px 6px 6px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--wf-muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+}
+
+.wf-chip:hover {
+    background: rgba(124, 196, 255, 0.12);
+    color: var(--wf-ink);
+}
+
+.wf-chip-num {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(124, 196, 255, 0.16);
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.wf-chip.active {
+    background: rgba(59, 130, 246, 0.3);
+    color: #fff;
+}
+
+.wf-chip.active .wf-chip-num {
+    background: var(--wf-blue);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+}
+
+.wf-chip.done .wf-chip-num {
+    background: var(--wf-green);
+    color: #fff;
+}
+
+/* ---- Finale -------------------------------------------------------------------- */
+.wf-finale {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -54%);
+    width: min(980px, calc(100% - 32px));
+    padding: 30px 30px 28px;
+    border-radius: 24px;
+    background: var(--wf-glass-strong);
+    border: 1px solid rgba(134, 239, 172, 0.4);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    text-align: center;
+    z-index: 3;
+    animation: wf-pop 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both;
+}
+
+.wf-finale-check {
+    display: inline-grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--wf-green);
+    color: #fff;
+    font-size: 28px;
+    font-weight: 900;
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.18);
+}
+
+.wf-finale h1 {
+    margin: 14px 0 20px;
+    font-size: clamp(26px, 3.6vw, 40px);
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.wf-flow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wf-flow li {
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    animation: wf-flow-in 0.6s ease forwards;
+}
+
+.wf-flow li span {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(59, 130, 246, 0.18);
+    border: 1px solid var(--wf-line);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.wf-flow li:last-child span {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(134, 239, 172, 0.55);
+}
+
+.wf-flow li + li::before {
+    content: '→';
+    margin: 0 8px;
+    color: var(--wf-accent);
+    font-weight: 800;
+}
+
+.wf-finale-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
+    animation: wf-fade-up 0.6s ease both;
+}
+
+/* ---- Buttons --------------------------------------------------------------------- */
+.wf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--wf-line);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--wf-ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.wf-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--wf-ink);
+}
+
+.wf-btn.is-primary {
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--wf-blue), var(--wf-navy));
+    box-shadow: 0 10px 26px rgba(59, 130, 246, 0.35);
+}
+
+.wf-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---- Start screen -------------------------------------------------------------- */
+.wf-start {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(10, 20, 36, 0.35), rgba(5, 11, 22, 0.82));
+    z-index: 4;
+}
+
+.wf-start-card {
+    width: min(560px, 100%);
+    padding: 34px 32px 26px;
+    border-radius: 24px;
+    background: var(--wf-glass-strong);
+    border: 1px solid var(--wf-line);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    animation: wf-pop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.wf-eyebrow {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.22);
+    color: var(--wf-accent);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.wf-start-card h1 {
+    margin: 14px 0 10px;
+    font-size: clamp(32px, 5vw, 46px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+.wf-start-sub {
+    margin: 0 auto 22px;
+    max-width: 460px;
+    color: var(--wf-muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.wf-start-voice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--wf-muted);
+}
+
+.wf-start-voice select {
+    max-width: 100%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--wf-line);
+    background: rgba(6, 14, 28, 0.85);
+    color: var(--wf-ink);
+    font: inherit;
+    font-size: 13px;
+}
+
+.wf-start-hint {
+    margin: 4px auto 0;
+    max-width: 440px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #fcd34d;
+}
+
+.wf-start-btn {
+    margin-top: 20px;
+    padding: 14px 30px;
+    font-size: 16px;
+}
+
+.wf-start-keys,
+.wf-start-voicehint {
+    margin: 16px 0 0;
+    font-size: 12px;
+    color: var(--wf-muted);
+}
+
+.wf-start-voicehint {
+    margin-top: 6px;
+    opacity: 0.75;
+}
+
+.wf-start-keys kbd {
+    display: inline-block;
+    min-width: 22px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--wf-line);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* H hides everything but the scene and caption (for recording a video). */
+.wf-root.is-clean .wf-top,
+.wf-root.is-clean .wf-timeline {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wf-root.is-clean .wf-caption {
+    bottom: 36px;
+}
+
+/* ---- Motion ---------------------------------------------------------------------- */
+@keyframes wf-caption-in {
+    from { opacity: 0; transform: translate(-50%, 18px); filter: blur(4px); }
+    to { opacity: 1; transform: translate(-50%, 0); filter: blur(0); }
+}
+
+@keyframes wf-pop {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+    to { opacity: 1; transform: translate(-50%, -54%) scale(1); }
+}
+
+.wf-start-card {
+    animation-name: wf-card-in;
+}
+
+@keyframes wf-card-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes wf-fade-down {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes wf-fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes wf-flow-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wf-caption,
+    .wf-finale,
+    .wf-start-card,
+    .wf-flow li,
+    .wf-top {
+        animation-duration: 0.01s;
+        animation-delay: 0s;
+    }
+}
+
+/* ---- Small screens --------------------------------------------------------------- */
+@media (max-width: 720px) {
+    .wf-top {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+    }
+
+    .wf-controls {
+        justify-content: space-between;
+        overflow-x: auto;
+    }
+
+    .wf-controls button {
+        padding: 0 9px;
+    }
+
+    .wf-caption {
+        bottom: 84px;
+        padding: 14px 16px 16px;
+    }
+
+    .wf-chip-label {
+        display: none;
+    }
+
+    .wf-chip {
+        padding: 6px;
+    }
+
+    .wf-chip.active .wf-chip-label {
+        display: inline;
+    }
+
+    .wf-chip.active {
+        padding-right: 12px;
+    }
+
+    .wf-finale {
+        padding: 22px 16px;
+    }
+
+    .wf-flow li + li::before {
+        margin: 0 4px;
+    }
+
+    .wf-flow li span {
+        font-size: 11.5px;
+        padding: 6px 8px;
+    }
+}
