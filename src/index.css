@@ -495,3 +495,11 @@ html {
     animation: none;
   }
 }
+
+/* Buttons without their own colour take the surrounding text colour. Without
+   this, a phone/PC in dark mode gives them the browser's white "button text"
+   even when the portal is in light mode -- white text on white cards.
+   :where() keeps this weaker than any class that sets a colour. */
+:where(.student-layout, .employee-layout, .admin-layout) button {
+  color: inherit;
+}

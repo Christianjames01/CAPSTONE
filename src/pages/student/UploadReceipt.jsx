@@ -3,6 +3,8 @@ import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shri
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
+import { describeRequest } from '../../lib/studentProgress'
+import { TaskSteps } from './StudentUi'
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -632,8 +634,13 @@ function UploadReceipt() {
 
             <div className="student-page-header">
                 <h1>Upload Official Receipt</h1>
-                <p>Submit your official receipt for Registrar verification.</p>
+                <p>Pay the amount below at the HCDC Finance Office first. Then upload a clear photo of your Official Receipt so the Registrar can check your payment.</p>
             </div>
+
+            <TaskSteps
+                steps={['Pay at the HCDC Finance Office', 'Upload your Official Receipt', 'The Registrar checks it']}
+                current={currentReceipt?.status === 'verified' ? 3 : currentReceipt && currentReceipt.status !== 'rejected' ? 2 : 1}
+            />
 
             <div className="student-card">
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Request Information</h2>
@@ -656,7 +663,7 @@ function UploadReceipt() {
 
                     <div className="student-info-field">
                         <span>Request Status</span>
-                        <span className={`student-status-pill status-${request.status}`}>{request.status.replace(/_/g, ' ')}</span>
+                        <span className={`sd-status tone-${describeRequest(request).tone}`}>{describeRequest(request).statusLabel}</span>
                     </div>
                 </div>
 

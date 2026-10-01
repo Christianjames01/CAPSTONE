@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { InfoBox } from './StudentUi'
+import { friendlyError } from '../../lib/friendlyError'
 import { MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shrinkImage'
 import { IconLock } from '../../components/UiIcons'
 import { IconPhone, IconMail, IconBook, IconUserCircle } from './icons'
@@ -140,7 +142,7 @@ function Profile() {
 
         } catch (err) {
             console.error('PROFILE ERROR:', err)
-            setError(err.message || 'Failed to load profile.')
+            setError(friendlyError(err, "We couldn't load your profile."))
         } finally {
             setLoading(false)
         }
@@ -449,6 +451,11 @@ function Profile() {
                 <h1>Profile</h1>
                 <p>View your student information and update your contact details.</p>
             </div>
+
+            <InfoBox title="What you can change here">
+                You can update your phone number, email, password and photo. Your name, student number, college and
+                program come from your school record — if any of them is wrong, message the Registrar to have it corrected.
+            </InfoBox>
 
             {error && <div className="student-error-box">{error}</div>}
             {message && <div className="student-success-box">{message}</div>}

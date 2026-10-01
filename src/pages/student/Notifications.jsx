@@ -5,9 +5,13 @@ import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconFileStack, IconMegaphone, IconUsers, IconCalendarCheck } from '../admin/icons'
 import { IconBell, IconMessage } from '../student/icons'
+import { EmptyState } from './StudentUi'
+import { friendlyError } from '../../lib/friendlyError'
 
 // Icon per notification type.
 const TYPE_ICONS = { request_update: IconFileStack, message: IconMessage, announcement: IconMegaphone, system: IconUsers, schedule: IconCalendarCheck }
+// Plain names for the notification kinds.
+const TYPE_LABELS = { request_update: 'Request update', message: 'Message', announcement: 'Announcement', system: 'Account', schedule: 'Pickup', claim_schedule: 'Pickup', requirement: 'Requirements', receipt: 'Payment' }
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
@@ -65,7 +69,7 @@ function Notifications() {
 
         } catch (err) {
             console.error('NOTIFICATIONS ERROR:', err)
-            setError(err.message || 'Failed to load notifications.')
+            setError(friendlyError(err, "We couldn't load your notifications."))
         } finally {
             setLoading(false)
         }
@@ -173,12 +177,13 @@ function Notifications() {
             {loading ? (
                 <SkeletonList count={3} />
             ) : showFilter === 'unread' && unreadCount === 0 && notifications.length > 0 ? (
-                <div className="student-empty">No unread notifications.</div>
+                <EmptyState icon={<IconBell />} title="You're all caught up" text="You have no unread notifications." />
             ) : notifications.length === 0 ? (
-                <div className="student-empty">
-                    You have no notifications yet. Updates about your requests will
-                    show up here.
-                </div>
+                <EmptyState
+                    icon={<IconBell />}
+                    title="No notifications yet"
+                    text="Updates about your requests, payments and pickup schedule will show up here."
+                />
             ) : (
                 notifications.filter((n) => showFilter === 'all' || !n.is_read).map((notification) => (
                     <button
@@ -200,9 +205,13 @@ function Notifications() {
                                     return <span className={`ui-avatar is-square${notification.is_read ? ' is-muted' : ''}`} aria-hidden="true"><TypeIcon /></span>
                                 })()}
                                 <div>
+                                    <span className="nt-type">{TYPE_LABELS[notification.notification_type] || 'Update'}</span>
                                     <h3>{notification.title}</h3>
                                     <p>{notification.message}</p>
-                                    <span style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>{formatDate(notification.created_at)}</span>
+                                    <span className="nt-meta">
+                                        {formatDate(notification.created_at)}
+                                        {notification.related_request_id && <span className="nt-open">View request →</span>}
+                                    </span>
                                 </div>
                             </div>
 

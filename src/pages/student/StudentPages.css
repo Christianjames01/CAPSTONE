@@ -1055,3 +1055,287 @@
 @media (max-width: 720px) {
     .rq-card-actions > button { flex: 1 1 100%; min-height: 44px; }
 }
+
+/* ---- Shared student UI: task steps, empty states, info boxes (StudentUi.jsx) ---- */
+.ss-steps {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 0 0 20px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.ss-steps-title {
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+}
+
+.ss-steps ol {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ss-steps li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--slate);
+}
+
+.ss-steps li + li::before {
+    content: '';
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--line);
+}
+
+.ss-steps li.is-done + li::before { background: var(--success-text); }
+
+.ss-steps-num {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.ss-steps li.is-done { color: var(--ink); }
+.ss-steps li.is-done .ss-steps-num { border-color: var(--success-text); background: var(--success-text); color: #fff; }
+.ss-steps li.is-current { color: var(--blue-accent, var(--blue)); }
+.ss-steps li.is-current .ss-steps-num { border-color: var(--blue-accent, var(--blue)); background: var(--blue-accent, var(--blue)); color: #fff; box-shadow: 0 0 0 4px var(--blue-tint); }
+
+.ss-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 36px 20px;
+    border: 1.5px dashed var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    text-align: center;
+}
+
+.ss-empty strong { font-size: 16px; color: var(--ink); }
+.ss-empty p { margin: 0 0 8px; max-width: 460px; font-size: 14px; line-height: 1.55; color: var(--slate); }
+.ss-empty-icon { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; border-radius: 50%; background: var(--blue-tint); color: var(--blue-accent, var(--blue)); }
+.ss-empty-icon svg { width: 24px; height: 24px; }
+
+.ss-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ss-empty-btn:hover { background: var(--blue-dark); color: #fff; }
+
+.ss-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--blue-tint);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.ss-info strong { font-size: 14.5px; }
+.ss-info ul, .ss-info ol { margin: 4px 0 0; padding-left: 20px; }
+.ss-info li + li { margin-top: 3px; }
+.ss-info.tone-warning { background: var(--warning-bg); color: var(--warning-text); }
+.ss-info.tone-success { background: var(--success-bg); }
+
+@media (max-width: 720px) {
+    .ss-steps { flex-direction: column; align-items: flex-start; }
+    .ss-steps ol { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .ss-steps li + li::before { display: none; }
+    .ss-empty-btn { width: 100%; }
+}
+
+/* Notifications: type label + what tapping does. */
+.nt-type {
+    display: inline-block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--blue-accent, var(--blue));
+}
+
+.nt-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.nt-open {
+    font-weight: 700;
+    color: var(--blue-accent, var(--blue));
+}
+
+/* Help: numbered steps. */
+.hs-steps {
+    margin: 0;
+    padding: 4px 16px 16px 36px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.hs-steps li + li { margin-top: 4px; }
+
+/* ---- File picker (StudentUi FilePicker) ------------------------------------ */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.ss-upload-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.ss-file {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    background: var(--paper);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.ss-file:hover,
+.ss-file:focus-within,
+.ss-file.is-dragging {
+    border-color: var(--blue-accent, var(--blue));
+    background: var(--blue-tint);
+}
+
+.ss-file.is-disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ss-file-icon,
+.ss-file-ok {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--blue-accent, var(--blue));
+}
+
+.ss-file-text,
+.ss-file-name {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ss-file-text strong,
+.ss-file-name strong { font-size: 14.5px; color: var(--ink); }
+.ss-file-text small,
+.ss-file-name small { font-size: 12.5px; color: var(--slate); }
+.ss-file-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ss-file.is-chosen {
+    border-style: solid;
+    border-color: rgba(30, 138, 95, 0.45);
+    background: var(--success-bg);
+    cursor: default;
+}
+
+.ss-file.is-chosen .ss-file-ok { background: var(--success-text); color: #fff; }
+.ss-file.is-chosen .ss-file-name { flex: 1; }
+
+.ss-file-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ss-file-actions a,
+.ss-file-actions button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--blue-accent, var(--blue));
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ss-upload-btn {
+    align-self: flex-start;
+    min-height: 44px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ss-upload-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ss-upload-btn:not(:disabled):hover { background: var(--blue-dark); }
+
+@media (max-width: 720px) {
+    .ss-file { align-items: flex-start; }
+    .ss-file.is-chosen { flex-wrap: wrap; }
+    .ss-file-actions { width: 100%; }
+    .ss-file-actions a,
+    .ss-file-actions button { flex: 1; justify-content: center; min-height: 44px; }
+    .ss-upload-btn { align-self: stretch; }
+}

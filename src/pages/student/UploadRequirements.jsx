@@ -3,6 +3,8 @@ import { isShrinkable, MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shri
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notifyWarning, notifyError } from '../../lib/notify'
+import { EmptyState, FilePicker, InfoBox, TaskSteps } from './StudentUi'
+import { friendlyError } from '../../lib/friendlyError'
 import { SkeletonPage } from '../../components/Skeleton'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -92,7 +94,7 @@ function UploadRequirements() {
 
         } catch (err) {
             console.error('LOAD REQUIREMENTS ERROR:', err)
-            setError(err.message || 'Failed to load requirements.')
+            setError(friendlyError(err, "We couldn't load your requirements."))
         } finally {
             setLoading(false)
         }
@@ -195,8 +197,21 @@ function UploadRequirements() {
 
             <div className="student-page-header">
                 <h1>Upload Requirements</h1>
-                <p>Upload the documents the Registrar needs to process your request.</p>
+                <p>Upload the documents the Registrar needs for this request. Use clear photos or PDF scans.</p>
             </div>
+
+            {requirements.length > 0 && (
+                <TaskSteps
+                    steps={['Upload each requirement', 'The Registrar reviews them', 'All approved']}
+                    current={requirements.every((r) => r.status === 'approved') ? 3 : requirements.some((r) => r.status === 'pending' || r.status === 'rejected') ? 0 : 1}
+                />
+            )}
+
+            {requirements.some((r) => r.status === 'rejected') && (
+                <InfoBox title="Some files were not accepted" tone="warning">
+                    Read the reason under each one marked <b>Rejected</b>, then upload a clearer or corrected file.
+                </InfoBox>
+            )}
 
             {request?.status === 'cancelled' && (
                 <div className="student-notice tone-danger" style={{ marginBottom: 16 }}>
@@ -206,7 +221,11 @@ function UploadRequirements() {
             )}
 
             {requirements.length === 0 ? (
-                <div className="student-empty">No additional requirements are needed for this request.</div>
+                <EmptyState
+                    title="No requirements needed"
+                    text="This document doesn't need any extra files. You can go back to your request."
+                    action={{ label: 'Back to my request', to: `/student/request/${requestId}` }}
+                />
             ) : (
                 requirements.map((req) => {
                     const doc = req.document_requirements
@@ -237,25 +256,25 @@ function UploadRequirements() {
                             )}
 
                             {editable && (
-                                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                                    <input
-                                        type="file"
+                                <div className="ss-upload-row">
+                                    <FilePicker
+                                        file={files[req.request_requirement_id] || null}
+                                        onChange={(picked) => setFiles((prev) => ({ ...prev, [req.request_requirement_id]: picked }))}
                                         accept={doc?.accepted_file_types || undefined}
-                                        onChange={(e) =>
-                                            setFiles((prev) => ({
-                                                ...prev,
-                                                [req.request_requirement_id]: e.target.files?.[0] || null,
-                                            }))
-                                        }
+                                        maxMb={doc?.max_file_size_mb || 5}
                                         disabled={uploadingId === req.request_requirement_id}
+                                        label={req.status === 'rejected' ? 'Upload a new file' : 'Upload your document'}
                                     />
 
                                     <button
-                                        className="student-link-button"
+                                        type="button"
+                                        className="ss-upload-btn"
                                         onClick={() => uploadRequirement(req)}
-                                        disabled={uploadingId === req.request_requirement_id}
+                                        disabled={uploadingId === req.request_requirement_id || !files[req.request_requirement_id]}
                                     >
-                                        {uploadingId === req.request_requirement_id ? 'Uploading...' : 'Upload'}
+                                        {uploadingId === req.request_requirement_id
+                                            ? 'Uploading...'
+                                            : req.status === 'rejected' ? 'Upload Again' : 'Upload'}
                                     </button>
                                 </div>
                             )}

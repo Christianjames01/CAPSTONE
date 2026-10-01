@@ -27,26 +27,58 @@ const IconTiktok = () => (
 )
 
 
+// Step-by-step answers in plain words.
 const FAQS = [
     {
         question: 'How do I request a document?',
-        answer: 'Go to "Request a Document" in the sidebar, choose the document type and quantity, add your purpose, and submit. You can track its status under "My Requests".',
+        steps: [
+            'Click "Request a Document" in the menu.',
+            'Choose the document you need and read what it requires.',
+            'Enter how many copies and the purpose, then add it to your list.',
+            'Click "Submit Request" and confirm.',
+        ],
     },
     {
-        question: 'How do I pay for my request?',
-        answer: 'Pay the amount shown on your request at the Finance Office, then go to "Upload Receipt" to submit your official receipt (OR) for verification.',
+        question: 'Where and how do I pay?',
+        steps: [
+            'Pay the amount shown on your request at the HCDC Finance Office.',
+            'Keep your Official Receipt (OR).',
+            'Open "Payments & Receipts", choose the request, and upload a clear photo of the receipt.',
+            'The Registrar checks it and you get a notification.',
+        ],
     },
     {
-        question: 'How will I know when my document is ready to claim?',
-        answer: 'Once your request is scheduled for claiming, it will appear under "Claim Schedule" with the date, time, and instructions. You will also get a notification.',
+        question: 'How do I upload my requirements?',
+        steps: [
+            'Open the request in "My Requests".',
+            'Click "Upload Requirements".',
+            'Upload a clear photo or PDF for each item.',
+            'If one is rejected, read the reason and upload it again.',
+        ],
     },
     {
-        question: 'What should I bring when claiming my document?',
-        answer: "Bring your official receipt (OR) and a valid ID. The registrar will verify your identity before releasing the document.",
+        question: 'How do I check my request status?',
+        steps: [
+            'Open "My Requests" or your Dashboard.',
+            'Each request shows its current step and what you need to do next.',
+            'Open a request to see the full progress and any action needed.',
+        ],
     },
     {
-        question: 'Can I cancel a request after submitting it?',
-        answer: 'Contact the Registrar\'s Office directly to request a cancellation for requests that have not yet been processed.',
+        question: 'How do I claim my document?',
+        steps: [
+            'When it is ready, the Registrar sets a pickup date and time and notifies you.',
+            'Check "Pickup Schedule" for the date, time and window.',
+            'Bring a valid ID and your Official Receipt to the Registrar\'s Office.',
+            'Can\'t go yourself? Add an authorized representative on the request page.',
+        ],
+    },
+    {
+        question: 'Can I cancel a request?',
+        steps: [
+            'You can cancel a request yourself while it is still pending: open it and click "Cancel this request".',
+            'After it has been paid or processed, message the Registrar instead.',
+        ],
     },
 ]
 
@@ -78,7 +110,7 @@ function HelpSupport() {
         <div>
             <div className="student-page-header">
                 <h1>Help &amp; Support</h1>
-                <p>Frequently asked questions, processing times, and Registrar contact information.</p>
+                <p>Quick answers to common questions, document fees and processing times, and how to reach the Registrar.</p>
             </div>
 
             <div className="student-card">
@@ -98,6 +130,8 @@ function HelpSupport() {
                                 }}
                             >
                                 <button
+                                    type="button"
+                                    aria-expanded={isOpen}
                                     onClick={() => setOpenFaq(isOpen ? null : index)}
                                     style={{
                                         width: '100%',
@@ -110,6 +144,9 @@ function HelpSupport() {
                                         alignItems: 'center',
                                         gap: 12,
                                         background: isOpen ? 'var(--blue-tint)' : 'var(--surface)',
+                                        color: 'var(--ink)',
+                                        border: 0,
+                                        cursor: 'pointer',
                                     }}
                                 >
                                     {faq.question}
@@ -117,9 +154,9 @@ function HelpSupport() {
                                 </button>
 
                                 {isOpen && (
-                                    <p style={{ padding: '0 16px 16px', fontSize: 13.5 }}>
-                                        {faq.answer}
-                                    </p>
+                                    <ol className="hs-steps">
+                                        {faq.steps.map((step) => <li key={step}>{step}</li>)}
+                                    </ol>
                                 )}
                             </div>
                         )

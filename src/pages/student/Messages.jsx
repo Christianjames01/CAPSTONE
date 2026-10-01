@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
+import { EmptyState } from './StudentUi'
+import { IconMessage } from './icons'
 import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
@@ -405,10 +407,12 @@ function Messages() {
                     <div className="student-page-header">
                         <h1>Messages</h1>
                     </div>
-                    <div className="student-empty">
-                        No registrar employee is assigned to your requests or program yet. Please check back later or visit
-                        the Registrar's Office directly.
-                    </div>
+                    <EmptyState
+                        icon={<IconMessage />}
+                        title="No one to message yet"
+                        text="Once registrar staff are assigned to your requests or program, you can chat with them here. For urgent concerns, visit the Registrar's Office."
+                        action={{ label: 'Go to Help & Support', to: '/student/help' }}
+                    />
                 </>
             ) : (
                 <ChatApp chatOpen={chatOpen && !!selected}>

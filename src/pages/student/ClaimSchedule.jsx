@@ -6,6 +6,8 @@ import { notify, notifyError, notifySuccess } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconCalendarCheck, IconCheckCircle, IconXCircle } from '../admin/icons'
+import { EmptyState, InfoBox } from './StudentUi'
+import { friendlyError } from '../../lib/friendlyError'
 import './StudentPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
@@ -103,7 +105,7 @@ function ClaimSchedule() {
 
         } catch (err) {
             console.error('CLAIM SCHEDULE ERROR:', err)
-            setError(err.message || 'Failed to load claim schedules.')
+            setError(friendlyError(err, "We couldn't load your pickup schedule."))
         } finally {
             setLoading(false)
         }
@@ -216,8 +218,18 @@ function ClaimSchedule() {
         <div>
             <div className="student-page-header">
                 <h1>Pickup Schedule</h1>
-                <p>When and where to claim your documents at the Registrar's Office. Bring a valid ID and your Official Receipt.</p>
+                <p>When and where to claim your documents at the Registrar's Office.</p>
             </div>
+
+            {schedules.some((sc) => sc.status === 'scheduled') && (
+                <InfoBox title="What to bring on your pickup day">
+                    <ul>
+                        <li>A valid ID (school ID or government ID)</li>
+                        <li>Your Official Receipt</li>
+                        <li>If someone claims for you: their valid ID and your signed authorization letter (add them as your representative on the request page first)</li>
+                    </ul>
+                </InfoBox>
+            )}
 
             {error && <div className="student-error-box">{error}</div>}
 
@@ -234,10 +246,12 @@ function ClaimSchedule() {
             {loading ? (
                 <SkeletonList count={3} />
             ) : schedules.length === 0 ? (
-                <div className="student-empty">
-                    You don't have any claim schedules yet. Once the Registrar schedules
-                    a document for claiming, it will appear here.
-                </div>
+                <EmptyState
+                    icon={<IconCalendarCheck />}
+                    title="No pickup scheduled yet"
+                    text="When your document is ready, the Registrar will set a pickup date and time and notify you. It will show up here."
+                    action={{ label: 'Check my requests', to: '/student/my-requests' }}
+                />
             ) : (
                 <>
                     {schedules.map((schedule) => (

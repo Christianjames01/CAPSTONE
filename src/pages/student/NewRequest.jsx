@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
-import { notify, notifyWarning } from '../../lib/notify'
+import { confirmModal, notify, notifyWarning } from '../../lib/notify'
+import { friendlyError } from '../../lib/friendlyError'
+import { TaskSteps } from './StudentUi'
 import { IconX } from './icons'
 import { Skeleton } from '../../components/Skeleton'
 import { DocumentSample } from '../../components/DocumentSample'
@@ -273,6 +275,14 @@ function NewRequest() {
             return
         }
 
+        // Confirm before submitting: what, how much, what happens next.
+        const confirmed = await confirmModal(
+            `You are requesting: ${cart.map((item) => `${item.document_name} (${item.quantity} ${item.quantity === 1 ? 'copy' : 'copies'})`).join(', ')}. ` +
+            `Total to pay at the HCDC Finance Office: ${peso(cartTotal)}. After submitting, pay the fee and upload a photo of your Official Receipt.`,
+            { title: cart.length > 1 ? `Submit ${cart.length} requests?` : 'Submit your request?', confirmButtonText: 'Submit Request' }
+        )
+        if (!confirmed) return
+
         setLoading(true)
         const created = []
 
@@ -391,9 +401,9 @@ function NewRequest() {
                 // Keep only what still needs submitting.
                 const done = new Set(created.map((r) => r.document_type_id))
                 setCart(cart.filter((item) => !done.has(item.document_type_id)))
-                setError(`${created.map((r) => r.request_number).join(', ')} submitted, but the rest could not be: ${err.message}`)
+                setError(`${created.map((r) => r.request_number).join(', ')} submitted, but the rest could not be. ${friendlyError(err, '')}`.trim())
             } else {
-                setError(err.message)
+                setError(friendlyError(err, "We couldn't submit your request."))
             }
         } finally {
             setLoading(false)
@@ -404,8 +414,14 @@ function NewRequest() {
         <div>
             <div className="student-page-header">
                 <h1>Request a Document</h1>
-                <p>Pick one or more documents, then submit them together and pay one total at the Finance Office.</p>
+                <p>Choose the document you need, check what's required, then submit. You can request several documents at once and pay one total at the Finance Office.</p>
             </div>
+
+            <TaskSteps
+                label="Your progress"
+                steps={['Choose a document', 'Check requirements & details', 'Review & submit']}
+                current={cart.length > 0 ? 2 : selectedDocument ? 1 : 0}
+            />
 
             {error && <div className="student-error-box">{error}</div>}
 
@@ -508,8 +524,9 @@ function NewRequest() {
                                 <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 14 }}>Checking required documents...</p>
                             ) : selectedRequirements.length > 0 ? (
                                 <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
-                                    <span style={{ fontSize: 12, color: 'var(--slate)', display: 'block', marginBottom: 8 }}>
-                                        Required documents for {selectedDocumentDetails.document_name}
+                                    <strong style={{ fontSize: 13.5, display: 'block', marginBottom: 2 }}>Before you continue</strong>
+                                    <span style={{ fontSize: 12.5, color: 'var(--slate)', display: 'block', marginBottom: 8 }}>
+                                        For {selectedDocumentDetails.document_name} you'll need:
                                     </span>
 
                                     <ul style={{ paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -647,7 +664,7 @@ function NewRequest() {
                                 {loading && <span className="auth-spinner" />}
                                 {loading
                                     ? 'Submitting...'
-                                    : cart.length > 1 ? `Submit ${cart.length} requests` : 'Submit request'}
+                                    : cart.length > 1 ? `Submit ${cart.length} Requests` : 'Submit Request'}
                             </button>
                             <p className="rq-cart-note">Each document is tracked as its own request. You can upload one official receipt for all of them.</p>
                         </>

@@ -7,6 +7,8 @@ import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconHourglass, IconCheckCircle, IconXCircle } from '../admin/icons'
 import { IconReceipt } from './icons'
+import { EmptyState, TaskSteps } from './StudentUi'
+import { friendlyError } from '../../lib/friendlyError'
 import './StudentPages.css'
 
 function UploadReceiptList() {
@@ -103,7 +105,7 @@ function UploadReceiptList() {
 
         } catch (err) {
             console.error('UPLOAD RECEIPT LIST ERROR:', err)
-            setError(err.message || 'Failed to load requests.')
+            setError(friendlyError(err, "We couldn't load your payments."))
         } finally {
             setLoading(false)
         }
@@ -118,6 +120,10 @@ function UploadReceiptList() {
                 <h1>Payments &amp; Receipts</h1>
                 <p>Pay your fees at the HCDC Finance Office, then upload a clear photo of your Official Receipt here. The Registrar will check it and let you know.</p>
             </div>
+
+            {requests.length > 0 && (
+                <TaskSteps steps={['Pay at the HCDC Finance Office', 'Upload a photo of your Official Receipt', 'The Registrar checks it']} current={1} />
+            )}
 
             {error && <div className="student-error-box">{error}</div>}
 
@@ -135,10 +141,12 @@ function UploadReceiptList() {
             {loading ? (
                 <SkeletonList count={3} />
             ) : requests.length === 0 ? (
-                <div className="student-empty">
-                    No requests currently need a receipt. New requests will appear
-                    here once submitted.
-                </div>
+                <EmptyState
+                    icon={<IconReceipt />}
+                    title="No payments needed right now"
+                    text="When you submit a request, it will appear here so you can upload its Official Receipt after paying."
+                    action={{ label: 'Request a Document', to: '/student/new-request' }}
+                />
             ) : (
                 requests.map((request) => (
                     <div className="student-list-card" key={request.request_id}>
