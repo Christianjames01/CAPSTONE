@@ -5,6 +5,8 @@ import { formatQueueNumber, todayStr } from '../lib/queue'
 import certichainLogo from '../assets/certichain-logo.png'
 import hcdcBackground from '../assets/footer-building.jpg'
 import ExplainerPlayer from '../components/explainer/ExplainerPlayer'
+import { facebookEmbedUrl, loadLobbyVideos } from '../lib/lobbyVideos'
+import { useLiveRefresh } from '../lib/useLiveRefresh'
 import { STUDENT_SCENES } from '../components/explainer/sceneLists'
 import './QueueDisplay.css'
 
@@ -13,7 +15,10 @@ const POLL_MS = 4000
 // Between calls the TV plays the student walkthrough (how to request
 // documents online) with the queue shrunk into a side panel; a new call
 // brings the full queue back at once. ?nodemo on the URL turns this off.
-const QUEUE_BEFORE_DEMO_MS = 60000
+// Every 2 minutes the TV takes a turn: the next lobby video (Facebook videos
+// the Registrar Head added on the Queue page), then the walkthrough demo,
+// then the first video again.
+const QUEUE_BEFORE_DEMO_MS = 120000
 const DEMO_ENABLED = typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('nodemo')
 // ?demoaudio also reads the walkthrough aloud on the TV.
 const DEMO_AUDIO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demoaudio')
@@ -85,9 +90,29 @@ function QueueDisplay() {
     const [demo, setDemo] = useState(false) // walkthrough on, queue in the side panel
     const [demoRun, setDemoRun] = useState(0)
     const [back, setBack] = useState(false) // the queue growing back to full size
+    const [videos, setVideos] = useState([])
+    const [video, setVideo] = useState(null) // the lobby video playing now (else the demo)
+    const turnRef = useRef(0)
     const lastAnnouncedKey = useRef(null)
     const audioCtxRef = useRef(null)
     const wakeLockRef = useRef(null)
+
+    const refreshVideos = () =>
+        loadLobbyVideos()
+            .then(({ videos: list }) => setVideos(list))
+            .catch((err) => console.error('LOBBY VIDEOS ERROR:', err))
+
+    useEffect(() => {
+        let cancelled = false
+        const run = () => loadLobbyVideos()
+            .then(({ videos: list }) => { if (!cancelled) setVideos(list) })
+            .catch((err) => console.error('LOBBY VIDEOS ERROR:', err))
+        run()
+        const t = setInterval(run, 10 * 60 * 1000)
+        return () => { cancelled = true; clearInterval(t) }
+    }, [])
+
+    useLiveRefresh(['lobby_videos'], refreshVideos)
 
     useEffect(() => {
         loadQueue()
@@ -157,22 +182,34 @@ function QueueDisplay() {
         }
     }
 
-    // After a quiet minute on the queue, play the walkthrough (restarts
-    // whenever the number being served changes).
+    // After 2 quiet minutes on the queue, take the next turn: a lobby video
+    // or the walkthrough (restarts whenever the number being served changes).
     useEffect(() => {
         if (!DEMO_ENABLED || !soundReady || demo || justCalled) return undefined
         const t = setTimeout(() => {
+            const rotation = [...videos, null] // null = the walkthrough demo
+            const next = rotation[turnRef.current % rotation.length]
+            turnRef.current += 1
+            setVideo(next)
             setDemo(true)
             setDemoRun((r) => r + 1)
         }, QUEUE_BEFORE_DEMO_MS)
         return () => clearTimeout(t)
-    }, [soundReady, demo, justCalled, nowServing])
+    }, [soundReady, demo, justCalled, nowServing, videos])
 
     const endDemo = () => {
         setDemo(false)
+        setVideo(null)
         setBack(true)
         setTimeout(() => setBack(false), 1200)
     }
+
+    // A video plays for the length the head set, then the queue comes back.
+    useEffect(() => {
+        if (!demo || !video) return undefined
+        const t = setTimeout(endDemo, Math.max(10, video.play_seconds || 60) * 1000)
+        return () => clearTimeout(t)
+    }, [demo, video, demoRun])
 
     const loadQueue = async () => {
         const today = todayStr()
@@ -257,7 +294,26 @@ function QueueDisplay() {
             </header>
 
             <main className={`qd-main${demo ? ' is-demo' : ''}${back ? ' is-back' : ''}`}>
-                {demo && (
+                {demo && video && (
+                    <section className="qd-demo qd-video" aria-label={video.title || 'Video from Holy Cross of Davao College'}>
+                        <div className="qd-demo-head">
+                            <span className="qd-demo-badge">Holy Cross of Davao College</span>
+                            <strong>{video.title || 'Latest from HCDC'}</strong>
+                        </div>
+                        <div className="qd-video-frame">
+                            <iframe
+                                key={demoRun}
+                                src={facebookEmbedUrl(video.url)}
+                                title={video.title || 'Video from Holy Cross of Davao College'}
+                                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                                allowFullScreen
+                                scrolling="no"
+                            />
+                        </div>
+                    </section>
+                )}
+
+                {demo && !video && (
                     <section className="qd-demo" aria-label="How to request documents online">
                         <div className="qd-demo-head">
                             <span className="qd-demo-badge">While you wait</span>

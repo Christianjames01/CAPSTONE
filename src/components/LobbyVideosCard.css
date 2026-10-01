@@ -1,0 +1,137 @@
+/* Registrar Head: lobby TV video list (LobbyVideosCard.jsx). */
+.lv-card {
+    margin-top: 28px;
+    padding: 22px;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.12));
+    border-radius: 16px;
+    background: var(--surface, #fff);
+    color: var(--ink, #101827);
+}
+
+.lv-head h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+}
+
+.lv-head p,
+.lv-note {
+    margin: 0;
+    max-width: 760px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--slate, #57616F);
+}
+
+.lv-note { margin-top: 14px; }
+
+.lv-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.lv-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+    flex: 1 1 220px;
+}
+
+.lv-grow { flex: 2 1 320px; }
+.lv-small { flex: 0 0 130px; min-width: 130px; }
+
+.lv-field span {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--slate, #57616F);
+}
+
+.lv-field input {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.16));
+    border-radius: 10px;
+    background: var(--surface, #fff);
+    color: var(--ink, #101827);
+    font: inherit;
+    font-size: 14px;
+}
+
+.lv-field input:focus {
+    outline: none;
+    border-color: var(--blue-accent, var(--blue, #123B78));
+    box-shadow: 0 0 0 3px var(--blue-tint, #EAF1FB);
+}
+
+.lv-add { min-height: 44px; }
+
+.lv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lv-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--line, rgba(16, 24, 39, 0.12));
+    border-radius: 12px;
+}
+
+.lv-list li.is-off { opacity: 0.55; }
+
+.lv-num {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--blue-tint, #EAF1FB);
+    color: var(--blue-accent, var(--blue, #123B78));
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.lv-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lv-main strong { font-size: 14.5px; }
+.lv-main a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+.lv-main small { font-size: 12px; color: var(--slate, #57616F); }
+
+.lv-actions { display: flex; gap: 6px; }
+
+.lv-actions button {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--line, rgba(16, 24, 39, 0.16));
+    border-radius: 8px;
+    background: transparent;
+    color: var(--blue-accent, var(--blue, #123B78));
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.lv-actions button.is-danger { color: var(--red, #C8102E); }
+
+@media (max-width: 640px) {
+    .lv-list li { flex-wrap: wrap; }
+    .lv-actions { width: 100%; }
+    .lv-actions button { flex: 1; min-height: 44px; }
+    .lv-small, .lv-add { flex: 1 1 100%; }
+}
