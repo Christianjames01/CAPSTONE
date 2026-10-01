@@ -18,7 +18,9 @@ const POLL_MS = 4000
 // Every 2 minutes the TV takes a turn: the next lobby video (Facebook videos
 // the Registrar Head added on the Queue page), then the walkthrough demo,
 // then the first video again.
-const QUEUE_BEFORE_DEMO_MS = 120000
+// ?every=30 on the URL changes the wait (10-600 seconds).
+const EVERY_PARAM = typeof window === 'undefined' ? null : Number(new URLSearchParams(window.location.search).get('every'))
+const QUEUE_BEFORE_DEMO_MS = EVERY_PARAM ? Math.min(600, Math.max(10, EVERY_PARAM)) * 1000 : 120000
 const DEMO_ENABLED = typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('nodemo')
 // ?demoaudio also reads the walkthrough aloud on the TV.
 const DEMO_AUDIO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demoaudio')
@@ -90,7 +92,9 @@ function QueueDisplay() {
     const [demo, setDemo] = useState(false) // walkthrough on, queue in the side panel
     const [demoRun, setDemoRun] = useState(0)
     const [back, setBack] = useState(false) // the queue growing back to full size
-    const [videos, setVideos] = useState([])
+    // Kept in a ref: re-checking the list (about every minute) must never
+    // restart the 2-minute countdown.
+    const videosRef = useRef([])
     const [video, setVideo] = useState(null) // the lobby video playing now (else the demo)
     const turnRef = useRef(0)
     const lastAnnouncedKey = useRef(null)
@@ -99,13 +103,13 @@ function QueueDisplay() {
 
     const refreshVideos = () =>
         loadLobbyVideos()
-            .then(({ videos: list }) => setVideos(list))
+            .then(({ videos: list }) => { videosRef.current = list })
             .catch((err) => console.error('LOBBY VIDEOS ERROR:', err))
 
     useEffect(() => {
         let cancelled = false
         const run = () => loadLobbyVideos()
-            .then(({ videos: list }) => { if (!cancelled) setVideos(list) })
+            .then(({ videos: list }) => { if (!cancelled) videosRef.current = list })
             .catch((err) => console.error('LOBBY VIDEOS ERROR:', err))
         run()
         const t = setInterval(run, 10 * 60 * 1000)
@@ -187,7 +191,7 @@ function QueueDisplay() {
     useEffect(() => {
         if (!DEMO_ENABLED || !soundReady || demo || justCalled) return undefined
         const t = setTimeout(() => {
-            const rotation = [...videos, null] // null = the walkthrough demo
+            const rotation = [...videosRef.current, null] // null = the walkthrough demo
             const next = rotation[turnRef.current % rotation.length]
             turnRef.current += 1
             setVideo(next)
@@ -195,7 +199,7 @@ function QueueDisplay() {
             setDemoRun((r) => r + 1)
         }, QUEUE_BEFORE_DEMO_MS)
         return () => clearTimeout(t)
-    }, [soundReady, demo, justCalled, nowServing, videos])
+    }, [soundReady, demo, justCalled, nowServing])
 
     const endDemo = () => {
         setDemo(false)
