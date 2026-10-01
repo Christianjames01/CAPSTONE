@@ -38,6 +38,16 @@ function useSeen(ref, threshold) {
     return seen || typeof IntersectionObserver === 'undefined'
 }
 
+// The 3D backdrop needs WebGL; without it the flat gradient stays.
+function webglAvailable() {
+    try {
+        const canvas = document.createElement('canvas')
+        return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'))
+    } catch {
+        return false
+    }
+}
+
 function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', onEnd, soundKey = 'walkthrough', defaultSound = false }) {
     const rootRef = useRef(null)
     const inView = useSeen(rootRef, 0.45)
@@ -50,6 +60,48 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     const tourOpen = useTourOpen()
     const playing = !tourOpen && !clock.ended && (choice === null ? autoplay && inView && !reducedMotion() : choice)
     const { scene, elapsed, ended, run } = clock
+
+    // ---- 3D: live backdrop + pointer tilt -------------------------------------
+    const stageRef = useRef(null)
+    const backdropRef = useRef(null)
+    const backdrop3d = useRef(null)
+    const [has3d, setHas3d] = useState(false)
+    useEffect(() => {
+        if (!webglAvailable()) return undefined
+        let cancelled = false
+        import('./stage3d')
+            .then(({ createStage3d }) => {
+                if (cancelled || !backdropRef.current) return
+                backdrop3d.current = createStage3d(backdropRef.current)
+                setHas3d(true)
+            })
+            .catch((err) => console.error('DEMO 3D ERROR:', err))
+        return () => {
+            cancelled = true
+            backdrop3d.current?.dispose()
+            backdrop3d.current = null
+        }
+    }, [])
+    useEffect(() => { backdrop3d.current?.setScene(scene) }, [scene, has3d])
+    // The backdrop keeps moving once the player has been seen (even paused).
+    useEffect(() => { backdrop3d.current?.setActive(inView) }, [inView, has3d])
+
+    // Tilt toward the pointer (CSS variables, no re-render).
+    const onPointerMove = (e) => {
+        const el = stageRef.current
+        if (!el || reducedMotion()) return
+        const r = el.getBoundingClientRect()
+        const x = ((e.clientX - r.left) / r.width - 0.5) * 2
+        const y = ((e.clientY - r.top) / r.height - 0.5) * 2
+        el.style.setProperty('--tx', x.toFixed(3))
+        el.style.setProperty('--ty', y.toFixed(3))
+        backdrop3d.current?.setPointer(x, y)
+    }
+    const onPointerLeave = () => {
+        stageRef.current?.style.setProperty('--tx', '0')
+        stageRef.current?.style.setProperty('--ty', '0')
+        backdrop3d.current?.setPointer(0, 0)
+    }
 
     // Voice-over: each scene waits for the narrator to finish.
     const [soundOn, setSoundOn] = useState(() => narrationSupported() && readSoundPref(soundKey, defaultSound))
@@ -132,7 +184,10 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     return (
         <div className="lpx-player" ref={rootRef} aria-label={label}>
             <div
-                className={`lpx-stage${playing ? '' : ' is-paused'}`}
+                ref={stageRef}
+                onPointerMove={onPointerMove}
+                onPointerLeave={onPointerLeave}
+                className={`lpx-stage lpx-is-3d${has3d ? ' has-backdrop' : ''}${playing ? '' : ' is-paused'}`}
                 onClick={togglePlay}
                 role="button"
                 tabIndex={0}
@@ -141,12 +196,19 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
             >
                 <div className="lpx-stage-bg" />
                 <div className="lpx-stage-grid" />
+                <div className="lpx-backdrop3d" ref={backdropRef} aria-hidden="true" />
 
                 <div className="lpx-chapter-tag" key={`tag-${scene}`}>
                     <span>{current.chapter}</span>{current.title}
                 </div>
 
-                <View key={`${current.key}-${run}`} cta={cta} />
+                <div className="lpx-depth">
+                    <div className="lpx-depth-sway">
+                        <div className="lpx-depth-enter" key={`enter-${current.key}-${run}`}>
+                            <View key={`${current.key}-${run}`} cta={cta} />
+                        </div>
+                    </div>
+                </div>
 
                 {!playing && (
                     <span className="lpx-big-play" aria-hidden="true">{ended ? Icon.replay : Icon.play}</span>
