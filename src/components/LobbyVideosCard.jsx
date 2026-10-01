@@ -16,6 +16,8 @@ function LobbyVideosCard() {
     const [title, setTitle] = useState('')
     const [seconds, setSeconds] = useState('60')
     const [saving, setSaving] = useState(false)
+    const [syncing, setSyncing] = useState(false)
+    const [syncNote, setSyncNote] = useState('')
 
     const refresh = () =>
         loadLobbyVideos({ includeInactive: true })
@@ -71,6 +73,32 @@ function LobbyVideosCard() {
         }
     }
 
+    // Fetch the newest videos from the HCDC Facebook Page now (it also runs
+    // by itself every hour).
+    const syncNow = async () => {
+        setSyncing(true)
+        setSyncNote('')
+        try {
+            const { data, error } = await supabase.functions.invoke('sync-facebook-videos', { body: {} })
+            let message = data?.error
+            if (error) {
+                try { message = (await error.context?.json())?.error || error.message } catch { message = error.message }
+            }
+            if (message) {
+                setSyncNote(/FB_PAGE_TOKEN|Not set up/i.test(message)
+                    ? 'Automatic fetching isn’t connected yet — it needs a Page access token from an admin of the HCDC Facebook Page.'
+                    : /not found|404|Failed to send/i.test(message)
+                        ? 'The sync function isn’t deployed yet.'
+                        : message)
+            } else {
+                setSyncNote(`Synced: ${data.fetched} video${data.fetched === 1 ? '' : 's'} from Facebook (${data.added} new).`)
+                await refresh()
+            }
+        } finally {
+            setSyncing(false)
+        }
+    }
+
     const toggle = async (video) => {
         const { error } = await supabase.from('lobby_videos').update({ is_active: !video.is_active }).eq('video_id', video.video_id)
         if (error) return notifyError('Could not update the video: ' + error.message)
@@ -91,17 +119,24 @@ function LobbyVideosCard() {
                 <div>
                     <h2 id="lv-title">Lobby TV videos</h2>
                     <p>
-                        Facebook videos the Queue Display plays every 2 minutes, in this order, with the walkthrough demo after
-                        the last one. On Facebook, open the video, tap <b>Share → Copy link</b>, and paste it here. Videos must be
-                        public; they play muted.
+                        The newest videos from the Holy Cross of Davao College Facebook Page are fetched automatically every
+                        hour. The Queue Display plays them every 2 minutes, newest first, with the walkthrough demo after the
+                        last one. Hide any you don't want on the TV.
                     </p>
                 </div>
+                {!unavailable && (
+                    <button type="button" className="admin-secondary-button lv-sync" onClick={syncNow} disabled={syncing}>
+                        {syncing ? 'Syncing…' : 'Sync from Facebook now'}
+                    </button>
+                )}
             </div>
+            {syncNote && <p className="lv-sync-note" role="status">{syncNote}</p>}
 
             {unavailable ? (
                 <p className="lv-note">Run the lobby videos SQL (20261002000000_lobby_videos) in Supabase to turn this on.</p>
             ) : (
                 <>
+                    <h3 className="lv-subhead">Add a video by hand (optional)</h3>
                     <form className="lv-form" onSubmit={add}>
                         <label className="lv-field lv-grow">
                             <span>Facebook video link</span>
@@ -121,7 +156,7 @@ function LobbyVideosCard() {
                     </form>
 
                     {loaded && videos.length === 0 && (
-                        <p className="lv-note">No videos yet — the TV shows the walkthrough demo every 2 minutes until you add some.</p>
+                        <p className="lv-note">No videos yet — the TV shows the walkthrough demo every 2 minutes until videos are fetched or added.</p>
                     )}
 
                     {videos.length > 0 && (
@@ -130,9 +165,16 @@ function LobbyVideosCard() {
                                 <li key={v.video_id} className={v.is_active ? '' : 'is-off'}>
                                     <span className="lv-num">{i + 1}</span>
                                     <div className="lv-main">
-                                        <strong>{v.title || 'Untitled video'}</strong>
+                                        <strong>
+                                            {v.source === 'facebook' && <span className="lv-badge">From Facebook</span>}
+                                            {v.title || 'Untitled video'}
+                                        </strong>
                                         <a href={v.url} target="_blank" rel="noopener noreferrer">{v.url}</a>
-                                        <small>Plays {v.play_seconds} s{v.is_active ? '' : ' · hidden from the TV'}</small>
+                                        <small>
+                                            Plays {v.play_seconds} s
+                                            {v.published_at ? ` · posted ${new Date(v.published_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                                            {v.is_active ? '' : ' · hidden from the TV'}
+                                        </small>
                                     </div>
                                     <div className="lv-actions">
                                         <button type="button" onClick={() => toggle(v)}>{v.is_active ? 'Hide' : 'Show'}</button>

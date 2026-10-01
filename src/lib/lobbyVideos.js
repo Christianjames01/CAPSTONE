@@ -32,15 +32,22 @@ export function facebookEmbedUrl(url, width = 1280) {
 
 const isMissingTable = (error) => error && (error.code === 'PGRST205' || error.code === '42P01')
 
-// Active videos in play order. [] (and unavailable) before the migration.
+const isMissingColumn = (error) => error && (error.code === '42703' || /source|published_at/i.test(error.message || ''))
+
+// Active videos in play order: the newest from Facebook first, then the ones
+// added by hand. [] (and unavailable) before the migration.
 export async function loadLobbyVideos({ includeInactive = false } = {}) {
-    let query = supabase
-        .from('lobby_videos')
-        .select('video_id, url, title, play_seconds, is_active, sort_order, created_at')
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: true })
-    if (!includeInactive) query = query.eq('is_active', true)
-    const { data, error } = await query
+    const run = (columns, synced) => {
+        let query = supabase.from('lobby_videos').select(columns)
+        if (synced) query = query.order('published_at', { ascending: false, nullsFirst: false })
+        query = query.order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+        if (!includeInactive) query = query.eq('is_active', true)
+        return query
+    }
+    const base = 'video_id, url, title, play_seconds, is_active, sort_order, created_at'
+    let { data, error } = await run(base + ', source, published_at', true)
+    // Before the Facebook sync migration: without its columns.
+    if (isMissingColumn(error)) ({ data, error } = await run(base, false))
     if (isMissingTable(error)) return { videos: [], unavailable: true }
     if (error) throw error
     return { videos: data || [], unavailable: false }
