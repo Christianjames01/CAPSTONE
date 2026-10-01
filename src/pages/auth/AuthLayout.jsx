@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import './Auth.css'
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 
 function AuthLayout({ title, subtitle, footer, children }) {
     return (
@@ -9,7 +9,7 @@ function AuthLayout({ title, subtitle, footer, children }) {
             <div className="auth-brand-panel">
                 <Link to="/" className="auth-brand-link">
                     <div className="auth-brand-seal">
-                        <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                        <img src={certichainLogo} alt="CertiChain" />
                     </div>
                     <div>
                         <div className="auth-brand-name">CertiChain</div>

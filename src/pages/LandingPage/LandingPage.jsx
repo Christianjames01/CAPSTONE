@@ -12,6 +12,7 @@ import { useCountUp, useInView, useMagnetic, useReveal, useScrollProgress } from
 import "./Landing.css";
 import "./LandingMotion.css";
 import hcdcLogo from "../../assets/hcdc-logo.png";
+import certichainLogo from "../../assets/certichain-logo.png";
 import dpoRegisteredBadge from "../../assets/dpo-registered-badge.png";
 import dataPrivacyBadge from "../../assets/data-privacy-badge.png";
 
@@ -404,7 +405,7 @@ function FinalCta() {
         <section className="cta-section">
             <div className="cta-container" data-reveal="scale">
                 <div className="cta-icon">
-                    <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                    <img src={certichainLogo} alt="CertiChain" />
                 </div>
                 <span className="cta-label">HCDC Registrar Services</span>
                 <h2>Ready to request <br /><span>your document?</span></h2>
@@ -641,7 +642,7 @@ const LandingPage = () => {
 
                     <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
                         <div className="brand-seal">
-                            <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                            <img src={certichainLogo} alt="CertiChain" />
                         </div>
                         <div className="brand-text">
                             <div className="brand-name">CertiChain</div>
@@ -1084,7 +1085,7 @@ const LandingPage = () => {
                         <div className="footer-brand">
                             <div className="brand">
                                 <div className="brand-seal">
-                                    <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                                    <img src={certichainLogo} alt="CertiChain" />
                                 </div>
                                 <div className="brand-text">
                                     <div className="brand-name">CertiChain</div>

@@ -3,7 +3,7 @@ import { IconAlert, IconCheck, IconQuestion, IconX } from '../../components/UiIc
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { REGISTRAR_CONTACT } from '../../lib/registrarContact'
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import './Verify.css'
 
 const formatDate = (value) =>
@@ -121,7 +121,7 @@ function VerifyCredential() {
             <header className="verify-header">
                 <div className="verify-header-inner">
                     <Link to="/" className="verify-brand">
-                        <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                        <img src={certichainLogo} alt="CertiChain" />
                         <div>
                             <div className="verify-brand-name">CertiChain</div>
                             <div className="verify-brand-subtitle">Credential Verification</div>

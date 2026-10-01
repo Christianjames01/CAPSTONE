@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
 import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone, IconTicket } from './icons'
@@ -137,7 +137,7 @@ function AdminLayout() {
                 </button>
 
                 <Link to="/admin/dashboard" className="admin-mobile-brand">
-                    <img src={hcdcLogo} alt="" />
+                    <img src={certichainLogo} alt="" />
                     <span>CertiChain</span>
                 </Link>
             </header>
@@ -152,7 +152,7 @@ function AdminLayout() {
                     <div className="admin-sidebar-brand-row">
                         <Link to="/admin/dashboard" className="admin-sidebar-brand" onClick={closeMobileNav}>
                             <div className="admin-sidebar-seal">
-                                <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                                <img src={certichainLogo} alt="CertiChain" />
                             </div>
                             <div>
                                 <div className="admin-sidebar-name">CertiChain</div>

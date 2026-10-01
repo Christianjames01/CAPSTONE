@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import dpoRegisteredBadge from '../../assets/dpo-registered-badge.png'
 import dataPrivacyBadge from '../../assets/data-privacy-badge.png'
 import './Legal.css'
@@ -101,7 +101,7 @@ function LegalLayout({ title, updated, children }) {
             <header className="legal-header">
                 <div className="legal-header-inner">
                     <Link to="/" className="legal-brand">
-                        <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                        <img src={certichainLogo} alt="CertiChain" />
                         <div>
                             <div className="legal-brand-name">CertiChain</div>
                             <div className="legal-brand-subtitle">HCDC Registrar Services</div>
@@ -124,7 +124,7 @@ function LegalLayout({ title, updated, children }) {
                         <div className="legal-footer-brand">
                             <div className="legal-footer-brand-row">
                                 <div className="legal-footer-brand-seal">
-                                    <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                                    <img src={certichainLogo} alt="CertiChain" />
                                 </div>
                                 <div>
                                     <div className="legal-footer-brand-name">CertiChain</div>

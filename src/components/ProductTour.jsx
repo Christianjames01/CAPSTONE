@@ -6,7 +6,7 @@ import { publishTourState } from '../lib/tourState'
 import { narrationSupported, readSoundPref, say, speaking, stopSpeaking, writeSoundPref } from '../lib/narration'
 import TourPreview from './TourPreview'
 import { useScrollLock } from '../lib/useScrollLock'
-import hcdcLogo from '../assets/hcdc-logo.png'
+import certichainLogo from '../assets/certichain-logo.png'
 import './ProductTour.css'
 
 // Guided demo tour that plays like a short video. Each step opens its real
@@ -531,7 +531,7 @@ function ProductTour({ role, steps: allSteps }) {
         <div className="tour-root" role="dialog" aria-modal="true" aria-labelledby="tour-title">
             {intro && (
                 <button type="button" className="tour-intro" onClick={() => setIntro(false)} aria-label="Start the demo now">
-                    <span className="tour-intro-seal"><img src={hcdcLogo} alt="" /></span>
+                    <span className="tour-intro-seal"><img src={certichainLogo} alt="" /></span>
                     <span className="tour-intro-eyebrow">Guided demo</span>
                     <strong>A quick tour of your portal</strong>
                     <span className="tour-intro-count" aria-hidden="true">

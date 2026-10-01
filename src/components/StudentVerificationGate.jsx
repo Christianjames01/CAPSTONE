@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { SkeletonAppShell } from './Skeleton'
 import { IconClock, IconAlertCircle, IconMail, IconPhone } from '../pages/student/icons'
-import hcdcLogo from '../assets/hcdc-logo.png'
+import certichainLogo from '../assets/certichain-logo.png'
 import { REGISTRAR_CONTACT } from '../lib/registrarContact'
 import './StudentVerificationGate.css'
 
@@ -59,7 +59,7 @@ function StudentVerificationGate({ children }) {
             <div className="verify-gate-page">
                 <div className="verify-gate-card">
                     <div className="verify-gate-seal">
-                        <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                        <img src={certichainLogo} alt="CertiChain" />
                     </div>
 
                     <div className={`verify-gate-icon ${rejected ? 'rejected' : 'pending'}`}>

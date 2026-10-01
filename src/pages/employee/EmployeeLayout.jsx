@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconMessage, IconHistory } from './icons'
 // Same icons as the Registrar Head's sidebar for the same pages.
@@ -146,7 +146,7 @@ function EmployeeLayout() {
                 </button>
 
                 <Link to="/employee/dashboard" className="employee-mobile-brand">
-                    <img src={hcdcLogo} alt="" />
+                    <img src={certichainLogo} alt="" />
                     <span>CertiChain</span>
                 </Link>
             </header>
@@ -161,7 +161,7 @@ function EmployeeLayout() {
                     <div className="employee-sidebar-brand-row">
                         <Link to="/employee/dashboard" className="employee-sidebar-brand" onClick={closeMobileNav}>
                             <div className="employee-sidebar-seal">
-                                <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                                <img src={certichainLogo} alt="CertiChain" />
                             </div>
                             <div>
                                 <div className="employee-sidebar-name">CertiChain</div>

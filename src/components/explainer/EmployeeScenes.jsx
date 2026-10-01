@@ -1,4 +1,4 @@
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import { Icon } from './icons'
 import { CtaButton, QrMark, Window } from './parts'
 
@@ -144,7 +144,7 @@ export function SceneEmpChat() {
 export function SceneStaffCta({ cta }) {
     return (
         <div className="lpx-scene lpx-cta">
-            <div className="lpx-cta-ring"><img src={hcdcLogo} alt="" /></div>
+            <div className="lpx-cta-ring"><img src={certichainLogo} alt="" /></div>
             <strong>{cta?.title}</strong>
             <div className="lpx-cta-buttons">
                 <CtaButton action={cta?.primary} className="lpx-cta-primary" />

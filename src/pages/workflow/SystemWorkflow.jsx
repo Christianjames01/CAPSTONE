@@ -4,6 +4,7 @@ import { FLOW, SHOTS, STEPS } from './shots'
 import { createWorkflowScene } from './workflowScene'
 import { createWorkflowAudio } from './workflowAudio'
 import { availableVoices, createNarrator, isNaturalVoice, recordingsAvailable, whenVoicesReady } from './workflowNarration'
+import certichainLogo from '../../assets/certichain-logo.png'
 import './SystemWorkflow.css'
 
 // A narrated 3D presentation of the CertiChain request workflow, for the
@@ -275,7 +276,7 @@ function SystemWorkflow() {
             {started && (
                 <header className="wf-top">
                     <div className="wf-brand">
-                        <span className="wf-brand-mark">CC</span>
+                        <span className="wf-brand-mark"><img src={certichainLogo} alt="CertiChain" /></span>
                         <div>
                             <strong>CertiChain</strong>
                             <span>Academic Registrar System · Workflow</span>

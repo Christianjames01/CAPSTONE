@@ -1,4 +1,4 @@
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import { Icon } from './icons'
 import { CtaButton, QrMark, Window } from './parts'
 
@@ -20,7 +20,7 @@ export function SceneIntro() {
 
             <div className="lpx-intro-brand">
                 <span className="lpx-queue-label is-after">With CertiChain</span>
-                <div className="lpx-seal"><img src={hcdcLogo} alt="" /></div>
+                <div className="lpx-seal"><img src={certichainLogo} alt="" /></div>
                 <strong>CertiChain</strong>
                 <small>HCDC Registrar Services</small>
                 <div className="lpx-intro-tags">
@@ -132,7 +132,7 @@ export function SceneClaim() {
 
             <div className="lpx-doc-final" style={{ "--delay": "1s" }}>
                 <div className="lpx-doc-paper">
-                    <img src={hcdcLogo} alt="" />
+                    <img src={certichainLogo} alt="" />
                     <strong>Transcript of Records</strong>
                     <i /><i /><i />
                     <div className="lpx-doc-qr"><QrMark size={46} /></div>
@@ -154,7 +154,7 @@ export function SceneClaim() {
 export function SceneCta({ cta }) {
     return (
         <div className="lpx-scene lpx-cta">
-            <div className="lpx-cta-ring"><img src={hcdcLogo} alt="" /></div>
+            <div className="lpx-cta-ring"><img src={certichainLogo} alt="" /></div>
             <strong>{cta?.title || <>Your records, <em>verified and provable.</em></>}</strong>
             <div className="lpx-cta-buttons">
                 <CtaButton action={cta?.primary} className="lpx-cta-primary" />

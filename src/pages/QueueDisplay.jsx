@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { IconVolume } from '../components/UiIcons'
 import { supabase } from '../lib/supabase'
 import { formatQueueNumber, todayStr } from '../lib/queue'
-import hcdcLogo from '../assets/hcdc-logo.png'
+import certichainLogo from '../assets/certichain-logo.png'
 import hcdcBackground from '../assets/footer-building.jpg'
 import ExplainerPlayer from '../components/explainer/ExplainerPlayer'
 import { STUDENT_SCENES } from '../components/explainer/sceneLists'
@@ -226,7 +226,7 @@ function QueueDisplay() {
             {!soundReady && (
                 <button className="qd-unlock" onClick={enableSound}>
                     <span className="qd-unlock-card">
-                        <img src={hcdcLogo} alt="" className="qd-unlock-logo" />
+                        <img src={certichainLogo} alt="" className="qd-unlock-logo" />
                         <span className="qd-unlock-title">Start the Queue Display</span>
                         <span className="qd-unlock-sub">Tap once so number announcements can play sound.</span>
                         <span className="qd-unlock-button">
@@ -239,7 +239,7 @@ function QueueDisplay() {
 
             <header className="qd-header">
                 <div className="qd-brand">
-                    <img src={hcdcLogo} alt="" className="qd-logo" />
+                    <img src={certichainLogo} alt="" className="qd-logo" />
                     <div>
                         <div className="qd-brand-name">Registrar's Office</div>
                         <div className="qd-brand-tag">Holy Cross of Davao College · Walk-in Queue</div>
@@ -278,7 +278,7 @@ function QueueDisplay() {
                         </span>
                     </div>
 
-                    <img src={hcdcLogo} alt="" className="qd-now-watermark" />
+                    <img src={certichainLogo} alt="" className="qd-now-watermark" />
 
                     <div className="qd-now-body">
                         {nowServing ? (

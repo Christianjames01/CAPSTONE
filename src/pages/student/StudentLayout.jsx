@@ -4,7 +4,7 @@ import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { watchStudentSession } from '../../lib/singleSession'
 import { useIdleLogout } from '../../lib/useIdleLogout'
-import hcdcLogo from '../../assets/hcdc-logo.png'
+import certichainLogo from '../../assets/certichain-logo.png'
 import {
     IconHome,
     IconDocumentPlus,
@@ -173,7 +173,7 @@ function StudentLayout() {
                 </button>
 
                 <Link to="/student/dashboard" className="student-mobile-brand">
-                    <img src={hcdcLogo} alt="" />
+                    <img src={certichainLogo} alt="" />
                     <span>CertiChain</span>
                 </Link>
             </header>
@@ -188,7 +188,7 @@ function StudentLayout() {
                     <div className="student-sidebar-brand-row">
                         <Link to="/student/dashboard" className="student-sidebar-brand" onClick={closeMobileNav}>
                             <div className="student-sidebar-seal">
-                                <img src={hcdcLogo} alt="Holy Cross of Davao College" />
+                                <img src={certichainLogo} alt="CertiChain" />
                             </div>
                             <div>
                                 <div className="student-sidebar-name">CertiChain</div>

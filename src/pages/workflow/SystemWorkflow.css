@@ -81,12 +81,15 @@
     width: 40px;
     height: 40px;
     border-radius: 12px;
-    background: linear-gradient(135deg, var(--wf-navy), var(--wf-blue));
-    font-weight: 900;
-    font-size: 14px;
-    letter-spacing: 0.04em;
+    background: #ffffff;
     box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
     flex-shrink: 0;
+}
+
+.wf-brand-mark img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
 .wf-brand strong {

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import hcdcLogo from "../../assets/hcdc-logo.png";
+import certichainLogo from "../../assets/certichain-logo.png";
 import { QrMark } from "../../components/explainer/parts";
 import { prefersReducedMotion, useInView, useTicker } from "./motion";
 
@@ -72,7 +72,7 @@ function HeroVisual() {
                 <div className="lpv-body">
                     <aside className="lpv-side">
                         <div className="lpv-brand">
-                            <img src={hcdcLogo} alt="" />
+                            <img src={certichainLogo} alt="" />
                             <div><strong>CertiChain</strong><small>Student Portal</small></div>
                         </div>
                         <nav>
