@@ -27,6 +27,7 @@ const RefundPolicy = lazy(() => import('./pages/legal/RefundPolicy'))
 const VerifyCredential = lazy(() => import('./pages/verify/VerifyCredential'))
 const QueueDisplay = lazy(() => import('./pages/QueueDisplay'))
 const SystemWorkflow = lazy(() => import('./pages/workflow/SystemWorkflow'))
+const Showreel = lazy(() => import('./pages/showreel/Showreel'))
 
 const StudentLayout = lazy(() => import('./pages/student/StudentLayout'))
 const Dashboard = lazy(() => import('./pages/student/Dashboard'))
@@ -173,6 +174,7 @@ function App() {
         {/* Public narrated 3D walkthrough of the workflow (capstone defense /
             system demo). */}
         <Route path="/system-workflow" element={<SystemWorkflow />} />
+        <Route path="/showreel" element={<Showreel />} />
 
         {/* Standalone, no portal sidebar -- meant to be opened full-screen
             on a lobby TV/monitor and left running. */}
