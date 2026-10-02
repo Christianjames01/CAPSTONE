@@ -144,6 +144,10 @@ export function createReelAudio({ duration, beat, cuts }) {
             bus.connect(master)
             schedule(offset)
         },
+        // Lower the music while the voice-over speaks.
+        setDuck(on) {
+            master.gain.setTargetAtTime(on ? 0.2 : 0.55, ctx.currentTime, on ? 0.05 : 0.25)
+        },
         stop() {
             if (!bus) return
             const old = bus

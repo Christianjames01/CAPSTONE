@@ -152,7 +152,7 @@
 }
 
 /* ---- 3. Journey ------------------------------------------------------------ */
-.rl-journey { justify-content: flex-start; align-items: stretch; padding-top: 120px; }
+.rl-journey { justify-content: flex-start; align-items: stretch; padding-top: 175px; }
 
 .rl-j-title {
     display: flex;
@@ -426,3 +426,60 @@
 @media (max-width: 640px) {
     .rl-progress, .rl-time { display: none; }
 }
+
+/* ---- Logo bug, captions, end-card badge ------------------------------------ */
+.rl-bug {
+    position: absolute;
+    top: 48px;
+    left: 56px;
+    z-index: 19;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.rl-bug-logo {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(242, 199, 92, 0.65), 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.rl-bug-logo img { width: 64px; height: 64px; object-fit: contain; }
+.rl-bug-text { display: flex; flex-direction: column; }
+.rl-bug-text strong { font-size: 32px; font-weight: 800; letter-spacing: 0.02em; }
+.rl-bug-text small { font-size: 18px; font-weight: 600; color: rgba(226, 236, 250, 0.75); }
+
+.rl-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 120px;
+    z-index: 19;
+    max-width: 1400px;
+    padding: 14px 30px;
+    border-radius: 16px;
+    background: rgba(4, 11, 24, 0.62);
+    color: #fff;
+    font-size: 34px;
+    font-weight: 700;
+    text-align: center;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.rl-end-badge {
+    display: grid;
+    place-items: center;
+    width: 120px;
+    height: 120px;
+    margin-top: 36px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 6px rgba(242, 199, 92, 0.75), 0 0 60px rgba(242, 199, 92, 0.45);
+}
+
+.rl-end-badge img { width: 92px; height: 92px; object-fit: contain; }
+.rl-end-url { margin-top: 28px; }

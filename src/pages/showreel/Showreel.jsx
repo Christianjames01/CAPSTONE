@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createReelAudio } from './reelAudio'
+import { speakLine, stopVoice } from './reelVoice'
+import certichainLogo from '../../assets/certichain-logo.png'
 import './Showreel.css'
 
 // CertiChain showreel: an 18-second, beat-synced (120 BPM) motion graphics
@@ -14,6 +16,16 @@ import './Showreel.css'
 // 15.0  End card          lockup, tagline, URL
 
 const DURATION = 18
+
+// Female voice-over, one line per scene (at = seconds into the reel).
+const VOICE_OVER = [
+    { at: 0.15, text: 'Your records. Verified.' },
+    { at: 2.7, text: 'This is CertiChain.' },
+    { at: 5.6, text: 'Request, upload, pay, track, and pick up. Five steps, all online.' },
+    { at: 9.6, text: 'Every credential carries a signed QR code. Genuine, in seconds.' },
+    { at: 12.6, text: 'No lines. No repeat visits.' },
+    { at: 15.1, text: 'CertiChain. Your records, verified and provable.' },
+]
 const BEAT = 0.5
 const CUTS = [2.5, 5.5, 9.5, 12.5, 15]
 
@@ -175,11 +187,40 @@ function Frame({ t }) {
                 )
             })}
 
+            <LogoBug t={t} />
+            <VoiceCaption t={t} />
+
             {/* Flash frames on the hits */}
             <div className="rl-flash" style={{ opacity: hit * 0.35 }} />
             <div className="rl-vignette" />
         </div>
     )
+}
+
+// The CertiChain logo, top-left, from the second scene to the end card.
+function LogoBug({ t }) {
+    const k = outExpo(seg(t, 2.6, 3.1)) * (1 - seg(t, 14.7, 15.0))
+    if (k <= 0) return null
+    return (
+        <div className="rl-bug" style={{ opacity: k, transform: `translateX(${(1 - k) * -40}px)` }}>
+            <span className="rl-bug-logo"><img src={certichainLogo} alt="CertiChain" /></span>
+            <span className="rl-bug-text">
+                <strong>CertiChain</strong>
+                <small>HCDC Registrar Services</small>
+            </span>
+        </div>
+    )
+}
+
+// Subtitles for the voice-over (shown even with the sound off).
+function VoiceCaption({ t }) {
+    const line = [...VOICE_OVER].reverse().find((l) => t >= l.at)
+    if (!line) return null
+    const next = VOICE_OVER[VOICE_OVER.indexOf(line) + 1]
+    const end = Math.min(next ? next.at - 0.2 : DURATION - 0.3, line.at + 2.8)
+    const k = seg(t, line.at, line.at + 0.25) * (1 - seg(t, end - 0.25, end))
+    if (k <= 0) return null
+    return <div className="rl-caption" style={{ opacity: k }} key={line.at}>{line.text}</div>
 }
 
 function SceneKinetic({ t }) {
@@ -359,6 +400,9 @@ function SceneEnd({ t }) {
             <div className="rl-end-tag">
                 <Word text="Your records, verified and provable." t={t} start={16.1} step={0.018} />
             </div>
+            <div className="rl-end-badge" style={{ opacity: seg(t, 16.3, 16.6), transform: `scale(${lerp(0.6, 1, outBack(seg(t, 16.3, 16.7)))})` }}>
+                <img src={certichainLogo} alt="CertiChain" />
+            </div>
             <div className="rl-end-url" style={{ opacity: seg(t, 16.6, 16.9), transform: `translateY(${(1 - outExpo(seg(t, 16.6, 17.1))) * 30}px)` }}>
                 onlineregistrar.vercel.app
             </div>
@@ -376,6 +420,8 @@ function Showreel() {
     const [scale, setScale] = useState(1)
     const audioRef = useRef(null)
     const tRef = useRef(t)
+    const soundRef = useRef(false)
+    const lastSpokenRef = useRef(-1)
 
     useEffect(() => {
         document.title = 'CertiChain · Showreel'
@@ -392,10 +438,22 @@ function Showreel() {
         const tick = (now) => {
             const dt = Math.min(0.1, (now - last) / 1000)
             last = now
-            let next = tRef.current + dt
+            const prev = tRef.current
+            let next = prev + dt
             if (next >= DURATION) {
                 next -= DURATION
                 audioRef.current?.restart(next)
+                lastSpokenRef.current = -1
+            }
+            if (soundRef.current) {
+                const line = VOICE_OVER.find((l) => l.at > lastSpokenRef.current && l.at <= next && l.at > next - 0.5)
+                if (line) {
+                    lastSpokenRef.current = line.at
+                    speakLine(line.text, {
+                        onStart: () => audioRef.current?.setDuck(true),
+                        onEnd: () => audioRef.current?.setDuck(false),
+                    })
+                }
             }
             tRef.current = next
             setT(next)
@@ -405,17 +463,20 @@ function Showreel() {
         return () => cancelAnimationFrame(frame)
     }, [playing])
 
-    useEffect(() => () => audioRef.current?.dispose(), [])
+    useEffect(() => () => { stopVoice(); audioRef.current?.dispose() }, [])
+    useEffect(() => { soundRef.current = soundOn }, [soundOn])
 
     const togglePlay = () => {
         const next = !playing
         setPlaying(next)
-        if (!next) audioRef.current?.stop()
+        if (!next) { audioRef.current?.stop(); stopVoice() }
         else if (soundOn) audioRef.current?.restart(tRef.current)
     }
 
     const replay = () => {
         tRef.current = 0
+        lastSpokenRef.current = -1
+        stopVoice()
         setT(0)
         setPlaying(true)
         if (soundOn) audioRef.current?.restart(0)
@@ -424,9 +485,11 @@ function Showreel() {
     const toggleSound = async () => {
         if (soundOn) {
             audioRef.current?.stop()
+            stopVoice()
             setSoundOn(false)
             return
         }
+        lastSpokenRef.current = tRef.current - 0.01
         if (!audioRef.current) audioRef.current = createReelAudio({ duration: DURATION, beat: BEAT, cuts: CUTS })
         if (!audioRef.current) return
         await audioRef.current.restart(tRef.current)
@@ -456,7 +519,7 @@ function Showreel() {
             <div className="rl-controls" role="toolbar" aria-label="Showreel controls">
                 <button type="button" onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'}>{playing ? '❚❚' : '▶'}</button>
                 <button type="button" onClick={replay} aria-label="Replay">↻</button>
-                <button type="button" onClick={toggleSound} className={soundOn ? 'is-on' : ''} aria-pressed={soundOn}>{soundOn ? 'Sound on' : 'Sound off'}</button>
+                <button type="button" onClick={toggleSound} className={soundOn ? 'is-on' : ''} aria-pressed={soundOn}>{soundOn ? 'Voice + music on' : 'Turn on voice + music'}</button>
                 <span className="rl-time">{t.toFixed(1)}s / {DURATION}s</span>
                 <span className="rl-progress"><b style={{ transform: `scaleX(${t / DURATION})` }} /></span>
             </div>
