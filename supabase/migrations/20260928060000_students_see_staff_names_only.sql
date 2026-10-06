@@ -12,6 +12,9 @@
 -- a student couldn't see that row any more and the check would fail. So if
 -- any policy outside `profiles` mentions profiles, this migration stops
 -- without changing anything and lists them -- send the list to be adjusted.
+-- Policies that only look up the caller's own row
+-- (`profiles.user_id = auth.uid()`, e.g. "is the caller active staff?") are
+-- fine: everyone can still read their own profile.
 --
 -- Safe to re-run.
 
@@ -30,6 +33,7 @@ begin
          where schemaname = 'public'
            and tablename <> 'profiles'
            and (coalesce(qual, '') ~* '\mprofiles\M' or coalesce(with_check, '') ~* '\mprofiles\M')
+           and not (coalesce(qual, '') || coalesce(with_check, '')) ~* 'profiles\.user_id\s*=\s*auth\.uid\(\)'
     loop
         found_any := true;
         raise warning 'Policy % on % reads profiles directly', p.policyname, p.tablename;
