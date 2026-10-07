@@ -86,6 +86,7 @@ const AdminNotifications = lazy(() => import('./pages/admin/Notifications'))
 const AdminActivityLogs = lazy(() => import('./pages/admin/ActivityLogs'))
 const Reports = lazy(() => import('./pages/admin/Reports'))
 const AdminProfile = lazy(() => import('./pages/admin/Profile'))
+const AdminCredentials = lazy(() => import('./pages/admin/Credentials'))
 const SuperAdmin = lazy(() => import('./pages/superadmin/SuperAdmin'))
 
 // Pages shared by the system admin and the registrar head. Paths are relative
@@ -107,6 +108,7 @@ const PORTAL_PAGES = [
     ['/office-calendar', <OfficeCalendar />],
     ['/queue', <AdminQueue />],
     ['/receipts', <OfficialReceipts />],
+    ['/credentials', <AdminCredentials />],
     ['/messages', <AdminMessages />],
     ['/notifications', <AdminNotifications />],
     ['/activity-logs', <AdminActivityLogs />],

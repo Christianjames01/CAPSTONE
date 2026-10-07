@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
-import { IconClipboardList, IconUsers, IconMessage, IconHistory } from '../employee/icons'
+import { IconClipboardList, IconUsers, IconMessage, IconHistory, IconShieldCheck } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone, IconTicket } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
@@ -31,6 +31,7 @@ const NAV_ITEMS = [
     { to: '/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
     { to: '/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
+    { to: '/credentials', label: 'Credentials', icon: <IconShieldCheck /> },
     { to: '/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/activity-logs', label: 'Activity Logs', icon: <IconHistory /> },
