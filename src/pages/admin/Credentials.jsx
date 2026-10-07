@@ -105,7 +105,17 @@ function Credentials() {
         })
     }, [rows, query, docFilter, statusFilter])
 
-    if (loading) return <SkeletonPage />
+    if (loading) {
+        return (
+            <SkeletonPage
+                portal="admin"
+                blocks={[
+                    { type: 'header' },
+                    { type: 'list', count: 6 },
+                ]}
+            />
+        )
+    }
 
     return (
         <div>
