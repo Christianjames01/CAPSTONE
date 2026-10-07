@@ -3,6 +3,7 @@ import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { notifyError } from '../../lib/notify'
 import ThemeToggle from '../../components/ThemeToggle'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconUsers, IconHistory } from '../employee/icons'
@@ -30,8 +31,8 @@ function SuperAdmin() {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
 
-    const load = useCallback(async () => {
-        setLoading(true)
+    const load = useCallback(async ({ silent = false } = {}) => {
+        if (!silent) setLoading(true)
         const [overviewRes, accountsRes, loginsRes, dailyRes] = await Promise.all([
             supabase.rpc('superadmin_overview'),
             supabase.rpc('superadmin_list_accounts'),
@@ -52,6 +53,10 @@ function SuperAdmin() {
     useEffect(() => {
         load()
     }, [load])
+
+    // New sign-ins (and account status/role changes) show up without a
+    // manual refresh -- see src/lib/useLiveRefresh.js.
+    useLiveRefresh(['login_events', 'profiles'], load)
 
     useEffect(() => {
         let cancelled = false
