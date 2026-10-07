@@ -5,6 +5,7 @@ import { ROLE_NAMES, STAFF_ROLES, displayName, downloadCsv, formatWhen, timeAgo 
 
 const FILTERS = [
     { key: 'all', label: 'All' },
+    { key: 'online', label: 'Online now' },
     { key: 'admin', label: 'System admins' },
     { key: 'registrar_head', label: 'Registrar heads' },
     { key: 'employee', label: 'Employees' },
@@ -18,10 +19,11 @@ function SuperAdminAccounts({ accounts, onChanged }) {
     const [busyId, setBusyId] = useState(null)
 
     const counts = useMemo(() => {
-        const result = { all: accounts.length, inactive: 0 }
+        const result = { all: accounts.length, inactive: 0, online: 0 }
         for (const a of accounts) {
             result[a.role] = (result[a.role] || 0) + 1
             if (a.status !== 'active') result.inactive += 1
+            if (a.online) result.online += 1
         }
         return result
     }, [accounts])
@@ -30,7 +32,8 @@ function SuperAdminAccounts({ accounts, onChanged }) {
         const q = query.trim().toLowerCase()
         return accounts.filter((a) => {
             if (filter === 'inactive' && a.status === 'active') return false
-            if (filter !== 'all' && filter !== 'inactive' && a.role !== filter) return false
+            if (filter === 'online' && !a.online) return false
+            if (!['all', 'inactive', 'online'].includes(filter) && a.role !== filter) return false
             if (!q) return true
             return `${a.full_name || ''} ${a.email || ''} ${ROLE_NAMES[a.role] || ''}`.toLowerCase().includes(q)
         })
@@ -143,7 +146,16 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                                                 </span>
                                             </td>
                                             <td title={formatWhen(a.last_sign_in_at)}>
-                                                {a.last_sign_in_at ? timeAgo(a.last_sign_in_at) : <span className="sa-muted">Never</span>}
+                                                {a.online ? (
+                                                    <span className="sa-online-label">
+                                                        <span className="sa-online-dot" />
+                                                        Online
+                                                    </span>
+                                                ) : a.last_sign_in_at ? (
+                                                    timeAgo(a.last_sign_in_at)
+                                                ) : (
+                                                    <span className="sa-muted">Never</span>
+                                                )}
                                             </td>
                                             <td>{formatWhen(a.account_created_at)}</td>
                                             <td className="sa-actions-cell">

@@ -58,6 +58,7 @@ function SuperAdminOverview({ overview, accounts, logins, daily, loading }) {
     const neverSignedIn = staff.filter((a) => a.status === 'active' && !a.last_sign_in_at)
     const idle = staff.filter((a) => a.status === 'active' && a.last_sign_in_at && daysSince(a.last_sign_in_at) > 30)
     const inactive = accounts.filter((a) => a.status !== 'active')
+    const onlineIds = new Set(accounts.filter((a) => a.online).map((a) => a.user_id))
 
     return (
         <>
@@ -67,6 +68,12 @@ function SuperAdminOverview({ overview, accounts, logins, daily, loading }) {
             </header>
 
             <section className="sa-tiles">
+                <Tile
+                    label="Online right now"
+                    value={loading && !overview ? '…' : stats.online_now}
+                    note={<span className="sa-online-label"><span className="sa-online-dot" aria-hidden="true" />Live</span>}
+                    tone="online"
+                />
                 <Tile label="Logins today" value={loading && !overview ? '…' : stats.logins_today} note="Manila time" />
                 <Tile label="Logins, last 7 days" value={loading && !overview ? '…' : stats.logins_7d} />
                 <Tile label="People signed in, 7 days" value={loading && !overview ? '…' : stats.users_7d} />
@@ -130,7 +137,10 @@ function SuperAdminOverview({ overview, accounts, logins, daily, loading }) {
                         <ul className="sa-feed">
                             {logins.slice(0, 8).map((row, index) => (
                                 <li key={`${row.user_id}-${row.logged_in_at}-${index}`}>
-                                    <span className="sa-feed-name">{displayName(row)}</span>
+                                    <span className="sa-feed-name">
+                                        {onlineIds.has(row.user_id) && <span className="sa-online-dot" title="Online now" />}
+                                        {displayName(row)}
+                                    </span>
                                     <span className="sa-feed-meta">{ROLE_NAMES[row.role] || row.role} · {timeAgo(row.logged_in_at)}</span>
                                 </li>
                             ))}

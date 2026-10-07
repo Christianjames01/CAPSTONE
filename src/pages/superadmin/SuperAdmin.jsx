@@ -56,7 +56,7 @@ function SuperAdmin() {
 
     // New sign-ins (and account status/role changes) show up without a
     // manual refresh -- see src/lib/useLiveRefresh.js.
-    useLiveRefresh(['login_events', 'profiles'], load)
+    useLiveRefresh(['login_events', 'profiles', 'user_presence'], load)
 
     useEffect(() => {
         let cancelled = false

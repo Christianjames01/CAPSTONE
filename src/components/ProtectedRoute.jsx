@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { SkeletonAppShell } from './Skeleton'
 import { dashboardPathForRole } from '../lib/roleRedirect'
 import { getEmployeeAccountIssue, employeeIssueMessage } from '../lib/accountStatusMessage'
+import { usePresenceHeartbeat } from '../lib/presence'
 
 function ProtectedRoute({ children, allowedRoles }) {
     const location = useLocation()
@@ -13,6 +14,10 @@ function ProtectedRoute({ children, allowedRoles }) {
     useEffect(() => {
         checkUser()
     }, [])
+
+    // Lets the superadmin's console show who is online right now. Runs for
+    // every signed-in, active account -- it only ever records the caller.
+    usePresenceHeartbeat(profile?.status === 'active')
 
     const checkUser = async () => {
         const { data: { user } } = await supabase.auth.getUser()
