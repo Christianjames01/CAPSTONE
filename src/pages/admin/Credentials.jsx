@@ -138,7 +138,7 @@ function Credentials() {
                 <select
                     value={docFilter}
                     onChange={(e) => setDocFilter(e.target.value)}
-                    className="form-input"
+                    className="admin-select"
                     style={{ maxWidth: 260 }}
                 >
                     <option value="all">All document types</option>
