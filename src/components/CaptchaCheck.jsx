@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { captchaEnabled, loadTurnstile, TURNSTILE_SITE_KEY } from '../lib/captcha'
-import campusPhotoAerial from '../assets/footer-building.jpg'
-import campusPhotoBackground from '../assets/hcdc-background.png'
 import './CaptchaCheck.css'
 
-const CAMPUS_PHOTOS = [campusPhotoAerial, campusPhotoBackground]
-const pickCampusPhoto = () => CAMPUS_PHOTOS[Math.floor(Math.random() * CAMPUS_PHOTOS.length)]
+// A different real photo every time the check opens or resets -- not the
+// HCDC building, just whatever Lorem Picsum (https://picsum.photos) hands
+// back for a random seed. Plain CSS background-image, so no canvas/CORS
+// concerns.
+const pickRandomPhoto = () => `https://picsum.photos/seed/${Math.random().toString(36).slice(2)}/300/150`
 
 // Slide-puzzle check for the sign-up, sign-in and forgot-password forms:
 // drag the slider until the piece fits the gap in the campus photo.
@@ -50,7 +51,7 @@ function CaptchaCheck({ onToken }) {
     const drag = useRef(null)
 
     const [puzzle, setPuzzle] = useState(newPuzzle)
-    const [campusPhoto, setCampusPhoto] = useState(pickCampusPhoto)
+    const [photoUrl, setPhotoUrl] = useState(pickRandomPhoto)
     const [offset, setOffset] = useState(0)
     const [state, setState] = useState('idle') // idle | dragging | wrong | checking | done | error
     const [error, setError] = useState('')
@@ -154,7 +155,7 @@ function CaptchaCheck({ onToken }) {
                             solvedRef.current = false
                             onTokenRef.current?.(null)
                             setPuzzle(newPuzzle())
-                            setCampusPhoto(pickCampusPhoto())
+                            setPhotoUrl(pickRandomPhoto())
                             setOffset(0)
                             setState('idle')
                         }
@@ -204,7 +205,7 @@ function CaptchaCheck({ onToken }) {
         stopWatchdog()
         solvedRef.current = false
         setPuzzle(newPuzzle())
-        setCampusPhoto(pickCampusPhoto())
+        setPhotoUrl(pickRandomPhoto())
         setOffset(0)
         setState('idle')
         setError('')
@@ -219,7 +220,7 @@ function CaptchaCheck({ onToken }) {
             setState('wrong')
             setTimeout(() => {
                 setPuzzle(newPuzzle())
-                setCampusPhoto(pickCampusPhoto())
+                setPhotoUrl(pickRandomPhoto())
                 setOffset(0)
                 setState('idle')
             }, 700)
@@ -290,7 +291,7 @@ function CaptchaCheck({ onToken }) {
 
     if (!captchaEnabled) return null
 
-    const photo = { backgroundImage: `url(${campusPhoto})`, backgroundSize: `${WIDTH}px ${HEIGHT}px` }
+    const photo = { backgroundImage: `url(${photoUrl})`, backgroundSize: `${WIDTH}px ${HEIGHT}px` }
 
 
     return (
