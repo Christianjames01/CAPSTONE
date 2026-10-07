@@ -413,7 +413,7 @@ function App() {
         </Route>
 
         <Route
-          path="/superadmin"
+          path="/superadmin/*"
           element={
             <ProtectedRoute allowedRoles={['superadmin']}>
               <SuperAdmin />
