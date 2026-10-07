@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageStats from '../../components/PageStats'
 import { IconCalendarCheck, IconHourglass, IconSwap, IconXCircle } from './icons'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import RepresentativeBadge from '../../components/RepresentativeBadge'
 import { loadRepresentativesByRequestIds } from '../../lib/claimRepresentatives'
@@ -12,6 +12,7 @@ import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/n
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const CHIPS = [
     { key: 'upcoming', label: 'Upcoming' },
@@ -42,6 +43,7 @@ function formatTime(time) {
 }
 
 function ClaimSchedules() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
 
@@ -188,6 +190,7 @@ function ClaimSchedules() {
     useLiveRefresh(['claim_schedules', 'document_requests'], loadData)
 
     const dismissSchedule = async (schedule) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Dismiss the missed claiming appointment for ${schedule.requestNumber}? The student will need a new schedule if they still want to claim it.`
         )
@@ -248,6 +251,7 @@ function ClaimSchedules() {
     }
 
     const markAsClaimed = async (schedule) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Mark ${schedule.requestNumber} as claimed?`)
         if (!confirmed) return
 

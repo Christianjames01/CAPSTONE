@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
@@ -12,6 +12,7 @@ import './AdminPages.css'
 import AvatarFace from '../../components/AvatarFace'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students are
@@ -21,6 +22,7 @@ function isListedStudent(s) {
 }
 
 function Students() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
 
     const [term, setTerm] = useState('')
@@ -54,6 +56,7 @@ function Students() {
     }
 
     const approveStudent = async (student) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Approve ${student.fullName}'s registration? They will be able to log in and submit requests.`,
             { title: 'Approve registration?', confirmButtonText: 'Approve', icon: 'question' }
@@ -64,6 +67,7 @@ function Students() {
     }
 
     const rejectStudent = async (student) => {
+        if (blockedForReadOnlyViewer(role)) return
         const { value: reason } = await Swal.fire({
             title: 'Reject registration',
             allowOutsideClick: false,
@@ -86,6 +90,7 @@ function Students() {
     }
 
     const reviewStudent = async (student, decision, reason) => {
+        if (blockedForReadOnlyViewer(role)) return
         try {
             setReviewingId(student.student_id)
 
@@ -259,6 +264,7 @@ function Students() {
     }
 
     const toggleStatus = async (student) => {
+        if (blockedForReadOnlyViewer(role)) return
         const nextStatus = student.status === 'active' ? 'inactive' : 'active'
 
         const confirmed = await confirmModal(
@@ -315,6 +321,7 @@ function Students() {
     }
 
     const removeStudent = async (student) => {
+        if (blockedForReadOnlyViewer(role)) return
         try {
             setRemoving(student.student_id)
 

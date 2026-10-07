@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
@@ -12,6 +13,7 @@ import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { digitsOnly, decimalOnly } from '../../lib/typedNumber'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 // programs.duration_years is always stored in years -- these just let the
 // admin type/read a short vocational course's length in whichever unit
@@ -30,6 +32,7 @@ function convertDurationValue(value, fromUnit, toUnit) {
 }
 
 function CollegesPrograms() {
+    const { role } = useOutletContext() || {}
     const [tab, setTab] = useState('colleges')
     const [search, setSearch] = useState('')
 
@@ -125,6 +128,7 @@ function CollegesPrograms() {
     const openEditCollege = (c) => { setCollegeForm(c); setShowCollegeForm(true) }
 
     const saveCollege = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!collegeForm.college_code.trim() || !collegeForm.college_name.trim()) {
             notifyWarning('College code and name are required.')
             return
@@ -168,6 +172,7 @@ function CollegesPrograms() {
     }
 
     const toggleCollegeStatus = async (college) => {
+        if (blockedForReadOnlyViewer(role)) return
         const nextStatus = college.status === 'active' ? 'inactive' : 'active'
 
         const confirmed = await confirmModal(
@@ -188,6 +193,7 @@ function CollegesPrograms() {
     }
 
     const deleteCollege = async (college) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Permanently delete "${college.college_name}"? This cannot be undone, and will fail if it still has programs or enrolled students.`,
             { title: 'Delete college?', confirmButtonText: 'Delete' }
@@ -220,6 +226,7 @@ function CollegesPrograms() {
     }
 
     const saveProgram = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!programForm.college_id || !programForm.program_code.trim() || !programForm.program_name.trim()) {
             notifyWarning('College, program code, and program name are required.')
             return
@@ -270,6 +277,7 @@ function CollegesPrograms() {
     }
 
     const toggleProgramStatus = async (program) => {
+        if (blockedForReadOnlyViewer(role)) return
         const nextStatus = program.status === 'active' ? 'inactive' : 'active'
 
         const confirmed = await confirmModal(
@@ -290,6 +298,7 @@ function CollegesPrograms() {
     }
 
     const deleteProgram = async (program) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Permanently delete "${program.program_name}"? This cannot be undone, and will fail if students are still enrolled in it.`,
             { title: 'Delete program?', confirmButtonText: 'Delete' }
@@ -346,6 +355,7 @@ function CollegesPrograms() {
         + (showCustomProgram && customProgram.name.trim() ? 1 : 0)
 
     const saveBulkAdd = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         const addingCustomCollege = showCustomCollege && customCollege.name.trim()
         const addingCustomProgram = showCustomProgram && customProgram.name.trim()
 

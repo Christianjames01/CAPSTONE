@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import PageStats from '../../components/PageStats'
 import { IconDocument, IconCheckCircle, IconBan, IconLayers, IconClipboardCheck } from './icons'
@@ -12,6 +13,7 @@ import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { digitsOnly, decimalOnly } from '../../lib/typedNumber'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const PREVIEW_IMAGE_BUCKET = 'document-previews'
 
@@ -49,6 +51,7 @@ const EMPTY_FORM = {
 }
 
 function Documents() {
+    const { role } = useOutletContext() || {}
     const [documents, setDocuments] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -177,6 +180,7 @@ function Documents() {
     }
 
     const saveDocument = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!form.document_code.trim() || !form.document_name.trim()) {
             notifyWarning('Document code and name are required.')
             return
@@ -294,6 +298,7 @@ function Documents() {
     }
 
     const toggleAvailability = async (doc) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             doc.is_available
                 ? `Mark "${doc.document_name}" as unavailable? Students will no longer be able to request it.`
@@ -325,6 +330,7 @@ function Documents() {
     }
 
     const deleteDocument = async (doc) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Permanently delete "${doc.document_name}"? This cannot be undone, and will fail if students already have requests for it.`,
             { title: 'Delete document type?', confirmButtonText: 'Delete' }
@@ -373,6 +379,7 @@ function Documents() {
     }
 
     const addRequirement = async (documentTypeId) => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!newRequirement.requirement_name.trim()) {
             notifyWarning('Requirement name is required.')
             return
@@ -415,6 +422,7 @@ function Documents() {
     }
 
     const removeRequirement = async (requirement, documentTypeId) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Remove requirement "${requirement.requirement_name}"?`)
         if (!confirmed) return
 

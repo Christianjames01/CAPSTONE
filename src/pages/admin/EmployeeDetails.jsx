@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconUsers } from './icons'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -15,8 +15,10 @@ import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 function EmployeeDetails() {
+    const { role } = useOutletContext() || {}
     const { employeeId } = useParams()
     const navigate = useNavigate()
 
@@ -154,6 +156,7 @@ function EmployeeDetails() {
     // and must create their own password on next login (ProtectedRoute ->
     // /force-change-password).
     const handleSetTempPassword = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         const name = `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || employee.employee_number
 
         const { value: tempPassword, isConfirmed } = await Swal.fire({
@@ -230,6 +233,7 @@ function EmployeeDetails() {
     }
 
     const saveEmployee = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         try {
             setSaving(true)
             setError('')
@@ -287,6 +291,7 @@ function EmployeeDetails() {
     }
 
     const addAssignment = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!newCollegeId || !newProgramId) {
             notifyWarning('Please select a college and program.')
             return
@@ -356,6 +361,7 @@ function EmployeeDetails() {
     }
 
     const removeAssignment = async (assignment) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal('Remove this assignment?')
         if (!confirmed) return
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
@@ -13,6 +13,7 @@ import { IconUsers, IconHourglass, IconFileStack, IconBuilding } from './icons'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
@@ -29,6 +30,7 @@ const BLANK_FORM = {
 }
 
 function Employees() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
 
     const [employees, setEmployees] = useState([])
@@ -148,6 +150,7 @@ function Employees() {
     }
 
     const addEmployee = async (e) => {
+        if (blockedForReadOnlyViewer(role)) return
         e.preventDefault()
 
         setAddError('')
@@ -252,6 +255,7 @@ function Employees() {
     }
 
     const removeEmployee = async (employee) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Remove ${employee.name}'s employee record? This does not delete their login account, only their registrar staff profile and access.`
         )
@@ -297,6 +301,7 @@ function Employees() {
     }
 
     const toggleStatus = async (employee) => {
+        if (blockedForReadOnlyViewer(role)) return
         const nextStatus = employee.status === 'active' ? 'inactive' : 'active'
 
         const confirmed = await confirmModal(

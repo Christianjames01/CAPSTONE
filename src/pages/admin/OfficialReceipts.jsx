@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import PageStats from '../../components/PageStats'
 import { IconHourglass, IconCheckCircle, IconXCircle, IconBarChart } from './icons'
 import { IconReceipt } from '../student/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { logActivity } from '../../lib/activityLog'
@@ -12,6 +12,7 @@ import Modal from '../../components/Modal'
 import './AdminPages.css'
 import ReceiptChecks from '../../components/ReceiptChecks'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 function formatDate(value) {
     if (!value) return ''
@@ -26,6 +27,7 @@ const CHIPS = [
 ]
 
 function OfficialReceipts() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
 
     const [receipts, setReceipts] = useState([])
@@ -105,6 +107,7 @@ function OfficialReceipts() {
     useLiveRefresh(['official_receipts'], loadReceipts)
 
     const verifyReceipt = async (receipt) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Verify the receipt for ${receipt.requestNumber}?`)
         if (!confirmed) return
 
@@ -166,6 +169,7 @@ function OfficialReceipts() {
     }
 
     const confirmRejectReceipt = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!rejectionReason.trim()) {
             notifyWarning('Please enter a rejection reason.')
             return

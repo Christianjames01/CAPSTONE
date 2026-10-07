@@ -227,7 +227,7 @@ function AdminLayout() {
                         changed from this account — edits, approvals, and deletions are blocked.
                     </div>
                 )}
-                <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
+                <Suspense fallback={<PageLoading inline />}><Outlet context={{ role }} /></Suspense>
             </main>
 
             <ProductTour role="head" steps={HEAD_TOUR} />

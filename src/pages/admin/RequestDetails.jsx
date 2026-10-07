@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import DocumentThumb from '../../components/DocumentThumb'
 import { IconXCircle } from './icons'
 import { IconAlert, IconCalendar, IconCheck, IconFile, IconX, StarRating } from '../../components/UiIcons'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { useAutoReject } from '../../lib/autoReject'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { confirmWithPassword } from '../../lib/confirmPassword'
@@ -75,6 +76,7 @@ function formatTime(time) {
 function AdminRequestDetails() {
     const { requestId } = useParams()
     const navigate = useNavigate()
+    const { role } = useOutletContext() || {}
 
     const [request, setRequest] = useState(null)
     const [student, setStudent] = useState(null)
@@ -382,6 +384,7 @@ function AdminRequestDetails() {
     }
 
     const verifyPayment = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!receipt) {
             notifyWarning('There is no official receipt to verify.')
             return
@@ -457,6 +460,7 @@ function AdminRequestDetails() {
     }
 
     const rejectPayment = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!receipt) {
             notifyWarning('There is no official receipt to reject.')
             return
@@ -534,6 +538,7 @@ function AdminRequestDetails() {
     }
 
     const approveRequirement = async (requirement) => {
+        if (blockedForReadOnlyViewer(role)) return
         if (requirement.status !== 'uploaded') {
             notifyWarning('Only uploaded requirements can be approved.')
             return
@@ -585,6 +590,7 @@ function AdminRequestDetails() {
     }
 
     const rejectRequirement = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!selectedRequirement) return
 
         if (!rejectionReason.trim()) {
@@ -644,6 +650,7 @@ function AdminRequestDetails() {
     }
 
     const startProcessing = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!request) return
 
         if (request.status !== 'receipt_verified') {
@@ -722,6 +729,7 @@ function AdminRequestDetails() {
     }
 
     const generateDigitalCredential = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!request) return
 
         if (request.status !== 'processing') {
@@ -797,6 +805,7 @@ function AdminRequestDetails() {
     }
 
     const reassignEmployee = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!reassignTo) {
             notifyWarning('Please select an employee.')
             return
@@ -848,6 +857,7 @@ function AdminRequestDetails() {
     }
 
     const applyOverride = async (targetStatus, reasonText) => {
+        if (blockedForReadOnlyViewer(role)) return
         try {
             setSaving(true)
 
@@ -930,6 +940,7 @@ function AdminRequestDetails() {
     }
 
     const dismissMissedClaim = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!claimSchedule || claimSchedule.status !== 'missed') return
 
         const confirmed = await confirmModal(

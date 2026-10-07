@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { IconCalendar, IconCheck } from '../../components/UiIcons'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -15,12 +15,14 @@ import { loadStudentsById } from '../../lib/studentNames'
 import RescheduleHistory from '../../components/RescheduleHistory'
 import { isClosedWithoutOpening, weekdayName } from '../../lib/officeCalendar'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
     'Kindly arrive on time for your scheduled slot.'
 
 function AdminClaimSchedule() {
+    const { role } = useOutletContext() || {}
     const { requestId } = useParams()
     const navigate = useNavigate()
 
@@ -173,6 +175,7 @@ function AdminClaimSchedule() {
     }
 
     const saveSchedule = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!request) return
         if (!validateForm()) return
 
@@ -337,6 +340,7 @@ function AdminClaimSchedule() {
     }
 
     const cancelSchedule = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!existingSchedule) return
 
         const confirmed = await confirmModal('Are you sure you want to cancel this claiming schedule?')

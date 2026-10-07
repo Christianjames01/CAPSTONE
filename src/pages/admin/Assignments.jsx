@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -13,6 +13,7 @@ import './AdminPages.css'
 import '../../components/DashboardStats.css'
 import './Assignments.css'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const initialsOf = (name) =>
     (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
@@ -20,6 +21,7 @@ const initialsOf = (name) =>
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
 function Assignments() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
 
     const [workload, setWorkload] = useState([])
@@ -198,6 +200,7 @@ function Assignments() {
     // future requests route to them automatically) and assigns every request
     // that was waiting for it.
     const coverProgram = async (group) => {
+        if (blockedForReadOnlyViewer(role)) return
         const employeeId = coverPick[group.key]
 
         if (!employeeId) {
@@ -261,6 +264,7 @@ function Assignments() {
     }
 
     const assignRequest = async (request) => {
+        if (blockedForReadOnlyViewer(role)) return
         const employeeId = assigning[request.request_id]
 
         if (!employeeId) {
@@ -333,6 +337,7 @@ function Assignments() {
     const clearSelection = () => setSelectedIds(new Set())
 
     const applyBulkAssign = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!bulkEmployeeId) {
             notifyWarning('Please select an employee first.')
             return
@@ -421,6 +426,7 @@ function Assignments() {
     // Each update only matches rows still assigned to the employee we saw,
     // so a request someone else reassigned meanwhile is left alone.
     const moveRequests = async (moves) => {
+        if (blockedForReadOnlyViewer(role)) return
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('You are not logged in.')
 
@@ -475,6 +481,7 @@ function Assignments() {
     }
 
     const moveSelectedRequests = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!moveTargetId) {
             notifyWarning('Please select the employee to move them to.')
             return
@@ -505,6 +512,7 @@ function Assignments() {
     }
 
     const applySuggestedMoves = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (suggestedMoves.length === 0) return
 
         const confirmed = await confirmModal(

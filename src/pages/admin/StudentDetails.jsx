@@ -4,7 +4,7 @@ import { IconUserCircle, IconMail } from '../student/icons'
 import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconKey } from '../../components/ProfileParts'
 import PageStats from '../../components/PageStats'
 import DocumentThumb from '../../components/DocumentThumb'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
@@ -19,6 +19,7 @@ import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -34,6 +35,7 @@ function formatTime(time) {
 }
 
 function StudentDetails() {
+    const { role } = useOutletContext() || {}
     const { studentId } = useParams()
     const navigate = useNavigate()
 
@@ -245,6 +247,7 @@ function StudentDetails() {
     }
 
     const saveEdits = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!form.firstName.trim() || !form.lastName.trim() || !form.studentNumber.trim()) {
             notifyWarning('First name, last name, and student number are required.')
             return
@@ -341,6 +344,7 @@ function StudentDetails() {
     }
 
     const handleResetPassword = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await Swal.fire({
             icon: 'warning',
             title: 'Reset student password?',
@@ -382,6 +386,7 @@ function StudentDetails() {
     }
 
     const handleChangeLoginEmail = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         const { value: newEmail } = await Swal.fire({
             icon: 'warning',
             title: 'Change login email?',

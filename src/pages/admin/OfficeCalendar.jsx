@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
@@ -11,8 +11,10 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatHours, isMissingHoursColumn, noteWithHours, writeWithHours } from '../../lib/officeHours'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 function OfficeCalendar() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
 
     const [openDays, setOpenDays] = useState([])
@@ -143,6 +145,7 @@ function OfficeCalendar() {
     }
 
     const toggleOpenDay = async (hours) => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!isWeekendDate(dayModalDate)) return
 
         const existing = openDaysByDate[dayModalDate]
@@ -207,6 +210,7 @@ function OfficeCalendar() {
 
     // Change the hours of a day already marked open. Returns true on success.
     const saveOpenDayHours = async (hours) => {
+        if (blockedForReadOnlyViewer(role)) return
         const existing = openDaysByDate[dayModalDate]
         if (!existing) return false
 
@@ -245,6 +249,7 @@ function OfficeCalendar() {
     }
 
     const removeOpenDayFromSidebar = async (day) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Remove ${formatDate(day.open_date)} as an office open day?`,
             { title: 'Remove open day?', confirmButtonText: 'Remove', icon: 'warning' }
@@ -283,6 +288,7 @@ function OfficeCalendar() {
     }
 
     const addEvent = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!newEventTitle.trim()) {
             notifyWarning('Please enter a title for this event.')
             return
@@ -331,6 +337,7 @@ function OfficeCalendar() {
     }
 
     const removeEvent = async (event) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             `Remove "${event.title}" from ${formatDate(event.event_date)}?`,
             { title: 'Remove event?', confirmButtonText: 'Remove', icon: 'warning' }
@@ -377,6 +384,7 @@ function OfficeCalendar() {
     }
 
     const addRangeEvent = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!rangeTitle.trim()) {
             notifyWarning('Please enter a title for this event.')
             return

@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
@@ -16,6 +17,7 @@ import './Announcements.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import HoursPicker from '../../components/officeCalendar/HoursPicker'
 import { hoursOf, validHours, writeWithHours } from '../../lib/officeHours'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const EMPTY_FORM = {
     announcement_id: null,
@@ -68,6 +70,7 @@ function matchesFilter(a, filter) {
 }
 
 function Announcements() {
+    const { role } = useOutletContext() || {}
     const [announcements, setAnnouncements] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -168,6 +171,7 @@ function Announcements() {
     }
 
     const saveAnnouncement = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!stripHtml(form.title) || !stripHtml(form.message)) {
             notifyWarning('Title and message are required.')
             return
@@ -233,6 +237,7 @@ function Announcements() {
     }
 
     const toggleActive = async (a) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
             a.is_active
                 ? `Deactivate "${stripHtml(a.title)}"? Students will no longer see it on their dashboard.`
@@ -264,6 +269,7 @@ function Announcements() {
     }
 
     const removeAnnouncement = async (a) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Delete the announcement "${stripHtml(a.title)}"? This cannot be undone.`)
         if (!confirmed) return
 

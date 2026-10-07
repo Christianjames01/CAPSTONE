@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import DocumentThumb from '../../components/DocumentThumb'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
@@ -13,6 +13,7 @@ import './AdminPages.css'
 
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -38,6 +39,7 @@ const BULK_STATUS_OPTIONS = [
 ]
 
 function AllRequests() {
+    const { role } = useOutletContext() || {}
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
 
@@ -176,6 +178,7 @@ function AllRequests() {
     const clearSelection = () => setSelectedIds(new Set())
 
     const applyBulkStatus = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         const targets = requests.filter((r) => selectedIds.has(r.request_id))
         if (targets.length === 0) return
 

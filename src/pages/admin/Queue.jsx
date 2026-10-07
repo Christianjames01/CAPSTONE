@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
@@ -11,6 +12,7 @@ import { digitsOnly } from '../../lib/typedNumber'
 import { useQueueDemo } from '../../lib/queueDemo'
 import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -20,6 +22,7 @@ function formatTime(value) {
 }
 
 function AdminQueue() {
+    const { role } = useOutletContext() || {}
     const [tickets, setTickets] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -103,6 +106,7 @@ function AdminQueue() {
     }
 
     const updateTicket = async (ticket, changes, description) => {
+        if (blockedForReadOnlyViewer(role)) return
         if (queueDemo.demo) {
             queueDemo.update(ticket, changes)
             return
@@ -130,6 +134,7 @@ function AdminQueue() {
     }
 
     const callTicket = async (ticket) => {
+        if (blockedForReadOnlyViewer(role)) return
         if (queueDemo.demo) {
             queueDemo.update(ticket, { status: 'called', called_at: new Date().toISOString() })
             return
@@ -153,6 +158,7 @@ function AdminQueue() {
         )
 
     const markCompleted = async (ticket) => {
+        if (blockedForReadOnlyViewer(role)) return
         if (!queueDemo.demo) {
             const confirmed = await confirmModal(`Mark ${formatQueueNumber(ticket.queue_number)} as completed?`)
             if (!confirmed) return
@@ -161,12 +167,14 @@ function AdminQueue() {
     }
 
     const markNoShow = async (ticket) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Mark ${formatQueueNumber(ticket.queue_number)} as a no-show?`)
         if (!confirmed) return
         await updateTicket(ticket, { status: 'no_show' }, `Marked ${formatQueueNumber(ticket.queue_number)} as a no-show.`)
     }
 
     const cancelTicket = async (ticket) => {
+        if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Cancel ticket ${formatQueueNumber(ticket.queue_number)}?`)
         if (!confirmed) return
         await updateTicket(ticket, { status: 'cancelled' }, `Cancelled ${formatQueueNumber(ticket.queue_number)}.`)
@@ -179,6 +187,7 @@ function AdminQueue() {
     // pre-printing 1-50 at the start of the day) instead of clicking once
     // per ticket.
     const issueTicket = async () => {
+        if (blockedForReadOnlyViewer(role)) return
         const count = Math.max(1, Math.min(100, Number(batchCount) || 1))
 
         if (queueDemo.demo) {
