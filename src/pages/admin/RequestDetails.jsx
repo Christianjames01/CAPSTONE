@@ -22,6 +22,7 @@ import { ReceiptFileIcon, CheckIcon, XIcon } from '../../components/ReceiptIcons
 import '../../components/ReceiptActions.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import ReceiptChecks from '../../components/ReceiptChecks'
+import { adminPath } from '../../lib/portalPaths'
 
 const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
@@ -1039,7 +1040,7 @@ function AdminRequestDetails() {
 
     return (
         <div>
-            <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/admin/requests')}>
+            <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(adminPath('/requests'))}>
                 ← Back to All Requests
             </button>
 
@@ -1516,7 +1517,7 @@ function AdminRequestDetails() {
                         <div style={{ display: 'flex', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
                             <button
                                 className="admin-link-button"
-                                onClick={() => navigate(`/admin/requests/${requestId}/claim-schedule`)}
+                                onClick={() => navigate(adminPath(`/requests/${requestId}/claim-schedule`))}
                             >
                                 {claimSchedule.status === 'missed' || claimSchedule.reschedule_requested_at
                                     ? 'Reschedule claiming →'
@@ -1546,7 +1547,7 @@ function AdminRequestDetails() {
                     </p>
                     <button
                         className="admin-primary-button"
-                        onClick={() => navigate(`/admin/requests/${requestId}/claim-schedule`)}
+                        onClick={() => navigate(adminPath(`/requests/${requestId}/claim-schedule`))}
                     >
                         <IconCalendar className="is-leading" />Schedule Claiming
                     </button>

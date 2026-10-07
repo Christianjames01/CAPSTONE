@@ -12,6 +12,7 @@ import { MOVABLE_STATUSES, averageLoad, isOverloaded, suggestRebalance } from '.
 import './AdminPages.css'
 import '../../components/DashboardStats.css'
 import './Assignments.css'
+import { adminPath } from '../../lib/portalPaths'
 
 const initialsOf = (name) =>
     (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
@@ -874,7 +875,7 @@ function Assignments() {
                                 Assign
                             </button>
 
-                            <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${request.request_id}`)}>
+                            <button className="admin-link-button" onClick={() => navigate(adminPath(`/requests/${request.request_id}`))}>
                                 Open request →
                             </button>
                         </div>

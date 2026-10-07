@@ -14,6 +14,7 @@ import Modal from '../../components/Modal'
 import '../auth/Auth.css'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { adminPath } from '../../lib/portalPaths'
 
 function EmployeeDetails() {
     const { employeeId } = useParams()
@@ -418,7 +419,7 @@ function EmployeeDetails() {
 
     return (
         <div>
-            <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate('/admin/employees')}>
+            <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(adminPath('/employees'))}>
                 ← Back to Employees
             </button>
 
@@ -655,7 +656,7 @@ function EmployeeDetails() {
                                 </div>
                             </div>
 
-                            <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>
+                            <button className="admin-link-button" onClick={() => navigate(adminPath(`/requests/${r.request_id}`))}>
                                 Open request →
                             </button>
                         </div>

@@ -10,6 +10,7 @@ import { IconBell, IconMessage } from '../student/icons'
 const TYPE_ICONS = { request_update: IconFileStack, message: IconMessage, announcement: IconMegaphone, system: IconUsers }
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { adminPath } from '../../lib/portalPaths'
 
 function Notifications() {
     const navigate = useNavigate()
@@ -94,7 +95,7 @@ function Notifications() {
     const handleClick = (notification) => {
         markAsRead(notification)
         if (notification.related_request_id) {
-            navigate(`/admin/requests/${notification.related_request_id}`)
+            navigate(adminPath(`/requests/${notification.related_request_id}`))
         }
     }
 

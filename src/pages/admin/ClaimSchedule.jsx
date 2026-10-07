@@ -14,6 +14,7 @@ import { CLAIM_COUNTER_SUGGESTIONS, saveWithClaimCounter } from '../../lib/claim
 import { loadStudentsById } from '../../lib/studentNames'
 import RescheduleHistory from '../../components/RescheduleHistory'
 import { isClosedWithoutOpening, weekdayName } from '../../lib/officeCalendar'
+import { adminPath } from '../../lib/portalPaths'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -438,7 +439,7 @@ function AdminClaimSchedule() {
     if (errorMessage) {
         return (
             <div>
-                <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/admin/requests/${requestId}`)}>
+                <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(adminPath(`/requests/${requestId}`))}>
                     ← Back to Request
                 </button>
 
@@ -457,7 +458,7 @@ function AdminClaimSchedule() {
 
     return (
         <div>
-            <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(`/admin/requests/${requestId}`)}>
+            <button className="admin-link-button" style={{ marginBottom: 16 }} onClick={() => navigate(adminPath(`/requests/${requestId}`))}>
                 ← Back to Request
             </button>
 

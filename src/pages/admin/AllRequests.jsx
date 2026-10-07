@@ -12,6 +12,7 @@ import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle } from './ic
 import './AdminPages.css'
 
 import { formatDisplayDateTime } from '../../lib/formatDate'
+import { adminPath } from '../../lib/portalPaths'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -374,7 +375,7 @@ function AllRequests() {
                         <div className="admin-card-actions">
                             <button
                                 className="admin-link-button"
-                                onClick={() => navigate(`/admin/requests/${request.request_id}`)}
+                                onClick={() => navigate(adminPath(`/requests/${request.request_id}`))}
                             >
                                 Open request →
                             </button>

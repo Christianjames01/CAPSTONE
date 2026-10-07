@@ -86,6 +86,40 @@ const AdminNotifications = lazy(() => import('./pages/admin/Notifications'))
 const AdminActivityLogs = lazy(() => import('./pages/admin/ActivityLogs'))
 const Reports = lazy(() => import('./pages/admin/Reports'))
 const AdminProfile = lazy(() => import('./pages/admin/Profile'))
+const SuperAdmin = lazy(() => import('./pages/superadmin/SuperAdmin'))
+
+// Pages shared by the system admin and the registrar head. Paths are relative
+// to the portal (/admin or /head).
+const PORTAL_PAGES = [
+    ['/dashboard', <AdminDashboard />],
+    ['/requests', <AllRequests />],
+    ['/requests/:requestId', <AdminRequestDetails />],
+    ['/requests/:requestId/claim-schedule', <AdminClaimSchedule />],
+    ['/assignments', <Assignments />],
+    ['/employees', <AdminEmployees />],
+    ['/employees/:employeeId', <EmployeeDetails />],
+    ['/students', <AdminStudents />],
+    ['/students/:studentId', <AdminStudentDetails />],
+    ['/documents', <AdminDocuments />],
+    ['/announcements', <Announcements />],
+    ['/colleges-programs', <CollegesPrograms />],
+    ['/claim-schedules', <AdminClaimSchedules />],
+    ['/office-calendar', <OfficeCalendar />],
+    ['/queue', <AdminQueue />],
+    ['/receipts', <OfficialReceipts />],
+    ['/messages', <AdminMessages />],
+    ['/notifications', <AdminNotifications />],
+    ['/activity-logs', <AdminActivityLogs />],
+    ['/reports', <Reports />],
+    ['/guide', <AdminUserGuide />],
+    ['/profile', <AdminProfile />],
+]
+
+function portalRoutes(base) {
+    return PORTAL_PAGES.map(([path, element]) => (
+        <Route key={base + path} path={base + path} element={element} />
+    ))
+}
 
 function App() {
   return (
@@ -356,125 +390,36 @@ function App() {
 
         </Route>
 
+        {/* The system admin (/admin) and the registrar head (/head) share the
+            same portal pages; each portal has its own guard below. */}
         <Route
           element={
-            <ProtectedRoute allowedRoles={['admin', 'registrar_head']}>
+            <ProtectedRoute allowedRoles={['admin']}>
               <AdminLayout />
             </ProtectedRoute>
           }
         >
-
-          <Route
-            path="/admin/dashboard"
-            element={<AdminDashboard />}
-          />
-
-          <Route
-            path="/admin/requests"
-            element={<AllRequests />}
-          />
-
-          <Route
-            path="/admin/requests/:requestId"
-            element={<AdminRequestDetails />}
-          />
-
-          <Route
-            path="/admin/requests/:requestId/claim-schedule"
-            element={<AdminClaimSchedule />}
-          />
-
-          <Route
-            path="/admin/assignments"
-            element={<Assignments />}
-          />
-
-          <Route
-            path="/admin/employees"
-            element={<AdminEmployees />}
-          />
-
-          <Route
-            path="/admin/employees/:employeeId"
-            element={<EmployeeDetails />}
-          />
-
-          <Route
-            path="/admin/students"
-            element={<AdminStudents />}
-          />
-
-          <Route
-            path="/admin/students/:studentId"
-            element={<AdminStudentDetails />}
-          />
-
-          <Route
-            path="/admin/documents"
-            element={<AdminDocuments />}
-          />
-
-          <Route
-            path="/admin/announcements"
-            element={<Announcements />}
-          />
-
-          <Route
-            path="/admin/colleges-programs"
-            element={<CollegesPrograms />}
-          />
-
-          <Route
-            path="/admin/claim-schedules"
-            element={<AdminClaimSchedules />}
-          />
-
-          <Route
-            path="/admin/office-calendar"
-            element={<OfficeCalendar />}
-          />
-
-          <Route
-            path="/admin/queue"
-            element={<AdminQueue />}
-          />
-
-          <Route
-            path="/admin/receipts"
-            element={<OfficialReceipts />}
-          />
-
-          <Route
-            path="/admin/messages"
-            element={<AdminMessages />}
-          />
-
-          <Route
-            path="/admin/notifications"
-            element={<AdminNotifications />}
-          />
-
-          <Route
-            path="/admin/activity-logs"
-            element={<AdminActivityLogs />}
-          />
-
-          <Route
-            path="/admin/reports"
-            element={<Reports />}
-          />
-
-          <Route
-            path="/admin/guide"
-            element={<AdminUserGuide />}
-          />
-
-          <Route
-            path="/admin/profile"
-            element={<AdminProfile />}
-          />
-
+          {portalRoutes('/admin')}
         </Route>
+
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={['registrar_head']}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          {portalRoutes('/head')}
+        </Route>
+
+        <Route
+          path="/superadmin"
+          element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdmin />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
       </Suspense>

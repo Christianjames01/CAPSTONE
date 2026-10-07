@@ -10,6 +10,7 @@ import RangeModal from '../../components/officeCalendar/RangeModal'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatHours, isMissingHoursColumn, noteWithHours, writeWithHours } from '../../lib/officeHours'
+import { adminPath } from '../../lib/portalPaths'
 
 function OfficeCalendar() {
     const navigate = useNavigate()
@@ -496,7 +497,7 @@ function OfficeCalendar() {
                     togglingOpen={togglingOpen}
                     onRemoveEvent={removeEvent}
                     removingEventId={removingEventId}
-                    onOpenRequest={(cs) => navigate(`/admin/requests/${cs.request_id}`)}
+                    onOpenRequest={(cs) => navigate(adminPath(`/requests/${cs.request_id}`))}
                     eventTitle={newEventTitle}
                     onEventTitleChange={setNewEventTitle}
                     eventNote={newEventNote}

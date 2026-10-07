@@ -1,0 +1,240 @@
+.superadmin-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    color: var(--ink);
+}
+
+.superadmin-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.superadmin-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.superadmin-brand img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.superadmin-brand h1 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.superadmin-brand p {
+    margin: 2px 0 0;
+    color: var(--slate);
+    font-size: 13px;
+}
+
+.superadmin-header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.superadmin-button {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--blue);
+    background: var(--blue);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.superadmin-button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.superadmin-button.is-ghost {
+    background: transparent;
+    color: var(--blue-accent, var(--blue));
+    border-color: var(--line);
+}
+
+.superadmin-button.is-danger {
+    background: #C8102E;
+    border-color: #C8102E;
+}
+
+.superadmin-button.is-success {
+    background: #15803D;
+    border-color: #15803D;
+}
+
+.superadmin-alert {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #C8102E;
+    color: #C8102E;
+    font-size: 14px;
+}
+
+.superadmin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.superadmin-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.superadmin-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.superadmin-stat-label {
+    font-size: 13px;
+    color: var(--slate);
+}
+
+.superadmin-stat-note {
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.superadmin-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.superadmin-role-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--slate);
+}
+
+.superadmin-role-chip strong {
+    color: var(--ink);
+}
+
+.superadmin-card {
+    margin-bottom: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.superadmin-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.superadmin-card-head h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.superadmin-search {
+    min-width: 240px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.superadmin-empty {
+    margin: 0;
+    color: var(--slate);
+    font-size: 14px;
+}
+
+.superadmin-table-wrap {
+    overflow-x: auto;
+}
+
+.superadmin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.superadmin-table th,
+.superadmin-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.superadmin-table th {
+    color: var(--slate);
+    font-weight: 600;
+}
+
+.superadmin-name {
+    display: block;
+    font-weight: 600;
+}
+
+.superadmin-email {
+    display: block;
+    color: var(--slate);
+    font-size: 12px;
+}
+
+.superadmin-pill {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.superadmin-pill.is-active {
+    background: rgba(21, 128, 61, 0.15);
+    color: #15803D;
+}
+
+.superadmin-pill.is-inactive {
+    background: rgba(200, 16, 46, 0.15);
+    color: #C8102E;
+}
+
+.superadmin-actions-cell {
+    text-align: right;
+}
+
+@media (max-width: 640px) {
+    .superadmin-page {
+        padding: 16px;
+    }
+
+    .superadmin-search {
+        min-width: 0;
+        width: 100%;
+    }
+}

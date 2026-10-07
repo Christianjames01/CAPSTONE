@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { captchaEnabled, loadTurnstile, TURNSTILE_SITE_KEY } from '../lib/captcha'
-import campusPhoto from '../assets/footer-building.jpg'
+import campusPhotoAerial from '../assets/footer-building.jpg'
+import campusPhotoBackground from '../assets/hcdc-background.png'
 import './CaptchaCheck.css'
+
+const CAMPUS_PHOTOS = [campusPhotoAerial, campusPhotoBackground]
+const pickCampusPhoto = () => CAMPUS_PHOTOS[Math.floor(Math.random() * CAMPUS_PHOTOS.length)]
 
 // Slide-puzzle check for the sign-up, sign-in and forgot-password forms:
 // drag the slider until the piece fits the gap in the campus photo.
@@ -46,6 +50,7 @@ function CaptchaCheck({ onToken }) {
     const drag = useRef(null)
 
     const [puzzle, setPuzzle] = useState(newPuzzle)
+    const [campusPhoto, setCampusPhoto] = useState(pickCampusPhoto)
     const [offset, setOffset] = useState(0)
     const [state, setState] = useState('idle') // idle | dragging | wrong | checking | done | error
     const [error, setError] = useState('')
@@ -149,6 +154,7 @@ function CaptchaCheck({ onToken }) {
                             solvedRef.current = false
                             onTokenRef.current?.(null)
                             setPuzzle(newPuzzle())
+                            setCampusPhoto(pickCampusPhoto())
                             setOffset(0)
                             setState('idle')
                         }
@@ -198,6 +204,7 @@ function CaptchaCheck({ onToken }) {
         stopWatchdog()
         solvedRef.current = false
         setPuzzle(newPuzzle())
+        setCampusPhoto(pickCampusPhoto())
         setOffset(0)
         setState('idle')
         setError('')
@@ -212,6 +219,7 @@ function CaptchaCheck({ onToken }) {
             setState('wrong')
             setTimeout(() => {
                 setPuzzle(newPuzzle())
+                setCampusPhoto(pickCampusPhoto())
                 setOffset(0)
                 setState('idle')
             }, 700)
@@ -283,6 +291,7 @@ function CaptchaCheck({ onToken }) {
     if (!captchaEnabled) return null
 
     const photo = { backgroundImage: `url(${campusPhoto})`, backgroundSize: `${WIDTH}px ${HEIGHT}px` }
+
 
     return (
         <div className={`captcha-puzzle is-${state}`} style={{ '--puzzle-w': `${WIDTH}px` }}>

@@ -11,6 +11,7 @@ import { IconIdCard, IconHourglass, IconLayers, IconBuilding } from './icons'
 import './AdminPages.css'
 import AvatarFace from '../../components/AvatarFace'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { adminPath } from '../../lib/portalPaths'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students are
@@ -425,7 +426,7 @@ function Students() {
             </div>
 
             <div className="admin-card-actions">
-                <button className="admin-link-button" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                <button className="admin-link-button" onClick={() => navigate(adminPath(`/students/${student.student_id}`))}>
                     View full record →
                 </button>
 
@@ -541,7 +542,7 @@ function Students() {
                             <div className="admin-card-actions">
                                 <button
                                     className="admin-link-button"
-                                    onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                                    onClick={() => navigate(adminPath(`/students/${student.student_id}`))}
                                 >
                                     View full record →
                                 </button>

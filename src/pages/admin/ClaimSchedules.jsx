@@ -11,6 +11,7 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
+import { adminPath } from '../../lib/portalPaths'
 
 const CHIPS = [
     { key: 'upcoming', label: 'Upcoming' },
@@ -365,7 +366,7 @@ function ClaimSchedules() {
                             </div>
 
                             <div className="admin-card-actions">
-                                <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>
+                                <button className="admin-link-button" onClick={() => navigate(adminPath(`/requests/${r.request_id}`))}>
                                     Open request →
                                 </button>
                             </div>
@@ -432,7 +433,7 @@ function ClaimSchedules() {
                         )}
 
                         <div className="admin-card-actions">
-                            <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${s.request_id}`)}>
+                            <button className="admin-link-button" onClick={() => navigate(adminPath(`/requests/${s.request_id}`))}>
                                 Open request →
                             </button>
 

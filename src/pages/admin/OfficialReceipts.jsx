@@ -11,6 +11,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import './AdminPages.css'
 import ReceiptChecks from '../../components/ReceiptChecks'
+import { adminPath } from '../../lib/portalPaths'
 
 function formatDate(value) {
     if (!value) return ''
@@ -294,7 +295,7 @@ function OfficialReceipts() {
                         )}
 
                         <div className="admin-card-actions">
-                            <button className="admin-link-button" onClick={() => navigate(`/admin/requests/${r.request_id}`)}>
+                            <button className="admin-link-button" onClick={() => navigate(adminPath(`/requests/${r.request_id}`))}>
                                 Open request →
                             </button>
 

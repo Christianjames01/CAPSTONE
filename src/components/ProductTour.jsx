@@ -6,6 +6,7 @@ import { publishTourState } from '../lib/tourState'
 import { narrationSupported, readSoundPref, say, speaking, stopSpeaking, writeSoundPref } from '../lib/narration'
 import TourPreview from './TourPreview'
 import { useScrollLock } from '../lib/useScrollLock'
+import { adminPath } from '../lib/portalPaths'
 import certichainLogo from '../assets/certichain-logo.png'
 import './ProductTour.css'
 
@@ -43,6 +44,20 @@ function writeDone(key) {
 }
 
 const PORTAL_CLASS = { student: 'student', employee: 'employee', head: 'admin' }
+
+// Tour steps are written with /admin links. In the head's portal those links
+// are /head, so swap the prefix to match the portal the tour is started in.
+function inCurrentPortal(step) {
+    const base = adminPath('')
+    if (base === '/admin') return step
+    const fix = (value) => (typeof value === 'string' ? value.replace(/\/admin(?=\/|")/g, base) : value)
+    return {
+        ...step,
+        target: fix(step.target),
+        route: fix(step.route),
+        action: step.action ? { ...step.action, to: fix(step.action.to) } : step.action,
+    }
+}
 
 // The page a step belongs to: step.route, else its sidebar link's href.
 function routeOf(step) {
@@ -223,7 +238,7 @@ function ProductTour({ role, steps: allSteps }) {
     const start = useCallback((custom) => {
         // Drop optional steps whose target isn't in this portal (e.g. links
         // hidden for limited-access employees).
-        const list = Array.isArray(custom) ? custom : allSteps
+        const list = (Array.isArray(custom) ? custom : allSteps).map(inCurrentPortal)
         setSteps(list.filter((s) => !s.optional || document.querySelector(s.target)))
         publishTourState({ session: Date.now() })
         setPlaying(true)

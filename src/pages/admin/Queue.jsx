@@ -10,6 +10,7 @@ import './AdminPages.css'
 import { digitsOnly } from '../../lib/typedNumber'
 import { useQueueDemo } from '../../lib/queueDemo'
 import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
+import { adminPath } from '../../lib/portalPaths'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -27,7 +28,7 @@ function AdminQueue() {
     const [batchCount, setBatchCount] = useState(1)
     // While the guided demo is on this page it shows sample tickets, and
     // the actions below change only those (nothing is saved).
-    const queueDemo = useQueueDemo('/admin/queue')
+    const queueDemo = useQueueDemo(adminPath('/queue'))
 
     useEffect(() => {
         loadQueue()

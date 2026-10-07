@@ -11,26 +11,27 @@ import { HEAD_TOUR } from '../../lib/tourSteps'
 import './AdminLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
+import { adminPath } from '../../lib/portalPaths'
 
 const NAV_ITEMS = [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
-    { to: '/admin/requests', label: 'All Requests', icon: <IconClipboardList /> },
-    { to: '/admin/assignments', label: 'Request Assignments', icon: <IconSwap /> },
-    { to: '/admin/employees', label: 'Employees', icon: <IconUsers /> },
-    { to: '/admin/students', label: 'Students', icon: <IconIdCard /> },
-    { to: '/admin/documents', label: 'Documents', icon: <IconDocument /> },
-    { to: '/admin/announcements', label: 'Announcements', icon: <IconMegaphone /> },
-    { to: '/admin/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
-    { to: '/admin/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
-    { to: '/admin/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
-    { to: '/admin/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
-    { to: '/admin/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
-    { to: '/admin/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
-    { to: '/admin/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
-    { to: '/admin/activity-logs', label: 'Activity Logs', icon: <IconHistory /> },
-    { to: '/admin/reports', label: 'Reports', icon: <IconBarChart /> },
-    { to: '/admin/guide', label: 'User Guide', icon: <IconBook /> },
-    { to: '/admin/profile', label: 'Profile', icon: <IconUserCircle /> },
+    { to: '/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
+    { to: '/requests', label: 'All Requests', icon: <IconClipboardList /> },
+    { to: '/assignments', label: 'Request Assignments', icon: <IconSwap /> },
+    { to: '/employees', label: 'Employees', icon: <IconUsers /> },
+    { to: '/students', label: 'Students', icon: <IconIdCard /> },
+    { to: '/documents', label: 'Documents', icon: <IconDocument /> },
+    { to: '/announcements', label: 'Announcements', icon: <IconMegaphone /> },
+    { to: '/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
+    { to: '/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
+    { to: '/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
+    { to: '/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
+    { to: '/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
+    { to: '/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
+    { to: '/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
+    { to: '/activity-logs', label: 'Activity Logs', icon: <IconHistory /> },
+    { to: '/reports', label: 'Reports', icon: <IconBarChart /> },
+    { to: '/guide', label: 'User Guide', icon: <IconBook /> },
+    { to: '/profile', label: 'Profile', icon: <IconUserCircle /> },
 ]
 
 function AdminLayout() {
@@ -136,7 +137,7 @@ function AdminLayout() {
                     <IconMenu />
                 </button>
 
-                <Link to="/admin/dashboard" className="admin-mobile-brand">
+                <Link to={adminPath('/dashboard')} className="admin-mobile-brand">
                     <img src={certichainLogo} alt="" />
                     <span>CertiChain</span>
                 </Link>
@@ -150,7 +151,7 @@ function AdminLayout() {
 
                 <div className="admin-sidebar-top">
                     <div className="admin-sidebar-brand-row">
-                        <Link to="/admin/dashboard" className="admin-sidebar-brand" onClick={closeMobileNav}>
+                        <Link to={adminPath('/dashboard')} className="admin-sidebar-brand" onClick={closeMobileNav}>
                             <div className="admin-sidebar-seal">
                                 <img src={certichainLogo} alt="CertiChain" />
                             </div>
@@ -176,7 +177,7 @@ function AdminLayout() {
                             return (
                                 <NavLink
                                     key={item.to}
-                                    to={item.to}
+                                    to={adminPath(item.to)}
                                     end={item.end}
                                     onClick={closeMobileNav}
                                     className={({ isActive }) =>

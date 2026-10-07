@@ -11,12 +11,13 @@ import { readableLogText } from '../../lib/logText'
 import '../../components/DashboardStats.css'
 import './AdminPages.css'
 import AvatarFace from '../../components/AvatarFace'
+import { adminPath } from '../../lib/portalPaths'
 
 const QUICK_LINKS = [
-    { to: '/admin/requests', label: 'All Requests', Icon: IconFileStack },
-    { to: '/admin/assignments', label: 'Assignments', Icon: IconSwap },
-    { to: '/admin/claim-schedules', label: 'Claim Schedules', Icon: IconCalendarCheck },
-    { to: '/admin/reports', label: 'Reports', Icon: IconBarChart },
+    { to: '/requests', label: 'All Requests', Icon: IconFileStack },
+    { to: '/assignments', label: 'Assignments', Icon: IconSwap },
+    { to: '/claim-schedules', label: 'Claim Schedules', Icon: IconCalendarCheck },
+    { to: '/reports', label: 'Reports', Icon: IconBarChart },
 ]
 
 // Statuses that still need someone to act on them.
@@ -290,20 +291,20 @@ function AdminDashboard() {
     const hasActiveWorkload = workload.some((w) => w.count > 0)
 
     const overviewStats = [
-        { label: 'Total Students', value: studentCount, to: '/admin/students', Icon: IconUsers, note: 'Registered student accounts' },
-        { label: 'Total Requests', value: requests.length, to: '/admin/requests', Icon: IconFileStack, note: `${weeklyRequests.current} this week`, change: weeklyRequests.change },
-        { label: "Today's Appointments", value: todayCount, to: '/admin/claim-schedules', Icon: IconCalendarCheck, note: 'Scheduled to claim today' },
-        { label: 'Unassigned', value: unassignedCount, to: '/admin/assignments', Icon: IconSwap, note: unassignedCount ? 'Active requests with no employee' : 'Every active request has an owner', warn: unassignedCount > 0 },
+        { label: 'Total Students', value: studentCount, to: adminPath('/students'), Icon: IconUsers, note: 'Registered student accounts' },
+        { label: 'Total Requests', value: requests.length, to: adminPath('/requests'), Icon: IconFileStack, note: `${weeklyRequests.current} this week`, change: weeklyRequests.change },
+        { label: "Today's Appointments", value: todayCount, to: adminPath('/claim-schedules'), Icon: IconCalendarCheck, note: 'Scheduled to claim today' },
+        { label: 'Unassigned', value: unassignedCount, to: adminPath('/assignments'), Icon: IconSwap, note: unassignedCount ? 'Active requests with no employee' : 'Every active request has an owner', warn: unassignedCount > 0 },
     ]
 
     const statusStats = [
-        { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: '/admin/requests?status=pending,payment_pending', Icon: IconHourglass },
-        { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], to: '/admin/requests?status=receipt_uploaded,receipt_verified', Icon: IconClipboardCheck },
-        { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], to: '/admin/requests?status=processing,lacking_requirements', Icon: IconLayers },
-        { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: '/admin/requests?status=ready_for_claiming', Icon: IconPackage },
-        { key: 'completed', label: 'Completed', statuses: ['completed'], to: '/admin/requests?status=completed', Icon: IconCheckCircle },
-        { key: 'rejected', label: 'Rejected', statuses: ['rejected'], to: '/admin/requests?status=rejected', Icon: IconXCircle },
-        { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], to: '/admin/requests?status=cancelled', Icon: IconBan },
+        { key: 'pending', label: 'Pending', statuses: ['pending', 'payment_pending'], to: adminPath('/requests?status=pending,payment_pending'), Icon: IconHourglass },
+        { key: 'verification', label: 'In Verification', statuses: ['receipt_uploaded', 'receipt_verified'], to: adminPath('/requests?status=receipt_uploaded,receipt_verified'), Icon: IconClipboardCheck },
+        { key: 'processing', label: 'Processing', statuses: ['processing', 'lacking_requirements'], to: adminPath('/requests?status=processing,lacking_requirements'), Icon: IconLayers },
+        { key: 'ready', label: 'Ready for Claiming', statuses: ['ready_for_claiming'], to: adminPath('/requests?status=ready_for_claiming'), Icon: IconPackage },
+        { key: 'completed', label: 'Completed', statuses: ['completed'], to: adminPath('/requests?status=completed'), Icon: IconCheckCircle },
+        { key: 'rejected', label: 'Rejected', statuses: ['rejected'], to: adminPath('/requests?status=rejected'), Icon: IconXCircle },
+        { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'], to: adminPath('/requests?status=cancelled'), Icon: IconBan },
     ].map((stat) => {
         const value = countByStatus(stat.statuses)
         const share = requests.length ? Math.round((value / requests.length) * 100) : 0
@@ -311,8 +312,8 @@ function AdminDashboard() {
     })
 
     const attentionStats = [
-        { label: missedCount === 1 ? 'Missed Claim' : 'Missed Claims', value: missedCount, to: '/admin/claim-schedules?status=missed', note: 'Students who did not show up' },
-        { label: rescheduleRequestCount === 1 ? 'Reschedule Request' : 'Reschedule Requests', value: rescheduleRequestCount, to: '/admin/claim-schedules?status=reschedule', note: 'Students asking for a new date' },
+        { label: missedCount === 1 ? 'Missed Claim' : 'Missed Claims', value: missedCount, to: adminPath('/claim-schedules?status=missed'), note: 'Students who did not show up' },
+        { label: rescheduleRequestCount === 1 ? 'Reschedule Request' : 'Reschedule Requests', value: rescheduleRequestCount, to: adminPath('/claim-schedules?status=reschedule'), note: 'Students asking for a new date' },
     ]
 
     if (loading) {
@@ -339,7 +340,7 @@ function AdminDashboard() {
                 </div>
                 <nav className="dash-greeting-links" aria-label="Quick links">
                     {QUICK_LINKS.map((link) => (
-                        <button key={link.to} className="dash-greeting-link" onClick={() => navigate(link.to)}>
+                        <button key={link.to} className="dash-greeting-link" onClick={() => navigate(adminPath(link.to))}>
                             <span aria-hidden="true"><link.Icon /></span>
                             {link.label}
                         </button>
@@ -424,7 +425,7 @@ function AdminDashboard() {
                             <h2>Team workload</h2>
                             <span>Active requests per employee{workload.length > 0 && ` · average ${averageLoad.toFixed(1)}`}</span>
                         </div>
-                        <button className="admin-link-button" onClick={() => navigate('/admin/assignments')}>Rebalance →</button>
+                        <button className="admin-link-button" onClick={() => navigate(adminPath('/assignments'))}>Rebalance →</button>
                     </div>
 
                     {!hasActiveWorkload ? (
@@ -435,7 +436,7 @@ function AdminDashboard() {
                                 const heavy = isOverloaded(w.count, averageLoad, workload.length)
                                 return (
                                     <li key={w.employeeId}>
-                                        <button onClick={() => navigate(`/admin/employees/${w.employeeId}`)}>
+                                        <button onClick={() => navigate(adminPath(`/employees/${w.employeeId}`))}>
                                             <span className="dash-avatar" aria-hidden="true">{initialsOf(w.name)}</span>
                                             <span className="dash-workload-main">
                                                 <span className="dash-workload-top">
@@ -471,7 +472,7 @@ function AdminDashboard() {
                             <h2>Recent activity</h2>
                             <span>What the team did last</span>
                         </div>
-                        <button className="admin-link-button" onClick={() => navigate('/admin/activity-logs')}>View all →</button>
+                        <button className="admin-link-button" onClick={() => navigate(adminPath('/activity-logs'))}>View all →</button>
                     </div>
 
                     {recentActivity.length === 0 ? (
@@ -504,7 +505,7 @@ function AdminDashboard() {
                         <h2>Recently registered students</h2>
                         <span>{studentCount.toLocaleString()} students in total</span>
                     </div>
-                    <button className="admin-link-button" onClick={() => navigate('/admin/students')}>View all →</button>
+                    <button className="admin-link-button" onClick={() => navigate(adminPath('/students'))}>View all →</button>
                 </div>
 
                 {recentStudents.length === 0 ? (
@@ -513,7 +514,7 @@ function AdminDashboard() {
                     <ul className="dash-students">
                         {recentStudents.map((student) => (
                             <li key={student.student_id}>
-                                <button onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                                <button onClick={() => navigate(adminPath(`/students/${student.student_id}`))}>
                                     <span className="dash-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <span className="dash-students-body">
                                         <strong>{student.fullName}</strong>

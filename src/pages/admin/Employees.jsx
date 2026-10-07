@@ -12,6 +12,7 @@ import PageStats from '../../components/PageStats'
 import { IconUsers, IconHourglass, IconFileStack, IconBuilding } from './icons'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { adminPath } from '../../lib/portalPaths'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
@@ -577,7 +578,7 @@ function Employees() {
                         <div className="admin-card-actions">
                             <button
                                 className="admin-link-button"
-                                onClick={() => navigate(`/admin/employees/${employee.employee_id}`)}
+                                onClick={() => navigate(adminPath(`/employees/${employee.employee_id}`))}
                             >
                                 Edit & assignments →
                             </button>
