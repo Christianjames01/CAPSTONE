@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { SkeletonPage } from '../../components/Skeleton'
 import { adminPath } from '../../lib/portalPaths'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
+import Modal from '../../components/Modal'
+import { IconXCircle } from './icons'
 import './AdminPages.css'
 
 const LOAD_LIMIT = 500
@@ -15,12 +19,16 @@ function formatWhen(value) {
 
 function Credentials() {
     const navigate = useNavigate()
+    const { role } = useOutletContext() || {}
     const [rows, setRows] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
     const [docFilter, setDocFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('all')
+    const [revokeTarget, setRevokeTarget] = useState(null)
+    const [revokeReason, setRevokeReason] = useState('')
+    const [revoking, setRevoking] = useState(false)
 
     const load = async ({ silent = false } = {}) => {
         if (!silent) setLoading(true)
@@ -87,6 +95,46 @@ function Credentials() {
     }, [])
 
     useLiveRefresh(['credentials'], load)
+
+    const closeRevokeModal = () => {
+        setRevokeTarget(null)
+        setRevokeReason('')
+    }
+
+    const confirmRevoke = async () => {
+        if (blockedForReadOnlyViewer(role)) return
+        if (!revokeTarget) return
+
+        if (!revokeReason.trim()) {
+            notifyWarning('Please enter a reason for revoking this credential.')
+            return
+        }
+
+        setRevoking(true)
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        const { error: revokeError } = await supabase
+            .from('credentials')
+            .update({
+                status: 'revoked',
+                revoked_at: new Date().toISOString(),
+                revoked_by: user?.id,
+                revocation_reason: revokeReason.trim(),
+            })
+            .eq('credential_id', revokeTarget.credential_id)
+
+        setRevoking(false)
+
+        if (revokeError) {
+            notifyError('Failed to revoke credential: ' + revokeError.message)
+            return
+        }
+
+        notifySuccess(`Credential "${revokeTarget.credential_number}" revoked.`)
+        closeRevokeModal()
+        load({ silent: true })
+    }
 
     const documentOptions = useMemo(
         () => [...new Set(rows.map((r) => r.documentName))].sort(),
@@ -195,7 +243,7 @@ function Credentials() {
                                         </td>
                                         <td>{formatWhen(c.generated_at)}</td>
                                         <td>{formatWhen(c.released_at)}</td>
-                                        <td>
+                                        <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                             {c.request_id && (
                                                 <button
                                                     type="button"
@@ -203,6 +251,16 @@ function Credentials() {
                                                     onClick={() => navigate(adminPath(`/requests/${c.request_id}`))}
                                                 >
                                                     Open request →
+                                                </button>
+                                            )}
+                                            {c.status !== 'revoked' && (
+                                                <button
+                                                    type="button"
+                                                    className="admin-link-button"
+                                                    style={{ color: 'var(--red, #C8102E)' }}
+                                                    onClick={() => setRevokeTarget(c)}
+                                                >
+                                                    Revoke
                                                 </button>
                                             )}
                                         </td>
@@ -216,6 +274,36 @@ function Credentials() {
                     </div>
                 )}
             </div>
+
+            {revokeTarget && (
+                <Modal
+                    title="Revoke Credential"
+                    subtitle="This marks the credential invalid. Anyone checking it on the public verify page will see it was revoked, with this reason."
+                    icon={IconXCircle}
+                    onClose={revoking ? undefined : closeRevokeModal}
+                >
+                    <p style={{ fontSize: 13, marginBottom: 12 }}>
+                        Revoking credential <strong style={{ fontFamily: 'monospace' }}>{revokeTarget.credential_number}</strong> for {revokeTarget.studentName}.
+                    </p>
+
+                    <textarea
+                        className="admin-search-input"
+                        style={{ width: '100%', minHeight: 90, marginBottom: 12 }}
+                        value={revokeReason}
+                        onChange={(event) => setRevokeReason(event.target.value)}
+                        placeholder="Example: Issued in error -- duplicate of CERT-000412."
+                    />
+
+                    <div className="app-modal-actions">
+                        <button className="admin-secondary-button" onClick={closeRevokeModal} disabled={revoking}>
+                            Cancel
+                        </button>
+                        <button className="admin-danger-button" onClick={confirmRevoke} disabled={revoking}>
+                            {revoking ? 'Revoking...' : 'Confirm Revoke'}
+                        </button>
+                    </div>
+                </Modal>
+            )}
         </div>
     )
 }
