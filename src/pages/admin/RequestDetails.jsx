@@ -102,6 +102,7 @@ function AdminRequestDetails() {
     const [reassignTo, setReassignTo] = useState('')
     const [newStatus, setNewStatus] = useState('')
     const [overrideReason, setOverrideReason] = useState('')
+    const [credentialNumberInput, setCredentialNumberInput] = useState('')
 
     const [rejectionReason, setRejectionReason] = useState('')
     const [showReject, setShowReject] = useState(false)
@@ -737,6 +738,12 @@ function AdminRequestDetails() {
             return
         }
 
+        const credentialNumber = credentialNumberInput.trim()
+        if (!credentialNumber) {
+            notifyWarning('Please enter a credential number.')
+            return
+        }
+
         const confirmed = await confirmModal('Have you verified the student record and prepared the requested academic document?')
         if (!confirmed) return
 
@@ -751,6 +758,7 @@ function AdminRequestDetails() {
                     request_id: request.request_id,
                     student_id: request.student_id,
                     document_type_id: request.document_type_id,
+                    credential_number: credentialNumber,
                     status: 'generated',
                     generated_by: actor.employeeId,
                     generated_at: new Date().toISOString(),
@@ -759,6 +767,9 @@ function AdminRequestDetails() {
                 .single()
 
             if (credentialError) {
+                if (credentialError.code === '23505') {
+                    throw new Error(`Credential number "${credentialNumber}" is already in use. Please enter a different one.`)
+                }
                 throw new Error('Failed to create credential record: ' + credentialError.message)
             }
 
@@ -794,6 +805,7 @@ function AdminRequestDetails() {
             })
 
             notifySuccess(`Digital credential generated successfully.\n\nCredential Number: ${credential.credential_number}`)
+            setCredentialNumberInput('')
             await loadRequest()
 
         } catch (err) {
@@ -1398,7 +1410,30 @@ function AdminRequestDetails() {
                             <p><strong>Processing Started:</strong> {formatDateTime(request.processed_at)}</p>
                         )}
 
-                        <button onClick={generateDigitalCredential} disabled={processing} className="admin-primary-button" style={{ marginTop: 12 }}>
+                        <label htmlFor="credential-number-input" style={{ display: 'block', marginTop: 12, fontWeight: 600 }}>
+                            Credential Number
+                        </label>
+                        <input
+                            id="credential-number-input"
+                            type="text"
+                            className="form-input"
+                            placeholder="e.g. CERT-2026-00417"
+                            value={credentialNumberInput}
+                            onChange={(e) => setCredentialNumberInput(e.target.value)}
+                            disabled={processing}
+                            style={{ marginTop: 4, maxWidth: 320 }}
+                        />
+                        <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 4 }}>
+                            Enter the number to use for this credential -- it won't be generated automatically.
+                            Must be unique.
+                        </p>
+
+                        <button
+                            onClick={generateDigitalCredential}
+                            disabled={processing || !credentialNumberInput.trim()}
+                            className="admin-primary-button"
+                            style={{ marginTop: 12 }}
+                        >
                             {processing ? 'Generating Credential...' : <><IconFile className="is-leading" />Generate Digital Credential</>}
                         </button>
                     </div>
