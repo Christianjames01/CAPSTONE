@@ -228,8 +228,11 @@ function AdminLayout() {
             <main className="admin-content">
                 {role === 'superadmin' && (
                     <div className="admin-readonly-banner" role="status">
-                        You're viewing the registrar head's portal as superadmin. Nothing here can be
-                        changed from this account — edits, approvals, and deletions are blocked.
+                        <span>
+                            You're viewing the registrar head's portal as superadmin. Nothing here can be
+                            changed from this account — edits, approvals, and deletions are blocked.
+                        </span>
+                        <Link to="/superadmin" className="admin-readonly-banner-link">← Back to Dashboard</Link>
                     </div>
                 )}
                 <Suspense fallback={<PageLoading inline />}><Outlet context={{ role }} /></Suspense>
