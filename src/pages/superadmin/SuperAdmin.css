@@ -1,8 +1,33 @@
+/* Colour tokens for this page. Other portals define theirs on their own
+   root element, so these are set here for light and dark mode. */
 .superadmin-page {
+    --blue: #123B78;
+    --blue-accent: #6FA8F5;
+    --surface: #FFFFFF;
+    --ink: #101827;
+    --slate: #57616F;
+    --line: rgba(16, 24, 39, 0.12);
+
     max-width: 1100px;
     margin: 0 auto;
     padding: 24px 16px 48px;
     color: var(--ink);
+}
+
+html[data-theme="dark"] .superadmin-page {
+    --surface: #1A1E28;
+    --ink: #E7E9EE;
+    --slate: #97A0B3;
+    --line: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .superadmin-page {
+        --surface: #1A1E28;
+        --ink: #E7E9EE;
+        --slate: #97A0B3;
+        --line: rgba(255, 255, 255, 0.14);
+    }
 }
 
 .superadmin-header {

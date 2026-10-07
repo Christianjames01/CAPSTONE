@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { confirmModal, notifyError, notifySuccess } from '../../lib/notify'
 import certichainLogo from '../../assets/certichain-logo.png'
+import ThemeToggle from '../../components/ThemeToggle'
 import './SuperAdmin.css'
 
 const ROLE_LABELS = {
@@ -114,6 +115,7 @@ function SuperAdmin() {
 
     return (
         <div className="superadmin-page">
+            <ThemeToggle />
             <header className="superadmin-header">
                 <div className="superadmin-brand">
                     <img src={certichainLogo} alt="" />
