@@ -1410,20 +1410,20 @@ function AdminRequestDetails() {
                             <p><strong>Processing Started:</strong> {formatDateTime(request.processed_at)}</p>
                         )}
 
-                        <label htmlFor="credential-number-input" style={{ display: 'block', marginTop: 12, fontWeight: 600 }}>
+                        <label htmlFor="credential-number-input" style={{ display: 'block', marginTop: 16, marginBottom: 6, fontWeight: 600 }}>
                             Credential Number
                         </label>
                         <input
                             id="credential-number-input"
                             type="text"
-                            className="form-input"
+                            className="admin-search-input"
                             placeholder="e.g. CERT-2026-00417"
                             value={credentialNumberInput}
                             onChange={(e) => setCredentialNumberInput(e.target.value)}
                             disabled={processing}
-                            style={{ marginTop: 4, maxWidth: 320 }}
+                            style={{ maxWidth: 360, fontFamily: 'monospace' }}
                         />
-                        <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 4 }}>
+                        <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 6 }}>
                             Enter the number to use for this credential -- it won't be generated automatically.
                             Must be unique.
                         </p>
