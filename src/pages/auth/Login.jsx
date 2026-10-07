@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import { checkLoginLock, recordLoginAttempt, formatLockMessage } from '../../lib/loginGuard'
+import { recordLoginEvent } from '../../lib/loginEvents'
 import { getInactiveAccountMessage, getEmployeeAccountIssue, employeeIssueMessage } from '../../lib/accountStatusMessage'
 import AuthLayout from './AuthLayout'
 import GoogleIcon from './GoogleIcon'
@@ -122,6 +123,7 @@ function Login() {
         }
 
         await recordLoginAttempt(email, true)
+        await recordLoginEvent()
 
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 

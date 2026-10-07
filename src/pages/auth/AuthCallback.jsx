@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { dashboardPathForRole } from '../../lib/roleRedirect'
+import { recordLoginEvent } from '../../lib/loginEvents'
 import { establishStudentSession, notifyPreviousDeviceSignedOut } from '../../lib/singleSession'
 import { getInactiveAccountMessage, getEmployeeAccountIssue, employeeIssueMessage } from '../../lib/accountStatusMessage'
 import AuthLayout from './AuthLayout'
@@ -81,6 +82,7 @@ function AuthCallback() {
         const dashboardPath = dashboardPathForRole(profile.role)
 
         if (dashboardPath) {
+            await recordLoginEvent()
             if (profile.role === 'student') {
                 const { hadExistingSession } = await establishStudentSession(user.id)
                 if (hadExistingSession) {
