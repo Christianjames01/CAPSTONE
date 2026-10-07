@@ -26,50 +26,60 @@ function Credentials() {
         if (!silent) setLoading(true)
         setError('')
 
-        const { data: credRows, error: credError } = await supabase
-            .from('credentials')
-            .select(`
-                credential_id, credential_number, status, student_id, request_id,
-                generated_at, released_at, revoked_at, revocation_reason,
-                document_requests ( request_number ),
-                document_types ( document_name )
-            `)
-            .order('generated_at', { ascending: false })
-            .limit(LOAD_LIMIT)
+        try {
+            const { data: credRows, error: credError } = await supabase
+                .from('credentials')
+                .select('credential_id, credential_number, status, student_id, request_id, document_type_id, generated_at, released_at, revoked_at, revocation_reason')
+                .order('generated_at', { ascending: false })
+                .limit(LOAD_LIMIT)
 
-        if (credError) {
-            setError(credError.message)
+            if (credError) throw new Error(credError.message)
+
+            const requestIds = [...new Set((credRows || []).map((c) => c.request_id).filter(Boolean))]
+            const docTypeIds = [...new Set((credRows || []).map((c) => c.document_type_id).filter(Boolean))]
+            const studentIds = [...new Set((credRows || []).map((c) => c.student_id).filter(Boolean))]
+
+            const [{ data: requestRows }, { data: docTypeRows }, { data: studentRows }] = await Promise.all([
+                requestIds.length
+                    ? supabase.from('document_requests').select('request_id, request_number').in('request_id', requestIds)
+                    : Promise.resolve({ data: [] }),
+                docTypeIds.length
+                    ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', docTypeIds)
+                    : Promise.resolve({ data: [] }),
+                studentIds.length
+                    ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
+                    : Promise.resolve({ data: [] }),
+            ])
+
+            const userIds = [...new Set((studentRows || []).map((s) => s.user_id).filter(Boolean))]
+            const { data: profileRows } = userIds.length
+                ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
+                : { data: [] }
+
+            const requestNumberById = Object.fromEntries((requestRows || []).map((r) => [r.request_id, r.request_number]))
+            const docNameById = Object.fromEntries((docTypeRows || []).map((d) => [d.document_type_id, d.document_name]))
+            const profileByUserId = Object.fromEntries((profileRows || []).map((p) => [p.user_id, p]))
+            const studentByStudentId = Object.fromEntries((studentRows || []).map((s) => [s.student_id, s]))
+
+            setRows(
+                (credRows || []).map((c) => {
+                    const student = studentByStudentId[c.student_id]
+                    const profile = student ? profileByUserId[student.user_id] : null
+                    return {
+                        ...c,
+                        documentName: docNameById[c.document_type_id] || 'Unknown document',
+                        requestNumber: requestNumberById[c.request_id] || '',
+                        studentName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
+                        studentNumber: student?.student_number || '',
+                    }
+                })
+            )
+        } catch (err) {
+            console.error('CREDENTIALS LOAD ERROR:', err)
+            setError(err.message || 'Could not load credentials.')
+        } finally {
             setLoading(false)
-            return
         }
-
-        const studentIds = [...new Set((credRows || []).map((c) => c.student_id).filter(Boolean))]
-        const { data: studentRows } = studentIds.length
-            ? await supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
-            : { data: [] }
-
-        const userIds = [...new Set((studentRows || []).map((s) => s.user_id).filter(Boolean))]
-        const { data: profileRows } = userIds.length
-            ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
-            : { data: [] }
-
-        const profileByUserId = Object.fromEntries((profileRows || []).map((p) => [p.user_id, p]))
-        const studentByStudentId = Object.fromEntries((studentRows || []).map((s) => [s.student_id, s]))
-
-        setRows(
-            (credRows || []).map((c) => {
-                const student = studentByStudentId[c.student_id]
-                const profile = student ? profileByUserId[student.user_id] : null
-                return {
-                    ...c,
-                    documentName: c.document_types?.document_name || 'Unknown document',
-                    requestNumber: c.document_requests?.request_number || '',
-                    studentName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
-                    studentNumber: student?.student_number || '',
-                }
-            })
-        )
-        setLoading(false)
     }
 
     useEffect(() => {
