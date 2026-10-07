@@ -13,6 +13,11 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
 import { adminPath } from '../../lib/portalPaths'
 
+// Hidden from the superadmin's view of the head portal -- not relevant for
+// account oversight (walk-in queue, announcements) or not meaningful for an
+// account that isn't the one signed in as head (its own profile, the guide).
+const HIDDEN_FOR_SUPERADMIN = ['/announcements', '/queue', '/guide', '/profile']
+
 const NAV_ITEMS = [
     { to: '/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
     { to: '/requests', label: 'All Requests', icon: <IconClipboardList /> },
@@ -177,7 +182,7 @@ function AdminLayout() {
                     </div>
 
                     <nav className="admin-nav">
-                        {NAV_ITEMS.map((item) => {
+                        {NAV_ITEMS.filter((item) => role !== 'superadmin' || !HIDDEN_FOR_SUPERADMIN.includes(item.to)).map((item) => {
                             const count = item.badgeKey ? badgeValue(item.badgeKey) : 0
 
                             return (
