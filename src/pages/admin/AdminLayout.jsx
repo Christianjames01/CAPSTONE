@@ -39,6 +39,7 @@ function AdminLayout() {
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
     const [roleLabel, setRoleLabel] = useState('')
+    const [role, setRole] = useState('')
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -81,7 +82,12 @@ function AdminLayout() {
             setInitials(
                 `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase()
             )
-            setRoleLabel(profile.role === 'admin' ? 'System Admin' : 'Registrar Head')
+            setRole(profile.role)
+            setRoleLabel(
+                profile.role === 'admin' ? 'System Admin'
+                    : profile.role === 'superadmin' ? 'Superadmin (view only)'
+                        : 'Registrar Head'
+            )
         }
     }
 
@@ -215,6 +221,12 @@ function AdminLayout() {
             </aside>
 
             <main className="admin-content">
+                {role === 'superadmin' && (
+                    <div className="admin-readonly-banner" role="status">
+                        You're viewing the registrar head's portal as superadmin. Nothing here can be
+                        changed from this account — edits, approvals, and deletions are blocked.
+                    </div>
+                )}
                 <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
             </main>
 

@@ -8,6 +8,12 @@
     padding-bottom: 48px;
 }
 
+.sa-sidebar-divider {
+    height: 1px;
+    margin: 10px 20px;
+    background: var(--line);
+}
+
 .superadmin-alert {
     display: flex;
     flex-wrap: wrap;

@@ -404,7 +404,7 @@ function App() {
 
         <Route
           element={
-            <ProtectedRoute allowedRoles={['registrar_head']}>
+            <ProtectedRoute allowedRoles={['registrar_head', 'superadmin']}>
               <AdminLayout />
             </ProtectedRoute>
           }

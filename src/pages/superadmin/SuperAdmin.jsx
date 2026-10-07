@@ -7,11 +7,10 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconLogout, IconMenu, IconX } from '../student/icons'
 import { IconUsers, IconHistory } from '../employee/icons'
-import { IconBarChart } from '../admin/icons'
+import { IconBuilding } from '../admin/icons'
 import SuperAdminOverview from './SuperAdminOverview'
 import SuperAdminAccounts from './SuperAdminAccounts'
 import SuperAdminLogins from './SuperAdminLogins'
-import SuperAdminHeadDashboard from './SuperAdminHeadDashboard'
 import '../admin/AdminLayout.css'
 import '../admin/AdminPages.css'
 import './SuperAdmin.css'
@@ -20,14 +19,13 @@ const NAV_ITEMS = [
     { to: '/superadmin', label: 'Overview', icon: <IconHome />, end: true },
     { to: '/superadmin/accounts', label: 'Accounts', icon: <IconUsers /> },
     { to: '/superadmin/logins', label: 'Login activity', icon: <IconHistory /> },
-    { to: '/superadmin/head-dashboard', label: 'Head Dashboard', icon: <IconBarChart /> },
 ]
 
 const LOGIN_LIMIT = 1000
 
 function SuperAdmin() {
     const navigate = useNavigate()
-    const [data, setData] = useState({ overview: null, accounts: [], logins: [], daily: [], headDashboard: null })
+    const [data, setData] = useState({ overview: null, accounts: [], logins: [], daily: [] })
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
     const [who, setWho] = useState({ name: '', initials: '' })
@@ -36,21 +34,19 @@ function SuperAdmin() {
 
     const load = useCallback(async ({ silent = false } = {}) => {
         if (!silent) setLoading(true)
-        const [overviewRes, accountsRes, loginsRes, dailyRes, headRes] = await Promise.all([
+        const [overviewRes, accountsRes, loginsRes, dailyRes] = await Promise.all([
             supabase.rpc('superadmin_overview'),
             supabase.rpc('superadmin_list_accounts'),
             supabase.rpc('superadmin_login_history', { p_limit: LOGIN_LIMIT }),
             supabase.rpc('superadmin_daily_logins', { p_days: 14 }),
-            supabase.rpc('superadmin_head_dashboard'),
         ])
-        const failed = overviewRes.error || accountsRes.error || loginsRes.error || dailyRes.error || headRes.error
+        const failed = overviewRes.error || accountsRes.error || loginsRes.error || dailyRes.error
         setLoadError(failed ? failed.message : '')
         setData({
             overview: overviewRes.data || null,
             accounts: accountsRes.data || [],
             logins: loginsRes.data || [],
             daily: dailyRes.data || [],
-            headDashboard: headRes.data || null,
         })
         setLoading(false)
     }, [])
@@ -59,9 +55,9 @@ function SuperAdmin() {
         load()
     }, [load])
 
-    // New sign-ins, account changes, and new requests/appointments show up
-    // without a manual refresh -- see src/lib/useLiveRefresh.js.
-    useLiveRefresh(['login_events', 'profiles', 'user_presence', 'document_requests', 'claim_schedules'], load)
+    // New sign-ins and account changes show up without a manual refresh --
+    // see src/lib/useLiveRefresh.js.
+    useLiveRefresh(['login_events', 'profiles', 'user_presence'], load)
 
     useEffect(() => {
         let cancelled = false
@@ -147,6 +143,15 @@ function SuperAdmin() {
                             </NavLink>
                         ))}
                     </nav>
+
+                    <div className="sa-sidebar-divider" />
+
+                    <nav className="admin-nav" aria-label="Other portals">
+                        <NavLink to="/head/dashboard" onClick={closeNav} className="admin-nav-link">
+                            <IconBuilding />
+                            <span>Head Portal (view only)</span>
+                        </NavLink>
+                    </nav>
                 </div>
 
                 <div className="admin-sidebar-bottom">
@@ -185,10 +190,6 @@ function SuperAdmin() {
                     <Route
                         path="logins"
                         element={<SuperAdminLogins logins={data.logins} />}
-                    />
-                    <Route
-                        path="head-dashboard"
-                        element={<SuperAdminHeadDashboard data={data.headDashboard} loading={loading} />}
                     />
                     <Route path="*" element={<Navigate to="/superadmin" replace />} />
                 </Routes>
