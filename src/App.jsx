@@ -7,6 +7,7 @@ import PageLoading from './components/PageLoading'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import RequireFullEmployeeAccess from './components/RequireFullEmployeeAccess'
+import RequireCanAddEmployees from './components/RequireCanAddEmployees'
 import StudentVerificationGate from './components/StudentVerificationGate'
 import HomeRoute from './components/HomeRoute'
 
@@ -48,6 +49,7 @@ const EmployeeUserGuide = lazy(() => import('./pages/employee/UserGuidePage'))
 const AdminUserGuide = lazy(() => import('./pages/admin/UserGuidePage'))
 
 const EmployeeLayout = lazy(() => import('./pages/employee/EmployeeLayout'))
+const EmployeeAddEmployee = lazy(() => import('./pages/employee/AddEmployee'))
 const EmployeeDashboard = lazy(() => import('./pages/employee/Dashboard'))
 const EmployeeRequestDetails = lazy(() => import('./pages/employee/RequestDetails'))
 const ClaimSchedule = lazy(() => import('./pages/employee/ClaimSchedule'))
@@ -378,6 +380,11 @@ function App() {
           <Route
             path="/employee/activity-logs"
             element={<RequireFullEmployeeAccess><ActivityLogs /></RequireFullEmployeeAccess>}
+          />
+
+          <Route
+            path="/employee/add-employee"
+            element={<RequireCanAddEmployees><EmployeeAddEmployee /></RequireCanAddEmployees>}
           />
 
           <Route

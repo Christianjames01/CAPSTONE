@@ -64,7 +64,7 @@ function Employees() {
 
             const { data: employeeRows, error: employeeError } = await supabase
                 .from('employees')
-                .select('employee_id, user_id, employee_number, position_title, display_name, assigned_college_id, status, created_at')
+                .select('employee_id, user_id, employee_number, position_title, display_name, assigned_college_id, status, can_add_employees, created_at')
                 .order('created_at', { ascending: false })
 
             if (employeeError) {
@@ -113,6 +113,7 @@ function Employees() {
                         email: profile?.email || '',
                         collegeName: collegeNameById[e.assigned_college_id] || 'Unassigned',
                         openCount: openCountByEmployee[e.employee_id] || 0,
+                        canAddEmployees: !!e.can_add_employees,
                     }
                 })
             )
@@ -359,6 +360,57 @@ function Employees() {
         }
     }
 
+    const toggleCanAddEmployees = async (employee) => {
+        if (blockedForReadOnlyViewer(role)) return
+        const next = !employee.canAddEmployees
+
+        const confirmed = await confirmModal(
+            next
+                ? `${employee.name} will be able to add new employee accounts themselves, from their own portal.`
+                : `${employee.name} will no longer be able to add new employee accounts.`,
+            { title: next ? 'Allow adding employees?' : 'Revoke adding employees?', confirmButtonText: next ? 'Allow' : 'Revoke' }
+        )
+        if (!confirmed) return
+
+        try {
+            setUpdating(employee.employee_id)
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser()
+
+            if (userError || !user) {
+                throw new Error('You are not logged in.')
+            }
+
+            const { error: updateError } = await supabase
+                .from('employees')
+                .update({ can_add_employees: next, updated_at: new Date().toISOString() })
+                .eq('employee_id', employee.employee_id)
+
+            if (updateError) {
+                throw new Error('Failed to update permission: ' + updateError.message)
+            }
+
+            await logActivity({
+                userId: user.id,
+                action: next ? 'grant_add_employees' : 'revoke_add_employees',
+                tableName: 'employees',
+                recordId: employee.employee_id,
+                description: `${next ? 'Allowed' : 'Revoked'} "${employee.name}" (${employee.employee_number}) adding employee accounts.`,
+            })
+
+            await loadEmployees()
+
+        } catch (err) {
+            console.error('TOGGLE CAN_ADD_EMPLOYEES ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to update permission.'))
+        } finally {
+            setUpdating(null)
+        }
+    }
+
     const initialsOf = (name) =>
         (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
 
@@ -572,6 +624,7 @@ function Employees() {
                                     <h3>
                                         {employee.name}
                                         {employee.displayName && <span className="admin-card-badge">Shown to students as “{employee.displayName}”</span>}
+                                        {employee.canAddEmployees && <span className="admin-card-badge">Can add employees</span>}
                                     </h3>
                                     <p>{employee.employee_number} · {employee.position_title} · {employee.email}</p>
                                 </div>
@@ -607,6 +660,14 @@ function Employees() {
                                 {updating === employee.employee_id
                                     ? 'Updating...'
                                     : employee.status === 'active' ? 'Deactivate' : 'Activate'}
+                            </button>
+
+                            <button
+                                className="admin-link-button"
+                                onClick={() => toggleCanAddEmployees(employee)}
+                                disabled={updating === employee.employee_id}
+                            >
+                                {employee.canAddEmployees ? 'Revoke adding employees' : 'Allow adding employees'}
                             </button>
 
                             <button

@@ -200,6 +200,16 @@ export const EMPLOYEE_GUIDE = [
             'Office Calendar shows holidays, office events and upcoming claiming dates.',
         ],
     },
+    {
+        id: 'add-employee',
+        title: 'Add Employee',
+        summary: 'Only shown if the Registrar Head granted you this.',
+        steps: [
+            'If a registrar head has allowed you to add employees, Add Employee appears in your sidebar.',
+            'Fill in the new employee’s name, employee number, position title, login email and a temporary password, then create the account.',
+            'The registrar head still sets the new employee’s college/program assignment afterward, from Employees.',
+        ],
+    },
 ]
 
 export const HEAD_GUIDE = [
@@ -220,6 +230,7 @@ export const HEAD_GUIDE = [
             'New employee accounts start inactive — activate them from Employees (you’re notified when one registers).',
             'Open an employee to edit details, set their program assignments, or set a temporary password; they must change it at their next login.',
             'Deactivate employees who leave; their requests can be reassigned.',
+            'Allow adding employees lets a trusted employee add new employee accounts themselves, from their own portal — you still set up their college/program assignment afterward. Revoke it the same way.',
         ],
     },
     {

@@ -5,7 +5,7 @@ import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconMessage, IconHistory } from './icons'
 // Same icons as the Registrar Head's sidebar for the same pages.
-import { IconIdCard, IconTicket } from '../admin/icons'
+import { IconIdCard, IconTicket, IconUsers } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
 import '../../components/DashboardStats.css'
@@ -27,6 +27,7 @@ const NAV_ITEMS = [
     { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/employee/activity-logs', label: 'Activity Logs', icon: <IconHistory />, fullAccessOnly: true },
+    { to: '/employee/add-employee', label: 'Add Employee', icon: <IconUsers />, canAddEmployeesOnly: true },
     { to: '/employee/guide', label: 'User Guide', icon: <IconBook /> },
     { to: '/employee/profile', label: 'Profile', icon: <IconUserCircle /> },
 ]
@@ -37,6 +38,7 @@ function EmployeeLayout() {
     const [initials, setInitials] = useState('')
     const [positionTitle, setPositionTitle] = useState('')
     const [accessScope, setAccessScope] = useState('full')
+    const [canAddEmployees, setCanAddEmployees] = useState(false)
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -83,13 +85,14 @@ function EmployeeLayout() {
 
         const { data: employee } = await supabase
             .from('employees')
-            .select('position_title, access_scope')
+            .select('position_title, access_scope, can_add_employees')
             .eq('user_id', user.id)
             .single()
 
         if (employee) {
             setPositionTitle(employee.position_title || '')
             setAccessScope(employee.access_scope || 'full')
+            setCanAddEmployees(!!employee.can_add_employees)
         }
     }
 
@@ -179,7 +182,10 @@ function EmployeeLayout() {
                     </div>
 
                     <nav className="employee-nav">
-                        {NAV_ITEMS.filter((item) => !item.fullAccessOnly || accessScope === 'full').map((item) => {
+                        {NAV_ITEMS.filter((item) =>
+                            (!item.fullAccessOnly || accessScope === 'full') &&
+                            (!item.canAddEmployeesOnly || canAddEmployees)
+                        ).map((item) => {
                             const count = item.badgeKey ? badgeValue(item.badgeKey) : 0
 
                             return (
