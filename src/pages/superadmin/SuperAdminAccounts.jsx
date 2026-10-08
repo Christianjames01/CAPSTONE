@@ -40,6 +40,31 @@ function SuperAdminAccounts({ accounts, onChanged }) {
         })
     }, [accounts, filter, query])
 
+    async function changeRole(account) {
+        const name = displayName(account)
+        const next = account.role === 'admin' ? 'registrar_head' : 'admin'
+        const nextLabel = ROLE_NAMES[next] || next
+        const confirmed = await confirmModal(
+            `${name} will be switched from ${ROLE_NAMES[account.role] || account.role} to ${nextLabel}.`,
+            { title: `Change role to ${nextLabel}?`, confirmButtonText: 'Change role' }
+        )
+        if (!confirmed) return
+
+        setBusyId(account.user_id)
+        const { error } = await supabase.rpc('superadmin_set_account_role', {
+            p_user_id: account.user_id,
+            p_role: next,
+        })
+        setBusyId(null)
+
+        if (error) {
+            notifyError(friendlyError(error))
+            return
+        }
+        notifySuccess(`${name} is now ${nextLabel}.`)
+        onChanged()
+    }
+
     async function toggleStatus(account) {
         const name = displayName(account)
         const next = account.status === 'active' ? 'inactive' : 'active'
@@ -161,14 +186,24 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                                             <td>{formatWhen(a.account_created_at)}</td>
                                             <td className="sa-actions-cell">
                                                 {isStaff ? (
-                                                    <button
-                                                        type="button"
-                                                        className={`admin-link-button ${a.status === 'active' ? 'is-danger' : 'is-success'}`}
-                                                        onClick={() => toggleStatus(a)}
-                                                        disabled={busyId === a.user_id}
-                                                    >
-                                                        {a.status === 'active' ? 'Deactivate' : 'Reactivate'}
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            className="admin-link-button"
+                                                            onClick={() => changeRole(a)}
+                                                            disabled={busyId === a.user_id}
+                                                        >
+                                                            Make {a.role === 'admin' ? 'Registrar Head' : 'System Admin'}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className={`admin-link-button ${a.status === 'active' ? 'is-danger' : 'is-success'}`}
+                                                            onClick={() => toggleStatus(a)}
+                                                            disabled={busyId === a.user_id}
+                                                        >
+                                                            {a.status === 'active' ? 'Deactivate' : 'Reactivate'}
+                                                        </button>
+                                                    </>
                                                 ) : (
                                                     <span className="sa-sub" title="Managed by registrar staff">Staff-managed</span>
                                                 )}
