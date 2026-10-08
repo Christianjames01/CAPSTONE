@@ -3,7 +3,7 @@
 
 const STATUS_STEPS = [
     'Pending — your request was received and is waiting for review.',
-    'Payment Pending — pay the fee at the Finance Office, then upload your official receipt.',
+    'Payment Pending — upload a photo of the official receipt from your already-paid, already-verified assessment.',
     'Receipt Uploaded — the Registrar is checking your receipt.',
     'Receipt Verified — payment confirmed; your document will be processed.',
     'Processing — your document is being prepared.',
@@ -29,23 +29,24 @@ export const STUDENT_GUIDE = [
     {
         id: 'request',
         title: 'Requesting a document',
-        summary: 'Submit a request for a TOR, certificate, diploma copy and more.',
+        summary: 'Get assessed and verified at the Registrar’s Office, pay at Finance, then submit online.',
         steps: [
-            'Go to Request a Document and choose the document. A sample preview on the right shows what it looks like.',
-            'Enter the number of copies and your purpose, if asked.',
-            'Submit. Your request appears under My Requests with its request number (e.g. REQ-000012).',
+            'Go to the Registrar’s Office in person and get an assessment slip for the document you need.',
+            'Pay the amount on the slip at the HCDC Finance Office and keep the official receipt (OR). CertiChain does not accept online payments.',
+            'Bring the receipt back to the Registrar’s Office so staff can verify it in person.',
+            'Once verified, go to Request a Document and choose the document — a sample preview on the right shows what it looks like.',
+            'Enter the number of copies and your purpose, if asked, then submit. Your request appears under My Requests with its request number (e.g. REQ-000012).',
         ],
         tips: ['If no employee is assigned to your program yet, your request still goes through — the Registrar Head assigns it.'],
     },
     {
         id: 'payment',
-        title: 'Paying and uploading your receipt',
-        summary: 'Pay in person at the Finance Office, then upload the official receipt.',
+        title: 'Uploading your receipt',
+        summary: 'Upload a photo of the official receipt the Registrar already verified.',
         steps: [
-            'When the status becomes Payment Pending, go to the HCDC Finance Office and pay the amount shown on the request in person. CertiChain does not accept online payments.',
-            'Keep the official receipt (OR) — you’ll bring the original when you claim your document.',
             'Go to Upload Receipt (or open the request) and upload a clear photo or scan of the official receipt.',
-            'Wait for verification. If the receipt is marked invalid, the reason is shown — upload a clearer or corrected copy. You don’t pay again.',
+            'Keep the original receipt — you’ll bring it when you claim your document.',
+            'Wait for the Registrar’s online check. If the receipt is marked invalid, the reason is shown — upload a clearer or corrected copy. You don’t pay again.',
         ],
     },
     {
