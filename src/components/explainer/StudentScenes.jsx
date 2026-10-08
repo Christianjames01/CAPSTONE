@@ -78,7 +78,7 @@ export function SceneRequest() {
                 </div>
                 <div className="lpx-badge-pop" style={{ "--delay": "5.4s" }}>
                     <span>{Icon.check}</span>
-                    <div><strong>Request submitted</strong><small>REQ-000124 · next: requirements &amp; payment</small></div>
+                    <div><strong>Request submitted</strong><small>REQ-000124 · next: requirements</small></div>
                 </div>
             </div>
             <span className="lpx-cursor" />
