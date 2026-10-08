@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
@@ -8,6 +8,9 @@ import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, 
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
 import { averageLoad as averageOf, isOverloaded } from '../../lib/workloadBalance'
 import { readableLogText } from '../../lib/logText'
+import { notifyError, notifySuccess } from '../../lib/notify'
+import { friendlyError } from '../../lib/friendlyError'
+import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import '../../components/DashboardStats.css'
 import './AdminPages.css'
 import AvatarFace from '../../components/AvatarFace'
@@ -50,6 +53,12 @@ const initialsOf = (name) =>
 
 function AdminDashboard() {
     const navigate = useNavigate()
+    const { role } = useOutletContext() || {}
+
+    const [storageUsage, setStorageUsage] = useState(null)
+    const [editingLimit, setEditingLimit] = useState(false)
+    const [limitInput, setLimitInput] = useState('')
+    const [savingLimit, setSavingLimit] = useState(false)
 
     const [requests, setRequests] = useState([])
     const [todayCount, setTodayCount] = useState(0)
@@ -248,12 +257,70 @@ function AdminDashboard() {
     // Update in place when requests change -- no manual refresh needed.
     useLiveRefresh(['document_requests', 'claim_schedules'], loadDashboard)
 
+    const loadStorageUsage = async () => {
+        const { data, error: rpcError } = await supabase.rpc('get_storage_usage_summary')
+        if (rpcError) {
+            console.error('STORAGE USAGE ERROR:', rpcError)
+            return
+        }
+        setStorageUsage(data)
+    }
+
+    useEffect(() => {
+        loadStorageUsage()
+    }, [])
+
+    const startEditingLimit = () => {
+        if (blockedForReadOnlyViewer(role)) return
+        setLimitInput(String(storageUsage?.limit_mb ?? ''))
+        setEditingLimit(true)
+    }
+
+    const saveStorageLimit = async () => {
+        if (blockedForReadOnlyViewer(role)) return
+        const limitMb = Number(limitInput)
+        if (!limitMb || limitMb < 1) {
+            notifyError('Enter a storage limit of at least 1 MB.')
+            return
+        }
+
+        try {
+            setSavingLimit(true)
+            const { error: rpcError } = await supabase.rpc('set_storage_limit_mb', { p_limit_mb: Math.round(limitMb) })
+            if (rpcError) throw rpcError
+
+            notifySuccess(`Storage limit set to ${Math.round(limitMb).toLocaleString()} MB.`)
+            setEditingLimit(false)
+            await loadStorageUsage()
+        } catch (err) {
+            console.error('SAVE STORAGE LIMIT ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to update the storage limit.'))
+        } finally {
+            setSavingLimit(false)
+        }
+    }
+
     const countByStatus = (statuses) =>
         requests.filter((r) => statuses.includes(r.status)).length
 
     const statusChartData = useMemo(() => buildStatusChartData(requests), [requests])
     const trendChartData = useMemo(() => dailyTrend(requests, 14), [requests])
     const weeklyRequests = useMemo(() => weeklyChange(requests), [requests])
+
+    const storageCard = useMemo(() => {
+        if (!storageUsage) return null
+        const limitBytes = storageUsage.limit_mb * 1024 * 1024
+        const pct = limitBytes > 0 ? Math.min(999, (storageUsage.total_bytes / limitBytes) * 100) : 0
+        const tone = pct >= 100 ? 'is-full' : pct >= 90 ? 'is-critical' : pct >= 80 ? 'is-warn' : 'is-ok'
+        const toMb = (bytes) => bytes / (1024 * 1024)
+        return {
+            usedMb: toMb(storageUsage.total_bytes),
+            limitMb: storageUsage.limit_mb,
+            pct,
+            tone,
+            buckets: (storageUsage.buckets || []).map((b) => ({ ...b, mb: toMb(b.bytes) })),
+        }
+    }, [storageUsage])
 
     const activeRequests = requests.filter((r) => ACTIVE_STATUSES.includes(r.status))
     const unassignedCount = activeRequests.filter((r) => !r.assigned_employee_id).length
@@ -361,6 +428,90 @@ function AdminDashboard() {
                         </button>
                     ))}
                 </div>
+            )}
+
+            {storageCard && storageCard.pct >= 80 && (
+                <div className="dash-alert-grid" style={{ marginBottom: 16 }}>
+                    <button className="dash-alert-tile" onClick={() => document.getElementById('storage-usage-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+                        <span className="dash-alert-icon" aria-hidden="true"><IconPackage /></span>
+                        <span className="dash-alert-text">
+                            <strong>{storageCard.pct >= 100 ? 'Storage is full' : `Storage at ${storageCard.pct.toFixed(0)}%`}</strong>
+                            <span>New uploads will start failing once it's full — see Storage Usage below.</span>
+                        </span>
+                        <span className="dash-alert-arrow" aria-hidden="true">→</span>
+                    </button>
+                </div>
+            )}
+
+            {storageCard && (
+                <section id="storage-usage-card" className="admin-card" style={{ marginBottom: 20 }}>
+                    <div className="admin-page-header-row" style={{ marginBottom: 14 }}>
+                        <div>
+                            <h2 style={{ fontSize: 16, marginBottom: 2 }}>Storage Usage</h2>
+                            <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>Receipts, requirement uploads, claim files and profile photos.</p>
+                        </div>
+                        {!editingLimit && (
+                            <button className="admin-link-button" onClick={startEditingLimit}>
+                                Change limit →
+                            </button>
+                        )}
+                    </div>
+
+                    <div style={{ background: 'var(--line)', borderRadius: 999, height: 10, overflow: 'hidden' }}>
+                        <div
+                            style={{
+                                width: `${Math.min(100, storageCard.pct)}%`,
+                                height: '100%',
+                                borderRadius: 999,
+                                transition: 'width 0.3s ease',
+                                background:
+                                    storageCard.tone === 'is-full' || storageCard.tone === 'is-critical'
+                                        ? 'var(--red, #c8102e)'
+                                        : storageCard.tone === 'is-warn'
+                                            ? 'var(--amber, #b7791f)'
+                                            : 'var(--green, #1e8a5f)',
+                            }}
+                        />
+                    </div>
+
+                    <p style={{ fontSize: 13, marginTop: 10, marginBottom: editingLimit ? 14 : 0 }}>
+                        <strong>{storageCard.usedMb.toFixed(1)} MB</strong> of {storageCard.limitMb.toLocaleString()} MB used
+                        <span style={{ color: 'var(--slate)' }}> ({storageCard.pct.toFixed(1)}%)</span>
+                    </p>
+
+                    {editingLimit && (
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <input
+                                className="admin-search-input"
+                                style={{ maxWidth: 160 }}
+                                type="number"
+                                min={1}
+                                value={limitInput}
+                                onChange={(e) => setLimitInput(e.target.value)}
+                                placeholder="e.g. 1024"
+                                disabled={savingLimit}
+                            />
+                            <span style={{ fontSize: 12.5, color: 'var(--slate)' }}>MB (1024 = Free tier, 102400 = Pro's 100 GB)</span>
+                            <button className="admin-primary-button" onClick={saveStorageLimit} disabled={savingLimit}>
+                                {savingLimit ? 'Saving...' : 'Save'}
+                            </button>
+                            <button className="admin-secondary-button" onClick={() => setEditingLimit(false)} disabled={savingLimit}>
+                                Cancel
+                            </button>
+                        </div>
+                    )}
+
+                    {storageCard.buckets.length > 0 && (
+                        <div className="admin-info-grid" style={{ marginTop: 16 }}>
+                            {storageCard.buckets.map((b) => (
+                                <div className="admin-info-field" key={b.bucket_id}>
+                                    <span>{b.bucket_id.replace(/-/g, ' ')}</span>
+                                    <strong>{b.mb.toFixed(1)} MB · {b.file_count} file{b.file_count === 1 ? '' : 's'}</strong>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
             )}
 
             <section className="dash-stats" aria-label="Key statistics">
