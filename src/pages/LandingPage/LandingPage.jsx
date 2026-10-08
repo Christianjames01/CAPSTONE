@@ -215,16 +215,16 @@ const IconTiktok = () => (
 
 const PROCESS_STEPS = [
     { Icon: IconUser, title: "Create an account", body: "Register with your student details. The Registrar verifies your record before you can request." },
-    { Icon: IconDocument, title: "Submit a request", body: "Choose the document, the number of copies and your purpose, then submit it online. The fee shown is your official assessment — no need to queue at the Registrar for a slip first." },
-    { Icon: IconCash, title: "Pay at the Finance Office", body: "Pay the amount shown on your request in person at the HCDC Finance Office and keep your official receipt.", badge: "In person" },
-    { Icon: IconUpload, title: "Upload your receipt", body: "Upload a clear photo of the official receipt, plus any required documents. The Registrar verifies them online." },
+    { Icon: IconReceipt, title: "Get your assessment slip", body: "Visit the Registrar's Office in person for the fee assessment on the document you need.", badge: "In person" },
+    { Icon: IconCash, title: "Pay at the Finance Office", body: "Pay the amount on your slip at the HCDC Finance Office and keep your official receipt.", badge: "In person" },
+    { Icon: IconUpload, title: "Submit & upload your receipt", body: "Back in your account, choose the document, the number of copies and your purpose, submit your request, then upload a clear photo of the official receipt." },
     { Icon: IconGear, title: "Processing", body: "Your document is prepared and signed. Every status change shows up live, with a notification." },
     { Icon: IconCalendar, title: "Claim & verify", body: "Claim on your scheduled date with a valid ID — or send an approved representative. Its QR code proves it’s genuine." },
 ];
 
 const LANDING_FAQ = [
     ["Do I need to create an account to request a document?", "Yes. A free CertiChain account lets you submit requests, upload your receipt and requirements, track status, and message the Registrar directly. The Registrar verifies your student record first."],
-    ["Where and how do I pay?", "In person at the HCDC Finance Office. Submit your request first, then pay the amount shown on it at the Finance Office and keep the official receipt (OR). Upload a clear photo of the OR in your account so the Registrar can verify it."],
+    ["Where and how do I pay?", "In person at the HCDC Finance Office. First get your assessment slip from the Registrar's Office, then pay the amount shown on it at the Finance Office and keep the official receipt (OR). Submit your request in your account and upload a clear photo of the OR so the Registrar can verify it."],
     ["Can I pay online?", "No. CertiChain doesn’t accept online payments — all fees are paid at the Finance Office, the same way as other HCDC fees."],
     ["What if my receipt is rejected?", "You’ll see the reason on your request. Upload a clearer or corrected photo of the same receipt — you don’t need to pay again."],
     ["How long does processing take?", "It depends on the document and current volume; typical processing days are shown for each document. Your account shows every status change live, and you’re notified at each step."],

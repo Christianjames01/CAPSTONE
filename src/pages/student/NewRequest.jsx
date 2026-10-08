@@ -278,7 +278,7 @@ function NewRequest() {
         // Confirm before submitting: what, how much, what happens next.
         const confirmed = await confirmModal(
             `You are requesting: ${cart.map((item) => `${item.document_name} (${item.quantity} ${item.quantity === 1 ? 'copy' : 'copies'})`).join(', ')}. ` +
-            `Total to pay at the HCDC Finance Office: ${peso(cartTotal)}. After submitting, pay the fee and upload a photo of your Official Receipt.`,
+            `Total per your assessment slip: ${peso(cartTotal)}. Make sure you've paid this at the HCDC Finance Office — you'll upload a photo of your Official Receipt next.`,
             { title: cart.length > 1 ? `Submit ${cart.length} requests?` : 'Submit your request?', confirmButtonText: 'Submit Request' }
         )
         if (!confirmed) return
@@ -420,9 +420,9 @@ function NewRequest() {
             <div className="student-notice tone-info">
                 <strong>How this works</strong>
                 <ol style={{ margin: '8px 0 0', paddingLeft: 18 }}>
-                    <li>Choose your document below — the fee shown is your official assessment, so there's no need to visit the Registrar's Office first.</li>
-                    <li>Pay that amount at the HCDC Finance Office and keep your Official Receipt.</li>
-                    <li>Upload a photo of the receipt here. The Registrar verifies it, processes your document, and gives you a claiming date.</li>
+                    <li>Visit the Registrar's Office in person to get your assessment slip for the document you need.</li>
+                    <li>Pay the amount on the slip at the HCDC Finance Office and keep your Official Receipt.</li>
+                    <li>Come back here to submit your request and upload a photo of your receipt. The Registrar verifies it, processes your document, and gives you a claiming date.</li>
                 </ol>
             </div>
 
