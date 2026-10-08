@@ -11,6 +11,7 @@ import { getCaptchaToken } from '../../lib/captcha'
 import { IconPhone, IconBook } from '../student/icons'
 import { IconLock } from '../../components/UiIcons'
 import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconBriefcase, IconKey } from '../../components/ProfileParts'
+import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -129,6 +130,11 @@ function Profile() {
     }
 
     const saveChanges = async () => {
+        if (phoneNumber.trim() && !isValidPhMobile(phoneNumber.trim())) {
+            setError('Phone number must be an 11-digit mobile number starting with 09.')
+            return
+        }
+
         try {
             setSaving(true)
             setError('')
@@ -357,9 +363,11 @@ function Profile() {
                             <input
                                 className="form-input"
                                 type="tel"
+                                inputMode="numeric"
+                                maxLength={11}
                                 value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                placeholder="09XX XXX XXXX"
+                                onChange={(e) => setPhoneNumber(digitsOnly(e.target.value))}
+                                placeholder="09XXXXXXXXX"
                                 disabled={saving}
                             />
                         </div>

@@ -21,6 +21,7 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
+import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -259,6 +260,17 @@ function StudentDetails() {
         if (graduationYear && (!/^\d{4}$/.test(graduationYear) || Number(graduationYear) < 1950 || Number(graduationYear) > maxYear)) {
             notifyWarning(`Graduation year must be a 4-digit year between 1950 and ${maxYear}.`)
             return
+        }
+
+        for (const [label, value] of [
+            ['Phone number', form.phoneNumber],
+            ['Alternate phone number', form.alternatePhoneNumber],
+            ['Emergency contact number', form.emergencyContactNumber],
+        ]) {
+            if (value.trim() && !isValidPhMobile(value.trim())) {
+                notifyWarning(`${label} must be an 11-digit mobile number starting with 09.`)
+                return
+            }
         }
 
         try {
@@ -646,12 +658,12 @@ function StudentDetails() {
                                     </select>
                                 ))}
                                 {editField('Graduation Year', <input className="admin-search-input" inputMode="numeric" placeholder="e.g. 2026" value={form.graduationYear} onChange={(e) => setForm({ ...form, graduationYear: e.target.value.replace(/\D/g, '').slice(0, 4) })} disabled={saving} />)}
-                                {editField('Phone Number', <input className="admin-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />)}
+                                {editField('Phone Number', <input className="admin-search-input" type="tel" inputMode="numeric" maxLength={11} value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: digitsOnly(e.target.value) })} disabled={saving} />)}
                                 <div className="admin-info-field"><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{student.status}</strong></div>
                                 {editField('Address', <input className="admin-search-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={saving} />)}
-                                {editField('Alternate Phone Number', <input className="admin-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />)}
+                                {editField('Alternate Phone Number', <input className="admin-search-input" type="tel" inputMode="numeric" maxLength={11} value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: digitsOnly(e.target.value) })} disabled={saving} />)}
                                 {editField('Emergency Contact Name', <input className="admin-search-input" value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} disabled={saving} />)}
-                                {editField('Emergency Contact Number', <input className="admin-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />)}
+                                {editField('Emergency Contact Number', <input className="admin-search-input" type="tel" inputMode="numeric" maxLength={11} value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: digitsOnly(e.target.value) })} disabled={saving} />)}
                             </div>
                             {editActions}
                         </form>

@@ -17,8 +17,7 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
-
-const PH_MOBILE = /^09\d{9}$/
+import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
 
 function EmployeeDetails() {
     const { role } = useOutletContext() || {}
@@ -240,7 +239,7 @@ function EmployeeDetails() {
         if (blockedForReadOnlyViewer(role)) return
 
         const trimmedPhone = form.phoneNumber.trim()
-        if (trimmedPhone && !PH_MOBILE.test(trimmedPhone)) {
+        if (trimmedPhone && !isValidPhMobile(trimmedPhone)) {
             const message = 'Contact number must be an 11-digit mobile number starting with 09.'
             setError(message)
             notifyError(message)
@@ -538,9 +537,11 @@ function EmployeeDetails() {
                             <input
                                 className="form-input"
                                 type="tel"
+                                inputMode="numeric"
+                                maxLength={11}
                                 value={form.phoneNumber}
-                                onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
-                                placeholder="09XX XXX XXXX"
+                                onChange={(e) => setForm({ ...form, phoneNumber: digitsOnly(e.target.value) })}
+                                placeholder="09XXXXXXXXX"
                                 disabled={saving}
                             />
                         </div>

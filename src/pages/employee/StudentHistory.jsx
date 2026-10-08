@@ -15,6 +15,7 @@ import '../auth/Auth.css'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { friendlyError } from '../../lib/friendlyError'
+import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -184,6 +185,17 @@ function StudentHistory() {
         if (graduationYear && (!/^\d{4}$/.test(graduationYear) || Number(graduationYear) < 1950 || Number(graduationYear) > maxYear)) {
             notifyWarning(`Graduation year must be a 4-digit year between 1950 and ${maxYear}.`)
             return
+        }
+
+        for (const [label, value] of [
+            ['Phone number', form.phoneNumber],
+            ['Alternate phone number', form.alternatePhoneNumber],
+            ['Emergency contact number', form.emergencyContactNumber],
+        ]) {
+            if (value.trim() && !isValidPhMobile(value.trim())) {
+                notifyWarning(`${label} must be an 11-digit mobile number starting with 09.`)
+                return
+            }
         }
 
         try {
@@ -536,7 +548,7 @@ function StudentHistory() {
                         </div>
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
-                            <input className="employee-search-input" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} disabled={saving} />
+                            <input className="employee-search-input" type="tel" inputMode="numeric" maxLength={11} value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: digitsOnly(e.target.value) })} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">College</label>
@@ -577,7 +589,7 @@ function StudentHistory() {
                         </div>
                         <div className="form-group">
                             <label className="form-label">Alternate Phone Number</label>
-                            <input className="employee-search-input" value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: e.target.value })} disabled={saving} />
+                            <input className="employee-search-input" type="tel" inputMode="numeric" maxLength={11} value={form.alternatePhoneNumber} onChange={(e) => setForm({ ...form, alternatePhoneNumber: digitsOnly(e.target.value) })} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Personal Email</label>
@@ -589,7 +601,7 @@ function StudentHistory() {
                         </div>
                         <div className="form-group">
                             <label className="form-label">Emergency Contact Number</label>
-                            <input className="employee-search-input" value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: e.target.value })} disabled={saving} />
+                            <input className="employee-search-input" type="tel" inputMode="numeric" maxLength={11} value={form.emergencyContactNumber} onChange={(e) => setForm({ ...form, emergencyContactNumber: digitsOnly(e.target.value) })} disabled={saving} />
                         </div>
                     </div>
 

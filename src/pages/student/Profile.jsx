@@ -13,6 +13,7 @@ import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib
 import '../auth/Auth.css'
 import './StudentPages.css'
 import { getCaptchaToken } from '../../lib/captcha'
+import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
 import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconKey } from '../../components/ProfileParts'
 
 function Profile() {
@@ -239,6 +240,19 @@ function Profile() {
     }
 
     const saveChanges = async () => {
+        if (phoneNumber.trim() && !isValidPhMobile(phoneNumber.trim())) {
+            setError('Phone number must be an 11-digit mobile number starting with 09.')
+            return
+        }
+        if (alternatePhoneNumber.trim() && !isValidPhMobile(alternatePhoneNumber.trim())) {
+            setError('Alternate phone number must be an 11-digit mobile number starting with 09.')
+            return
+        }
+        if (emergencyContactNumber.trim() && !isValidPhMobile(emergencyContactNumber.trim())) {
+            setError('Emergency contact number must be an 11-digit mobile number starting with 09.')
+            return
+        }
+
         try {
             setSaving(true)
             setError('')
@@ -584,9 +598,11 @@ function Profile() {
                             <input
                                 className="form-input"
                                 type="tel"
+                                inputMode="numeric"
+                                maxLength={11}
                                 value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                placeholder="09XX XXX XXXX"
+                                onChange={(e) => setPhoneNumber(digitsOnly(e.target.value))}
+                                placeholder="09XXXXXXXXX"
                                 disabled={saving}
                             />
                         </div>
@@ -596,9 +612,11 @@ function Profile() {
                             <input
                                 className="form-input"
                                 type="tel"
+                                inputMode="numeric"
+                                maxLength={11}
                                 value={alternatePhoneNumber}
-                                onChange={(e) => setAlternatePhoneNumber(e.target.value)}
-                                placeholder="09XX XXX XXXX"
+                                onChange={(e) => setAlternatePhoneNumber(digitsOnly(e.target.value))}
+                                placeholder="09XXXXXXXXX"
                                 disabled={saving}
                             />
                         </div>
@@ -647,9 +665,11 @@ function Profile() {
                             <input
                                 className="form-input"
                                 type="tel"
+                                inputMode="numeric"
+                                maxLength={11}
                                 value={emergencyContactNumber}
-                                onChange={(e) => setEmergencyContactNumber(e.target.value)}
-                                placeholder="09XX XXX XXXX"
+                                onChange={(e) => setEmergencyContactNumber(digitsOnly(e.target.value))}
+                                placeholder="09XXXXXXXXX"
                                 disabled={saving}
                             />
                         </div>

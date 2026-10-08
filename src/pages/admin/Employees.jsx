@@ -16,10 +16,9 @@ import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
 import { confirmWithPassword } from '../../lib/confirmPassword'
+import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
-
-const PH_MOBILE = /^09\d{9}$/
 
 const BLANK_FORM = {
     firstName: '',
@@ -173,7 +172,7 @@ function Employees() {
             return
         }
 
-        if (form.phoneNumber.trim() && !PH_MOBILE.test(form.phoneNumber.trim())) {
+        if (form.phoneNumber.trim() && !isValidPhMobile(form.phoneNumber.trim())) {
             setAddError('Contact number must be an 11-digit mobile number starting with 09.')
             return
         }
@@ -519,7 +518,7 @@ function Employees() {
 
                                 <div className="form-group">
                                     <label className="form-label" htmlFor="emp-phone">Contact Number <span className="app-modal-optional">optional</span></label>
-                                    <input id="emp-phone" className="form-input" type="tel" autoComplete="off" value={form.phoneNumber} onChange={(e) => updateForm('phoneNumber', e.target.value)} placeholder="09XX XXX XXXX" disabled={creating} />
+                                    <input id="emp-phone" className="form-input" type="tel" inputMode="numeric" maxLength={11} autoComplete="off" value={form.phoneNumber} onChange={(e) => updateForm('phoneNumber', digitsOnly(e.target.value))} placeholder="09XXXXXXXXX" disabled={creating} />
                                 </div>
                             </div>
                         </section>
