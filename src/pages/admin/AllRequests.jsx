@@ -172,17 +172,24 @@ function AllRequests() {
                         { header: 'Purpose', key: 'purpose', width: 28 },
                         { header: 'Requested At', key: 'requestedAt', width: 20, format: 'datetime' },
                         { header: 'Completed At', key: 'completedAt', width: 20, format: 'datetime' },
+                        { header: 'Auto-Deletes On', key: 'autoDeletesOn', width: 20, format: 'datetime' },
                     ],
-                    rows: visibleRequests.map((r) => ({
-                        ...r,
-                        statusLabel: r.status.replace(/_/g, ' '),
-                        requestedAt: r.requested_at ? new Date(r.requested_at) : null,
-                        completedAt: r.completed_at ? new Date(r.completed_at) : null,
-                    })),
+                    rows: visibleRequests.map((r) => {
+                        const resolvedAt = r.completed_at || r.cancelled_at || r.auto_rejected_at || (['rejected', 'cancelled'].includes(r.status) ? r.updated_at : null)
+                        const autoDeletesOn = resolvedAt ? new Date(new Date(resolvedAt).getTime() + 30 * 24 * 60 * 60 * 1000) : null
+                        return {
+                            ...r,
+                            statusLabel: r.status.replace(/_/g, ' '),
+                            requestedAt: r.requested_at ? new Date(r.requested_at) : null,
+                            completedAt: r.completed_at ? new Date(r.completed_at) : null,
+                            autoDeletesOn,
+                        }
+                    }),
                 },
             ], [
                 'CertiChain — All Requests',
                 `${activeChip === 'all' ? 'All statuses' : activeChip.replace(/_/g, ' ')} · ${visibleRequests.length} request${visibleRequests.length === 1 ? '' : 's'} · Generated ${new Date().toLocaleString('en-PH')}`,
+                'Completed, rejected and cancelled requests are auto-deleted 30 days after they were resolved (not requests still pending/in progress). "Auto-Deletes On" shows that date.',
             ])
         } catch (err) {
             console.error('EXPORT REQUESTS ERROR:', err)
