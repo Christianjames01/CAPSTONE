@@ -236,9 +236,20 @@ function Messages() {
         }
     }
 
-    // Only messages sent to the head count as unread here -- oversight
-    // threads between a student and an employee belong to them.
+    // Messages sent to the head -- used for "Mark all as read" and for
+    // deciding what actually gets marked read when the head opens a
+    // thread. An oversight thread's messages were never addressed to the
+    // head, so opening one to look must never mark them read on behalf of
+    // the student or employee who actually received them.
     const unreadCountFor = (thread) => unreadReceived(thread.messages, currentUserId).length
+
+    // Any unread message at all, head's or not -- what the thread list
+    // badge and the Unread tab go by, same as the "All" view already shows
+    // which threads have something unseen. An oversight thread the head
+    // is just watching still shows as unread here if the actual
+    // participant hasn't read it yet -- same as Messenger shows unread on
+    // any conversation, not only ones addressed to you specifically.
+    const threadUnreadCount = (thread) => thread.messages.filter((m) => !m.is_read).length
 
     const totalUnread = threads.reduce((sum, t) => sum + unreadCountFor(t), 0)
 
@@ -557,7 +568,7 @@ function Messages() {
 
     const roleLabel = (role) => (role === 'student' ? 'Student' : role === 'employee' ? 'Employee' : role ? 'Registrar' : '')
 
-    const unreadThreads = threads.filter((t) => unreadCountFor(t) > 0)
+    const unreadThreads = threads.filter((t) => threadUnreadCount(t) > 0)
     const myThreads = threads.filter((t) => isMyThread(t))
 
     const threadQuery = threadSearch.trim().toLowerCase()
@@ -676,7 +687,7 @@ function Messages() {
                                     <ChatListItem
                                         key={thread.pairKey}
                                         active={thread.pairKey === activeKey}
-                                        unread={unreadCountFor(thread)}
+                                        unread={threadUnreadCount(thread)}
                                         people={peopleOf(thread)}
                                         name={titleOf(thread)}
                                         meta={isMyThread(thread) ? null : 'Oversight'}
