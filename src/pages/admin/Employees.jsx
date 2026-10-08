@@ -646,7 +646,7 @@ function Employees() {
 
                         <div className="admin-card-actions">
                             <button
-                                className="admin-link-button"
+                                className={`admin-link-button${employee.canAddEmployees ? ' is-success' : ''}`}
                                 onClick={() => toggleCanAddEmployees(employee)}
                                 disabled={updating === employee.employee_id}
                             >
@@ -662,6 +662,7 @@ function Employees() {
 
                             <button
                                 className={`admin-link-button${employee.status === 'active' ? ' is-danger' : ' is-success'}`}
+                                style={{ marginLeft: 'auto' }}
                                 onClick={() => toggleStatus(employee)}
                                 disabled={updating === employee.employee_id}
                             >
@@ -672,7 +673,6 @@ function Employees() {
 
                             <button
                                 className="admin-link-button is-danger"
-                                style={{ marginLeft: 'auto' }}
                                 onClick={() => removeEmployee(employee)}
                                 disabled={removing === employee.employee_id}
                             >
