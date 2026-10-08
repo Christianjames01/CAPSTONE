@@ -264,6 +264,14 @@ function ClaimScheduleList() {
                 throw new Error('Schedule was updated but request status could not be updated: ' + requestError.message)
             }
 
+            const { error: releaseError } = await supabase
+                .from('credentials')
+                .update({ released_at: now })
+                .eq('request_id', appointment.request_id)
+                .is('released_at', null)
+
+            if (releaseError) console.error('RELEASE CREDENTIAL ERROR:', releaseError)
+
             await logActivity({
                 employeeId: employee.employee_id,
                 action: 'mark_claimed',

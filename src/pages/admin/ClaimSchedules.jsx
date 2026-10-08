@@ -276,6 +276,14 @@ function ClaimSchedules() {
 
             if (requestError) throw new Error(requestError.message)
 
+            const { error: releaseError } = await supabase
+                .from('credentials')
+                .update({ released_at: now })
+                .eq('request_id', schedule.request_id)
+                .is('released_at', null)
+
+            if (releaseError) console.error('RELEASE CREDENTIAL ERROR:', releaseError)
+
             await logActivity({
                 userId: user?.id,
                 action: 'mark_claimed',
