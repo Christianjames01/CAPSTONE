@@ -630,7 +630,7 @@ function StudentDetails() {
                     ) : (
                         <form onSubmit={submitEdits}>
                             <div className="admin-info-grid admin-edit-grid">
-                                {editField('Student Number', <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 8) })} disabled={saving} autoFocus />)}
+                                {editField('Student Number', <input className="admin-search-input" inputMode="numeric" value={form.studentNumber} onChange={(e) => setForm({ ...form, studentNumber: e.target.value.replace(/\D/g, '').slice(0, 9) })} disabled={saving} autoFocus />)}
                                 {editField('College', (
                                     <select className="admin-search-input" value={form.collegeId} onChange={(e) => onCollegeChange(e.target.value)} disabled={saving}>
                                         <option value="">-- None --</option>

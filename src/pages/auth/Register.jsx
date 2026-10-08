@@ -76,7 +76,7 @@ function Register() {
     }
 
     const handleStudentNumberInput = (e) => {
-        setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 8))
+        setStudentNumber(e.target.value.replace(/\D/g, '').slice(0, 9))
         setStudentNumberTaken(false)
     }
 
@@ -524,7 +524,7 @@ function Register() {
                             value={studentNumber}
                             onChange={handleStudentNumberInput}
                             onBlur={checkStudentNumber}
-                            placeholder="XXXXXXXX"
+                            placeholder="XXXXXXXXX"
                             autoComplete="off"
                             aria-invalid={studentNumberTaken || undefined}
                             required
