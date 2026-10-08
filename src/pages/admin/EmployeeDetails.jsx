@@ -18,6 +18,8 @@ import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
 
+const PH_MOBILE = /^09\d{9}$/
+
 function EmployeeDetails() {
     const { role } = useOutletContext() || {}
     const { employeeId } = useParams()
@@ -229,12 +231,22 @@ function EmployeeDetails() {
             positionTitle,
             displayName,
             assignedCollegeId,
+            phoneNumber: employee.phone_number || '',
         })
         setEditing(true)
     }
 
     const saveEmployee = async () => {
         if (blockedForReadOnlyViewer(role)) return
+
+        const trimmedPhone = form.phoneNumber.trim()
+        if (trimmedPhone && !PH_MOBILE.test(trimmedPhone)) {
+            const message = 'Contact number must be an 11-digit mobile number starting with 09.'
+            setError(message)
+            notifyError(message)
+            return
+        }
+
         try {
             setSaving(true)
             setError('')
@@ -266,11 +278,23 @@ function EmployeeDetails() {
                 throw thrown
             }
 
+            const { error: profileUpdateError } = await supabase
+                .from('profiles')
+                .update({ phone_number: trimmedPhone || null })
+                .eq('user_id', employee.user_id)
+
+            if (profileUpdateError) {
+                const thrown = new Error('Employee was updated, but the contact number could not be saved: ' + profileUpdateError.message)
+                thrown.details = profileUpdateError.details
+                throw thrown
+            }
+
             const changes = describeChanges([
                 ['employee number', employee.employee_number, form.employeeNumber.trim()],
                 ['position', employee.position_title, form.positionTitle.trim()],
                 ['nickname', employee.display_name, form.displayName.trim() || null],
                 ['assigned college', collegeName(employee.assigned_college_id), collegeName(form.assignedCollegeId || null)],
+                ['contact number', employee.phone_number, trimmedPhone || null],
             ])
 
             await logActivity({
@@ -507,6 +531,18 @@ function EmployeeDetails() {
                             <small style={{ display: 'block', marginTop: 6, fontSize: 12, color: 'var(--slate)' }}>
                                 If set, students see this name (not the real name) when messaging this employee.
                             </small>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Contact Number (optional)</label>
+                            <input
+                                className="form-input"
+                                type="tel"
+                                value={form.phoneNumber}
+                                onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                                placeholder="09XX XXX XXXX"
+                                disabled={saving}
+                            />
                         </div>
 
                         <div className="form-group">
