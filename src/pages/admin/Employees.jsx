@@ -19,6 +19,8 @@ import { confirmWithPassword } from '../../lib/confirmPassword'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
+const PH_MOBILE = /^09\d{9}$/
+
 const BLANK_FORM = {
     firstName: '',
     lastName: '',
@@ -28,6 +30,7 @@ const BLANK_FORM = {
     assignedCollegeId: '',
     assignedProgramId: '',
     email: '',
+    phoneNumber: '',
     password: '',
 }
 
@@ -170,6 +173,11 @@ function Employees() {
             return
         }
 
+        if (form.phoneNumber.trim() && !PH_MOBILE.test(form.phoneNumber.trim())) {
+            setAddError('Contact number must be an 11-digit mobile number starting with 09.')
+            return
+        }
+
         try {
             setCreating(true)
 
@@ -191,6 +199,7 @@ function Employees() {
                 positionTitle: form.positionTitle.trim(),
                 assignedCollegeId: form.assignedCollegeId || null,
                 displayName: form.displayName.trim() || null,
+                phoneNumber: form.phoneNumber.trim() || null,
             })
 
             await logActivity({
@@ -372,6 +381,16 @@ function Employees() {
         )
         if (!confirmed) return
 
+        // Granting this is a real privilege escalation (the employee can
+        // then create more logins themselves) -- confirm it's really you.
+        if (next) {
+            const verified = await confirmWithPassword({
+                title: 'Confirm with your password',
+                text: `Enter your password to let ${employee.name} add employee accounts.`,
+            })
+            if (!verified) return
+        }
+
         try {
             setUpdating(employee.employee_id)
 
@@ -496,6 +515,11 @@ function Employees() {
                                 <div className="form-group">
                                     <label className="form-label" htmlFor="emp-position">Position Title</label>
                                     <input id="emp-position" className="form-input" type="text" autoComplete="off" value={form.positionTitle} onChange={(e) => updateForm('positionTitle', e.target.value)} placeholder="e.g. Registrar Staff" disabled={creating} />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="emp-phone">Contact Number <span className="app-modal-optional">optional</span></label>
+                                    <input id="emp-phone" className="form-input" type="tel" autoComplete="off" value={form.phoneNumber} onChange={(e) => updateForm('phoneNumber', e.target.value)} placeholder="09XX XXX XXXX" disabled={creating} />
                                 </div>
                             </div>
                         </section>

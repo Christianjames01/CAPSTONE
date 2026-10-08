@@ -46,6 +46,7 @@ async function createBySignUp({
     positionTitle,
     assignedCollegeId,
     displayName,
+    phoneNumber,
 }) {
     const tempClient = createClient(supabaseUrl, supabaseKey, {
         auth: { persistSession: false, autoRefreshToken: false },
@@ -95,7 +96,7 @@ async function createBySignUp({
 
     await supabase
         .from('profiles')
-        .update({ must_change_password: true })
+        .update({ must_change_password: true, phone_number: phoneNumber || null })
         .eq('user_id', data.user.id)
 
     return data.user

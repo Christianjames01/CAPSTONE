@@ -11,6 +11,8 @@ import { passwordMeetsRequirements, passwordRequirementMessage } from '../../lib
 import { IconUsers } from '../admin/icons'
 import './EmployeePages.css'
 
+const PH_MOBILE = /^09\d{9}$/
+
 const BLANK_FORM = {
     firstName: '',
     lastName: '',
@@ -18,6 +20,7 @@ const BLANK_FORM = {
     employeeNumber: '',
     positionTitle: '',
     email: '',
+    phoneNumber: '',
     password: '',
 }
 
@@ -58,6 +61,11 @@ function AddEmployee() {
             return
         }
 
+        if (form.phoneNumber.trim() && !PH_MOBILE.test(form.phoneNumber.trim())) {
+            setError('Contact number must be an 11-digit mobile number starting with 09.')
+            return
+        }
+
         try {
             setCreating(true)
 
@@ -78,6 +86,7 @@ function AddEmployee() {
                 employeeNumber: form.employeeNumber.trim(),
                 positionTitle: form.positionTitle.trim(),
                 displayName: form.displayName.trim() || null,
+                phoneNumber: form.phoneNumber.trim() || null,
             })
 
             await logActivity({
@@ -145,6 +154,11 @@ function AddEmployee() {
                         <div className="form-group">
                             <label className="form-label" htmlFor="emp-position">Position Title</label>
                             <input id="emp-position" className="form-input" type="text" autoComplete="off" value={form.positionTitle} onChange={(e) => updateForm('positionTitle', e.target.value)} placeholder="e.g. Registrar Staff" disabled={creating} />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="emp-phone">Contact Number <span className="app-modal-optional">optional</span></label>
+                            <input id="emp-phone" className="form-input" type="tel" autoComplete="off" value={form.phoneNumber} onChange={(e) => updateForm('phoneNumber', e.target.value)} placeholder="09XX XXX XXXX" disabled={creating} />
                         </div>
                     </div>
                 </section>
