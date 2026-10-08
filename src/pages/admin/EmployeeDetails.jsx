@@ -285,7 +285,9 @@ function EmployeeDetails() {
 
         } catch (err) {
             console.error('SAVE EMPLOYEE ERROR:', err)
-            setError(err.message || 'Failed to save employee.')
+            const message = friendlyError(err, 'Failed to save employee.')
+            setError(message)
+            notifyError(message)
         } finally {
             setSaving(false)
         }

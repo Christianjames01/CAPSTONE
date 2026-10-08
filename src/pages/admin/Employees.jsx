@@ -249,7 +249,9 @@ function Employees() {
 
         } catch (err) {
             console.error('ADD EMPLOYEE ERROR:', err)
-            setAddError(err.message || 'Failed to create employee account.')
+            const message = friendlyError(err, 'Failed to create employee account.')
+            setAddError(message)
+            notifyError(message)
         } finally {
             setCreating(false)
         }
