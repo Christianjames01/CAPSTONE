@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
+import { exportEmployeeBackup } from '../../lib/employeeBackup'
 import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
@@ -270,9 +271,23 @@ function Employees() {
     const removeEmployee = async (employee) => {
         if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(
-            `Remove ${employee.name}'s employee record? This does not delete their login account, only their registrar staff profile and access.`
+            `Remove ${employee.name}'s employee record? This does not delete their login account, only their registrar staff profile and access. An Excel backup will download first.`
         )
         if (!confirmed) return
+
+        try {
+            await exportEmployeeBackup(employee)
+        } catch (backupErr) {
+            console.error('EMPLOYEE BACKUP ERROR:', backupErr)
+            notifyError(friendlyError(backupErr, 'Failed to create the backup, so nothing was removed.'))
+            return
+        }
+
+        const proceed = await confirmModal(
+            `The backup for ${employee.name} has downloaded. Continue removing the employee record now?`,
+            { title: 'Backup downloaded', confirmButtonText: 'Remove record', icon: 'warning' }
+        )
+        if (!proceed) return
 
         // Deleting an employee is permanent: confirm who is making it.
         const verified = await confirmWithPassword({
