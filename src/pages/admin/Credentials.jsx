@@ -6,6 +6,7 @@ import { SkeletonPage } from '../../components/Skeleton'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import Modal from '../../components/Modal'
 import { IconXCircle } from './icons'
 import './AdminPages.css'
@@ -109,6 +110,14 @@ function Credentials() {
             notifyWarning('Please enter a reason for revoking this credential.')
             return
         }
+
+        // Revoking is permanent and public (the verify page shows it):
+        // confirm who is making it.
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to revoke credential ${revokeTarget.credential_number}.`,
+        })
+        if (!verified) return
 
         setRevoking(true)
 
