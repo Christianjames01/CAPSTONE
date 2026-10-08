@@ -170,6 +170,8 @@ function AllRequests() {
                 {
                     name: 'Requests',
                     columns: [
+                        { header: 'Credential #', key: 'credentialNumber', width: 18 },
+                        { header: 'Credential Status', key: 'credentialStatusLabel', width: 18 },
                         { header: 'Request #', key: 'request_number', width: 16 },
                         { header: 'Student #', key: 'studentNumber', width: 16 },
                         { header: 'Student Name', key: 'studentName', width: 26 },
@@ -177,8 +179,6 @@ function AllRequests() {
                         { header: 'Quantity', key: 'quantity', width: 10 },
                         { header: 'Total Amount', key: 'total_amount', width: 16, format: 'peso' },
                         { header: 'Status', key: 'statusLabel', width: 20 },
-                        { header: 'Credential #', key: 'credentialNumber', width: 18 },
-                        { header: 'Credential Status', key: 'credentialStatusLabel', width: 18 },
                         { header: 'Assigned Employee', key: 'employeeName', width: 24 },
                         { header: 'Purpose', key: 'purpose', width: 28 },
                         { header: 'Requested At', key: 'requestedAt', width: 20, format: 'datetime' },
