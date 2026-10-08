@@ -38,7 +38,7 @@ function Credentials() {
         try {
             const { data: credRows, error: credError } = await supabase
                 .from('credentials')
-                .select('credential_id, credential_number, status, student_id, request_id, document_type_id, generated_at, released_at, revoked_at, revocation_reason')
+                .select('credential_id, credential_number, status, student_id, request_id, document_type_id, generated_at, released_at, revoked_at, revoked_by, revocation_reason')
                 .order('generated_at', { ascending: false })
                 .limit(LOAD_LIMIT)
 
@@ -60,7 +60,10 @@ function Credentials() {
                     : Promise.resolve({ data: [] }),
             ])
 
-            const userIds = [...new Set((studentRows || []).map((s) => s.user_id).filter(Boolean))]
+            const userIds = [...new Set([
+                ...(studentRows || []).map((s) => s.user_id),
+                ...(credRows || []).map((c) => c.revoked_by),
+            ].filter(Boolean))]
             const { data: profileRows } = userIds.length
                 ? await supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', userIds)
                 : { data: [] }
@@ -74,12 +77,14 @@ function Credentials() {
                 (credRows || []).map((c) => {
                     const student = studentByStudentId[c.student_id]
                     const profile = student ? profileByUserId[student.user_id] : null
+                    const revokedByProfile = c.revoked_by ? profileByUserId[c.revoked_by] : null
                     return {
                         ...c,
                         documentName: docNameById[c.document_type_id] || 'Unknown document',
                         requestNumber: requestNumberById[c.request_id] || '',
                         studentName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Unknown',
                         studentNumber: student?.student_number || '',
+                        revokedByName: revokedByProfile ? `${revokedByProfile.first_name} ${revokedByProfile.last_name}`.trim() : '',
                     }
                 })
             )
@@ -246,8 +251,16 @@ function Credentials() {
                                             <span className={`admin-status-pill status-${c.status === 'revoked' ? 'rejected' : 'active'}`}>
                                                 {c.status === 'revoked' ? 'Revoked' : 'Generated'}
                                             </span>
-                                            {c.status === 'revoked' && c.revocation_reason && (
-                                                <span style={{ display: 'block', color: 'var(--slate)', fontSize: 12 }}>{c.revocation_reason}</span>
+                                            {c.status === 'revoked' && (
+                                                <span style={{ display: 'block', color: 'var(--slate)', fontSize: 12, marginTop: 2 }}>
+                                                    {c.revoked_at && (
+                                                        <>
+                                                            By {c.revokedByName || 'Unknown'} on {formatWhen(c.revoked_at)}
+                                                            <br />
+                                                        </>
+                                                    )}
+                                                    {c.revocation_reason}
+                                                </span>
                                             )}
                                         </td>
                                         <td>{formatWhen(c.generated_at)}</td>
