@@ -261,7 +261,9 @@ function EmployeeDetails() {
                 .eq('employee_id', employeeId)
 
             if (updateError) {
-                throw new Error('Failed to update employee: ' + updateError.message)
+                const thrown = new Error('Failed to update employee: ' + updateError.message)
+                thrown.details = updateError.details
+                throw thrown
             }
 
             const changes = describeChanges([

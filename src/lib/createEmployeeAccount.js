@@ -16,12 +16,17 @@ export async function createEmployeeAccount(fields) {
     // The function answered with its own error (e.g. email already used).
     if (error instanceof FunctionsHttpError && error.context?.status !== 404) {
         let message = error.message
+        let details
         try {
-            message = (await error.context.json())?.error || message
+            const body = await error.context.json()
+            message = body?.error || message
+            details = body?.details
         } catch {
             // keep the generic message
         }
-        throw new Error(message)
+        const thrown = new Error(message)
+        if (details) thrown.details = details
+        throw thrown
     }
 
     // Not deployed yet (404) or unreachable: use the old way.
@@ -81,9 +86,11 @@ async function createBySignUp({
         })
 
     if (employeeError) {
-        throw new Error(
+        const thrown = new Error(
             `Account created (${email}), but the employee profile could not be saved: ${employeeError.message}`
         )
+        thrown.details = employeeError.details
+        throw thrown
     }
 
     await supabase
