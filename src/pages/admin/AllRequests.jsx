@@ -15,6 +15,7 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
+import { downloadExcelReport } from '../../lib/reportExport'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -52,6 +53,7 @@ function AllRequests() {
     const [selectedIds, setSelectedIds] = useState(new Set())
     const [bulkStatus, setBulkStatus] = useState(BULK_STATUS_OPTIONS[0])
     const [applyingBulk, setApplyingBulk] = useState(false)
+    const [exporting, setExporting] = useState(false)
 
     const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
 
@@ -151,6 +153,44 @@ function AllRequests() {
                 r.documentName.toLowerCase().includes(term)
             )
         }))
+
+    const exportExcel = async () => {
+        try {
+            setExporting(true)
+            await downloadExcelReport(`CertiChain-Requests-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+                {
+                    name: 'Requests',
+                    columns: [
+                        { header: 'Request #', key: 'request_number', width: 16 },
+                        { header: 'Student #', key: 'studentNumber', width: 16 },
+                        { header: 'Student Name', key: 'studentName', width: 26 },
+                        { header: 'Document', key: 'documentName', width: 28 },
+                        { header: 'Quantity', key: 'quantity', width: 10 },
+                        { header: 'Total Amount', key: 'total_amount', width: 16, format: 'peso' },
+                        { header: 'Status', key: 'statusLabel', width: 20 },
+                        { header: 'Assigned Employee', key: 'employeeName', width: 24 },
+                        { header: 'Purpose', key: 'purpose', width: 28 },
+                        { header: 'Requested At', key: 'requestedAt', width: 20, format: 'datetime' },
+                        { header: 'Completed At', key: 'completedAt', width: 20, format: 'datetime' },
+                    ],
+                    rows: visibleRequests.map((r) => ({
+                        ...r,
+                        statusLabel: r.status.replace(/_/g, ' '),
+                        requestedAt: r.requested_at ? new Date(r.requested_at) : null,
+                        completedAt: r.completed_at ? new Date(r.completed_at) : null,
+                    })),
+                },
+            ], [
+                'CertiChain — All Requests',
+                `${activeChip === 'all' ? 'All statuses' : activeChip.replace(/_/g, ' ')} · ${visibleRequests.length} request${visibleRequests.length === 1 ? '' : 's'} · Generated ${new Date().toLocaleString('en-PH')}`,
+            ])
+        } catch (err) {
+            console.error('EXPORT REQUESTS ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to export requests.'))
+        } finally {
+            setExporting(false)
+        }
+    }
 
     const allVisibleSelected = visibleRequests.length > 0 && visibleRequests.every((r) => selectedIds.has(r.request_id))
 
@@ -296,15 +336,25 @@ function AllRequests() {
                 />
             )}
 
-            <input
-                className="admin-search-input admin-search-field"
-                style={{ marginBottom: 16 }}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by request number, student number, or document"
-                aria-label="Search requests"
-            />
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+                <input
+                    className="admin-search-input admin-search-field"
+                    style={{ flex: '1 1 260px', marginBottom: 0 }}
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by request number, student number, or document"
+                    aria-label="Search requests"
+                />
+                <button
+                    type="button"
+                    className="admin-secondary-button"
+                    onClick={exportExcel}
+                    disabled={exporting || visibleRequests.length === 0}
+                >
+                    {exporting ? 'Preparing…' : `Export Excel (${visibleRequests.length})`}
+                </button>
+            </div>
 
             <div className="admin-filter-row">
                 {STATUS_CHIPS.map((chip) => (
