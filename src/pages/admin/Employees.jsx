@@ -647,6 +647,14 @@ function Employees() {
                         <div className="admin-card-actions">
                             <button
                                 className="admin-link-button"
+                                onClick={() => toggleCanAddEmployees(employee)}
+                                disabled={updating === employee.employee_id}
+                            >
+                                {employee.canAddEmployees ? 'Revoke adding employees' : 'Allow adding employees'}
+                            </button>
+
+                            <button
+                                className="admin-link-button"
                                 onClick={() => navigate(adminPath(`/employees/${employee.employee_id}`))}
                             >
                                 Edit & assignments →
@@ -663,15 +671,8 @@ function Employees() {
                             </button>
 
                             <button
-                                className="admin-link-button"
-                                onClick={() => toggleCanAddEmployees(employee)}
-                                disabled={updating === employee.employee_id}
-                            >
-                                {employee.canAddEmployees ? 'Revoke adding employees' : 'Allow adding employees'}
-                            </button>
-
-                            <button
                                 className="admin-link-button is-danger"
+                                style={{ marginLeft: 'auto' }}
                                 onClick={() => removeEmployee(employee)}
                                 disabled={removing === employee.employee_id}
                             >
