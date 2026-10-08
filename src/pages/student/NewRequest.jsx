@@ -417,6 +417,15 @@ function NewRequest() {
                 <p>Choose the document you need, check what's required, then submit. You can request several documents at once and pay one total at the Finance Office.</p>
             </div>
 
+            <div className="student-notice tone-info">
+                <strong>How this works</strong>
+                <ol style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+                    <li>Choose your document below — the fee shown is your official assessment, so there's no need to visit the Registrar's Office first.</li>
+                    <li>Pay that amount at the HCDC Finance Office and keep your Official Receipt.</li>
+                    <li>Upload a photo of the receipt here. The Registrar verifies it, processes your document, and gives you a claiming date.</li>
+                </ol>
+            </div>
+
             <TaskSteps
                 label="Your progress"
                 steps={['Choose a document', 'Check requirements & details', 'Review & submit']}
