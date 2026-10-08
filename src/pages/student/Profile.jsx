@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { InfoBox } from './StudentUi'
 import { friendlyError } from '../../lib/friendlyError'
-import { MAX_ORIGINAL_IMAGE_MB, shrinkImage } from '../../lib/shrinkImage'
 import { IconLock } from '../../components/UiIcons'
 import { IconPhone, IconMail, IconBook, IconUserCircle } from './icons'
 import { supabase } from '../../lib/supabase'
@@ -28,7 +27,6 @@ function Profile() {
 
     const [editing, setEditing] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
     const [phoneNumber, setPhoneNumber] = useState('')
     const [address, setAddress] = useState('')
@@ -146,80 +144,6 @@ function Profile() {
             setError(friendlyError(err, "We couldn't load your profile."))
         } finally {
             setLoading(false)
-        }
-    }
-
-    const uploadAvatar = async (file) => {
-        setError('')
-        setMessage('')
-
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
-
-        if (!allowedTypes.includes(file.type)) {
-            setError('Only JPG, PNG, and WEBP images are allowed.')
-            return
-        }
-
-        if (file.size > MAX_ORIGINAL_IMAGE_MB * 1024 * 1024) {
-            setError(`Image must not exceed ${MAX_ORIGINAL_IMAGE_MB} MB.`)
-            return
-        }
-
-        // Avatars are shown small: shrink to 600 px before upload.
-        const photo = await shrinkImage(file, { maxSide: 600, skipBelowBytes: 150 * 1024 })
-        if (photo.size > 2 * 1024 * 1024) {
-            setError('Image must not exceed 2 MB.')
-            return
-        }
-
-        try {
-            setUploadingAvatar(true)
-
-            const {
-                data: { user },
-                error: userError
-            } = await supabase.auth.getUser()
-
-            if (userError || !user) {
-                throw new Error('You are not logged in.')
-            }
-
-            const fileExtension = photo.name.split('.').pop().toLowerCase()
-            const filePath = `${user.id}/avatar-${Date.now()}.${fileExtension}`
-
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, photo, { cacheControl: '3600', upsert: false })
-
-            if (uploadError) {
-                throw new Error('Failed to upload photo: ' + uploadError.message)
-            }
-
-            const { data: publicUrlData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(filePath)
-
-            const publicUrl = publicUrlData?.publicUrl
-
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ profile_photo_url: publicUrl })
-                .eq('user_id', user.id)
-
-            if (updateError) {
-                await supabase.storage.from('avatars').remove([filePath])
-                throw new Error('Failed to save photo: ' + updateError.message)
-            }
-
-            setProfile((prev) => ({ ...prev, profile_photo_url: publicUrl }))
-            setMessage('Profile photo updated.')
-            window.dispatchEvent(new Event('profile-updated'))
-
-        } catch (err) {
-            console.error('AVATAR UPLOAD ERROR:', err)
-            setError(err.message || 'Failed to upload photo.')
-        } finally {
-            setUploadingAvatar(false)
         }
     }
 
@@ -467,25 +391,12 @@ function Profile() {
             </div>
 
             <InfoBox title="What you can change here">
-                You can update your phone number, email, password and photo. Your name, student number, college and
+                You can update your phone number, email and password. Your name, student number, college and
                 program come from your school record — if any of them is wrong, message the Registrar to have it corrected.
             </InfoBox>
 
             {error && <div className="student-error-box">{error}</div>}
             {message && <div className="student-success-box">{message}</div>}
-
-            <input
-                id="avatar-input"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={{ display: 'none' }}
-                disabled={uploadingAvatar}
-                onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) uploadAvatar(file)
-                    e.target.value = ''
-                }}
-            />
 
             <div className="pf-page">
                 <ProfileHero
@@ -495,8 +406,6 @@ function Profile() {
                     eyebrow="Student"
                     subtitle={[programName, collegeName].filter(Boolean).join(' · ') || profile?.email}
                     tags={[student?.student_number, student?.year_level, student?.enrollment_status]}
-                    onChangePhoto={() => document.getElementById('avatar-input').click()}
-                    uploading={uploadingAvatar}
                 />
 
                 <div className="pf-layout">
