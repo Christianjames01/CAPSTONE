@@ -15,6 +15,7 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
@@ -263,6 +264,13 @@ function Employees() {
             `Remove ${employee.name}'s employee record? This does not delete their login account, only their registrar staff profile and access.`
         )
         if (!confirmed) return
+
+        // Deleting an employee is permanent: confirm who is making it.
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to remove ${employee.name}'s employee record.`,
+        })
+        if (!verified) return
 
         try {
             setRemoving(employee.employee_id)
