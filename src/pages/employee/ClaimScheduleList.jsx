@@ -63,9 +63,10 @@ function ClaimScheduleList() {
 
             setEmployee(employeeData)
 
-            const isReleasingOnly = employeeData.access_scope === 'releasing'
-
-            let needsSchedulingQuery = supabase
+            // Claiming is a shared, front-desk job: every employee sees every
+            // request ready for claiming and every upcoming appointment
+            // office-wide, not just ones assigned to or scheduled by them.
+            const needsSchedulingQuery = supabase
                 .from('document_requests')
                 .select(`
                     request_id,
@@ -78,12 +79,6 @@ function ClaimScheduleList() {
                 `)
                 .eq('status', 'ready_for_claiming')
                 .order('processed_at', { ascending: false })
-
-            if (!isReleasingOnly) {
-                // Releasing is a front-desk job: it sees every request ready
-                // for claiming office-wide, not just ones assigned to it.
-                needsSchedulingQuery = needsSchedulingQuery.eq('assigned_employee_id', employeeData.employee_id)
-            }
 
             const { data: requests, error: requestError } = await needsSchedulingQuery
 
@@ -139,7 +134,7 @@ function ClaimScheduleList() {
 
             const today = new Date().toISOString().slice(0, 10)
 
-            let todayScheduleQuery = supabase
+            const todayScheduleQuery = supabase
                 .from('claim_schedules')
                 .select(`
                     claim_schedule_id,
@@ -155,10 +150,6 @@ function ClaimScheduleList() {
                 .eq('claim_date', today)
                 .neq('status', 'cancelled')
                 .order('claim_time', { ascending: true })
-
-            if (!isReleasingOnly) {
-                todayScheduleQuery = todayScheduleQuery.eq('scheduled_by', employeeData.employee_id)
-            }
 
             const { data: todaySchedules, error: todayError } = await todayScheduleQuery
 
@@ -244,7 +235,9 @@ function ClaimScheduleList() {
                 throw new Error('Failed to update claim schedule: ' + scheduleError.message)
             }
 
-            let requestUpdateQuery = supabase
+            // Claiming is shared front-desk work -- any employee can release a
+            // request ready for claiming, not just the one it's assigned to.
+            const { error: requestError } = await supabase
                 .from('document_requests')
                 .update({
                     status: 'completed',
@@ -253,12 +246,6 @@ function ClaimScheduleList() {
                     updated_at: now,
                 })
                 .eq('request_id', appointment.request_id)
-
-            if (employee.access_scope !== 'releasing') {
-                requestUpdateQuery = requestUpdateQuery.eq('assigned_employee_id', employee.employee_id)
-            }
-
-            const { error: requestError } = await requestUpdateQuery
 
             if (requestError) {
                 throw new Error('Schedule was updated but request status could not be updated: ' + requestError.message)

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
 import { deleteStudentAccount } from '../../lib/deleteStudentAccount'
+import { exportStudentBackup } from '../../lib/studentBackup'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
@@ -335,19 +336,27 @@ function Students() {
                 throw new Error('Failed to check request history: ' + countError.message)
             }
 
-            if (requestCount > 0) {
-                notifyError(
-                    `${student.fullName} has ${requestCount} document request${requestCount === 1 ? '' : 's'} on file, so their account can't be deleted. Deactivate the account instead.`,
-                    "Can't delete"
-                )
+            const confirmed = await confirmModal(
+                requestCount > 0
+                    ? `${student.fullName} has ${requestCount} document request${requestCount === 1 ? '' : 's'} on file. Deleting removes their login, profile, student record, requests, receipts and claim schedules entirely -- this cannot be undone. An Excel backup of everything will download first.`
+                    : `Permanently delete ${student.fullName}'s account? This removes their login, profile, and student record entirely. This cannot be undone. An Excel backup will download first.`,
+                { title: 'Delete this account?', confirmButtonText: 'Back up & delete', icon: 'warning' }
+            )
+            if (!confirmed) return
+
+            try {
+                await exportStudentBackup(student)
+            } catch (backupErr) {
+                console.error('STUDENT BACKUP ERROR:', backupErr)
+                notifyError(friendlyError(backupErr, 'Failed to create the backup, so nothing was deleted.'))
                 return
             }
 
-            const confirmed = await confirmModal(
-                `Permanently delete ${student.fullName}'s account? This removes their login, profile, and student record entirely. This cannot be undone.`,
-                { title: 'Delete this account?', confirmButtonText: 'Delete account', icon: 'warning' }
+            const proceed = await confirmModal(
+                `The backup for ${student.fullName} has downloaded. Continue deleting the account now?`,
+                { title: 'Backup downloaded', confirmButtonText: 'Delete account', icon: 'warning' }
             )
-            if (!confirmed) return
+            if (!proceed) return
 
             const { value: password } = await Swal.fire({
                 title: 'Confirm your password',
