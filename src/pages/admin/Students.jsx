@@ -13,6 +13,7 @@ import AvatarFace from '../../components/AvatarFace'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students are
@@ -148,7 +149,7 @@ function Students() {
 
         } catch (err) {
             console.error('REVIEW STUDENT ERROR:', err)
-            notifyError(err.message || 'Failed to review student.')
+            notifyError(friendlyError(err, 'Failed to review student.'))
         } finally {
             setReviewingId(null)
         }
@@ -314,7 +315,7 @@ function Students() {
 
         } catch (err) {
             console.error('TOGGLE STUDENT STATUS ERROR:', err)
-            notifyError(err.message || 'Failed to update student status.')
+            notifyError(friendlyError(err, 'Failed to update student status.'))
         } finally {
             setUpdating(null)
         }
@@ -370,7 +371,7 @@ function Students() {
 
         } catch (err) {
             console.error('REMOVE STUDENT ERROR:', err)
-            notifyError(err.message || 'Failed to delete student.')
+            notifyError(friendlyError(err, 'Failed to delete student.'))
         } finally {
             setRemoving(null)
         }

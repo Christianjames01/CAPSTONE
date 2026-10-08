@@ -24,6 +24,7 @@ import '../../components/ReceiptActions.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import ReceiptChecks from '../../components/ReceiptChecks'
 import { adminPath } from '../../lib/portalPaths'
+import { friendlyError } from '../../lib/friendlyError'
 
 const STATUS_OPTIONS = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified',
@@ -454,7 +455,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('VERIFY PAYMENT ERROR:', err)
-            notifyError(err.message || 'Failed to verify payment.')
+            notifyError(friendlyError(err, 'Failed to verify payment.'))
         } finally {
             setProcessing(false)
         }
@@ -532,7 +533,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('REJECT PAYMENT ERROR:', err)
-            notifyError(err.message || 'Failed to reject payment.')
+            notifyError(friendlyError(err, 'Failed to reject payment.'))
         } finally {
             setProcessing(false)
         }
@@ -584,7 +585,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('APPROVE REQUIREMENT ERROR:', err)
-            notifyError(err.message || 'Failed to approve requirement.')
+            notifyError(friendlyError(err, 'Failed to approve requirement.'))
         } finally {
             setRequirementProcessing(false)
         }
@@ -644,7 +645,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('REJECT REQUIREMENT ERROR:', err)
-            notifyError(err.message || 'Failed to reject requirement.')
+            notifyError(friendlyError(err, 'Failed to reject requirement.'))
         } finally {
             setRequirementProcessing(false)
         }
@@ -723,7 +724,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('START PROCESSING ERROR:', err)
-            notifyError(err.message || 'Failed to start document processing.')
+            notifyError(friendlyError(err, 'Failed to start document processing.'))
         } finally {
             setProcessing(false)
         }
@@ -810,7 +811,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('GENERATE DIGITAL CREDENTIAL ERROR:', err)
-            notifyError(err.message || 'Failed to generate digital credential.')
+            notifyError(friendlyError(err, 'Failed to generate digital credential.'))
         } finally {
             setProcessing(false)
         }
@@ -862,7 +863,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('REASSIGN ERROR:', err)
-            notifyError(err.message || 'Failed to reassign request.')
+            notifyError(friendlyError(err, 'Failed to reassign request.'))
         } finally {
             setSaving(false)
         }
@@ -923,7 +924,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('OVERRIDE STATUS ERROR:', err)
-            notifyError(err.message || 'Failed to override status.')
+            notifyError(friendlyError(err, 'Failed to override status.'))
         } finally {
             setSaving(false)
         }
@@ -1009,7 +1010,7 @@ function AdminRequestDetails() {
 
         } catch (err) {
             console.error('DISMISS MISSED CLAIM ERROR:', err)
-            notifyError(err.message || 'Failed to dismiss schedule.')
+            notifyError(friendlyError(err, 'Failed to dismiss schedule.'))
         } finally {
             setSaving(false)
         }

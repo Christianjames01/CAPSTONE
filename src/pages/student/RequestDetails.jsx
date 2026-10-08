@@ -15,6 +15,7 @@ import { useAutoReject } from '../../lib/autoReject'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { loadDirectoryProfiles } from '../../lib/directoryProfiles'
 import RequestProgress from './RequestProgress'
+import { friendlyError } from '../../lib/friendlyError'
 
 const STATUS_META = {
     pending: {
@@ -435,7 +436,7 @@ function RequestDetails() {
 
         } catch (err) {
             console.error('CANCEL REQUEST ERROR:', err)
-            notifyError(err.message || 'Failed to cancel request.')
+            notifyError(friendlyError(err, 'Failed to cancel request.'))
         } finally {
             setCancelling(false)
         }
@@ -495,7 +496,7 @@ function RequestDetails() {
 
         } catch (err) {
             console.error('REQUEST RESCHEDULE ERROR:', err)
-            notifyError(err.message || 'Failed to send your reschedule request.')
+            notifyError(friendlyError(err, 'Failed to send your reschedule request.'))
         } finally {
             setRequestingReschedule(false)
         }
@@ -530,7 +531,7 @@ function RequestDetails() {
 
         } catch (err) {
             console.error('SUBMIT RATING ERROR:', err)
-            notifyError(err.message || 'Failed to submit your rating.')
+            notifyError(friendlyError(err, 'Failed to submit your rating.'))
         } finally {
             setSubmittingRating(false)
         }

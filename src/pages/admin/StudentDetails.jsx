@@ -20,6 +20,7 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -337,7 +338,7 @@ function StudentDetails() {
 
         } catch (err) {
             console.error('SAVE STUDENT EDIT ERROR:', err)
-            notifyError(err.message || 'Failed to save changes.')
+            notifyError(friendlyError(err, 'Failed to save changes.'))
         } finally {
             setSaving(false)
         }
@@ -379,7 +380,7 @@ function StudentDetails() {
 
         } catch (err) {
             console.error('RESET STUDENT PASSWORD ERROR:', err)
-            notifyError(err.message || 'Failed to reset password.')
+            notifyError(friendlyError(err, 'Failed to reset password.'))
         } finally {
             setResettingPassword(false)
         }
@@ -429,7 +430,7 @@ function StudentDetails() {
 
         } catch (err) {
             console.error('CHANGE STUDENT LOGIN EMAIL ERROR:', err)
-            notifyError(err.message || 'Failed to change login email.')
+            notifyError(friendlyError(err, 'Failed to change login email.'))
         } finally {
             setChangingEmail(false)
         }

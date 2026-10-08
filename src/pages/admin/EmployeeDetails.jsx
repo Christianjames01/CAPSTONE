@@ -16,6 +16,7 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 function EmployeeDetails() {
     const { role } = useOutletContext() || {}
@@ -216,7 +217,7 @@ function EmployeeDetails() {
             })
         } catch (err) {
             console.error('RESET EMPLOYEE PASSWORD ERROR:', err)
-            notifyError(err.message || 'Failed to set a temporary password.')
+            notifyError(friendlyError(err, 'Failed to set a temporary password.'))
         } finally {
             setResettingPassword(false)
         }
@@ -356,7 +357,7 @@ function EmployeeDetails() {
 
         } catch (err) {
             console.error('ADD ASSIGNMENT ERROR:', err)
-            notifyError(err.message || 'Failed to add assignment.')
+            notifyError(friendlyError(err, 'Failed to add assignment.'))
         }
     }
 
@@ -396,7 +397,7 @@ function EmployeeDetails() {
 
         } catch (err) {
             console.error('REMOVE ASSIGNMENT ERROR:', err)
-            notifyError(err.message || 'Failed to remove assignment.')
+            notifyError(friendlyError(err, 'Failed to remove assignment.'))
         }
     }
 

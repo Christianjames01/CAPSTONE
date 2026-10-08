@@ -14,6 +14,7 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
@@ -294,7 +295,7 @@ function Employees() {
 
         } catch (err) {
             console.error('REMOVE EMPLOYEE ERROR:', err)
-            notifyError(err.message || 'Failed to remove employee.')
+            notifyError(friendlyError(err, 'Failed to remove employee.'))
         } finally {
             setRemoving(null)
         }
@@ -342,7 +343,7 @@ function Employees() {
 
         } catch (err) {
             console.error('TOGGLE STATUS ERROR:', err)
-            notifyError(err.message || 'Failed to update employee status.')
+            notifyError(friendlyError(err, 'Failed to update employee status.'))
         } finally {
             setUpdating(null)
         }

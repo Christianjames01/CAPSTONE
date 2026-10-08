@@ -7,7 +7,7 @@ const RULES = [
     [/failed to fetch|networkerror|network request failed|load failed|timeout|timed out/i, 'Please check your internet connection and try again.'],
     [/jwt|token (is )?expired|not logged in|session/i, 'Your session has ended. Please log in again.'],
     [/42501|permission denied|row-level security|not allowed|violates row-level/i, 'You are not allowed to do this. If you think this is a mistake, please message the Registrar.'],
-    [/23505|duplicate key|already exists/i, 'This was already submitted.'],
+    [/23505|duplicate key|already exists/i, 'This already exists. Please use a different one.'],
     [/payload too large|file size|too large|exceed/i, 'The file is too large. Please choose a smaller file.'],
     [/mime|file type|not allowed type|invalid file/i, 'This file type is not accepted. Please use a JPG, PNG or PDF file.'],
     [/storage|bucket|object/i, 'The file could not be uploaded. Please try again.'],

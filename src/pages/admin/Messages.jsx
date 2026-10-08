@@ -14,6 +14,7 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
 import { pendingInquiry, statusReplyFor, inquiryRequestNumber, inquiryLabel } from '../../lib/requestStatusMessages'
+import { friendlyError } from '../../lib/friendlyError'
 
 // Same contact block already shown to students on the Help & Support page
 // -- reused here so the head doesn't have to retype the office's number,
@@ -254,7 +255,7 @@ function Messages() {
                 prev.map((t) => (targetKeys.has(t.pairKey) ? { ...t, messages: withRead(t.messages, ids) } : t))
             )
         } catch (err) {
-            notifyError(err.message)
+            notifyError(friendlyError(err))
         }
     }
 
@@ -451,7 +452,7 @@ function Messages() {
 
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
-            notifyError(err.message || 'Failed to send message.')
+            notifyError(friendlyError(err, 'Failed to send message.'))
         } finally {
             setSending(false)
         }
@@ -484,7 +485,7 @@ function Messages() {
             setRawMessages((prev) => markSendDeleted(prev, m, currentUserId))
         } catch (err) {
             console.error('DELETE MESSAGE ERROR:', err)
-            notifyError(err.message || 'Failed to delete message.')
+            notifyError(friendlyError(err, 'Failed to delete message.'))
         } finally {
             setDeletingKey(null)
         }
@@ -504,7 +505,7 @@ function Messages() {
             return true
         } catch (err) {
             console.error('EDIT MESSAGE ERROR:', err)
-            notifyError(err.message || 'Failed to edit message.')
+            notifyError(friendlyError(err, 'Failed to edit message.'))
             return false
         }
     }
@@ -529,7 +530,7 @@ function Messages() {
             notifySuccess('Conversation deleted from your Messages.')
         } catch (err) {
             console.error('DELETE CONVERSATION ERROR:', err)
-            notifyError(err.message || 'Failed to delete conversation.')
+            notifyError(friendlyError(err, 'Failed to delete conversation.'))
         } finally {
             setDeletingKey(null)
         }
@@ -601,7 +602,7 @@ function Messages() {
             setReply(await statusReplyFor(inquiryNumber, inquiry.sender_user_id))
             setReplyTo(inquiry)
         } catch (err) {
-            notifyError(err.message || 'Could not look up that request.')
+            notifyError(friendlyError(err, 'Could not look up that request.'))
         } finally {
             setFillingStatus(false)
         }

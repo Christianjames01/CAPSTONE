@@ -14,6 +14,7 @@ import { IconUserCircle } from '../student/icons'
 import '../auth/Auth.css'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { friendlyError } from '../../lib/friendlyError'
 
 function formatDate(value) {
     if (!value) return '-'
@@ -269,7 +270,7 @@ function StudentHistory() {
 
         } catch (err) {
             console.error('SAVE STUDENT EDIT ERROR:', err)
-            notifyError(err.message || 'Failed to save changes.')
+            notifyError(friendlyError(err, 'Failed to save changes.'))
         } finally {
             setSaving(false)
         }
@@ -310,7 +311,7 @@ function StudentHistory() {
 
         } catch (err) {
             console.error('RESET STUDENT PASSWORD ERROR:', err)
-            notifyError(err.message || 'Failed to reset password.')
+            notifyError(friendlyError(err, 'Failed to reset password.'))
         } finally {
             setResettingPassword(false)
         }
@@ -367,7 +368,7 @@ function StudentHistory() {
 
         } catch (err) {
             console.error('CHANGE STUDENT LOGIN EMAIL ERROR:', err)
-            notifyError(err.message || 'Failed to change login email.')
+            notifyError(friendlyError(err, 'Failed to change login email.'))
         } finally {
             setChangingEmail(false)
         }

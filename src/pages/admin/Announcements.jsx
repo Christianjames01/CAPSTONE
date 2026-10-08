@@ -18,6 +18,7 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import HoursPicker from '../../components/officeCalendar/HoursPicker'
 import { hoursOf, validHours, writeWithHours } from '../../lib/officeHours'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const EMPTY_FORM = {
     announcement_id: null,
@@ -230,7 +231,7 @@ function Announcements() {
 
         } catch (err) {
             console.error('SAVE ANNOUNCEMENT ERROR:', err)
-            notifyError(err.message || 'Failed to save announcement.')
+            notifyError(friendlyError(err, 'Failed to save announcement.'))
         } finally {
             setSaving(false)
         }
@@ -264,7 +265,7 @@ function Announcements() {
 
         } catch (err) {
             console.error('TOGGLE ANNOUNCEMENT ERROR:', err)
-            notifyError(err.message || 'Failed to update announcement.')
+            notifyError(friendlyError(err, 'Failed to update announcement.'))
         }
     }
 
@@ -289,7 +290,7 @@ function Announcements() {
 
         } catch (err) {
             console.error('REMOVE ANNOUNCEMENT ERROR:', err)
-            notifyError(err.message || 'Failed to delete announcement.')
+            notifyError(friendlyError(err, 'Failed to delete announcement.'))
         } finally {
             setRemoving(null)
         }

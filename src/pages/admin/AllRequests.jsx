@@ -14,6 +14,7 @@ import './AdminPages.css'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -265,7 +266,7 @@ function AllRequests() {
 
         } catch (err) {
             console.error('BULK STATUS CHANGE ERROR:', err)
-            notifyError(err.message || 'Failed to update selected requests.')
+            notifyError(friendlyError(err, 'Failed to update selected requests.'))
         } finally {
             setApplyingBulk(false)
         }

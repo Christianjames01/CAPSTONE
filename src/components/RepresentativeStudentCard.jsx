@@ -9,6 +9,7 @@ import {
 } from '../lib/claimRepresentatives'
 import { formatDisplayDateTime } from '../lib/formatDate'
 import './Representative.css'
+import { friendlyError } from '../lib/friendlyError'
 
 // Upload one representative file (photos are shrunk first; PDFs go up as
 // they are) and return its storage path.
@@ -137,7 +138,7 @@ function RepresentativeStudentCard({ request }) {
             await refresh()
         } catch (err) {
             if (uploaded.length) await supabase.storage.from(REPRESENTATIVE_BUCKET).remove(uploaded)
-            notifyError(err.message || 'Could not submit the representative.')
+            notifyError(friendlyError(err, 'Could not submit the representative.'))
         } finally {
             setSaving(false)
         }
@@ -165,7 +166,7 @@ function RepresentativeStudentCard({ request }) {
             await refresh()
         } catch (err) {
             if (newPath) await supabase.storage.from(REPRESENTATIVE_BUCKET).remove([newPath])
-            notifyError(err.message || `Could not upload the ${fileDef.short}.`)
+            notifyError(friendlyError(err, `Could not upload the ${fileDef.short}.`))
         } finally {
             setReplacing(null)
         }

@@ -13,6 +13,7 @@ import './AdminPages.css'
 import ReceiptChecks from '../../components/ReceiptChecks'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 function formatDate(value) {
     if (!value) return ''
@@ -151,7 +152,7 @@ function OfficialReceipts() {
 
         } catch (err) {
             console.error('VERIFY RECEIPT ERROR:', err)
-            notifyError(err.message || 'Failed to verify receipt.')
+            notifyError(friendlyError(err, 'Failed to verify receipt.'))
         } finally {
             setProcessing(null)
         }
@@ -220,7 +221,7 @@ function OfficialReceipts() {
 
         } catch (err) {
             console.error('REJECT RECEIPT ERROR:', err)
-            notifyError(err.message || 'Failed to reject receipt.')
+            notifyError(friendlyError(err, 'Failed to reject receipt.'))
         } finally {
             setProcessing(null)
         }

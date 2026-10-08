@@ -21,6 +21,7 @@ import '../../components/ReceiptActions.css'
 import { loadStudentsById } from '../../lib/studentNames'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import ReceiptChecks from '../../components/ReceiptChecks'
+import { friendlyError } from '../../lib/friendlyError'
 
 const OVERDUE_ELIGIBLE_STATUSES = [
     'pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing',
@@ -1251,7 +1252,7 @@ function EmployeeRequestDetails() {
 
         } catch (error) {
             console.error('CHANGE STATUS ERROR:', error)
-            notifyError(error.message || 'Failed to change status.')
+            notifyError(friendlyError(error, 'Failed to change status.'))
         } finally {
             setChangingStatus(false)
         }

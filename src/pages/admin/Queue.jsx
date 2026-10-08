@@ -13,6 +13,7 @@ import { useQueueDemo } from '../../lib/queueDemo'
 import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -127,7 +128,7 @@ function AdminQueue() {
 
         } catch (err) {
             console.error('UPDATE QUEUE TICKET ERROR:', err)
-            notifyError(err.message || 'Failed to update this ticket.')
+            notifyError(friendlyError(err, 'Failed to update this ticket.'))
         } finally {
             setActing(null)
         }
@@ -232,7 +233,7 @@ function AdminQueue() {
 
         } catch (err) {
             console.error('ISSUE TICKET ERROR:', err)
-            notifyError(err.message || 'Failed to issue a ticket.')
+            notifyError(friendlyError(err, 'Failed to issue a ticket.'))
         } finally {
             setIssuing(false)
         }

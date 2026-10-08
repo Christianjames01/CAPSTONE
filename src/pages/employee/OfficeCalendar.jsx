@@ -10,6 +10,7 @@ import RangeModal from '../../components/officeCalendar/RangeModal'
 import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatHours, isMissingHoursColumn, noteWithHours, writeWithHours } from '../../lib/officeHours'
+import { friendlyError } from '../../lib/friendlyError'
 
 function OfficeCalendar() {
     const navigate = useNavigate()
@@ -219,7 +220,7 @@ function OfficeCalendar() {
 
         } catch (err) {
             console.error('TOGGLE OPEN DAY ERROR:', err)
-            notifyError(err.message || 'Failed to update open status.')
+            notifyError(friendlyError(err, 'Failed to update open status.'))
         } finally {
             setTogglingOpen(false)
         }
@@ -257,7 +258,7 @@ function OfficeCalendar() {
             return true
         } catch (err) {
             console.error('SAVE OPEN DAY HOURS ERROR:', err)
-            notifyError(err.message || 'Failed to save office hours.')
+            notifyError(friendlyError(err, 'Failed to save office hours.'))
             return false
         } finally {
             setTogglingOpen(false)
@@ -296,7 +297,7 @@ function OfficeCalendar() {
 
         } catch (err) {
             console.error('REMOVE OPEN DAY ERROR:', err)
-            notifyError(err.message || 'Failed to remove open day.')
+            notifyError(friendlyError(err, 'Failed to remove open day.'))
         } finally {
             setRemovingOpenDayId(null)
         }
@@ -344,7 +345,7 @@ function OfficeCalendar() {
 
         } catch (err) {
             console.error('ADD EVENT ERROR:', err)
-            notifyError(err.message || 'Failed to add event.')
+            notifyError(friendlyError(err, 'Failed to add event.'))
         } finally {
             setSaving(false)
         }
@@ -382,7 +383,7 @@ function OfficeCalendar() {
 
         } catch (err) {
             console.error('REMOVE EVENT ERROR:', err)
-            notifyError(err.message || 'Failed to remove event.')
+            notifyError(friendlyError(err, 'Failed to remove event.'))
         } finally {
             setRemovingEventId(null)
         }
@@ -453,7 +454,7 @@ function OfficeCalendar() {
 
         } catch (err) {
             console.error('ADD RANGE EVENT ERROR:', err)
-            notifyError(err.message || 'Failed to add event to the selected range.')
+            notifyError(friendlyError(err, 'Failed to add event to the selected range.'))
         } finally {
             setAddingRange(false)
         }

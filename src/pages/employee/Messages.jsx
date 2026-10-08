@@ -12,6 +12,7 @@ import './EmployeePages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { useTyping } from '../../lib/useTyping'
 import { pendingInquiry, statusReplyFor, inquiryRequestNumber, inquiryLabel } from '../../lib/requestStatusMessages'
+import { friendlyError } from '../../lib/friendlyError'
 
 function Messages() {
     const [userId, setUserId] = useState(null)
@@ -212,7 +213,7 @@ function Messages() {
                 )
             )
         } catch (err) {
-            notifyError(err.message)
+            notifyError(friendlyError(err))
         }
     }
 
@@ -279,7 +280,7 @@ function Messages() {
 
         } catch (err) {
             console.error('SEND MESSAGE ERROR:', err)
-            notifyError(err.message || 'Failed to send message.')
+            notifyError(friendlyError(err, 'Failed to send message.'))
         } finally {
             setSending(false)
         }
@@ -309,7 +310,7 @@ function Messages() {
             replaceActiveThread({ ...activeThread, messages: markSendDeleted(activeThread.messages, m, userId) })
         } catch (err) {
             console.error('DELETE MESSAGE ERROR:', err)
-            notifyError(err.message || 'Failed to delete message.')
+            notifyError(friendlyError(err, 'Failed to delete message.'))
         } finally {
             setBusy(false)
         }
@@ -334,7 +335,7 @@ function Messages() {
             return true
         } catch (err) {
             console.error('EDIT MESSAGE ERROR:', err)
-            notifyError(err.message || 'Failed to edit message.')
+            notifyError(friendlyError(err, 'Failed to edit message.'))
             return false
         }
     }
@@ -348,7 +349,7 @@ function Messages() {
             setReply(await statusReplyFor(inquiryNumber, inquiry.sender_user_id))
             setReplyTo(inquiry)
         } catch (err) {
-            notifyError(err.message || 'Could not look up that request.')
+            notifyError(friendlyError(err, 'Could not look up that request.'))
         } finally {
             setFillingStatus(false)
         }

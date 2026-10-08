@@ -166,7 +166,7 @@ function UploadRequirements() {
 
         } catch (err) {
             console.error('UPLOAD REQUIREMENT ERROR:', err)
-            notifyError(err.message || 'Failed to upload requirement.')
+            notifyError(friendlyError(err, 'Failed to upload requirement.'))
         } finally {
             setUploadingId(null)
         }

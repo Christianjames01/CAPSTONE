@@ -10,6 +10,7 @@ import './EmployeePages.css'
 import { digitsOnly } from '../../lib/typedNumber'
 import { useQueueDemo } from '../../lib/queueDemo'
 import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
+import { friendlyError } from '../../lib/friendlyError'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -122,7 +123,7 @@ function EmployeeQueue() {
 
         } catch (err) {
             console.error('UPDATE QUEUE TICKET ERROR:', err)
-            notifyError(err.message || 'Failed to update this ticket.')
+            notifyError(friendlyError(err, 'Failed to update this ticket.'))
         } finally {
             setActing(null)
         }
@@ -214,7 +215,7 @@ function EmployeeQueue() {
 
         } catch (err) {
             console.error('ISSUE TICKET ERROR:', err)
-            notifyError(err.message || 'Failed to issue a ticket.')
+            notifyError(friendlyError(err, 'Failed to issue a ticket.'))
         } finally {
             setIssuing(false)
         }

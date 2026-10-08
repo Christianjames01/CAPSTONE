@@ -13,6 +13,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import './AdminPages.css'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const CHIPS = [
     { key: 'upcoming', label: 'Upcoming' },
@@ -244,7 +245,7 @@ function ClaimSchedules() {
 
         } catch (err) {
             console.error('DISMISS SCHEDULE ERROR:', err)
-            notifyError(err.message || 'Failed to dismiss schedule.')
+            notifyError(friendlyError(err, 'Failed to dismiss schedule.'))
         } finally {
             setMarking(null)
         }
@@ -295,7 +296,7 @@ function ClaimSchedules() {
 
         } catch (err) {
             console.error('MARK CLAIMED ERROR:', err)
-            notifyError(err.message || 'Failed to mark as claimed.')
+            notifyError(friendlyError(err, 'Failed to mark as claimed.'))
         } finally {
             setMarking(null)
         }

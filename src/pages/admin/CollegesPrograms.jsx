@@ -14,6 +14,7 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { digitsOnly, decimalOnly } from '../../lib/typedNumber'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 // programs.duration_years is always stored in years -- these just let the
 // admin type/read a short vocational course's length in whichever unit
@@ -165,7 +166,7 @@ function CollegesPrograms() {
 
         } catch (err) {
             console.error('SAVE COLLEGE ERROR:', err)
-            notifyError(err.message || 'Failed to save college.')
+            notifyError(friendlyError(err, 'Failed to save college.'))
         } finally {
             setSaving(false)
         }
@@ -188,7 +189,7 @@ function CollegesPrograms() {
             await logAdmin('toggle_college_status', 'colleges', college.college_id, `Set college "${college.college_name}" status from "${college.status}" to "${nextStatus}".`)
             await loadData({ silent: true })
         } catch (err) {
-            notifyError(err.message || 'Failed to update college status.')
+            notifyError(friendlyError(err, 'Failed to update college status.'))
         }
     }
 
@@ -206,7 +207,7 @@ function CollegesPrograms() {
             await logAdmin('delete_college', 'colleges', college.college_id, `Deleted college "${college.college_name}" (Registrar Head).`)
             await loadData({ silent: true })
         } catch (err) {
-            notifyError(err.message || 'Failed to delete college.')
+            notifyError(friendlyError(err, 'Failed to delete college.'))
         }
     }
 
@@ -270,7 +271,7 @@ function CollegesPrograms() {
 
         } catch (err) {
             console.error('SAVE PROGRAM ERROR:', err)
-            notifyError(err.message || 'Failed to save program.')
+            notifyError(friendlyError(err, 'Failed to save program.'))
         } finally {
             setSaving(false)
         }
@@ -293,7 +294,7 @@ function CollegesPrograms() {
             await logAdmin('toggle_program_status', 'programs', program.program_id, `Set program "${program.program_name}" status from "${program.status}" to "${nextStatus}".`)
             await loadData({ silent: true })
         } catch (err) {
-            notifyError(err.message || 'Failed to update program status.')
+            notifyError(friendlyError(err, 'Failed to update program status.'))
         }
     }
 
@@ -311,7 +312,7 @@ function CollegesPrograms() {
             await logAdmin('delete_program', 'programs', program.program_id, `Deleted program "${program.program_name}" (Registrar Head).`)
             await loadData({ silent: true })
         } catch (err) {
-            notifyError(err.message || 'Failed to delete program.')
+            notifyError(friendlyError(err, 'Failed to delete program.'))
         }
     }
 
@@ -456,7 +457,7 @@ function CollegesPrograms() {
 
         } catch (err) {
             console.error('BULK ADD ERROR:', err)
-            notifyError(err.message || 'Failed to add selected colleges/programs.')
+            notifyError(friendlyError(err, 'Failed to add selected colleges/programs.'))
         } finally {
             setAddingBulk(false)
         }

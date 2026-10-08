@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { confirmModal, notifyError, notifySuccess } from '../../lib/notify'
 import { ROLE_NAMES, STAFF_ROLES, displayName, downloadCsv, formatWhen, timeAgo } from './superadminFormat'
+import { friendlyError } from '../../lib/friendlyError'
 
 const FILTERS = [
     { key: 'all', label: 'All' },
@@ -59,7 +60,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
         setBusyId(null)
 
         if (error) {
-            notifyError(error.message)
+            notifyError(friendlyError(error))
             return
         }
         notifySuccess(`${name} ${next === 'active' ? 'reactivated' : 'deactivated'}.`)

@@ -208,7 +208,7 @@ function ClaimSchedule() {
 
         } catch (err) {
             console.error('REQUEST RESCHEDULE ERROR:', err)
-            notifyError(err.message || 'Failed to send your reschedule request.')
+            notifyError(friendlyError(err, 'Failed to send your reschedule request.'))
         } finally {
             setRequestingRescheduleId(null)
         }

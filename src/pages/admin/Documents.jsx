@@ -14,6 +14,7 @@ import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { digitsOnly, decimalOnly } from '../../lib/typedNumber'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const PREVIEW_IMAGE_BUCKET = 'document-previews'
 
@@ -290,7 +291,7 @@ function Documents() {
 
         } catch (err) {
             console.error('SAVE DOCUMENT ERROR:', err)
-            notifyError(err.message || 'Failed to save document type.')
+            notifyError(friendlyError(err, 'Failed to save document type.'))
         } finally {
             setSaving(false)
             setUploadingImage(false)
@@ -325,7 +326,7 @@ function Documents() {
 
         } catch (err) {
             console.error('TOGGLE AVAILABILITY ERROR:', err)
-            notifyError(err.message || 'Failed to update availability.')
+            notifyError(friendlyError(err, 'Failed to update availability.'))
         }
     }
 
@@ -351,7 +352,7 @@ function Documents() {
 
         } catch (err) {
             console.error('DELETE DOCUMENT ERROR:', err)
-            notifyError(err.message || 'Failed to delete document type.')
+            notifyError(friendlyError(err, 'Failed to delete document type.'))
         }
     }
 
@@ -417,7 +418,7 @@ function Documents() {
 
         } catch (err) {
             console.error('ADD REQUIREMENT ERROR:', err)
-            notifyError(err.message || 'Failed to add requirement.')
+            notifyError(friendlyError(err, 'Failed to add requirement.'))
         }
     }
 
@@ -445,7 +446,7 @@ function Documents() {
 
         } catch (err) {
             console.error('REMOVE REQUIREMENT ERROR:', err)
-            notifyError(err.message || 'Failed to remove requirement.')
+            notifyError(friendlyError(err, 'Failed to remove requirement.'))
         }
     }
 

@@ -12,6 +12,7 @@ import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/n
 import { SkeletonList } from '../../components/Skeleton'
 import { loadStudentsById } from '../../lib/studentNames'
 import './EmployeePages.css'
+import { friendlyError } from '../../lib/friendlyError'
 
 function ClaimScheduleList() {
     const navigate = useNavigate()
@@ -283,7 +284,7 @@ function ClaimScheduleList() {
 
         } catch (err) {
             console.error('MARK AS CLAIMED ERROR:', err)
-            notifyError(err.message || 'Failed to mark as claimed.')
+            notifyError(friendlyError(err, 'Failed to mark as claimed.'))
         } finally {
             setMarking(null)
         }

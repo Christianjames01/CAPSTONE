@@ -14,6 +14,7 @@ import '../../components/DashboardStats.css'
 import './Assignments.css'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const initialsOf = (name) =>
     (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?'
@@ -257,7 +258,7 @@ function Assignments() {
             await loadData()
         } catch (err) {
             console.error('COVER PROGRAM ERROR:', err)
-            notifyError(err.message || 'Failed to assign the program.')
+            notifyError(friendlyError(err, 'Failed to assign the program.'))
         } finally {
             setCovering(null)
         }
@@ -312,7 +313,7 @@ function Assignments() {
 
         } catch (err) {
             console.error('ASSIGN REQUEST ERROR:', err)
-            notifyError(err.message || 'Failed to assign request.')
+            notifyError(friendlyError(err, 'Failed to assign request.'))
         }
     }
 
@@ -395,7 +396,7 @@ function Assignments() {
 
         } catch (err) {
             console.error('BULK ASSIGN ERROR:', err)
-            notifyError(err.message || 'Failed to assign selected requests.')
+            notifyError(friendlyError(err, 'Failed to assign selected requests.'))
         } finally {
             setApplyingBulk(false)
         }
@@ -505,7 +506,7 @@ function Assignments() {
             await loadData()
         } catch (err) {
             console.error('MOVE REQUESTS ERROR:', err)
-            notifyError(err.message || 'Failed to move requests.')
+            notifyError(friendlyError(err, 'Failed to move requests.'))
         } finally {
             setMoving(false)
         }
@@ -528,7 +529,7 @@ function Assignments() {
             await loadData()
         } catch (err) {
             console.error('REBALANCE ERROR:', err)
-            notifyError(err.message || 'Failed to rebalance the workload.')
+            notifyError(friendlyError(err, 'Failed to rebalance the workload.'))
         } finally {
             setMoving(false)
         }

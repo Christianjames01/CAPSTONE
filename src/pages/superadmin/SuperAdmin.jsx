@@ -14,6 +14,7 @@ import SuperAdminLogins from './SuperAdminLogins'
 import '../admin/AdminLayout.css'
 import '../admin/AdminPages.css'
 import './SuperAdmin.css'
+import { friendlyError } from '../../lib/friendlyError'
 
 const NAV_ITEMS = [
     { to: '/superadmin', label: 'Overview', icon: <IconHome />, end: true },
@@ -87,7 +88,7 @@ function SuperAdmin() {
         setLoggingOut(true)
         const { error } = await supabase.auth.signOut()
         if (error) {
-            notifyError(error.message)
+            notifyError(friendlyError(error))
             setLoggingOut(false)
             return
         }

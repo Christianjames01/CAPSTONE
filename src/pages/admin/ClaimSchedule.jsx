@@ -16,6 +16,7 @@ import RescheduleHistory from '../../components/RescheduleHistory'
 import { isClosedWithoutOpening, weekdayName } from '../../lib/officeCalendar'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
+import { friendlyError } from '../../lib/friendlyError'
 
 const DEFAULT_REMARKS =
     'Please bring your official receipt (OR) and a valid ID when claiming your document. ' +
@@ -333,7 +334,7 @@ function AdminClaimSchedule() {
 
         } catch (error) {
             console.error('SAVE CLAIM SCHEDULE ERROR:', error)
-            notifyError(error.message || 'Failed to save claim schedule.')
+            notifyError(friendlyError(error, 'Failed to save claim schedule.'))
         } finally {
             setSaving(false)
         }
@@ -407,7 +408,7 @@ function AdminClaimSchedule() {
 
         } catch (error) {
             console.error('CANCEL SCHEDULE ERROR:', error)
-            notifyError(error.message || 'Failed to cancel schedule.')
+            notifyError(friendlyError(error, 'Failed to cancel schedule.'))
         } finally {
             setSaving(false)
         }

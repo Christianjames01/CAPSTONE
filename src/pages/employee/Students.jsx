@@ -8,6 +8,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
 import AvatarFace from '../../components/AvatarFace'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
+import { friendlyError } from '../../lib/friendlyError'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students
@@ -143,7 +144,7 @@ function Students() {
 
         } catch (err) {
             console.error('REVIEW STUDENT ERROR:', err)
-            notifyError(err.message || 'Failed to review student.')
+            notifyError(friendlyError(err, 'Failed to review student.'))
         } finally {
             setReviewingId(null)
         }
