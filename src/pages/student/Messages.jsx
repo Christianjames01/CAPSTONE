@@ -63,6 +63,21 @@ function Messages() {
     useLiveRefresh(['messages'], (options) => loadMessages(options))
     const { typingUserIds, sendTyping } = useTyping(userId)
 
+    // Appends an incoming message the instant it arrives, instead of waiting
+    // for the next full reload (useLiveRefresh above still runs too, and
+    // corrects anything this simpler path can't handle, e.g. a Head reply
+    // routed into an employee's thread via [[ref=...]]).
+    useEffect(() => {
+        if (!userId) return undefined
+        const channel = supabase
+            .channel(`messages-incoming-${userId}`)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_user_id=eq.${userId}` }, (payload) => {
+                addMessage(readMessage(payload.new))
+            })
+            .subscribe()
+        return () => supabase.removeChannel(channel)
+    }, [userId])
+
     useEffect(() => {
         loadMessages()
     }, [])
