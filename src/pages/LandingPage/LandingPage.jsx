@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { IconCheck as UiCheck } from '../../components/UiIcons'
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase";
@@ -561,8 +561,11 @@ const LandingPage = () => {
             <strong>${REGISTRAR_CONTACT.office}</strong>
             <span>${REGISTRAR_CONTACT.address}</span>
             <a href="mailto:${REGISTRAR_CONTACT.email}">${REGISTRAR_CONTACT.email}</a>
-            <a href="${REGISTRAR_CONTACT.telephoneHref}">${REGISTRAR_CONTACT.telephone}</a>
-            ${REGISTRAR_CONTACT.mobileNumbers.map((m) => `<a href="${m.href}">${m.label}: ${m.display}</a>`).join("")}
+            ${REGISTRAR_CONTACT.campuses.map((campus) => `
+                <span class="lp-modal-contact-campus">${campus.name}</span>
+                <a href="${campus.telephoneHref}">${campus.telephone}</a>
+                ${campus.mobileNumbers.map((m) => `<a href="${m.href}">${m.label}: ${m.display}</a>`).join("")}
+            `).join("")}
         </div>`;
 
     const openHelpModal = () => {
@@ -1061,9 +1064,13 @@ const LandingPage = () => {
                                 <p>{REGISTRAR_CONTACT.office}</p>
                                 <ul>
                                     <li><span>Email</span><a href={`mailto:${REGISTRAR_CONTACT.email}`}>{REGISTRAR_CONTACT.email}</a></li>
-                                    <li><span>Phone</span><a href={REGISTRAR_CONTACT.telephoneHref}>{REGISTRAR_CONTACT.telephone}</a></li>
-                                    {REGISTRAR_CONTACT.mobileNumbers.map((m) => (
-                                        <li key={m.label}><span>{m.label}</span><a href={m.href}>{m.display}</a></li>
+                                    {REGISTRAR_CONTACT.campuses.map((campus) => (
+                                        <Fragment key={campus.name}>
+                                            <li><span>{campus.name}</span><a href={campus.telephoneHref}>{campus.telephone}</a></li>
+                                            {campus.mobileNumbers.map((m) => (
+                                                <li key={m.href}><span>{m.label}</span><a href={m.href}>{m.display}</a></li>
+                                            ))}
+                                        </Fragment>
                                     ))}
                                 </ul>
                                 <p className="faq-contact-note">Payments: HCDC Finance Office, in person.</p>

@@ -217,24 +217,26 @@ function HelpSupport() {
                     </div>
 
                     <div className="student-info-field">
-                        <span>Telephone</span>
-                        <strong>{REGISTRAR_CONTACT.telephone}</strong>
-                    </div>
-
-                    <div className="student-info-field">
                         <span>Telefax</span>
                         <strong>{REGISTRAR_CONTACT.telefax}</strong>
-                    </div>
-
-                    <div className="student-info-field">
-                        <span>Mobile</span>
-                        <strong>{REGISTRAR_CONTACT.mobile}</strong>
                     </div>
 
                     <div className="student-info-field">
                         <span>Website</span>
                         <strong>{REGISTRAR_CONTACT.website}</strong>
                     </div>
+
+                    {REGISTRAR_CONTACT.campuses.map((campus) => (
+                        <div className="student-info-field" key={campus.name}>
+                            <span>{campus.name}</span>
+                            <strong>
+                                {campus.telephone}
+                                {campus.mobileNumbers.map((m) => (
+                                    <span key={m.href}>{' · '}{m.label !== 'Mobile' ? `${m.label}: ` : ''}{m.display}</span>
+                                ))}
+                            </strong>
+                        </div>
+                    ))}
                 </div>
             </div>
 

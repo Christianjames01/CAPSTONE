@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { SkeletonAppShell } from './Skeleton'
@@ -88,13 +88,17 @@ function StudentVerificationGate({ children }) {
                             <a className="verify-gate-contact-link" href={`mailto:${REGISTRAR_CONTACT.email}`}>
                                 <IconMail /> {REGISTRAR_CONTACT.email}
                             </a>
-                            <a className="verify-gate-contact-link" href={REGISTRAR_CONTACT.telephoneHref}>
-                                <IconPhone /> {REGISTRAR_CONTACT.telephone}
-                            </a>
-                            {REGISTRAR_CONTACT.mobileNumbers.map((m) => (
-                                <a key={m.href} className="verify-gate-contact-link" href={m.href}>
-                                    <IconPhone /> {m.label} {m.display}
-                                </a>
+                            {REGISTRAR_CONTACT.campuses.map((campus) => (
+                                <Fragment key={campus.name}>
+                                    <a className="verify-gate-contact-link" href={campus.telephoneHref}>
+                                        <IconPhone /> {campus.name}: {campus.telephone}
+                                    </a>
+                                    {campus.mobileNumbers.map((m) => (
+                                        <a key={m.href} className="verify-gate-contact-link" href={m.href}>
+                                            <IconPhone /> {campus.name === 'Main Campus' ? m.label : `${campus.name} ${m.label}`} {m.display}
+                                        </a>
+                                    ))}
+                                </Fragment>
                             ))}
                         </div>
                         <div className="verify-gate-contact-address">{REGISTRAR_CONTACT.address}</div>
