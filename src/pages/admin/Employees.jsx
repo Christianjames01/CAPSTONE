@@ -646,7 +646,7 @@ function Employees() {
 
                         <div className="admin-card-actions">
                             <button
-                                className={`admin-link-button${employee.canAddEmployees ? ' is-success' : ''}`}
+                                className={`admin-link-button${employee.canAddEmployees ? ' is-warning' : ' is-success'}`}
                                 onClick={() => toggleCanAddEmployees(employee)}
                                 disabled={updating === employee.employee_id}
                             >

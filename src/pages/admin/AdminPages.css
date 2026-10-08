@@ -596,6 +596,15 @@
     background: var(--success-bg, rgba(30, 138, 95, 0.12));
 }
 
+.admin-card-actions .admin-link-button.is-warning {
+    color: #B45309;
+}
+
+.admin-card-actions .admin-link-button.is-warning:hover:not(:disabled) {
+    border-color: #B45309;
+    background: rgba(180, 83, 9, 0.1);
+}
+
 .admin-card-actions .admin-link-button:disabled {
     opacity: 0.55;
     cursor: not-allowed;
