@@ -6,8 +6,14 @@ export function todayStr() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// Monday=A, Tuesday=B, Wednesday=C, Thursday=D, Friday=E, Saturday=F --
+// the office is never open Sunday (see isClosedWeekday), so there's no
+// letter for it; getDay() 0 falls back to "Q" just in case.
+const QUEUE_DAY_LETTERS = ['Q', 'A', 'B', 'C', 'D', 'E', 'F']
+
 export function formatQueueNumber(n) {
-    return `Q-${String(n).padStart(3, '0')}`
+    const letter = QUEUE_DAY_LETTERS[new Date().getDay()]
+    return `${letter}-${String(n).padStart(3, '0')}`
 }
 
 // Whether the registrar office counts as open today for walk-in queuing:
