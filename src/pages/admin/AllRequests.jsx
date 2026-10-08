@@ -85,8 +85,9 @@ function AllRequests() {
             const studentIds = [...new Set(data.map((r) => r.student_id).filter(Boolean))]
             const documentTypeIds = [...new Set(data.map((r) => r.document_type_id).filter(Boolean))]
             const employeeIds = [...new Set(data.map((r) => r.assigned_employee_id).filter(Boolean))]
+            const requestIds = data.map((r) => r.request_id)
 
-            const [{ data: students }, { data: documentTypes }, { data: employees }] = await Promise.all([
+            const [{ data: students }, { data: documentTypes }, { data: employees }, { data: credentials }] = await Promise.all([
                 studentIds.length
                     ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
@@ -95,6 +96,9 @@ function AllRequests() {
                     : Promise.resolve({ data: [] }),
                 employeeIds.length
                     ? supabase.from('employees').select('employee_id, user_id, employee_number').in('employee_id', employeeIds)
+                    : Promise.resolve({ data: [] }),
+                requestIds.length
+                    ? supabase.from('credentials').select('request_id, credential_number, status, generated_at').in('request_id', requestIds)
                     : Promise.resolve({ data: [] }),
             ])
 
@@ -111,6 +115,7 @@ function AllRequests() {
             const studentById = Object.fromEntries((students || []).map((s) => [s.student_id, s]))
             const documentNameById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.document_name]))
             const documentPreviewById = Object.fromEntries((documentTypes || []).map((d) => [d.document_type_id, d.preview_image_url || null]))
+            const credentialByRequestId = Object.fromEntries((credentials || []).map((c) => [c.request_id, c]))
 
             setRequests(
                 data.map((r) => {
@@ -118,6 +123,7 @@ function AllRequests() {
                     const employeeProfile = employee ? profileByUserId[employee.user_id] : null
                     const student = studentById[r.student_id]
                     const studentProfile = student ? profileByUserId[student.user_id] : null
+                    const credential = credentialByRequestId[r.request_id]
 
                     return {
                         ...r,
@@ -126,6 +132,9 @@ function AllRequests() {
                         documentName: documentNameById[r.document_type_id] || 'Document',
                         documentPreview: documentPreviewById[r.document_type_id] || null,
                         employeeName: employeeProfile ? `${employeeProfile.first_name} ${employeeProfile.last_name}`.trim() : 'Unassigned',
+                        credentialNumber: credential?.credential_number || '',
+                        credentialStatus: credential?.status || '',
+                        credentialGeneratedAt: credential?.generated_at || null,
                     }
                 })
             )
@@ -139,7 +148,7 @@ function AllRequests() {
     }
 
     // Update in place when requests change -- no manual refresh needed.
-    useLiveRefresh(['document_requests'], loadRequests)
+    useLiveRefresh(['document_requests', 'credentials'], loadRequests)
 
     const visibleRequests = (requests
         .filter((r) => !activeStatuses || activeStatuses.includes(r.status))
@@ -168,6 +177,8 @@ function AllRequests() {
                         { header: 'Quantity', key: 'quantity', width: 10 },
                         { header: 'Total Amount', key: 'total_amount', width: 16, format: 'peso' },
                         { header: 'Status', key: 'statusLabel', width: 20 },
+                        { header: 'Credential #', key: 'credentialNumber', width: 18 },
+                        { header: 'Credential Status', key: 'credentialStatusLabel', width: 18 },
                         { header: 'Assigned Employee', key: 'employeeName', width: 24 },
                         { header: 'Purpose', key: 'purpose', width: 28 },
                         { header: 'Requested At', key: 'requestedAt', width: 20, format: 'datetime' },
@@ -180,6 +191,7 @@ function AllRequests() {
                         return {
                             ...r,
                             statusLabel: r.status.replace(/_/g, ' '),
+                            credentialStatusLabel: r.credentialStatus ? r.credentialStatus.replace(/_/g, ' ') : '',
                             requestedAt: r.requested_at ? new Date(r.requested_at) : null,
                             completedAt: r.completed_at ? new Date(r.completed_at) : null,
                             autoDeletesOn,
@@ -431,6 +443,18 @@ function AllRequests() {
                                     {formatDisplayDateTime(request.requested_at) || '-'}
                                 </strong>
                             </div>
+
+                            {request.credentialNumber && (
+                                <div className="admin-info-field">
+                                    <span>Credential</span>
+                                    <strong style={{ fontFamily: 'monospace', fontSize: 13 }}>
+                                        {request.credentialNumber}
+                                        {request.credentialStatus === 'revoked' && (
+                                            <span className="admin-status-pill status-rejected" style={{ marginLeft: 6, fontSize: 10.5 }}>Revoked</span>
+                                        )}
+                                    </strong>
+                                </div>
+                            )}
                         </div>
 
                         <div className="admin-card-actions">
