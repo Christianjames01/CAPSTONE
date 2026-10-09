@@ -50,6 +50,7 @@ function Employees() {
 
     const [showAddForm, setShowAddForm] = useState(false)
     const [form, setForm] = useState(BLANK_FORM)
+    const [pendingAssignments, setPendingAssignments] = useState([])
     const [creating, setCreating] = useState(false)
     const [addError, setAddError] = useState('')
     const [addMessage, setAddMessage] = useState('')
@@ -151,8 +152,29 @@ function Employees() {
         if (creating) return
         setShowAddForm(false)
         setForm(BLANK_FORM)
+        setPendingAssignments([])
         setAddError('')
         setAddMessage('')
+    }
+
+    const collegeName = (id) => colleges.find((c) => c.college_id === id)?.college_name || 'N/A'
+    const programName = (id) => programs.find((p) => p.program_id === id)?.program_name || 'N/A'
+
+    const addPendingAssignment = () => {
+        if (!form.assignedCollegeId || !form.assignedProgramId) {
+            notifyWarning('Please select a college and program.')
+            return
+        }
+        if (pendingAssignments.some((a) => a.collegeId === form.assignedCollegeId && a.programId === form.assignedProgramId)) {
+            notifyWarning('That college and program is already added.')
+            return
+        }
+        setPendingAssignments((prev) => [...prev, { collegeId: form.assignedCollegeId, programId: form.assignedProgramId }])
+        setForm((prev) => ({ ...prev, assignedCollegeId: '', assignedProgramId: '' }))
+    }
+
+    const removePendingAssignment = (index) => {
+        setPendingAssignments((prev) => prev.filter((_, i) => i !== index))
     }
 
     const addEmployee = async (e) => {
@@ -197,7 +219,7 @@ function Employees() {
                 lastName: form.lastName.trim(),
                 employeeNumber: form.employeeNumber.trim(),
                 positionTitle: form.positionTitle.trim(),
-                assignedCollegeId: form.assignedCollegeId || null,
+                assignedCollegeId: pendingAssignments[0]?.collegeId || null,
                 displayName: form.displayName.trim() || null,
                 phoneNumber: form.phoneNumber.trim() || null,
             })
@@ -212,7 +234,7 @@ function Employees() {
 
             let assignmentNote = ''
 
-            if (form.assignedCollegeId && form.assignedProgramId) {
+            if (pendingAssignments.length > 0) {
                 const { data: newEmployeeRow, error: newEmployeeLookupError } = await supabase
                     .from('employees')
                     .select('employee_id')
@@ -221,28 +243,30 @@ function Employees() {
 
                 if (newEmployeeLookupError || !newEmployeeRow) {
                     console.error('NEW EMPLOYEE LOOKUP ERROR:', newEmployeeLookupError)
-                    assignmentNote = ' The account was created, but the college/program assignment could not be set automatically — add it from the employee\'s page.'
+                    assignmentNote = ' The account was created, but the college/program assignments could not be set automatically — add them from the employee\'s page.'
                 } else {
                     const { error: assignmentError } = await supabase
                         .from('employee_assignments')
-                        .insert({
-                            employee_id: newEmployeeRow.employee_id,
-                            college_id: form.assignedCollegeId,
-                            program_id: form.assignedProgramId,
-                            is_primary: true,
-                            status: 'active',
-                        })
+                        .insert(
+                            pendingAssignments.map((a, i) => ({
+                                employee_id: newEmployeeRow.employee_id,
+                                college_id: a.collegeId,
+                                program_id: a.programId,
+                                is_primary: i === 0,
+                                status: 'active',
+                            }))
+                        )
 
                     if (assignmentError) {
                         console.error('NEW EMPLOYEE ASSIGNMENT ERROR:', assignmentError)
-                        assignmentNote = ' The account was created, but the college/program assignment could not be saved: ' + assignmentError.message
+                        assignmentNote = ' The account was created, but the college/program assignments could not be saved: ' + assignmentError.message
                     } else {
                         await logActivity({
                             userId: user.id,
                             action: 'add_employee_assignment',
                             tableName: 'employee_assignments',
                             recordId: newEmployeeRow.employee_id,
-                            description: `Assigned new employee "${form.firstName.trim()} ${form.lastName.trim()}" to a college/program on creation.`,
+                            description: `Assigned new employee "${form.firstName.trim()} ${form.lastName.trim()}" to ${pendingAssignments.length} college/program${pendingAssignments.length === 1 ? '' : 's'} on creation.`,
                         })
                     }
                 }
@@ -252,6 +276,7 @@ function Employees() {
             const createdMessage = `Employee account created for ${form.email.trim()}.${assignmentNote}`
             setShowAddForm(false)
             setForm(BLANK_FORM)
+            setPendingAssignments([])
             setAddError('')
             setAddMessage('')
             if (assignmentNote) notifyWarning(createdMessage)
@@ -540,6 +565,31 @@ function Employees() {
 
                         <section className="app-modal-section">
                             <h4>Assignment <span className="app-modal-optional">optional</span></h4>
+
+                            {pendingAssignments.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                                    {pendingAssignments.map((a, i) => (
+                                        <span
+                                            key={`${a.collegeId}-${a.programId}`}
+                                            className="admin-status-pill"
+                                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                                        >
+                                            {collegeName(a.collegeId)} · {programName(a.programId)}
+                                            {i === 0 && <em style={{ fontStyle: 'normal', opacity: 0.7 }}>(primary)</em>}
+                                            <button
+                                                type="button"
+                                                onClick={() => removePendingAssignment(i)}
+                                                disabled={creating}
+                                                aria-label={`Remove ${collegeName(a.collegeId)} · ${programName(a.programId)}`}
+                                                style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="app-modal-grid">
                                 <div className="form-group">
                                     <label className="form-label" htmlFor="emp-college">College</label>
@@ -575,8 +625,19 @@ function Employees() {
                                     </select>
                                 </div>
                             </div>
-                            <small className="app-modal-help">
-                                Student requests for this program are routed to this employee. You can also set it later on the employee's page.
+
+                            <button
+                                type="button"
+                                className="admin-link-button"
+                                onClick={addPendingAssignment}
+                                disabled={creating || !form.assignedCollegeId || !form.assignedProgramId}
+                                style={{ marginTop: 8 }}
+                            >
+                                + Add this assignment
+                            </button>
+
+                            <small className="app-modal-help" style={{ display: 'block', marginTop: 8 }}>
+                                Add as many college/program pairs as this employee is assigned to. Student requests for each program route to them. You can also change this later on the employee's page.
                             </small>
                         </section>
 
