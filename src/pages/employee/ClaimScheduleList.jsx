@@ -88,12 +88,21 @@ function ClaimScheduleList() {
 
             const requestIds = (requests || []).map((r) => r.request_id)
 
-            const { data: schedules } = requestIds.length
-                ? await supabase
-                    .from('claim_schedules')
-                    .select('claim_schedule_id, request_id, claim_date, claim_time, scheduled_date, scheduled_time, status, reschedule_requested_at, reschedule_reason')
-                    .in('request_id', requestIds)
-                : { data: [] }
+            const [{ data: schedules }, { data: readyCredentials }] = await Promise.all([
+                requestIds.length
+                    ? supabase
+                        .from('claim_schedules')
+                        .select('claim_schedule_id, request_id, claim_date, claim_time, scheduled_date, scheduled_time, status, reschedule_requested_at, reschedule_reason')
+                        .in('request_id', requestIds)
+                    : Promise.resolve({ data: [] }),
+                requestIds.length
+                    ? supabase.from('credentials').select('request_id, credential_number').in('request_id', requestIds)
+                    : Promise.resolve({ data: [] }),
+            ])
+
+            const credentialNumberByRequestId = Object.fromEntries(
+                (readyCredentials || []).map((c) => [c.request_id, c.credential_number])
+            )
 
             const scheduleByRequestId = Object.fromEntries(
                 (schedules || [])
@@ -128,6 +137,7 @@ function ClaimScheduleList() {
                         studentName: readyStudents[r.student_id]?.name || 'Unknown student',
                         studentNumber: readyStudents[r.student_id]?.number || 'N/A',
                         schedule: scheduleByRequestId[r.request_id] || null,
+                        credentialNumber: credentialNumberByRequestId[r.request_id] || '',
                     }))
                     .sort((a, b) => priority(a.schedule) - priority(b.schedule))
             )
@@ -170,6 +180,14 @@ function ClaimScheduleList() {
                 (todayRequests || []).map((r) => [r.request_id, r])
             )
 
+            const { data: todayCredentials } = todayRequestIds.length
+                ? await supabase.from('credentials').select('request_id, credential_number').in('request_id', todayRequestIds)
+                : { data: [] }
+
+            const todayCredentialByRequestId = Object.fromEntries(
+                (todayCredentials || []).map((c) => [c.request_id, c.credential_number])
+            )
+
             const todayDocTypeIds = [...new Set((todayRequests || []).map((r) => r.document_type_id).filter(Boolean))]
 
             const { data: todayDocTypes } = todayDocTypeIds.length
@@ -195,6 +213,7 @@ function ClaimScheduleList() {
                         documentName: todayDocNameById[request?.document_type_id] || 'Document',
                         studentNumber: todayStudents[s.student_id]?.number || 'N/A',
                         studentName: todayStudents[s.student_id]?.name || 'Unknown student',
+                        credentialNumber: todayCredentialByRequestId[s.request_id] || '',
                     }
                 })
             )
@@ -349,6 +368,12 @@ function ClaimScheduleList() {
                                     <span>Time</span>
                                     <strong>{formatTime(appt.claim_time || appt.scheduled_time)}</strong>
                                 </div>
+                                {appt.credentialNumber && (
+                                    <div className="employee-info-field">
+                                        <span>Credential #</span>
+                                        <strong style={{ fontFamily: 'monospace' }}>{appt.credentialNumber}</strong>
+                                    </div>
+                                )}
                             </div>
 
                             {appt.status !== 'claimed' && (
@@ -380,7 +405,11 @@ function ClaimScheduleList() {
                             <div>
                                 <p className="request-student-name">{request.studentName}</p>
                                 <h3>{request.documentName}</h3>
-                                <p>{request.request_number} · Student {request.studentNumber}{request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}</p>
+                                <p>
+                                    {request.request_number} · Student {request.studentNumber}
+                                    {request.credentialNumber && <> · Credential <span style={{ fontFamily: 'monospace' }}>{request.credentialNumber}</span></>}
+                                    {request.requested_at && ` · Requested ${formatDisplayDateTime(request.requested_at)}`}
+                                </p>
                                 <RepresentativeBadge representative={representatives[request.request_id]} />
                             </div>
                             </div>
