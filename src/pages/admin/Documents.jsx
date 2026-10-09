@@ -477,9 +477,11 @@ function Documents() {
                     <p>Manage document types, fees, processing times, and their requirements.</p>
                 </div>
 
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <button className="admin-primary-button" onClick={openNewForm}>+ Add Document Type</button>
-                </div>
+                {(currentRole === 'registrar_head' || currentRole === 'admin') && (
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        <button className="admin-primary-button" onClick={openNewForm}>+ Add Document Type</button>
+                    </div>
+                )}
             </div>
 
             {showForm && (

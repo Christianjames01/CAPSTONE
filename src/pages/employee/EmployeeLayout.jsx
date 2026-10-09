@@ -5,7 +5,7 @@ import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
 import { IconClipboardList, IconShieldCheck, IconGear, IconMessage, IconHistory } from './icons'
 // Same icons as the Registrar Head's sidebar for the same pages.
-import { IconIdCard, IconTicket, IconUsers } from '../admin/icons'
+import { IconIdCard, IconTicket, IconUsers, IconDocument } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
 import ProductTour from '../../components/ProductTour'
 import '../../components/DashboardStats.css'
@@ -27,6 +27,7 @@ const NAV_ITEMS = [
     { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/employee/activity-logs', label: 'Activity Logs', icon: <IconHistory />, fullAccessOnly: true },
+    { to: '/employee/documents', label: 'Documents', icon: <IconDocument /> },
     { to: '/employee/add-employee', label: 'Add Employee', icon: <IconUsers />, canAddEmployeesOnly: true },
     { to: '/employee/guide', label: 'User Guide', icon: <IconBook /> },
     { to: '/employee/profile', label: 'Profile', icon: <IconUserCircle /> },

@@ -201,6 +201,16 @@ export const EMPLOYEE_GUIDE = [
         ],
     },
     {
+        id: 'documents',
+        title: 'Editing documents',
+        summary: 'Update the document catalog students see.',
+        steps: [
+            'Documents lists every document type. Edit one to change its fee, description, processing days, availability or sample image.',
+            'Manage requirements lets you add or remove the files a document needs.',
+            'Adding a brand-new document type or deleting one stays with the Registrar Head.',
+        ],
+    },
+    {
         id: 'add-employee',
         title: 'Add Employee',
         summary: 'Only shown if the Registrar Head granted you this.',

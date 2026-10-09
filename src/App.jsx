@@ -388,6 +388,11 @@ function App() {
           />
 
           <Route
+            path="/employee/documents"
+            element={<AdminDocuments />}
+          />
+
+          <Route
             path="/employee/profile"
             element={<EmployeeProfile />}
           />
