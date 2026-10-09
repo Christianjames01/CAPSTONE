@@ -86,14 +86,21 @@ function ClaimSchedules() {
             const requestIds = [...new Set(rows.map((s) => s.request_id))]
             const studentIds = [...new Set(rows.map((s) => s.student_id).filter(Boolean))]
 
-            const [{ data: requests }, { data: students }] = await Promise.all([
+            const [{ data: requests }, { data: students }, { data: scheduleCredentials }] = await Promise.all([
                 requestIds.length
                     ? supabase.from('document_requests').select('request_id, request_number, document_type_id, requested_at').in('request_id', requestIds)
                     : Promise.resolve({ data: [] }),
                 studentIds.length
                     ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', studentIds)
                     : Promise.resolve({ data: [] }),
+                requestIds.length
+                    ? supabase.from('credentials').select('request_id, credential_number').in('request_id', requestIds)
+                    : Promise.resolve({ data: [] }),
             ])
+
+            const credentialNumberByRequestId = Object.fromEntries(
+                (scheduleCredentials || []).map((c) => [c.request_id, c.credential_number])
+            )
 
             const documentTypeIds = [...new Set((requests || []).map((r) => r.document_type_id).filter(Boolean))]
             const studentUserIds = (students || []).map((s) => s.user_id).filter(Boolean)
@@ -125,6 +132,7 @@ function ClaimSchedules() {
                         documentName: documentNameById[request?.document_type_id] || 'Document',
                         studentNumber: student?.student_number || 'N/A',
                         studentName: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
+                        credentialNumber: credentialNumberByRequestId[s.request_id] || '',
                     }
                 })
             )
@@ -146,14 +154,23 @@ function ClaimSchedules() {
             const uStudentIds = [...new Set(uRows.map((r) => r.student_id).filter(Boolean))]
             const uDocTypeIds = [...new Set(uRows.map((r) => r.document_type_id).filter(Boolean))]
 
-            const [{ data: uStudents }, { data: uDocTypes }] = await Promise.all([
+            const uRequestIds = uRows.map((r) => r.request_id)
+
+            const [{ data: uStudents }, { data: uDocTypes }, { data: uCredentials }] = await Promise.all([
                 uStudentIds.length
                     ? supabase.from('students').select('student_id, user_id, student_number').in('student_id', uStudentIds)
                     : Promise.resolve({ data: [] }),
                 uDocTypeIds.length
                     ? supabase.from('document_types').select('document_type_id, document_name').in('document_type_id', uDocTypeIds)
                     : Promise.resolve({ data: [] }),
+                uRequestIds.length
+                    ? supabase.from('credentials').select('request_id, credential_number').in('request_id', uRequestIds)
+                    : Promise.resolve({ data: [] }),
             ])
+
+            const uCredentialByRequestId = Object.fromEntries(
+                (uCredentials || []).map((c) => [c.request_id, c.credential_number])
+            )
 
             const uStudentUserIds = (uStudents || []).map((s) => s.user_id).filter(Boolean)
 
@@ -175,6 +192,7 @@ function ClaimSchedules() {
                         studentNumber: student?.student_number || 'N/A',
                         studentName: studentProfile ? `${studentProfile.first_name} ${studentProfile.last_name}`.trim() : '',
                         documentName: uDocNameById[r.document_type_id] || 'Document',
+                        credentialNumber: uCredentialByRequestId[r.request_id] || '',
                     }
                 })
             )
@@ -371,7 +389,11 @@ function ClaimSchedules() {
                                         {r.studentName || `Student ${r.studentNumber}`}
                                     </p>
                                     <h3>{r.documentName}</h3>
-                                    <p>{r.request_number} · Student {r.studentNumber}{r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}</p>
+                                    <p>
+                                        {r.request_number} · Student {r.studentNumber}
+                                        {r.credentialNumber && <> · Credential <span style={{ fontFamily: 'monospace' }}>{r.credentialNumber}</span></>}
+                                        {r.requested_at && ` · Requested ${formatDisplayDateTime(r.requested_at)}`}
+                                    </p>
                                     <RepresentativeBadge representative={representatives[r.request_id]} />
                                 </div>
                                 </div>
@@ -420,7 +442,11 @@ function ClaimSchedules() {
                                     {s.studentName || `Student ${s.studentNumber}`}
                                 </p>
                                 <h3>{s.documentName}</h3>
-                                <p>{s.requestNumber} · Student {s.studentNumber}{s.requestedAt && ` · Requested ${formatDisplayDateTime(s.requestedAt)}`}</p>
+                                <p>
+                                    {s.requestNumber} · Student {s.studentNumber}
+                                    {s.credentialNumber && <> · Credential <span style={{ fontFamily: 'monospace' }}>{s.credentialNumber}</span></>}
+                                    {s.requestedAt && ` · Requested ${formatDisplayDateTime(s.requestedAt)}`}
+                                </p>
                                 <RepresentativeBadge representative={representatives[s.request_id]} />
                             </div>
                             </div>
