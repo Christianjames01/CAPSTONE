@@ -16,6 +16,9 @@ import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
 import { downloadExcelReport } from '../../lib/reportExport'
+import { exportRequestBackup } from '../../lib/requestBackup'
+
+const FINISHED_STATUSES = ['completed', 'rejected', 'cancelled']
 
 const STATUS_CHIPS = [
     { key: 'all', label: 'All' },
@@ -54,6 +57,7 @@ function AllRequests() {
     const [bulkStatus, setBulkStatus] = useState(BULK_STATUS_OPTIONS[0])
     const [applyingBulk, setApplyingBulk] = useState(false)
     const [exporting, setExporting] = useState(false)
+    const [deletingId, setDeletingId] = useState(null)
 
     const activeStatuses = activeChip === 'all' ? null : activeChip.split(',')
 
@@ -208,6 +212,58 @@ function AllRequests() {
             notifyError(friendlyError(err, 'Failed to export requests.'))
         } finally {
             setExporting(false)
+        }
+    }
+
+    // Deletes one finished request now instead of waiting for the 30-day
+    // auto-purge -- to free up storage sooner. Always backs it up to Excel
+    // first, same as the student-deletion flow; nothing is deleted if that
+    // export fails. The database function (delete_resolved_request) also
+    // deletes the actual receipt/requirement/claim files from storage, and
+    // refuses anything not already completed/rejected/cancelled.
+    const deleteRequest = async (request) => {
+        if (blockedForReadOnlyViewer(role)) return
+        if (!FINISHED_STATUSES.includes(request.status)) {
+            notifyError('Only completed, rejected or cancelled requests can be deleted this way.')
+            return
+        }
+
+        const confirmed = await confirmModal(
+            `Permanently delete request ${request.request_number}? This removes the request, its receipt and requirement files entirely -- this cannot be undone. Any issued credential stays in the system and verifiable. An Excel backup will download first.`,
+            { title: 'Delete this request?', confirmButtonText: 'Back up & delete', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setDeletingId(request.request_id)
+            await exportRequestBackup(request)
+        } catch (err) {
+            console.error('REQUEST BACKUP ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to create the backup, so nothing was deleted.'))
+            setDeletingId(null)
+            return
+        }
+
+        const proceed = await confirmModal(
+            `The backup for ${request.request_number} has downloaded. Continue deleting the request now?`,
+            { title: 'Backup downloaded', confirmButtonText: 'Delete request', icon: 'warning' }
+        )
+        if (!proceed) {
+            setDeletingId(null)
+            return
+        }
+
+        try {
+            const { error: rpcError } = await supabase.rpc('delete_resolved_request', { p_request_id: request.request_id })
+            if (rpcError) throw rpcError
+
+            notifySuccess(`Request ${request.request_number} has been permanently deleted.`)
+            setRequests((prev) => prev.filter((r) => r.request_id !== request.request_id))
+        } catch (err) {
+            console.error('DELETE REQUEST ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to delete request.'))
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -464,6 +520,17 @@ function AllRequests() {
                             >
                                 Open request →
                             </button>
+
+                            {FINISHED_STATUSES.includes(request.status) && (
+                                <button
+                                    className="admin-link-button is-danger"
+                                    style={{ marginLeft: 'auto' }}
+                                    onClick={() => deleteRequest(request)}
+                                    disabled={deletingId === request.request_id}
+                                >
+                                    {deletingId === request.request_id ? 'Deleting...' : 'Delete'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))
