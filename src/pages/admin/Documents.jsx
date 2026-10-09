@@ -195,8 +195,24 @@ function Documents() {
         try {
             setSaving(true)
 
+            // The form's own preview_image_url may already be cleared (the
+            // Remove image button does that immediately, before Save), so
+            // the saved record -- not the in-progress form -- is the only
+            // reliable source for "what was the old file, if any".
+            const original = form.document_type_id
+                ? documents.find((d) => d.document_type_id === form.document_type_id)
+                : null
+            const previousImageUrl = original?.preview_image_url || null
+
             let previewImageUrl = form.preview_image_url
-            const previousImageUrl = form.preview_image_url
+
+            const deleteStorageImage = async (url) => {
+                const marker = `/${PREVIEW_IMAGE_BUCKET}/`
+                const i = url.indexOf(marker)
+                if (i === -1) return
+                const { error: removeError } = await supabase.storage.from(PREVIEW_IMAGE_BUCKET).remove([url.slice(i + marker.length)])
+                if (removeError) console.error('REMOVE OLD PREVIEW IMAGE ERROR:', removeError)
+            }
 
             if (imageFile) {
                 setUploadingImage(true)
@@ -223,15 +239,12 @@ function Documents() {
                 // Replacing an image otherwise leaves the old one behind
                 // forever (uploads never overwrite). Best-effort: the new
                 // image is already saved either way.
-                if (previousImageUrl) {
-                    const marker = `/${PREVIEW_IMAGE_BUCKET}/`
-                    const i = previousImageUrl.indexOf(marker)
-                    if (i !== -1) {
-                        const oldPath = previousImageUrl.slice(i + marker.length)
-                        const { error: removeError } = await supabase.storage.from(PREVIEW_IMAGE_BUCKET).remove([oldPath])
-                        if (removeError) console.error('REMOVE OLD PREVIEW IMAGE ERROR:', removeError)
-                    }
-                }
+                if (previousImageUrl) await deleteStorageImage(previousImageUrl)
+
+            } else if (previousImageUrl && !previewImageUrl) {
+                // "Remove image" was clicked (no replacement chosen) --
+                // the old file needs deleting too, not just unlinked.
+                await deleteStorageImage(previousImageUrl)
             }
 
             const payload = {
@@ -250,8 +263,6 @@ function Documents() {
             }
 
             if (form.document_type_id) {
-                const original = documents.find((d) => d.document_type_id === form.document_type_id)
-
                 const { error: updateError } = await supabase
                     .from('document_types')
                     .update(payload)
@@ -359,6 +370,16 @@ function Documents() {
                 .eq('document_type_id', doc.document_type_id)
 
             if (deleteError) throw new Error(deleteError.message)
+
+            // Best-effort: the document type is already gone either way.
+            if (doc.preview_image_url) {
+                const marker = `/${PREVIEW_IMAGE_BUCKET}/`
+                const i = doc.preview_image_url.indexOf(marker)
+                if (i !== -1) {
+                    const { error: removeError } = await supabase.storage.from(PREVIEW_IMAGE_BUCKET).remove([doc.preview_image_url.slice(i + marker.length)])
+                    if (removeError) console.error('REMOVE DELETED DOCUMENT IMAGE ERROR:', removeError)
+                }
+            }
 
             await logAdmin('delete_document_type', doc.document_type_id, `Deleted document type "${doc.document_name}" (Registrar Head).`)
 
