@@ -7,7 +7,6 @@ import { claimDate, claimTime, eachDateInRange, formatDate, getToday, isWeekendD
 import CalendarBoard from '../../components/officeCalendar/CalendarBoard'
 import DayModal from '../../components/officeCalendar/DayModal'
 import RangeModal from '../../components/officeCalendar/RangeModal'
-import DeleteRangeModal from '../../components/officeCalendar/DeleteRangeModal'
 import './AdminPages.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatHours, isMissingHoursColumn, noteWithHours, writeWithHours } from '../../lib/officeHours'
@@ -46,11 +45,6 @@ function OfficeCalendar() {
     const [rangeTitle, setRangeTitle] = useState('')
     const [rangeNote, setRangeNote] = useState('')
     const [addingRange, setAddingRange] = useState(false)
-
-    const [showDeleteRangeModal, setShowDeleteRangeModal] = useState(false)
-    const [deleteRangeStart, setDeleteRangeStart] = useState('')
-    const [deleteRangeEnd, setDeleteRangeEnd] = useState('')
-    const [removingRange, setRemovingRange] = useState(false)
 
     useLiveRefresh(['office_events', 'office_open_days', 'claim_schedules'], (options) => loadAll(options))
 
@@ -508,66 +502,6 @@ function OfficeCalendar() {
         setShowRangeModal(false)
     }
 
-    const openDeleteRangeModal = () => {
-        if (blockedForReadOnlyViewer(role)) return
-        setDeleteRangeStart(getToday())
-        setDeleteRangeEnd(getToday())
-        setShowDeleteRangeModal(true)
-    }
-
-    const closeDeleteRangeModal = () => {
-        if (removingRange) return
-        setShowDeleteRangeModal(false)
-    }
-
-    const deleteRangeMatches = useMemo(() => {
-        if (!deleteRangeStart || !deleteRangeEnd || deleteRangeStart > deleteRangeEnd) return []
-        return events.filter((ev) => ev.event_date >= deleteRangeStart && ev.event_date <= deleteRangeEnd)
-    }, [events, deleteRangeStart, deleteRangeEnd])
-
-    const removeRangeEvents = async () => {
-        if (blockedForReadOnlyViewer(role)) return
-        if (deleteRangeMatches.length === 0) return
-
-        const confirmed = await confirmModal(
-            `Delete ${deleteRangeMatches.length} event${deleteRangeMatches.length === 1 ? '' : 's'} from ${formatDate(deleteRangeStart)} to ${formatDate(deleteRangeEnd)}? This cannot be undone.`,
-            { title: 'Delete events in range?', confirmButtonText: 'Delete', icon: 'warning' }
-        )
-        if (!confirmed) return
-
-        try {
-            setRemovingRange(true)
-
-            const { data: { user } } = await supabase.auth.getUser()
-
-            const ids = deleteRangeMatches.map((ev) => ev.event_id)
-            const { error: deleteError } = await supabase
-                .from('office_events')
-                .delete()
-                .in('event_id', ids)
-
-            if (deleteError) throw new Error(deleteError.message)
-
-            await logActivity({
-                userId: user?.id,
-                action: 'remove_office_event',
-                tableName: 'office_events',
-                recordId: null,
-                description: `Removed ${ids.length} office event(s) from ${formatDate(deleteRangeStart)} to ${formatDate(deleteRangeEnd)}.`,
-            })
-
-            notifySuccess(`Deleted ${ids.length} event${ids.length === 1 ? '' : 's'}.`)
-            setShowDeleteRangeModal(false)
-            await loadAll()
-
-        } catch (err) {
-            console.error('REMOVE RANGE EVENTS ERROR:', err)
-            notifyError(friendlyError(err, 'Failed to delete events in the selected range.'))
-        } finally {
-            setRemovingRange(false)
-        }
-    }
-
     return (
         <div>
             <div className="admin-page-header-row">
@@ -581,7 +515,6 @@ function OfficeCalendar() {
 
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <button className="admin-secondary-button ocal-pill" onClick={openRangeModal}>+ Add for a Range</button>
-                    <button className="admin-secondary-button ocal-pill" onClick={openDeleteRangeModal}>- Delete a Range</button>
                     <button className="admin-primary-button ocal-pill" onClick={() => openDayModal(getToday())}>+ Manage a Day</button>
                 </div>
             </div>
@@ -643,20 +576,6 @@ function OfficeCalendar() {
                     onSubmit={addRangeEvent}
                     onClose={closeRangeModal}
                     adding={addingRange}
-                />
-            )}
-
-            {showDeleteRangeModal && (
-                <DeleteRangeModal
-                    portal="admin"
-                    start={deleteRangeStart}
-                    end={deleteRangeEnd}
-                    onStartChange={setDeleteRangeStart}
-                    onEndChange={setDeleteRangeEnd}
-                    matchingEvents={deleteRangeMatches}
-                    onSubmit={removeRangeEvents}
-                    onClose={closeDeleteRangeModal}
-                    removing={removingRange}
                 />
             )}
         </div>
