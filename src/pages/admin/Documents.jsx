@@ -196,6 +196,7 @@ function Documents() {
             setSaving(true)
 
             let previewImageUrl = form.preview_image_url
+            const previousImageUrl = form.preview_image_url
 
             if (imageFile) {
                 setUploadingImage(true)
@@ -218,6 +219,19 @@ function Documents() {
                     .getPublicUrl(filePath)
 
                 previewImageUrl = publicUrlData?.publicUrl || null
+
+                // Replacing an image otherwise leaves the old one behind
+                // forever (uploads never overwrite). Best-effort: the new
+                // image is already saved either way.
+                if (previousImageUrl) {
+                    const marker = `/${PREVIEW_IMAGE_BUCKET}/`
+                    const i = previousImageUrl.indexOf(marker)
+                    if (i !== -1) {
+                        const oldPath = previousImageUrl.slice(i + marker.length)
+                        const { error: removeError } = await supabase.storage.from(PREVIEW_IMAGE_BUCKET).remove([oldPath])
+                        if (removeError) console.error('REMOVE OLD PREVIEW IMAGE ERROR:', removeError)
+                    }
+                }
             }
 
             const payload = {
