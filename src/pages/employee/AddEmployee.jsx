@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { createEmployeeAccount } from '../../lib/createEmployeeAccount'
-import { notifyError, notifySuccess } from '../../lib/notify'
+import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
 import { friendlyError } from '../../lib/friendlyError'
 import Modal from '../../components/Modal'
 import PasswordRequirements from '../../components/PasswordRequirements'
@@ -18,6 +18,8 @@ const BLANK_FORM = {
     displayName: '',
     employeeNumber: '',
     positionTitle: '',
+    assignedCollegeId: '',
+    assignedProgramId: '',
     email: '',
     phoneNumber: '',
     password: '',
@@ -26,15 +28,29 @@ const BLANK_FORM = {
 // A focused version of the Registrar Head's "Add Employee" form, for an
 // employee a registrar head/admin has granted can_add_employees. Reuses the
 // shared Modal so the form gets the exact same styling as Employees.jsx.
-// Creates the login and employees row only -- college/program assignment is
-// left to a registrar head from Employees > Edit & assignments, since that
-// insert needs permissions this page's caller doesn't have.
+// Creates the login, the employees row, and (if a college/program is
+// picked) the assignment too -- the same three steps Employees.jsx does.
 function AddEmployee() {
     const navigate = useNavigate()
 
     const [form, setForm] = useState(BLANK_FORM)
+    const [colleges, setColleges] = useState([])
+    const [programs, setPrograms] = useState([])
     const [creating, setCreating] = useState(false)
     const [error, setError] = useState('')
+
+    useEffect(() => {
+        loadCollegesAndPrograms()
+    }, [])
+
+    const loadCollegesAndPrograms = async () => {
+        const [{ data: collegeRows }, { data: programRows }] = await Promise.all([
+            supabase.from('colleges').select('college_id, college_name').order('college_name'),
+            supabase.from('programs').select('program_id, program_name, college_id').order('program_name'),
+        ])
+        setColleges(collegeRows || [])
+        setPrograms(programRows || [])
+    }
 
     const updateForm = (field, value) => {
         setForm((prev) => ({ ...prev, [field]: value }))
@@ -84,6 +100,7 @@ function AddEmployee() {
                 lastName: form.lastName.trim(),
                 employeeNumber: form.employeeNumber.trim(),
                 positionTitle: form.positionTitle.trim(),
+                assignedCollegeId: form.assignedCollegeId || null,
                 displayName: form.displayName.trim() || null,
                 phoneNumber: form.phoneNumber.trim() || null,
             })
@@ -96,8 +113,48 @@ function AddEmployee() {
                 description: `Added employee "${form.firstName.trim()} ${form.lastName.trim()}" (${form.employeeNumber.trim()}).`,
             })
 
-            notifySuccess(`Employee account created for ${form.email.trim()}. A registrar head can set their college/program from Employees.`)
+            let assignmentNote = ''
+
+            if (form.assignedCollegeId && form.assignedProgramId) {
+                const { data: newEmployeeRow, error: newEmployeeLookupError } = await supabase
+                    .from('employees')
+                    .select('employee_id')
+                    .eq('user_id', newUser.id)
+                    .single()
+
+                if (newEmployeeLookupError || !newEmployeeRow) {
+                    console.error('NEW EMPLOYEE LOOKUP ERROR:', newEmployeeLookupError)
+                    assignmentNote = ' The account was created, but the college/program assignment could not be set automatically — ask a registrar head to add it.'
+                } else {
+                    const { error: assignmentError } = await supabase
+                        .from('employee_assignments')
+                        .insert({
+                            employee_id: newEmployeeRow.employee_id,
+                            college_id: form.assignedCollegeId,
+                            program_id: form.assignedProgramId,
+                            is_primary: true,
+                            status: 'active',
+                        })
+
+                    if (assignmentError) {
+                        console.error('NEW EMPLOYEE ASSIGNMENT ERROR:', assignmentError)
+                        assignmentNote = ' The account was created, but the college/program assignment could not be saved: ' + assignmentError.message
+                    } else {
+                        await logActivity({
+                            userId: user.id,
+                            action: 'add_employee_assignment',
+                            tableName: 'employee_assignments',
+                            recordId: newEmployeeRow.employee_id,
+                            description: `Assigned new employee "${form.firstName.trim()} ${form.lastName.trim()}" to a college/program on creation.`,
+                        })
+                    }
+                }
+            }
+
+            const createdMessage = `Employee account created for ${form.email.trim()}.${assignmentNote}`
             setForm(BLANK_FORM)
+            if (assignmentNote) notifyWarning(createdMessage)
+            else notifySuccess(createdMessage)
             navigate('/employee/dashboard')
 
         } catch (err) {
@@ -160,6 +217,48 @@ function AddEmployee() {
                             <input id="emp-phone" className="form-input" type="tel" inputMode="numeric" maxLength={11} autoComplete="off" value={form.phoneNumber} onChange={(e) => updateForm('phoneNumber', digitsOnly(e.target.value))} placeholder="09XXXXXXXXX" disabled={creating} />
                         </div>
                     </div>
+                </section>
+
+                <section className="app-modal-section">
+                    <h4>Assignment <span className="app-modal-optional">optional</span></h4>
+                    <div className="app-modal-grid">
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="emp-college">College</label>
+                            <select
+                                id="emp-college"
+                                className="form-input"
+                                value={form.assignedCollegeId}
+                                onChange={(e) => setForm((prev) => ({ ...prev, assignedCollegeId: e.target.value, assignedProgramId: '' }))}
+                                disabled={creating}
+                            >
+                                <option value="">None</option>
+                                {colleges.map((c) => (
+                                    <option key={c.college_id} value={c.college_id}>{c.college_name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="emp-program">Program</label>
+                            <select
+                                id="emp-program"
+                                className="form-input"
+                                value={form.assignedProgramId}
+                                onChange={(e) => updateForm('assignedProgramId', e.target.value)}
+                                disabled={creating || !form.assignedCollegeId}
+                            >
+                                <option value="">
+                                    {form.assignedCollegeId ? 'None' : 'Select a college first'}
+                                </option>
+                                {programs.filter((p) => p.college_id === form.assignedCollegeId).map((p) => (
+                                    <option key={p.program_id} value={p.program_id}>{p.program_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <small className="app-modal-help">
+                        Student requests for this program are routed to this employee. You can also set it later from their profile.
+                    </small>
                 </section>
 
                 <section className="app-modal-section">
