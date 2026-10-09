@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
-import { notifyStudentByStudentId, notifyError } from '../../lib/notify'
+import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
@@ -75,6 +75,12 @@ function Students() {
     }
 
     const approveStudent = async (student) => {
+        const confirmed = await confirmModal(
+            `Approve ${student.fullName}'s registration? They will be able to log in and submit requests.`,
+            { title: 'Approve registration?', confirmButtonText: 'Approve', icon: 'question' }
+        )
+        if (!confirmed) return
+
         await reviewStudent(student, 'approved')
     }
 
