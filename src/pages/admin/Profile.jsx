@@ -12,6 +12,7 @@ import './AdminPages.css'
 import { getCaptchaToken } from '../../lib/captcha'
 import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconBriefcase, IconKey } from '../../components/ProfileParts'
 import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -45,9 +46,11 @@ function Profile() {
         loadProfile()
     }, [])
 
-    const loadProfile = async () => {
+    useLiveRefresh(['profiles'], (options) => loadProfile(options))
+
+    const loadProfile = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {
@@ -72,7 +75,7 @@ function Profile() {
             }
 
             setProfile(profileData)
-            setPhoneNumber(profileData.phone_number || '')
+            if (!editing) setPhoneNumber(profileData.phone_number || '')
 
             const { data: employeeData } = await supabase
                 .from('employees')

@@ -14,6 +14,7 @@ import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 const HISTORY_STATUSES = ['completed', 'no_show', 'cancelled']
 
@@ -36,9 +37,11 @@ function AdminQueue() {
 
     useEffect(() => {
         loadQueue()
-        const interval = setInterval(() => loadQueue({ silent: true }), 5000)
-        return () => clearInterval(interval)
     }, [])
+
+    // Update in place when a ticket is issued, called, served, or completed
+    // anywhere -- no manual refresh needed.
+    useLiveRefresh(['walk_in_queue'], (options) => loadQueue(options))
 
     const loadQueue = async ({ silent = false } = {}) => {
         try {

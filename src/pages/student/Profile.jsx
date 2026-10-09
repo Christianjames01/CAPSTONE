@@ -13,6 +13,7 @@ import '../auth/Auth.css'
 import './StudentPages.css'
 import { getCaptchaToken } from '../../lib/captcha'
 import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconKey } from '../../components/ProfileParts'
 
 function Profile() {
@@ -54,9 +55,13 @@ function Profile() {
         loadProfile()
     }, [])
 
-    const loadProfile = async () => {
+    // Picks up a change the Registrar makes to your record (e.g. approving
+    // your registration, correcting a detail) without needing a reload.
+    useLiveRefresh(['profiles', 'students'], (options) => loadProfile(options))
+
+    const loadProfile = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {
@@ -87,7 +92,9 @@ function Profile() {
             }
 
             setProfile(profileData)
-            setPhoneNumber(profileData.phone_number || '')
+            // Don't stomp on an in-progress edit if a live update arrives
+            // while the student has the form open.
+            if (!editing) setPhoneNumber(profileData.phone_number || '')
 
             const { data: studentData, error: studentError } = await supabase
                 .from('students')
@@ -113,11 +120,13 @@ function Profile() {
             }
 
             setStudent(studentData)
-            setAddress(studentData.address || '')
-            setAlternatePhoneNumber(studentData.alternate_phone_number || '')
-            setAlternateEmail(studentData.alternate_email || '')
-            setEmergencyContactName(studentData.emergency_contact_name || '')
-            setEmergencyContactNumber(studentData.emergency_contact_number || '')
+            if (!editing) {
+                setAddress(studentData.address || '')
+                setAlternatePhoneNumber(studentData.alternate_phone_number || '')
+                setAlternateEmail(studentData.alternate_email || '')
+                setEmergencyContactName(studentData.emergency_contact_name || '')
+                setEmergencyContactNumber(studentData.emergency_contact_number || '')
+            }
 
             if (studentData.college_id) {
                 const { data: college } = await supabase

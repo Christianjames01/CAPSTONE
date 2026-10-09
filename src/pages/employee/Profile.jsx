@@ -12,6 +12,7 @@ import { IconPhone, IconBook } from '../student/icons'
 import { IconLock } from '../../components/UiIcons'
 import { ProfileHero, ProfileSection, ProfileFields, SecurityRow, IconShield, IconBriefcase, IconKey } from '../../components/ProfileParts'
 import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
+import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
 function Profile() {
     const [profile, setProfile] = useState(null)
@@ -39,9 +40,13 @@ function Profile() {
         loadProfile()
     }, [])
 
-    const loadProfile = async () => {
+    // Picks up a change the Registrar Head makes (a new assignment, a
+    // different college) without needing a reload.
+    useLiveRefresh(['profiles', 'employees', 'employee_assignments'], (options) => loadProfile(options))
+
+    const loadProfile = async ({ silent = false } = {}) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             setError('')
 
             const {
@@ -64,7 +69,7 @@ function Profile() {
             }
 
             setProfile(profileData)
-            setPhoneNumber(profileData.phone_number || '')
+            if (!editing) setPhoneNumber(profileData.phone_number || '')
 
             const { data: employeeData, error: employeeError } = await supabase
                 .from('employees')
