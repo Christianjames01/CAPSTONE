@@ -81,9 +81,11 @@ function CalendarBoard({
     upcomingOpenDays,
     onDayClick,
     onRemoveEvent,
+    onRemoveEventGroup,
     onRemoveOpenDay,
     removingEventId,
     removingOpenDayId,
+    removingGroupKey,
 }) {
     const [showAllUpcoming, setShowAllUpcoming] = useState(false)
 
@@ -171,7 +173,9 @@ function CalendarBoard({
         const dayCount = item.type === 'event' ? item.events.length : 1
         const removing = item.type === 'open'
             ? removingOpenDayId === item.day.open_day_id
-            : removingEventId === item.events[0].event_id
+            : dayCount === 1
+                ? removingEventId === item.events[0].event_id
+                : removingGroupKey === item.key
 
         return (
             <li key={item.key} className={`ocal-upcoming-item is-${item.type}`}>
@@ -191,20 +195,22 @@ function CalendarBoard({
                     </span>
                 </button>
 
-                {/* A collapsed multi-day entry is removed day by day from the
-                    day view, so only single entries get a quick remove. */}
-                {dayCount === 1 && (
-                    <button
-                        type="button"
-                        className="ocal-icon-button ocal-upcoming-remove"
-                        onClick={() => (item.type === 'open' ? onRemoveOpenDay(item.day) : onRemoveEvent(item.events[0]))}
-                        disabled={removing}
-                        aria-label={`Remove ${item.title} on ${formatDate(item.date)}`}
-                        title="Remove"
-                    >
-                        <CloseIcon />
-                    </button>
-                )}
+                <button
+                    type="button"
+                    className="ocal-icon-button ocal-upcoming-remove"
+                    onClick={() => {
+                        if (item.type === 'open') return onRemoveOpenDay(item.day)
+                        if (dayCount === 1) return onRemoveEvent(item.events[0])
+                        return onRemoveEventGroup(item.events, item.key)
+                    }}
+                    disabled={removing}
+                    aria-label={dayCount > 1
+                        ? `Remove ${item.title} (${dayCount} days, ${rangeLabel(item.date, item.endDate)})`
+                        : `Remove ${item.title} on ${formatDate(item.date)}`}
+                    title="Remove"
+                >
+                    <CloseIcon />
+                </button>
             </li>
         )
     }

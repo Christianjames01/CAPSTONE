@@ -38,6 +38,7 @@ function OfficeCalendar() {
     const [togglingOpen, setTogglingOpen] = useState(false)
     const [removingEventId, setRemovingEventId] = useState(null)
     const [removingOpenDayId, setRemovingOpenDayId] = useState(null)
+    const [removingGroupKey, setRemovingGroupKey] = useState(null)
 
     const [showRangeModal, setShowRangeModal] = useState(false)
     const [rangeStart, setRangeStart] = useState('')
@@ -382,6 +383,49 @@ function OfficeCalendar() {
         }
     }
 
+    const removeEventGroup = async (groupEvents, groupKey) => {
+        if (blockedForReadOnlyViewer(role)) return
+
+        const first = groupEvents[0]
+        const last = groupEvents[groupEvents.length - 1]
+        const confirmed = await confirmModal(
+            `Remove "${first.title}" from all ${groupEvents.length} days (${formatDate(first.event_date)} to ${formatDate(last.event_date)})?`,
+            { title: 'Remove event?', confirmButtonText: 'Remove', icon: 'warning' }
+        )
+        if (!confirmed) return
+
+        try {
+            setRemovingGroupKey(groupKey)
+
+            const { data: { user } } = await supabase.auth.getUser()
+
+            const ids = groupEvents.map((ev) => ev.event_id)
+            const { error: deleteError } = await supabase
+                .from('office_events')
+                .delete()
+                .in('event_id', ids)
+
+            if (deleteError) throw new Error(deleteError.message)
+
+            await logActivity({
+                userId: user?.id,
+                action: 'remove_office_event',
+                tableName: 'office_events',
+                recordId: null,
+                description: `Removed office event "${first.title}" from ${ids.length} day(s), ${formatDate(first.event_date)} to ${formatDate(last.event_date)}.`,
+            })
+
+            notifySuccess(`Removed from ${ids.length} day${ids.length === 1 ? '' : 's'}.`)
+            await loadAll()
+
+        } catch (err) {
+            console.error('REMOVE EVENT GROUP ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to remove this event.'))
+        } finally {
+            setRemovingGroupKey(null)
+        }
+    }
+
     const openRangeModal = () => {
         setRangeStart(getToday())
         setRangeEnd(getToday())
@@ -555,9 +599,11 @@ function OfficeCalendar() {
                 upcomingOpenDays={upcomingOpenDays}
                 onDayClick={openDayModal}
                 onRemoveEvent={removeEvent}
+                onRemoveEventGroup={removeEventGroup}
                 onRemoveOpenDay={removeOpenDayFromSidebar}
                 removingEventId={removingEventId}
                 removingOpenDayId={removingOpenDayId}
+                removingGroupKey={removingGroupKey}
             />
 
             {showDayModal && (
