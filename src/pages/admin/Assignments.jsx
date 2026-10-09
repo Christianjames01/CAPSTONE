@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
-import { notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
+import { notify, notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { SkeletonList } from '../../components/Skeleton'
 import { IconBarChart, IconFileStack, IconHourglass, IconUsers } from './icons'
 import { loadStudentsById } from '../../lib/studentNames'
@@ -254,6 +254,15 @@ function Assignments() {
                 description: `Assigned "${employee?.name || employeeId}" to ${group.programName} (${group.collegeName}) and gave them ${group.requestIds.length} waiting request(s).`,
             })
 
+            if (employee?.user_id) {
+                await notify({
+                    userId: employee.user_id,
+                    title: 'New program assignment',
+                    message: `You've been assigned to ${group.programName} (${group.collegeName}). ${group.requestIds.length} waiting request${group.requestIds.length === 1 ? '' : 's'} ${group.requestIds.length === 1 ? 'has' : 'have'} been assigned to you.`,
+                    notificationType: 'assignment',
+                })
+            }
+
             notifySuccess(`${employee?.name || 'The employee'} now handles ${group.programName}.`)
             await loadData()
         } catch (err) {
@@ -308,6 +317,16 @@ function Assignments() {
                 recordId: request.request_id,
                 description: `Assigned request "${request.request_number}" to "${employee?.name || employeeId}".`,
             })
+
+            if (employee?.user_id) {
+                await notify({
+                    userId: employee.user_id,
+                    title: 'Request assigned to you',
+                    message: `Request ${request.request_number} has been assigned to you.`,
+                    notificationType: 'assignment',
+                    relatedRequestId: request.request_id,
+                })
+            }
 
             await loadData()
 
@@ -389,6 +408,15 @@ function Assignments() {
                 )
             )
 
+            if (employee?.user_id) {
+                await notify({
+                    userId: employee.user_id,
+                    title: 'Requests assigned to you',
+                    message: `${targets.length} request${targets.length === 1 ? '' : 's'} ${targets.length === 1 ? 'has' : 'have'} been assigned to you: ${targets.map((r) => r.request_number).join(', ')}.`,
+                    notificationType: 'assignment',
+                })
+            }
+
             notifySuccess(`${targets.length} request(s) assigned to ${employee?.name || 'the employee'}.`)
             clearSelection()
             setBulkEmployeeId('')
@@ -451,21 +479,32 @@ function Assignments() {
             if (updateError) throw new Error('Failed to move requests: ' + updateError.message)
 
             const movedIds = new Set((updatedRows || []).map((r) => r.request_id))
+            const movedRequests = g.requests.filter((r) => movedIds.has(r.request_id))
             movedCount += movedIds.size
 
             await Promise.all(
-                g.requests
-                    .filter((r) => movedIds.has(r.request_id))
-                    .map((r) =>
-                        logActivity({
-                            userId: user.id,
-                            action: 'reassign_request',
-                            tableName: 'document_requests',
-                            recordId: r.request_id,
-                            description: `Reassigned request "${r.request_number}" from "${nameOfEmployee(g.fromId)}" to "${nameOfEmployee(g.toId)}" (workload rebalance).`,
-                        })
-                    )
+                movedRequests.map((r) =>
+                    logActivity({
+                        userId: user.id,
+                        action: 'reassign_request',
+                        tableName: 'document_requests',
+                        recordId: r.request_id,
+                        description: `Reassigned request "${r.request_number}" from "${nameOfEmployee(g.fromId)}" to "${nameOfEmployee(g.toId)}" (workload rebalance).`,
+                    })
+                )
             )
+
+            if (movedRequests.length > 0) {
+                const toUserId = employees.find((e) => e.employee_id === g.toId)?.user_id
+                if (toUserId) {
+                    await notify({
+                        userId: toUserId,
+                        title: 'Requests assigned to you',
+                        message: `${movedRequests.length} request${movedRequests.length === 1 ? '' : 's'} ${movedRequests.length === 1 ? 'has' : 'have'} been reassigned to you from ${nameOfEmployee(g.fromId)} (workload rebalance): ${movedRequests.map((r) => r.request_number).join(', ')}.`,
+                        notificationType: 'assignment',
+                    })
+                }
+            }
         }
 
         return movedCount

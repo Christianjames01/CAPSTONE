@@ -11,7 +11,7 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
-import { notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
+import { notify, notifyStudentByStudentId, notifyError, notifyWarning, notifySuccess, confirmModal } from '../../lib/notify'
 import { SkeletonPage } from '../../components/Skeleton'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import HighlightedText from '../../components/HighlightedText'
@@ -857,6 +857,16 @@ function AdminRequestDetails() {
                 recordId: requestId,
                 description: `Reassigned request "${request.request_number}" ${describeChanges([['assigned employee', currentEmployeeName, newEmployee?.name || reassignTo]]) || `to "${newEmployee?.name || reassignTo}"`}.`,
             })
+
+            if (newEmployee?.user_id) {
+                await notify({
+                    userId: newEmployee.user_id,
+                    title: 'Request assigned to you',
+                    message: `Request ${request.request_number} (${documentName || 'document'}) has been assigned to you.`,
+                    notificationType: 'assignment',
+                    relatedRequestId: requestId,
+                })
+            }
 
             notifySuccess('Request reassigned.')
             await loadRequest()
