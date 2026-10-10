@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { ROLE_NAMES, displayName, downloadCsv, formatWhen, timeAgo } from './superadminFormat'
+import { SkeletonList } from '../../components/Skeleton'
 
 const RANGES = [
     { key: 'today', label: 'Today', days: 1 },
@@ -8,7 +10,8 @@ const RANGES = [
     { key: 'all', label: 'All', days: null },
 ]
 
-function SuperAdminLogins({ logins }) {
+function SuperAdminLogins() {
+    const { logins, loading } = useOutletContext()
     const [range, setRange] = useState('7d')
     const [role, setRole] = useState('all')
     const [query, setQuery] = useState('')
@@ -35,14 +38,16 @@ function SuperAdminLogins({ logins }) {
         )
     }
 
+    const stillLoading = loading && logins.length === 0
+
     return (
         <>
-            <header className="admin-page-header-row">
-                <div className="admin-page-header">
+            <header className="sa-page-header-row">
+                <div className="sa-page-header">
                     <h1>Login activity</h1>
                     <p>Each successful sign-in, newest first. Times are Manila time.</p>
                 </div>
-                <button type="button" className="admin-link-button" onClick={exportLogins} disabled={visible.length === 0}>
+                <button type="button" className="sa-btn sa-btn-ghost" onClick={exportLogins} disabled={visible.length === 0}>
                     Export CSV
                 </button>
             </header>
@@ -55,7 +60,7 @@ function SuperAdminLogins({ logins }) {
                             type="button"
                             role="tab"
                             aria-selected={range === r.key}
-                            className={`admin-filter-chip${range === r.key ? ' active' : ''}`}
+                            className={`sa-chip${range === r.key ? ' active' : ''}`}
                             onClick={() => setRange(r.key)}
                         >
                             {r.label}
@@ -71,7 +76,7 @@ function SuperAdminLogins({ logins }) {
                     </select>
                     <input
                         type="search"
-                        className="admin-search-input"
+                        className="sa-input"
                         placeholder="Search name or email"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
@@ -80,34 +85,40 @@ function SuperAdminLogins({ logins }) {
                 </div>
             </div>
 
-            <section className="admin-card">
-                <p className="sa-muted sa-count">{visible.length} sign-in{visible.length === 1 ? '' : 's'}</p>
-                {visible.length === 0 ? (
-                    <p className="admin-empty">No sign-ins match these filters.</p>
+            <section className="sa-card">
+                {stillLoading ? (
+                    <SkeletonList count={6} fields={0} />
                 ) : (
-                    <div className="admin-table-wrapper">
-                        <table className="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>When</th>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {visible.map((row, index) => (
-                                    <tr key={`${row.user_id}-${row.logged_in_at}-${index}`}>
-                                        <td title={timeAgo(row.logged_in_at)}>{formatWhen(row.logged_in_at)}</td>
-                                        <td>
-                                            <span className="sa-name">{displayName(row)}</span>
-                                            <span className="sa-sub">{row.email}</span>
-                                        </td>
-                                        <td>{ROLE_NAMES[row.role] || row.role || '—'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <>
+                        <p className="sa-muted sa-count">{visible.length} sign-in{visible.length === 1 ? '' : 's'}</p>
+                        {visible.length === 0 ? (
+                            <p className="sa-empty">No sign-ins match these filters.</p>
+                        ) : (
+                            <div className="sa-table-wrapper">
+                                <table className="sa-table">
+                                    <thead>
+                                        <tr>
+                                            <th>When</th>
+                                            <th>Name</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {visible.map((row, index) => (
+                                            <tr key={`${row.user_id}-${row.logged_in_at}-${index}`}>
+                                                <td title={timeAgo(row.logged_in_at)}>{formatWhen(row.logged_in_at)}</td>
+                                                <td>
+                                                    <span className="sa-name">{displayName(row)}</span>
+                                                    <span className="sa-sub">{row.email}</span>
+                                                </td>
+                                                <td>{ROLE_NAMES[row.role] || row.role || '—'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
         </>

@@ -1,0 +1,422 @@
+/* ===================================================
+   SIDEBAR
+=================================================== */
+.sa-sidebar {
+    width: 264px;
+    flex-shrink: 0;
+    height: 100vh;
+    height: 100dvh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 22px 14px;
+    background: var(--sa-navy-dark);
+    overflow-y: auto;
+    transition: width 0.2s ease;
+}
+
+.sa-sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.sa-sidebar-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sa-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+    min-width: 0;
+}
+
+.sa-sidebar-seal {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sa-sidebar-seal img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.sa-sidebar-brand-text {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sa-sidebar-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.sa-sidebar-subtitle {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+.sa-mobile-topbar,
+.sa-mobile-menu-button,
+.sa-mobile-close-button,
+.sa-nav-backdrop {
+    display: none;
+}
+
+/* ===== Nav groups ===== */
+.sa-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sa-nav-group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 0 12px 4px;
+}
+
+.sa-nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.82);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sa-nav-link svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sa-nav-link span:not(.sa-nav-tooltip) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sa-nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.sa-nav-link.active {
+    background: var(--sa-navy);
+    color: #fff;
+}
+
+.sa-nav-external {
+    margin-left: auto;
+    font-size: 11px;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.sa-nav-tooltip {
+    display: none;
+}
+
+/* ===== Collapse toggle ===== */
+.sa-collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-top: 4px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sa-collapse-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.sa-collapse-icon {
+    display: inline-flex;
+    transition: transform 0.2s ease;
+}
+
+.sa-collapse-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ===== Bottom block ===== */
+.sa-sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sa-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+    min-width: 0;
+}
+
+.sa-user-avatar {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sa-gold);
+    color: #0d2c5c;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.sa-user-text {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sa-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sa-user-role {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+}
+
+.sa-logout-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.sa-logout-button svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.sa-logout-button:hover:not(:disabled) {
+    background: rgba(200, 16, 46, 0.25);
+    color: #fff;
+}
+
+/* ===== Collapsed state (desktop only) ===== */
+@media (min-width: 961px) {
+    .sa-portal.is-collapsed .sa-sidebar {
+        width: 72px;
+    }
+
+    .sa-portal.is-collapsed .sa-sidebar-brand-text,
+    .sa-portal.is-collapsed .sa-nav-group-label,
+    .sa-portal.is-collapsed .sa-nav-link span:not(.sa-nav-tooltip),
+    .sa-portal.is-collapsed .sa-nav-external,
+    .sa-portal.is-collapsed .sa-collapse-toggle span:not(.sa-collapse-icon),
+    .sa-portal.is-collapsed .sa-user-text,
+    .sa-portal.is-collapsed .sa-logout-button span {
+        display: none;
+    }
+
+    .sa-portal.is-collapsed .sa-nav-link,
+    .sa-portal.is-collapsed .sa-collapse-toggle,
+    .sa-portal.is-collapsed .sa-logout-button {
+        justify-content: center;
+    }
+
+    .sa-portal.is-collapsed .sa-collapse-icon {
+        transform: rotate(180deg);
+    }
+
+    /* CSS-only tooltip, shown on hover/focus only while collapsed. Native
+       title= attribute already gives every item an accessible name; this is
+       a purely visual bubble on top of it. */
+    .sa-portal.is-collapsed .sa-nav-link {
+        position: relative;
+    }
+
+    .sa-portal.is-collapsed .sa-nav-tooltip {
+        display: block;
+        position: absolute;
+        left: calc(100% + 10px);
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--sa-navy-dark);
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s ease;
+        z-index: 60;
+        box-shadow: var(--sa-shadow-md);
+    }
+
+    .sa-portal.is-collapsed .sa-nav-link:hover .sa-nav-tooltip,
+    .sa-portal.is-collapsed .sa-nav-link:focus-visible .sa-nav-tooltip {
+        opacity: 1;
+    }
+}
+
+/* ===== Content ===== */
+.sa-content {
+    flex: 1;
+    min-width: 0;
+    padding: 36px 40px;
+}
+
+/* ===================================================
+   RESPONSIVE (mobile drawer -- same pattern as the other
+   three portal layouts; collapse is desktop-only)
+=================================================== */
+@media (max-width: 960px) {
+    .sa-mobile-topbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        padding: 14px 18px;
+        background: var(--sa-navy-dark);
+    }
+
+    .sa-mobile-menu-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .sa-mobile-menu-button svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .sa-mobile-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .sa-mobile-brand img {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .sa-mobile-brand span {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 16px;
+        color: #fff;
+    }
+
+    .sa-nav-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 15, 30, 0.5);
+        z-index: 40;
+    }
+
+    .sa-portal {
+        flex-direction: column;
+    }
+
+    .sa-sidebar,
+    .sa-portal.is-collapsed .sa-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        max-width: 82vw;
+        height: 100vh;
+        height: 100dvh;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 20px 14px;
+        overflow-y: auto;
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+    }
+
+    .sa-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sa-sidebar-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    .sa-mobile-close-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .sa-mobile-close-button svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .sa-collapse-toggle {
+        display: none;
+    }
+
+    .sa-content {
+        padding: 22px 16px;
+    }
+}

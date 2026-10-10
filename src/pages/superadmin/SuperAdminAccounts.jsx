@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { confirmModal, notifyError, notifySuccess } from '../../lib/notify'
 import { ROLE_NAMES, STAFF_ROLES, displayName, downloadCsv, formatWhen, timeAgo } from './superadminFormat'
 import { friendlyError } from '../../lib/friendlyError'
+import { SkeletonList } from '../../components/Skeleton'
 
 const FILTERS = [
     { key: 'all', label: 'All' },
@@ -14,7 +16,8 @@ const FILTERS = [
     { key: 'inactive', label: 'Deactivated' },
 ]
 
-function SuperAdminAccounts({ accounts, onChanged }) {
+function SuperAdminAccounts() {
+    const { accounts, loading, reload } = useOutletContext()
     const [filter, setFilter] = useState('all')
     const [query, setQuery] = useState('')
     const [busyId, setBusyId] = useState(null)
@@ -62,7 +65,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
             return
         }
         notifySuccess(`${name} is now ${nextLabel}.`)
-        onChanged()
+        reload()
     }
 
     async function toggleStatus(account) {
@@ -89,7 +92,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
             return
         }
         notifySuccess(`${name} ${next === 'active' ? 'reactivated' : 'deactivated'}.`)
-        onChanged()
+        reload()
     }
 
     function exportAccounts() {
@@ -103,14 +106,16 @@ function SuperAdminAccounts({ accounts, onChanged }) {
         )
     }
 
+    const stillLoading = loading && accounts.length === 0
+
     return (
         <>
-            <header className="admin-page-header-row">
-                <div className="admin-page-header">
+            <header className="sa-page-header-row">
+                <div className="sa-page-header">
                     <h1>Accounts</h1>
                     <p>Every account in the system. Staff accounts can be deactivated here.</p>
                 </div>
-                <button type="button" className="admin-link-button" onClick={exportAccounts} disabled={visible.length === 0}>
+                <button type="button" className="sa-btn sa-btn-ghost" onClick={exportAccounts} disabled={visible.length === 0}>
                     Export CSV
                 </button>
             </header>
@@ -123,7 +128,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                             type="button"
                             role="tab"
                             aria-selected={filter === f.key}
-                            className={`admin-filter-chip${filter === f.key ? ' active' : ''}`}
+                            className={`sa-chip${filter === f.key ? ' active' : ''}`}
                             onClick={() => setFilter(f.key)}
                         >
                             {f.label} <span className="sa-chip-count">{counts[f.key] ?? 0}</span>
@@ -132,7 +137,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                 </div>
                 <input
                     type="search"
-                    className="admin-search-input"
+                    className="sa-input"
                     placeholder="Search name, email or role"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -140,12 +145,14 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                 />
             </div>
 
-            <section className="admin-card">
-                {visible.length === 0 ? (
-                    <p className="admin-empty">No accounts match this filter.</p>
+            <section className="sa-card">
+                {stillLoading ? (
+                    <SkeletonList count={6} fields={0} />
+                ) : visible.length === 0 ? (
+                    <p className="sa-empty">No accounts match this filter.</p>
                 ) : (
-                    <div className="admin-table-wrapper">
-                        <table className="admin-table">
+                    <div className="sa-table-wrapper">
+                        <table className="sa-table">
                             <thead>
                                 <tr>
                                     <th>Name</th>
@@ -167,7 +174,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                                             </td>
                                             <td>{ROLE_NAMES[a.role] || a.role}</td>
                                             <td>
-                                                <span className={`sa-pill ${a.status === 'active' ? 'is-active' : 'is-inactive'}`}>
+                                                <span className={`sa-badge ${a.status === 'active' ? 'is-active' : 'is-inactive'}`}>
                                                     {a.status === 'active' ? 'Active' : 'Deactivated'}
                                                 </span>
                                             </td>
@@ -189,7 +196,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                                                     <>
                                                         <button
                                                             type="button"
-                                                            className="admin-link-button"
+                                                            className="sa-btn sa-btn-ghost"
                                                             onClick={() => changeRole(a)}
                                                             disabled={busyId === a.user_id}
                                                         >
@@ -197,7 +204,7 @@ function SuperAdminAccounts({ accounts, onChanged }) {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            className={`admin-link-button ${a.status === 'active' ? 'is-danger' : 'is-success'}`}
+                                                            className={`sa-btn sa-btn-ghost ${a.status === 'active' ? 'is-danger' : 'is-success'}`}
                                                             onClick={() => toggleStatus(a)}
                                                             disabled={busyId === a.user_id}
                                                         >

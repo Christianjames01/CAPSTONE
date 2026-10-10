@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { ROLE_NAMES, STAFF_ROLES, daysSince, displayName, formatDay, timeAgo } from './superadminFormat'
+import { SkeletonStatGrid } from '../../components/Skeleton'
 
 function Tile({ label, value, note, tone }) {
     return (
@@ -52,57 +53,63 @@ function RoleBars({ counts }) {
     )
 }
 
-function SuperAdminOverview({ overview, accounts, logins, daily, loading }) {
+function SuperAdminOverview() {
+    const { overview, accounts, logins, daily, loading } = useOutletContext()
     const stats = overview || {}
     const staff = accounts.filter((a) => STAFF_ROLES.includes(a.role))
     const neverSignedIn = staff.filter((a) => a.status === 'active' && !a.last_sign_in_at)
     const idle = staff.filter((a) => a.status === 'active' && a.last_sign_in_at && daysSince(a.last_sign_in_at) > 30)
     const inactive = accounts.filter((a) => a.status !== 'active')
     const onlineIds = new Set(accounts.filter((a) => a.online).map((a) => a.user_id))
+    const stillLoading = loading && !overview
 
     return (
         <>
-            <header className="admin-page-header">
+            <header className="sa-page-header">
                 <h1>Overview</h1>
                 <p>How the system is being used, and which accounts need attention.</p>
             </header>
 
-            <section className="sa-tiles">
-                <Tile
-                    label="Online right now"
-                    value={loading && !overview ? '…' : stats.online_now}
-                    note={<span className="sa-online-label"><span className="sa-online-dot" aria-hidden="true" />Live</span>}
-                    tone="online"
-                />
-                <Tile label="Logins today" value={loading && !overview ? '…' : stats.logins_today} note="Manila time" />
-                <Tile label="Logins, last 7 days" value={loading && !overview ? '…' : stats.logins_7d} />
-                <Tile label="People signed in, 7 days" value={loading && !overview ? '…' : stats.users_7d} />
-                <Tile
-                    label="Active accounts"
-                    value={loading && !overview ? '…' : stats.active}
-                    note={`${stats.inactive ?? 0} inactive`}
-                />
-            </section>
+            {stillLoading ? (
+                <SkeletonStatGrid count={5} />
+            ) : (
+                <section className="sa-tiles">
+                    <Tile
+                        label="Online right now"
+                        value={stats.online_now}
+                        note={<span className="sa-online-label"><span className="sa-online-dot" aria-hidden="true" />Live</span>}
+                        tone="online"
+                    />
+                    <Tile label="Logins today" value={stats.logins_today} note="Manila time" />
+                    <Tile label="Logins, last 7 days" value={stats.logins_7d} />
+                    <Tile label="People signed in, 7 days" value={stats.users_7d} />
+                    <Tile
+                        label="Active accounts"
+                        value={stats.active}
+                        note={`${stats.inactive ?? 0} inactive`}
+                    />
+                </section>
+            )}
 
             <div className="sa-grid">
-                <section className="admin-card sa-panel sa-panel-wide">
-                    <div className="sa-panel-head">
+                <section className="sa-card sa-panel-wide">
+                    <div className="sa-card-head">
                         <h2>Logins, last 14 days</h2>
-                        <Link to="/superadmin/logins" className="admin-link-button">Full history →</Link>
+                        <Link to="/superadmin/logins" className="sa-btn sa-btn-ghost">Full history →</Link>
                     </div>
                     <LoginChart daily={daily} />
                 </section>
 
-                <section className="admin-card sa-panel">
-                    <div className="sa-panel-head">
+                <section className="sa-card">
+                    <div className="sa-card-head">
                         <h2>Accounts by role</h2>
-                        <Link to="/superadmin/accounts" className="admin-link-button">Manage →</Link>
+                        <Link to="/superadmin/accounts" className="sa-btn sa-btn-ghost">Manage →</Link>
                     </div>
                     <RoleBars counts={stats.accounts} />
                 </section>
 
-                <section className="admin-card sa-panel">
-                    <div className="sa-panel-head">
+                <section className="sa-card">
+                    <div className="sa-card-head">
                         <h2>Needs attention</h2>
                     </div>
                     <ul className="sa-attention">
@@ -127,8 +134,8 @@ function SuperAdminOverview({ overview, accounts, logins, daily, loading }) {
                     </ul>
                 </section>
 
-                <section className="admin-card sa-panel">
-                    <div className="sa-panel-head">
+                <section className="sa-card">
+                    <div className="sa-card-head">
                         <h2>Latest sign-ins</h2>
                     </div>
                     {logins.length === 0 ? (

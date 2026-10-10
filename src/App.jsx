@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import PageLoading from './components/PageLoading'
 
 // Each page is downloaded the first time it's opened (code splitting), so
@@ -89,7 +89,14 @@ const AdminActivityLogs = lazy(() => import('./pages/admin/ActivityLogs'))
 const Reports = lazy(() => import('./pages/admin/Reports'))
 const AdminProfile = lazy(() => import('./pages/admin/Profile'))
 const AdminCredentials = lazy(() => import('./pages/admin/Credentials'))
-const SuperAdmin = lazy(() => import('./pages/superadmin/SuperAdmin'))
+const SuperAdminLayout = lazy(() => import('./pages/superadmin/SuperAdminLayout'))
+const SuperAdminOverview = lazy(() => import('./pages/superadmin/SuperAdminOverview'))
+const SuperAdminAccounts = lazy(() => import('./pages/superadmin/SuperAdminAccounts'))
+const SuperAdminLogins = lazy(() => import('./pages/superadmin/SuperAdminLogins'))
+const SuperAdminRoles = lazy(() => import('./pages/superadmin/SuperAdminRoles'))
+const SuperAdminSecurity = lazy(() => import('./pages/superadmin/SuperAdminSecurity'))
+const SuperAdminSystemHealth = lazy(() => import('./pages/superadmin/SuperAdminSystemHealth'))
+const SuperAdminDataExport = lazy(() => import('./pages/superadmin/SuperAdminDataExport'))
 
 // Pages shared by the system admin and the registrar head. Paths are relative
 // to the portal (/admin or /head).
@@ -427,13 +434,21 @@ function App() {
         </Route>
 
         <Route
-          path="/superadmin/*"
           element={
             <ProtectedRoute allowedRoles={['superadmin']}>
-              <SuperAdmin />
+              <SuperAdminLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="/superadmin" element={<SuperAdminOverview />} />
+          <Route path="/superadmin/accounts" element={<SuperAdminAccounts />} />
+          <Route path="/superadmin/logins" element={<SuperAdminLogins />} />
+          <Route path="/superadmin/roles" element={<SuperAdminRoles />} />
+          <Route path="/superadmin/security" element={<SuperAdminSecurity />} />
+          <Route path="/superadmin/system-health" element={<SuperAdminSystemHealth />} />
+          <Route path="/superadmin/data-export" element={<SuperAdminDataExport />} />
+          <Route path="/superadmin/*" element={<Navigate to="/superadmin" replace />} />
+        </Route>
 
       </Routes>
       </Suspense>
