@@ -94,3 +94,37 @@
 .pv-btn.is-ghost:hover:not(:disabled) {
     color: var(--blue);
 }
+
+/* Setup Incomplete cards (same page, same file): signed up but never
+   finished their profile. A caution tone (amber), not the informational
+   blue used for Pending Verification above -- these are the ones close to
+   auto-deactivation. */
+.si-card {
+    border-left: 3px solid #b8892b;
+}
+
+.si-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(184, 137, 43, 0.14);
+    color: #8a6a22;
+    white-space: nowrap;
+}
+
+.si-badge.is-declined {
+    background: var(--danger-bg-soft, rgba(200, 16, 46, 0.08));
+    color: var(--red);
+}
+
+.si-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+}

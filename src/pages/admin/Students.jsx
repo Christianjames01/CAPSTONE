@@ -627,7 +627,7 @@ function Students() {
                     </p>
 
                     {pendingProfiles.map((p) => (
-                        <div className="admin-list-card" key={p.user_id}>
+                        <div className="admin-list-card si-card" key={p.user_id}>
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
                                     <span className="admin-avatar is-muted" aria-hidden="true"><AvatarFace photo={p.profile_photo_url} name={`${p.first_name} ${p.last_name}`} /></span>
@@ -637,20 +637,20 @@ function Students() {
                                     </div>
                                 </div>
                                 {p.status === 'inactive' ? (
-                                    <span className="admin-status-pill status-rejected">Auto-declined</span>
+                                    <span className="si-badge is-declined">Auto-declined</span>
                                 ) : (
-                                    <span className="admin-status-pill status-pending">Setup incomplete</span>
+                                    <span className="si-badge">Setup incomplete</span>
                                 )}
                             </div>
 
-                            <div className="admin-list-card-header" style={{ marginTop: 10 }}>
+                            <div className="si-foot">
                                 <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>
                                     Signed up {new Date(p.created_at).toLocaleString('en-PH', {
                                         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
                                     })}
                                 </p>
                                 <button
-                                    className="admin-link-button is-danger"
+                                    className="pv-btn is-reject"
                                     onClick={() => removeIncompleteProfile(p)}
                                     disabled={removingProfileId === p.user_id}
                                 >
