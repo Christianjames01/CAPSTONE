@@ -324,6 +324,7 @@ function Register() {
         <AuthLayout
             title="Create your account"
             subtitle="Register to request and track your academic documents online."
+            cardClassName="is-refined"
             footer={
                 <>Already have an account? <Link to="/login">Log in</Link></>
             }

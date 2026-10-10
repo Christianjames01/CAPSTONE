@@ -218,6 +218,7 @@ function Login() {
         <AuthLayout
             title="Welcome back"
             subtitle="Log in to manage your academic document requests."
+            cardClassName="is-refined"
             footer={
                 <>Don't have an account? <Link to="/register">Register</Link></>
             }

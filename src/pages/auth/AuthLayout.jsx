@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import './Auth.css'
 import certichainLogo from '../../assets/certichain-logo.png'
 
-function AuthLayout({ title, subtitle, footer, children }) {
+function AuthLayout({ title, subtitle, footer, children, cardClassName }) {
     return (
         <div className="auth-page">
 
@@ -31,7 +31,7 @@ function AuthLayout({ title, subtitle, footer, children }) {
             </div>
 
             <div className="auth-form-panel">
-                <div className="auth-card">
+                <div className={`auth-card${cardClassName ? ` ${cardClassName}` : ''}`}>
                     <Link to="/" className="auth-back-link">← Back to home</Link>
 
                     <div className="auth-card-header">

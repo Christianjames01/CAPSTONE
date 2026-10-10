@@ -174,6 +174,101 @@
     margin: auto 0;
 }
 
+/* ===================================================
+   REFINED FILL-UP AREA (Login + Register only)
+   A modifier on .auth-card, scoped with .is-refined so
+   the other auth pages (forgot/reset password, complete
+   profile, employee register, force-change-password)
+   that share this same CSS file keep their current look.
+=================================================== */
+.auth-card.is-refined {
+    position: relative;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 34px 32px 28px;
+    box-shadow: 0 24px 54px -28px rgba(10, 36, 80, 0.28), 0 2px 10px rgba(16, 24, 39, 0.04);
+}
+
+.auth-card.is-refined::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 28px;
+    right: 28px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--blue) 0%, #b8892b 100%);
+}
+
+.auth-card.is-refined .auth-back-link {
+    margin-bottom: 18px;
+}
+
+.auth-card.is-refined .form-input {
+    padding: 13px 16px;
+    border-radius: 10px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+}
+
+.auth-card.is-refined .form-input:focus {
+    background: var(--white);
+    border-color: var(--blue);
+    box-shadow: 0 0 0 4px var(--blue-tint);
+}
+
+.auth-card.is-refined .password-field .form-input {
+    padding-right: 44px;
+}
+
+.auth-card.is-refined .auth-submit {
+    border-radius: 10px;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, var(--blue) 0%, var(--blue-dark) 100%);
+    box-shadow: 0 12px 26px -14px rgba(18, 59, 120, 0.6);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-card.is-refined .auth-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px -14px rgba(18, 59, 120, 0.7);
+}
+
+.auth-card.is-refined .auth-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.auth-card.is-refined .auth-submit:focus-visible {
+    outline: 2px solid #b8892b;
+    outline-offset: 2px;
+}
+
+.auth-card.is-refined .auth-google-button {
+    border-radius: 10px;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-card.is-refined .auth-google-button:hover:not(:disabled) {
+    box-shadow: 0 8px 18px -10px rgba(16, 24, 39, 0.22);
+}
+
+.auth-card.is-refined .auth-type-toggle button {
+    border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+    .auth-card.is-refined {
+        padding: 26px 18px 22px;
+        border-radius: 14px;
+    }
+
+    .auth-card.is-refined::before {
+        left: 18px;
+        right: 18px;
+    }
+}
+
 .auth-form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
