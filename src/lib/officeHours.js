@@ -5,8 +5,8 @@
 export const DEFAULT_HOURS = { open: '08:00', close: '17:00' }
 
 export const HOURS_PRESETS = [
-    { label: '8 AM – 5 PM', open: '08:00', close: '17:00' },
-    { label: '8 AM – 6 PM', open: '08:00', close: '18:00' },
+    { label: '8 AM–12NN, 1–5 PM', open: '08:00', close: '17:00' },
+    { label: '8 AM–12NN, 1–6 PM', open: '08:00', close: '18:00' },
     { label: '8 AM – 12 NN', open: '08:00', close: '12:00' },
     { label: '1 PM – 5 PM', open: '13:00', close: '17:00' },
 ]
@@ -20,9 +20,14 @@ function formatClock(time) {
     return d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
 }
 
-// "8:00 AM – 5:00 PM", or '' when not set.
+// "8:00 AM – 5:00 PM", or '' when not set. A range spanning the fixed
+// noon-to-1pm lunch break shows as two blocks ("8:00 AM–12:00 NN, 1:00–5:00
+// PM") instead of implying the office stays open straight through lunch.
 export function formatHours(open, close) {
     if (!open || !close) return ''
+    if (open <= '12:00' && close >= '13:00') {
+        return `${formatClock(open)}–12:00 NN, 1:00–${formatClock(close)}`
+    }
     return `${formatClock(open)} – ${formatClock(close)}`
 }
 
