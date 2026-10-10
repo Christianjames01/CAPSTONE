@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
-import { StatusBreakdownChart, RequestsTrendChart } from './DashboardCharts'
+import { StatusDonutChart, RequestsTrendChart } from './DashboardCharts'
 import { SkeletonDashboard } from '../../components/Skeleton'
 import { IconUsers, IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconXCircle, IconBan, IconCalendarCheck, IconClipboardCheck, IconLayers, IconSwap, IconBarChart } from './icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange } from '../../lib/dashboardData'
@@ -565,7 +565,7 @@ function AdminDashboard() {
             </section>
 
             <div className="dash-charts-grid">
-                <StatusBreakdownChart data={statusChartData} />
+                <StatusDonutChart data={statusChartData} />
                 <RequestsTrendChart data={trendChartData} />
             </div>
 

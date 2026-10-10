@@ -363,10 +363,11 @@ export function SkeletonDashboard({ portal = 'admin', alerts = 0, overview = 3, 
                         </div>
                         <Skeleton width={96} height={30} radius={6} />
                     </div>
-                    <div className="dash-status-block">
-                        <Skeleton width={70} height={28} style={{ marginBottom: 16 }} />
-                        <div className="skeleton-stackbar" />
-                        <div className="dash-stack-legend">
+                    <div className="dash-donut-row">
+                        <div className="dash-donut-wrap">
+                            <div className="skeleton-donut" />
+                        </div>
+                        <div className="dash-legend">
                             {Array.from({ length: 7 }).map((_, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px' }}>
                                     <Skeleton width={10} height={10} radius={3} />

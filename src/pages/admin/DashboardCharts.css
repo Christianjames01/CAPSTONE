@@ -68,73 +68,90 @@
 }
 
 /* ===================================================
-   STATUS BREAKDOWN (stacked proportion bar)
+   DONUT
 =================================================== */
 
-.dash-status-block {
+.dash-donut-row {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
     margin-top: auto;
     margin-bottom: auto;
 }
 
-.dash-stackbar-total {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 16px;
+.dash-donut-wrap {
+    position: relative;
+    width: 180px;
+    flex-shrink: 0;
+    margin: 0 auto;
 }
 
-.dash-stackbar-total-value {
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--ink);
-}
-
-.dash-stackbar-total-label {
-    font-size: 12.5px;
-    color: var(--slate);
-}
-
-.dash-stackbar {
-    display: flex;
-    gap: 2px;
+.dash-donut-svg {
     width: 100%;
-    height: 14px;
-    border-radius: 7px;
-    overflow: hidden;
-    background: var(--line);
+    height: auto;
+    display: block;
+    overflow: visible;
 }
 
-.dash-stackbar-seg {
+/* The 2px surface-colored stroke is the gap between slices: an even
+   pixel gap at every size, instead of an angle that varies with the slice. */
+.dash-donut-segment {
+    stroke: var(--surface);
+    stroke-width: 2;
+    stroke-linejoin: round;
     cursor: pointer;
     outline: none;
-    transition: filter 0.15s ease, opacity 0.15s ease;
+    transition: opacity 0.15s ease;
 }
 
-.dash-stackbar-seg:hover,
-.dash-stackbar-seg:focus-visible {
-    filter: brightness(1.12);
-}
-
-.dash-stackbar-seg:focus-visible {
-    outline: 2px solid var(--ink);
-    outline-offset: 2px;
-}
-
-.dash-stackbar-seg.is-dimmed {
+.dash-donut-segment.is-dimmed {
     opacity: 0.35;
 }
 
-.dash-stack-legend {
+.dash-donut-segment:focus-visible {
+    stroke: var(--ink);
+}
+
+.dash-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+    padding: 0 38px;
+}
+
+.dash-donut-center-value {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+}
+
+.dash-donut-center-label {
+    font-size: 11.5px;
+    color: var(--slate);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+.dash-legend {
     list-style: none;
-    margin: 16px 0 0;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
 }
 
-.dash-stack-legend li {
+.dash-legend li {
     display: grid;
     grid-template-columns: 10px 1fr auto 38px;
     align-items: center;
@@ -145,18 +162,18 @@
     transition: background 0.12s ease;
 }
 
-.dash-stack-legend li.active {
+.dash-legend li.active {
     background: var(--paper);
 }
 
-.dash-stack-legend li.is-empty .dash-legend-label,
-.dash-stack-legend li.is-empty .dash-legend-value,
-.dash-stack-legend li.is-empty .dash-legend-pct {
+.dash-legend li.is-empty .dash-legend-label,
+.dash-legend li.is-empty .dash-legend-value,
+.dash-legend li.is-empty .dash-legend-pct {
     color: var(--slate);
     opacity: 0.7;
 }
 
-.dash-stack-legend li.is-empty .dash-legend-key {
+.dash-legend li.is-empty .dash-legend-key {
     opacity: 0.35;
 }
 
@@ -189,10 +206,23 @@
     .dash-chart-card {
         padding: 16px;
     }
+
+    .dash-donut-row {
+        gap: 16px;
+    }
+
+    .dash-donut-wrap {
+        width: 150px;
+    }
+
+    .dash-legend {
+        min-width: 0;
+        max-width: none;
+    }
 }
 
 /* ===================================================
-   DAILY TREND (gradient area chart)
+   DAILY COLUMNS
 =================================================== */
 
 .dash-line-wrap {
@@ -205,7 +235,6 @@
     width: 100%;
     height: auto;
     display: block;
-    overflow: visible;
 }
 
 .dash-gridline {
@@ -231,50 +260,30 @@
     fill: var(--ink);
 }
 
-.dash-area-fill {
-    pointer-events: none;
-}
-
-.dash-area-line {
-    stroke: var(--blue-accent, var(--blue));
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    pointer-events: none;
-}
-
-.dash-point-hit {
+.dash-column-hit {
     fill: transparent;
     cursor: pointer;
 }
 
-.dash-hover-line {
-    stroke: var(--slate);
-    stroke-width: 1;
-    stroke-dasharray: 3 3;
-    pointer-events: none;
+.dash-column-hit.is-hover {
+    fill: var(--blue-tint);
+    opacity: 0.6;
 }
 
-.dash-area-dot {
-    fill: var(--surface);
-    stroke: var(--blue-accent, var(--blue));
-    stroke-width: 2;
+.dash-column {
+    fill: var(--blue-accent, var(--blue));
+    opacity: 0.55;
     pointer-events: none;
     transition: opacity 0.15s ease;
 }
 
-.dash-area-dot.is-today {
-    fill: var(--blue-accent, var(--blue));
+/* Today's column is the one to watch, so it's full strength. */
+.dash-column.is-today {
+    opacity: 1;
 }
 
-.dash-area-dot.is-dimmed {
-    opacity: 0.3;
-}
-
-.dash-area-dot.is-hover {
-    fill: var(--blue-accent, var(--blue));
-    stroke: var(--surface);
-    stroke-width: 2;
+.dash-column.is-dimmed {
+    opacity: 0.25;
 }
 
 /* ===================================================
@@ -344,8 +353,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .dash-stackbar-seg,
-    .dash-area-dot,
+    .dash-donut-segment,
+    .dash-column,
     .dash-table-toggle {
         transition: none;
     }

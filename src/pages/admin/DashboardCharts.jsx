@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './DashboardCharts.css'
 
 const formatDayLabel = (isoDate) =>
@@ -20,26 +20,27 @@ const integerTicks = (max) => {
     return { ticks, ceiling }
 }
 
-// Catmull-Rom through the points, converted to cubic Beziers: a smooth
-// curve that still passes through every real data point (no overshoot
-// smoothing that would imply counts the data doesn't have).
-const smoothLinePath = (points) => {
-    if (points.length === 0) return ''
-    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`
+const polarToCartesian = (cx, cy, r, angleDeg) => {
+    const rad = ((angleDeg - 90) * Math.PI) / 180
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+}
 
-    let d = `M ${points[0].x} ${points[0].y}`
-    for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[i === 0 ? i : i - 1]
-        const p1 = points[i]
-        const p2 = points[i + 1]
-        const p3 = points[i + 2 < points.length ? i + 2 : i + 1]
-        const cp1x = p1.x + (p2.x - p0.x) / 6
-        const cp1y = p1.y + (p2.y - p0.y) / 6
-        const cp2x = p2.x - (p3.x - p1.x) / 6
-        const cp2y = p2.y - (p3.y - p1.y) / 6
-        d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
-    }
-    return d
+const donutSegmentPath = (cx, cy, rOuter, rInner, startAngle, endAngle) => {
+    // A full circle can't be drawn as one arc; nudge it just short of 360.
+    const end = endAngle - startAngle >= 360 ? startAngle + 359.99 : endAngle
+    const startOuter = polarToCartesian(cx, cy, rOuter, end)
+    const endOuter = polarToCartesian(cx, cy, rOuter, startAngle)
+    const startInner = polarToCartesian(cx, cy, rInner, end)
+    const endInner = polarToCartesian(cx, cy, rInner, startAngle)
+    const largeArc = end - startAngle > 180 ? 1 : 0
+
+    return [
+        `M ${startOuter.x} ${startOuter.y}`,
+        `A ${rOuter} ${rOuter} 0 ${largeArc} 0 ${endOuter.x} ${endOuter.y}`,
+        `L ${endInner.x} ${endInner.y}`,
+        `A ${rInner} ${rInner} 0 ${largeArc} 1 ${startInner.x} ${startInner.y}`,
+        'Z',
+    ].join(' ')
 }
 
 function ChartHead({ title, subtitle, showTable, onToggle }) {
@@ -56,21 +57,27 @@ function ChartHead({ title, subtitle, showTable, onToggle }) {
     )
 }
 
-export function StatusBreakdownChart({ data }) {
+export function StatusDonutChart({ data }) {
     const [hoverKey, setHoverKey] = useState(null)
     const [showTable, setShowTable] = useState(false)
 
     const total = data.reduce((sum, d) => sum + d.value, 0)
     const pctOf = (v) => (total > 0 ? (v / total) * 100 : 0)
 
-    const segments = data
+    const cx = 100
+    const cy = 100
+    const rOuter = 90
+    const rInner = 66
+
+    const wedges = data
         .filter((d) => d.value > 0)
         .reduce((acc, d) => {
-            const pct = pctOf(d.value)
             const start = acc.length ? acc[acc.length - 1].end : 0
-            acc.push({ ...d, pct, start, end: start + pct })
+            acc.push({ ...d, start, end: start + (d.value / total) * 360 })
             return acc
         }, [])
+
+    const hovered = hoverKey ? data.find((d) => d.key === hoverKey) : null
 
     return (
         <div className="dash-chart-card">
@@ -108,34 +115,35 @@ export function StatusBreakdownChart({ data }) {
             ) : total === 0 ? (
                 <div className="dash-chart-empty">No requests yet.</div>
             ) : (
-                <div className="dash-status-block">
-                    <div className="dash-stackbar-total">
-                        <span className="dash-stackbar-total-value">{total.toLocaleString()}</span>
-                        <span className="dash-stackbar-total-label">total request{total === 1 ? '' : 's'}</span>
+                <div className="dash-donut-row">
+                    <div className="dash-donut-wrap">
+                        <svg viewBox="0 0 200 200" className="dash-donut-svg" role="img" aria-label={`Requests by status, ${total} total`}>
+                            {wedges.map((w) => (
+                                <path
+                                    key={w.key}
+                                    d={donutSegmentPath(cx, cy, hoverKey === w.key ? rOuter + 4 : rOuter, rInner, w.start, w.end)}
+                                    style={{ fill: w.color }}
+                                    className={`dash-donut-segment${hoverKey && hoverKey !== w.key ? ' is-dimmed' : ''}`}
+                                    onMouseEnter={() => setHoverKey(w.key)}
+                                    onMouseLeave={() => setHoverKey(null)}
+                                    tabIndex={0}
+                                    aria-label={`${w.label}: ${w.value} requests, ${pctOf(w.value).toFixed(0)}%`}
+                                    onFocus={() => setHoverKey(w.key)}
+                                    onBlur={() => setHoverKey(null)}
+                                />
+                            ))}
+                        </svg>
+
+                        {/* Center readout follows the hovered status, otherwise the total. */}
+                        <div className="dash-donut-center" aria-hidden="true">
+                            <span className="dash-donut-center-value">{hovered ? hovered.value : total}</span>
+                            <span className="dash-donut-center-label">
+                                {hovered ? `${hovered.label} · ${pctOf(hovered.value).toFixed(0)}%` : 'Total requests'}
+                            </span>
+                        </div>
                     </div>
 
-                    <div
-                        className="dash-stackbar"
-                        role="img"
-                        aria-label={`Requests by status, ${total} total`}
-                        onMouseLeave={() => setHoverKey(null)}
-                    >
-                        {segments.map((s) => (
-                            <div
-                                key={s.key}
-                                className={`dash-stackbar-seg${hoverKey && hoverKey !== s.key ? ' is-dimmed' : ''}`}
-                                style={{ width: `${s.pct}%`, background: s.color }}
-                                onMouseEnter={() => setHoverKey(s.key)}
-                                onFocus={() => setHoverKey(s.key)}
-                                onBlur={() => setHoverKey(null)}
-                                tabIndex={0}
-                                role="img"
-                                aria-label={`${s.label}: ${s.value} requests, ${s.pct.toFixed(0)}%`}
-                            />
-                        ))}
-                    </div>
-
-                    <ul className="dash-stack-legend">
+                    <ul className="dash-legend">
                         {data.map((d) => (
                             <li
                                 key={d.key}
@@ -162,7 +170,6 @@ export function StatusBreakdownChart({ data }) {
 export function RequestsTrendChart({ data }) {
     const [hoverIndex, setHoverIndex] = useState(null)
     const [showTable, setShowTable] = useState(false)
-    const gradientId = useId()
 
     const width = 640
     const height = 250
@@ -173,23 +180,13 @@ export function RequestsTrendChart({ data }) {
 
     const plotWidth = width - padLeft - padRight
     const plotHeight = height - padTop - padBottom
-    const baselineY = padTop + plotHeight
 
     const { ticks, ceiling } = useMemo(() => integerTicks(Math.max(...data.map((d) => d.count), 0)), [data])
 
-    const slot = data.length > 1 ? plotWidth / (data.length - 1) : plotWidth
-    const xAt = (i) => (data.length > 1 ? padLeft + slot * i : padLeft + plotWidth / 2)
+    const slot = data.length ? plotWidth / data.length : 0
+    const barWidth = Math.min(28, Math.max(6, slot * 0.56))
+    const xCenter = (i) => padLeft + slot * i + slot / 2
     const yAt = (v) => padTop + plotHeight - (v / ceiling) * plotHeight
-
-    const points = useMemo(
-        () => data.map((d, i) => ({ x: xAt(i), y: yAt(d.count) })),
-        [data, ceiling]
-    )
-
-    const linePath = useMemo(() => smoothLinePath(points), [points])
-    const areaPath = points.length
-        ? `${linePath} L ${points[points.length - 1].x} ${baselineY} L ${points[0].x} ${baselineY} Z`
-        : ''
 
     const totalInPeriod = data.reduce((sum, d) => sum + d.count, 0)
     const peak = data.reduce((best, d) => (d.count > (best?.count ?? -1) ? d : best), null)
@@ -197,7 +194,12 @@ export function RequestsTrendChart({ data }) {
     const lastIndex = data.length - 1
 
     const hovered = hoverIndex !== null ? data[hoverIndex] : null
-    const hoverPoint = hoverIndex !== null ? points[hoverIndex] : null
+
+    // Rounded top corners only, so each column sits flat on the baseline.
+    const columnPath = (x, y, w, h) => {
+        const r = Math.min(4, w / 2, h)
+        return `M ${x} ${y + h} V ${y + r} Q ${x} ${y} ${x + r} ${y} H ${x + w - r} Q ${x + w} ${y} ${x + w} ${y + r} V ${y + h} Z`
+    }
 
     return (
         <div className="dash-chart-card">
@@ -240,13 +242,6 @@ export function RequestsTrendChart({ data }) {
                         aria-label={`New requests per day, ${totalInPeriod} in the last ${data.length} days`}
                         onMouseLeave={() => setHoverIndex(null)}
                     >
-                        <defs>
-                            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="var(--blue-accent, var(--blue))" stopOpacity="0.32" />
-                                <stop offset="100%" stopColor="var(--blue-accent, var(--blue))" stopOpacity="0" />
-                            </linearGradient>
-                        </defs>
-
                         {ticks.map((t) => {
                             const y = yAt(t)
                             return (
@@ -259,56 +254,44 @@ export function RequestsTrendChart({ data }) {
 
                         {data.map((d, i) =>
                             i % labelEvery === (lastIndex % labelEvery) ? (
-                                <text key={d.date} x={xAt(i)} y={height - 10} textAnchor="middle" className={`dash-axis-label${i === lastIndex ? ' is-today' : ''}`}>
+                                <text key={d.date} x={xCenter(i)} y={height - 10} textAnchor="middle" className={`dash-axis-label${i === lastIndex ? ' is-today' : ''}`}>
                                     {i === lastIndex ? 'Today' : formatDayLabel(d.date)}
                                 </text>
                             ) : null
                         )}
 
-                        <path d={areaPath} className="dash-area-fill" fill={`url(#${gradientId})`} />
-                        <path d={linePath} className="dash-area-line" fill="none" />
-
-                        {points.map((p, i) => {
-                            const hitX = Math.max(padLeft, p.x - slot / 2)
-                            const hitRight = Math.min(padLeft + plotWidth, p.x + slot / 2)
+                        {data.map((d, i) => {
+                            const x = xCenter(i) - barWidth / 2
+                            const y = yAt(d.count)
+                            const h = padTop + plotHeight - y
                             return (
-                                <rect
-                                    key={data[i].date}
-                                    x={hitX}
-                                    y={padTop}
-                                    width={Math.max(0, hitRight - hitX)}
-                                    height={plotHeight}
-                                    className="dash-point-hit"
-                                    onMouseEnter={() => setHoverIndex(i)}
-                                />
+                                <g key={d.date}>
+                                    {/* Full-height hit area so thin or empty days are easy to hover. */}
+                                    <rect
+                                        x={padLeft + slot * i}
+                                        y={padTop}
+                                        width={slot}
+                                        height={plotHeight}
+                                        className={`dash-column-hit${hoverIndex === i ? ' is-hover' : ''}`}
+                                        onMouseEnter={() => setHoverIndex(i)}
+                                    />
+                                    {d.count > 0 && (
+                                        <path
+                                            d={columnPath(x, y, barWidth, h)}
+                                            className={`dash-column${i === lastIndex ? ' is-today' : ''}${hoverIndex !== null && hoverIndex !== i ? ' is-dimmed' : ''}`}
+                                        />
+                                    )}
+                                </g>
                             )
                         })}
-
-                        {hoverPoint && (
-                            <line x1={hoverPoint.x} y1={padTop} x2={hoverPoint.x} y2={baselineY} className="dash-hover-line" />
-                        )}
-
-                        {points.map((p, i) => (
-                            <circle
-                                key={`dot-${data[i].date}`}
-                                cx={p.x}
-                                cy={p.y}
-                                r={i === lastIndex ? 3.5 : 2.5}
-                                className={`dash-area-dot${i === lastIndex ? ' is-today' : ''}${hoverIndex !== null && hoverIndex !== i ? ' is-dimmed' : ''}`}
-                            />
-                        ))}
-
-                        {hoverPoint && (
-                            <circle cx={hoverPoint.x} cy={hoverPoint.y} r={5.5} className="dash-area-dot is-hover" />
-                        )}
                     </svg>
 
-                    {hovered && hoverPoint && (
+                    {hovered && (
                         <div
                             className="dash-tooltip"
                             style={{
-                                left: `${(hoverPoint.x / width) * 100}%`,
-                                top: `${(hoverPoint.y / height) * 100}%`,
+                                left: `${(xCenter(hoverIndex) / width) * 100}%`,
+                                top: `${(yAt(hovered.count) / height) * 100}%`,
                             }}
                         >
                             <strong>{hovered.count} {hovered.count === 1 ? 'request' : 'requests'}</strong>
