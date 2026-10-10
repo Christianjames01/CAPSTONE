@@ -6,7 +6,7 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { IconCalendar } from '../student/icons'
 import { IconShieldCheck, IconGear, IconUsers } from './icons'
 import { SkeletonDashboard } from '../../components/Skeleton'
-import { StatusDonutChart, RequestsTrendChart } from '../admin/DashboardCharts'
+import { StatusBreakdownChart, RequestsTrendChart } from '../admin/DashboardCharts'
 import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle, IconCalendarCheck, IconXCircle } from '../admin/icons'
 import { localDay, statusChartData as buildStatusChartData, dailyTrend, weeklyChange, countByStatus } from '../../lib/dashboardData'
 import '../../components/DashboardStats.css'
@@ -442,7 +442,7 @@ function EmployeeDashboard() {
 
             {!isReleasingOnly && (
                 <div className="dash-charts-grid">
-                    <StatusDonutChart data={statusChartData} />
+                    <StatusBreakdownChart data={statusChartData} />
                     <RequestsTrendChart data={trendChartData} />
                 </div>
             )}

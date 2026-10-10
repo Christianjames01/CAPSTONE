@@ -221,12 +221,12 @@ html[data-theme="dark"] {
     border-top: 1px solid var(--skeleton-card-border);
 }
 
-/* Donut placeholder: a ring the same size and thickness as the real chart. */
-.skeleton-donut {
+/* Stacked-bar placeholder: same height/radius as the real status bar. */
+.skeleton-stackbar {
     width: 100%;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle, transparent 57%, var(--skeleton-base) 58%, var(--skeleton-base) 78%, transparent 79%);
+    height: 14px;
+    border-radius: 7px;
+    background: var(--skeleton-base);
     animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
 
@@ -246,7 +246,7 @@ html[data-theme="dark"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .skeleton-donut {
+    .skeleton-stackbar {
         animation: none;
     }
 }
