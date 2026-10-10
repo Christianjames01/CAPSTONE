@@ -366,7 +366,7 @@ function Students() {
                         <div className="employee-list-card pv-card" key={student.student_id}>
                             <div className="employee-list-card-header">
                                 <div className="ui-card-title" style={{ alignItems: 'center' }}>
-                                    <span className="ui-avatar pv-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
+                                    <span className="ui-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <div>
                                         <h3>{student.fullName}</h3>
                                         <p>{student.student_number} · {student.email}</p>

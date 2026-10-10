@@ -562,7 +562,7 @@ function Students() {
                         <div className="admin-list-card pv-card" key={student.student_id}>
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
-                                    <span className="admin-avatar pv-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
+                                    <span className="admin-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <div>
                                         <h3>{student.fullName}</h3>
                                         <p>{student.student_number} · {student.email}</p>
