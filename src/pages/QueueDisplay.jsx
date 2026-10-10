@@ -13,7 +13,7 @@ const POLL_MS = 4000
 // Between calls the TV plays the student walkthrough (how to request
 // documents online) with the queue shrunk into a side panel; a new call
 // brings the full queue back at once. ?nodemo on the URL turns this off.
-const QUEUE_BEFORE_DEMO_MS = 120000
+const QUEUE_BEFORE_DEMO_MS = 300000
 const DEMO_ENABLED = typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('nodemo')
 // ?demoaudio also reads the walkthrough aloud on the TV.
 const DEMO_AUDIO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demoaudio')
@@ -157,7 +157,7 @@ function QueueDisplay() {
         }
     }
 
-    // After a quiet minute on the queue, play the walkthrough (restarts
+    // After 5 quiet minutes on the queue, play the walkthrough (restarts
     // whenever the number being served changes).
     useEffect(() => {
         if (!DEMO_ENABLED || !soundReady || demo || justCalled) return undefined
