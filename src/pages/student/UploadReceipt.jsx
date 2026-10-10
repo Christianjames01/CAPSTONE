@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { describeRequest } from '../../lib/studentProgress'
-import { TaskSteps } from './StudentUi'
+import { FilePicker, TaskSteps } from './StudentUi'
 import { SkeletonPage } from '../../components/Skeleton'
 import '../auth/Auth.css'
 import './StudentPages.css'
@@ -573,15 +573,6 @@ function UploadReceipt() {
             setReceiptFile(null)
             setReceiptNumber('')
 
-            const fileInput =
-                document.getElementById(
-                    'receipt-file'
-                )
-
-            if (fileInput) {
-                fileInput.value = ''
-            }
-
         } catch (error) {
             console.error(
                 'UPLOAD RECEIPT ERROR:',
@@ -761,24 +752,18 @@ function UploadReceipt() {
                     <div className="form-group">
                         <label className="form-label">Receipt File</label>
 
-                        <input
-                            id="receipt-file"
-                            type="file"
+                        <FilePicker
+                            file={receiptFile}
+                            onChange={setReceiptFile}
                             accept=".jpg,.jpeg,.png,.webp,.pdf"
-                            onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
-                            className="form-input"
+                            maxMb={5}
                             disabled={uploading}
+                            label={receiptStatus === 'rejected' ? 'Upload a new file' : 'Upload your Official Receipt'}
                         />
 
                         <small style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--slate)' }}>
-                            Accepted: JPG, PNG, WEBP, PDF. Photos are resized automatically; PDFs up to 5 MB.
+                            Photos are resized automatically; PDFs up to 5 MB.
                         </small>
-
-                        {receiptFile && (
-                            <p style={{ marginTop: 10, fontSize: 13.5, color: 'var(--ink)' }}>
-                                Selected: {receiptFile.name}
-                            </p>
-                        )}
                     </div>
 
                     {siblings.length > 0 && (
