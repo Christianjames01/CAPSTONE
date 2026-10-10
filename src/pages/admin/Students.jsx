@@ -5,6 +5,7 @@ import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifySuccess, notifyStudentByStudentId, confirmModal } from '../../lib/notify'
 import { deleteStudentAccount } from '../../lib/deleteStudentAccount'
 import { exportStudentBackup } from '../../lib/studentBackup'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
@@ -359,22 +360,13 @@ function Students() {
             )
             if (!proceed) return
 
-            const { value: password } = await Swal.fire({
+            const passwordConfirmed = await confirmWithPassword({
                 title: 'Confirm your password',
                 text: 'For your security, enter your own password to permanently delete this account.',
-                allowOutsideClick: false,
-                input: 'password',
-                inputLabel: 'Your password',
-                inputPlaceholder: 'Enter your password',
-                showCancelButton: true,
-                confirmButtonText: 'Delete account',
-                confirmButtonColor: '#dc3545',
-                inputValidator: (value) => (!value ? 'Password is required.' : undefined),
             })
+            if (!passwordConfirmed) return
 
-            if (!password) return
-
-            await deleteStudentAccount({ studentUserId: student.user_id, password })
+            await deleteStudentAccount({ studentUserId: student.user_id })
 
             notifySuccess(`${student.fullName}'s account has been permanently deleted.`)
             setAllStudents((prev) => prev.filter((s) => s.student_id !== student.student_id))
@@ -403,22 +395,13 @@ function Students() {
             )
             if (!confirmed) return
 
-            const { value: password } = await Swal.fire({
+            const passwordConfirmed = await confirmWithPassword({
                 title: 'Confirm your password',
                 text: 'For your security, enter your own password to permanently delete this account.',
-                allowOutsideClick: false,
-                input: 'password',
-                inputLabel: 'Your password',
-                inputPlaceholder: 'Enter your password',
-                showCancelButton: true,
-                confirmButtonText: 'Delete account',
-                confirmButtonColor: '#dc3545',
-                inputValidator: (value) => (!value ? 'Password is required.' : undefined),
             })
+            if (!passwordConfirmed) return
 
-            if (!password) return
-
-            await deleteStudentAccount({ studentUserId: profile.user_id, password })
+            await deleteStudentAccount({ studentUserId: profile.user_id })
 
             notifySuccess(`${name}'s account has been permanently deleted.`)
             setPendingProfiles((prev) => prev.filter((p) => p.user_id !== profile.user_id))

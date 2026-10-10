@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-student-account`
 
-export async function deleteStudentAccount({ studentUserId, password }) {
+export async function deleteStudentAccount({ studentUserId }) {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {
@@ -15,7 +15,7 @@ export async function deleteStudentAccount({ studentUserId, password }) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ studentUserId, password }),
+        body: JSON.stringify({ studentUserId }),
     })
 
     const result = await response.json()
