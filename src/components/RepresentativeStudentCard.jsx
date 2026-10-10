@@ -8,6 +8,7 @@ import {
     REPRESENTATIVE_STATUS, fileNoteOf, fileStatusOf, loadRepresentative, loadRepresentativeRemovals,
 } from '../lib/claimRepresentatives'
 import { formatDisplayDateTime } from '../lib/formatDate'
+import { FilePicker } from '../pages/student/StudentUi'
 import './Representative.css'
 import { friendlyError } from '../lib/friendlyError'
 
@@ -308,16 +309,29 @@ function RepresentativeStudentCard({ request }) {
                     </div>
 
                     <div className="rep-grid">
-                        <label className="rep-field">
+                        <div className="rep-field">
                             <span>Signed authorization letter {representative ? '(leave empty to keep)' : '*'}</span>
-                            <input type="file" accept={ACCEPTED_TYPES} onChange={(e) => pickFile(e.target.files?.[0], setLetterFile)} disabled={saving} />
-                        </label>
-                        <label className="rep-field">
+                            <FilePicker
+                                file={letterFile}
+                                onChange={(file) => pickFile(file, setLetterFile)}
+                                accept={ACCEPTED_TYPES}
+                                maxMb={MAX_FILE_MB}
+                                disabled={saving}
+                                label="Upload the signed letter"
+                            />
+                        </div>
+                        <div className="rep-field">
                             <span>Representative’s valid ID {representative ? '(leave empty to keep)' : '*'}</span>
-                            <input type="file" accept={ACCEPTED_TYPES} onChange={(e) => pickFile(e.target.files?.[0], setIdFile)} disabled={saving} />
-                        </label>
+                            <FilePicker
+                                file={idFile}
+                                onChange={(file) => pickFile(file, setIdFile)}
+                                accept={ACCEPTED_TYPES}
+                                maxMb={MAX_FILE_MB}
+                                disabled={saving}
+                                label="Upload their valid ID"
+                            />
+                        </div>
                     </div>
-                    <p className="rep-sub">JPG, PNG or PDF, up to {MAX_FILE_MB} MB each.</p>
 
                     <div className="rep-actions">
                         <button type="submit" className="auth-submit rep-button" disabled={saving}>
