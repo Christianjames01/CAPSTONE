@@ -276,7 +276,7 @@ function SystemWorkflow() {
             {started && (
                 <header className="wf-top">
                     <div className="wf-brand">
-                        <span className="wf-brand-mark"><img src={certichainLogo} alt="CertiChain" /></span>
+                        <span className="wf-brand-mark"><img src={certichainLogo} alt="Holy Cross of Davao College" /></span>
                         <div>
                             <strong>CertiChain</strong>
                             <span>Academic Registrar System · Workflow</span>

@@ -59,7 +59,7 @@ function StudentVerificationGate({ children }) {
             <div className="verify-gate-page">
                 <div className="verify-gate-card">
                     <div className="verify-gate-seal">
-                        <img src={certichainLogo} alt="CertiChain" />
+                        <img src={certichainLogo} alt="Holy Cross of Davao College" />
                     </div>
 
                     <div className={`verify-gate-icon ${rejected ? 'rejected' : 'pending'}`}>

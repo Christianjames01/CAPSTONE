@@ -35,7 +35,7 @@ function LogoCard({ l, outro }) {
                 return <span key={i} className="dv-logo-ring" style={{ transform: `translate(-50%, -50%) scale(${0.3 + r * 2})`, opacity: (1 - r) * 0.7 }} />
             })}
             <div className="dv-logo-badge" style={{ transform: `scale(${pop}) rotate(${(1 - pop) * -30}deg)` }}>
-                <img src={certichainLogo} alt="CertiChain" />
+                <img src={certichainLogo} alt="Holy Cross of Davao College" />
             </div>
             <div className="dv-logo-word">
                 {[...word].map((ch, i) => {

@@ -165,7 +165,7 @@ function EmployeeLayout() {
                     <div className="employee-sidebar-brand-row">
                         <Link to="/employee/dashboard" className="employee-sidebar-brand" onClick={closeMobileNav}>
                             <div className="employee-sidebar-seal">
-                                <img src={certichainLogo} alt="CertiChain" />
+                                <img src={certichainLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
                                 <div className="employee-sidebar-name">CertiChain</div>

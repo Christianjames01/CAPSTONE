@@ -165,7 +165,7 @@ function AdminLayout() {
                     <div className="admin-sidebar-brand-row">
                         <Link to={adminPath('/dashboard')} className="admin-sidebar-brand" onClick={closeMobileNav}>
                             <div className="admin-sidebar-seal">
-                                <img src={certichainLogo} alt="CertiChain" />
+                                <img src={certichainLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
                                 <div className="admin-sidebar-name">CertiChain</div>

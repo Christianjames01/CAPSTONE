@@ -203,7 +203,7 @@ function LogoBug({ t }) {
     if (k <= 0) return null
     return (
         <div className="rl-bug" style={{ opacity: k, transform: `translateX(${(1 - k) * -40}px)` }}>
-            <span className="rl-bug-logo"><img src={certichainLogo} alt="CertiChain" /></span>
+            <span className="rl-bug-logo"><img src={certichainLogo} alt="Holy Cross of Davao College" /></span>
             <span className="rl-bug-text">
                 <strong>CertiChain</strong>
                 <small>HCDC Registrar Services</small>
@@ -401,7 +401,7 @@ function SceneEnd({ t }) {
                 <Word text="Your records, verified and provable." t={t} start={16.1} step={0.018} />
             </div>
             <div className="rl-end-badge" style={{ opacity: seg(t, 16.3, 16.6), transform: `scale(${lerp(0.6, 1, outBack(seg(t, 16.3, 16.7)))})` }}>
-                <img src={certichainLogo} alt="CertiChain" />
+                <img src={certichainLogo} alt="Holy Cross of Davao College" />
             </div>
             <div className="rl-end-url" style={{ opacity: seg(t, 16.6, 16.9), transform: `translateY(${(1 - outExpo(seg(t, 16.6, 17.1))) * 30}px)` }}>
                 onlineregistrar.vercel.app

@@ -9,7 +9,7 @@ function AuthLayout({ title, subtitle, footer, children }) {
             <div className="auth-brand-panel">
                 <Link to="/" className="auth-brand-link">
                     <div className="auth-brand-seal">
-                        <img src={certichainLogo} alt="CertiChain" />
+                        <img src={certichainLogo} alt="Holy Cross of Davao College" />
                     </div>
                     <div>
                         <div className="auth-brand-name">CertiChain</div>

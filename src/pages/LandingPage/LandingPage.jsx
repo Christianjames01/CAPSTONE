@@ -405,7 +405,7 @@ function FinalCta() {
         <section className="cta-section">
             <div className="cta-container" data-reveal="scale">
                 <div className="cta-icon">
-                    <img src={certichainLogo} alt="CertiChain" />
+                    <img src={certichainLogo} alt="Holy Cross of Davao College" />
                 </div>
                 <span className="cta-label">HCDC Registrar Services</span>
                 <h2>Ready to request <br /><span>your document?</span></h2>
@@ -645,7 +645,7 @@ const LandingPage = () => {
 
                     <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }}>
                         <div className="brand-seal">
-                            <img src={certichainLogo} alt="CertiChain" />
+                            <img src={certichainLogo} alt="Holy Cross of Davao College" />
                         </div>
                         <div className="brand-text">
                             <div className="brand-name">CertiChain</div>
@@ -1092,7 +1092,7 @@ const LandingPage = () => {
                         <div className="footer-brand">
                             <div className="brand">
                                 <div className="brand-seal">
-                                    <img src={certichainLogo} alt="CertiChain" />
+                                    <img src={certichainLogo} alt="Holy Cross of Davao College" />
                                 </div>
                                 <div className="brand-text">
                                     <div className="brand-name">CertiChain</div>

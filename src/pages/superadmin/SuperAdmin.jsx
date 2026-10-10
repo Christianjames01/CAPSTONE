@@ -118,7 +118,7 @@ function SuperAdmin() {
                     <div className="admin-sidebar-brand-row">
                         <NavLink to="/superadmin" className="admin-sidebar-brand" onClick={closeNav}>
                             <div className="admin-sidebar-seal">
-                                <img src={certichainLogo} alt="CertiChain" />
+                                <img src={certichainLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
                                 <div className="admin-sidebar-name">CertiChain</div>

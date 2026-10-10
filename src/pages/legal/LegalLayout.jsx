@@ -101,7 +101,7 @@ function LegalLayout({ title, updated, children }) {
             <header className="legal-header">
                 <div className="legal-header-inner">
                     <Link to="/" className="legal-brand">
-                        <img src={certichainLogo} alt="CertiChain" />
+                        <img src={certichainLogo} alt="Holy Cross of Davao College" />
                         <div>
                             <div className="legal-brand-name">CertiChain</div>
                             <div className="legal-brand-subtitle">HCDC Registrar Services</div>
@@ -124,7 +124,7 @@ function LegalLayout({ title, updated, children }) {
                         <div className="legal-footer-brand">
                             <div className="legal-footer-brand-row">
                                 <div className="legal-footer-brand-seal">
-                                    <img src={certichainLogo} alt="CertiChain" />
+                                    <img src={certichainLogo} alt="Holy Cross of Davao College" />
                                 </div>
                                 <div>
                                     <div className="legal-footer-brand-name">CertiChain</div>

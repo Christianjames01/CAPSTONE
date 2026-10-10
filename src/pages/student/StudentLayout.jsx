@@ -189,7 +189,7 @@ function StudentLayout() {
                     <div className="student-sidebar-brand-row">
                         <Link to="/student/dashboard" className="student-sidebar-brand" onClick={closeMobileNav}>
                             <div className="student-sidebar-seal">
-                                <img src={certichainLogo} alt="CertiChain" />
+                                <img src={certichainLogo} alt="Holy Cross of Davao College" />
                             </div>
                             <div>
                                 <div className="student-sidebar-name">CertiChain</div>
