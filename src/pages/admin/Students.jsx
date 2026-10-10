@@ -11,13 +11,11 @@ import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconIdCard, IconHourglass, IconLayers, IconBuilding } from './icons'
 import './AdminPages.css'
-import '../../components/PendingVerification.css'
 import AvatarFace from '../../components/AvatarFace'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
-import { formatDisplayDateTime } from '../../lib/formatDate'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students are
@@ -91,6 +89,12 @@ function Students() {
             { title: 'Reject registration?', confirmButtonText: 'Reject', icon: 'warning' }
         )
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to reject ${student.fullName}'s registration.`,
+        })
+        if (!verified) return
 
         await reviewStudent(student, 'rejected', reason)
     }
@@ -277,6 +281,14 @@ function Students() {
             `${nextStatus === 'active' ? 'Activate' : 'Deactivate'} ${student.fullName}? ${nextStatus === 'inactive' ? 'They will no longer be able to log in or submit requests.' : ''}`
         )
         if (!confirmed) return
+
+        if (nextStatus === 'inactive') {
+            const verified = await confirmWithPassword({
+                title: 'Confirm with your password',
+                text: `Enter your password to deactivate ${student.fullName}'s account.`,
+            })
+            if (!verified) return
+        }
 
         try {
             setUpdating(student.student_id)
@@ -559,19 +571,16 @@ function Students() {
                     </p>
 
                     {pendingVerifications.map((student) => (
-                        <div className="admin-list-card pv-card" key={student.student_id}>
+                        <div className="admin-list-card" key={student.student_id}>
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
                                     <span className="admin-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <div>
                                         <h3>{student.fullName}</h3>
                                         <p>{student.student_number} · {student.email}</p>
-                                        {student.created_at && (
-                                            <div className="pv-meta">Registered {formatDisplayDateTime(student.created_at)}</div>
-                                        )}
                                     </div>
                                 </div>
-                                <span className="pv-badge"><IconHourglass /> Awaiting verification</span>
+                                <span className="admin-status-pill status-pending">pending</span>
                             </div>
 
                             <div className="admin-info-grid">
@@ -589,28 +598,28 @@ function Students() {
                                 </div>
                             </div>
 
-                            <div className="pv-actions">
+                            <div className="admin-card-actions">
                                 <button
-                                    className="pv-btn is-ghost"
+                                    className="admin-link-button"
                                     onClick={() => navigate(adminPath(`/students/${student.student_id}`))}
                                 >
                                     View full record →
                                 </button>
 
                                 <button
-                                    className="pv-btn is-reject"
-                                    onClick={() => rejectStudent(student)}
-                                    disabled={reviewingId === student.student_id}
-                                >
-                                    Reject
-                                </button>
-
-                                <button
-                                    className="pv-btn is-approve"
+                                    className="admin-link-button is-success"
                                     onClick={() => approveStudent(student)}
                                     disabled={reviewingId === student.student_id}
                                 >
                                     {reviewingId === student.student_id ? 'Working...' : 'Approve'}
+                                </button>
+
+                                <button
+                                    className="admin-link-button is-danger"
+                                    onClick={() => rejectStudent(student)}
+                                    disabled={reviewingId === student.student_id}
+                                >
+                                    Reject
                                 </button>
                             </div>
                         </div>
@@ -627,7 +636,7 @@ function Students() {
                     </p>
 
                     {pendingProfiles.map((p) => (
-                        <div className="admin-list-card si-card" key={p.user_id}>
+                        <div className="admin-list-card" key={p.user_id}>
                             <div className="admin-list-card-header">
                                 <div className="admin-card-title">
                                     <span className="admin-avatar is-muted" aria-hidden="true"><AvatarFace photo={p.profile_photo_url} name={`${p.first_name} ${p.last_name}`} /></span>
@@ -637,20 +646,20 @@ function Students() {
                                     </div>
                                 </div>
                                 {p.status === 'inactive' ? (
-                                    <span className="si-badge is-declined">Auto-declined</span>
+                                    <span className="admin-status-pill status-rejected">Auto-declined</span>
                                 ) : (
-                                    <span className="si-badge">Setup incomplete</span>
+                                    <span className="admin-status-pill status-pending">Setup incomplete</span>
                                 )}
                             </div>
 
-                            <div className="si-foot">
+                            <div className="admin-list-card-header" style={{ marginTop: 10 }}>
                                 <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>
                                     Signed up {new Date(p.created_at).toLocaleString('en-PH', {
                                         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
                                     })}
                                 </p>
                                 <button
-                                    className="pv-btn is-reject"
+                                    className="admin-link-button is-danger"
                                     onClick={() => removeIncompleteProfile(p)}
                                     disabled={removingProfileId === p.user_id}
                                 >
@@ -709,23 +718,33 @@ function Students() {
                     {selectedGroup.students.map(renderStudentCard)}
                 </>
             ) : (
-                <div className="stu-program-grid">
-                    {groupedResults.map((group) => (
-                        <button
-                            type="button"
-                            className="stu-program-card"
-                            key={group.key}
-                            onClick={() => setSelectedProgramKey(group.key)}
-                        >
-                            <div className="stu-program-card-head">
-                                <span className="stu-program-icon" aria-hidden="true"><IconBuilding /></span>
-                                <span className="stu-program-count">{group.students.length} student{group.students.length === 1 ? '' : 's'}</span>
-                            </div>
-                            <h3>{group.programName}</h3>
-                            <p>{group.collegeName}</p>
-                            <span className="stu-program-link">View students →</span>
-                        </button>
-                    ))}
+                <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>College</th>
+                                <th>Course</th>
+                                <th>Students</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {groupedResults.map((group) => (
+                                <tr
+                                    key={group.key}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => setSelectedProgramKey(group.key)}
+                                >
+                                    <td>{group.collegeName}</td>
+                                    <td>{group.programName}</td>
+                                    <td>{group.students.length}</td>
+                                    <td>
+                                        <span className="admin-link-button">View →</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>

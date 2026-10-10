@@ -3,15 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import Swal from 'sweetalert2'
 import { SkeletonList } from '../../components/Skeleton'
 import './EmployeePages.css'
-import '../../components/PendingVerification.css'
 import AvatarFace from '../../components/AvatarFace'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { friendlyError } from '../../lib/friendlyError'
-import { formatDisplayDateTime } from '../../lib/formatDate'
-import { IconHourglass } from '../admin/icons'
 
 // Pending registrations are reviewed in their own section and rejected ones
 // aren't real students, so only verified (or pre-verification) students
@@ -100,6 +98,12 @@ function Students() {
         })
 
         if (!reason) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to reject ${student.fullName}'s registration.`,
+        })
+        if (!verified) return
 
         await reviewStudent(student, 'rejected', reason)
     }
@@ -363,19 +367,16 @@ function Students() {
                     </p>
 
                     {pendingVerifications.map((student) => (
-                        <div className="employee-list-card pv-card" key={student.student_id}>
+                        <div className="employee-list-card" key={student.student_id}>
                             <div className="employee-list-card-header">
                                 <div className="ui-card-title" style={{ alignItems: 'center' }}>
                                     <span className="ui-avatar" aria-hidden="true"><AvatarFace photo={student.photoUrl} name={student.fullName} /></span>
                                     <div>
                                         <h3>{student.fullName}</h3>
                                         <p>{student.student_number} · {student.email}</p>
-                                        {student.created_at && (
-                                            <div className="pv-meta">Registered {formatDisplayDateTime(student.created_at)}</div>
-                                        )}
                                     </div>
                                 </div>
-                                <span className="pv-badge"><IconHourglass /> Awaiting verification</span>
+                                <span className="employee-status-pill status-pending">pending</span>
                             </div>
 
                             <div className="employee-info-grid">
@@ -393,28 +394,28 @@ function Students() {
                                 </div>
                             </div>
 
-                            <div className="pv-actions">
+                            <div className="ui-card-actions">
                                 <button
-                                    className="pv-btn is-ghost"
+                                    className="employee-link-button"
                                     onClick={() => navigate(`/employee/students/${student.student_id}`)}
                                 >
                                     View full details →
                                 </button>
 
                                 <button
-                                    className="pv-btn is-reject"
-                                    onClick={() => rejectStudent(student)}
-                                    disabled={reviewingId === student.student_id}
-                                >
-                                    Reject
-                                </button>
-
-                                <button
-                                    className="pv-btn is-approve"
+                                    className="employee-link-button is-success"
                                     onClick={() => approveStudent(student)}
                                     disabled={reviewingId === student.student_id}
                                 >
                                     {reviewingId === student.student_id ? 'Working...' : 'Approve'}
+                                </button>
+
+                                <button
+                                    className="employee-link-button is-danger"
+                                    onClick={() => rejectStudent(student)}
+                                    disabled={reviewingId === student.student_id}
+                                >
+                                    Reject
                                 </button>
                             </div>
                         </div>

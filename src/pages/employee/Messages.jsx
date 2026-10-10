@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notifyError, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
 import { SkeletonList } from '../../components/Skeleton'
@@ -303,6 +304,12 @@ function Messages() {
             { title: 'Delete message?', confirmButtonText: 'Delete', icon: 'warning' }
         )
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: 'Enter your password to delete this message for everyone.',
+        })
+        if (!verified) return
 
         try {
             setBusy(true)

@@ -369,6 +369,14 @@ function Employees() {
         )
         if (!confirmed) return
 
+        if (nextStatus === 'inactive') {
+            const verified = await confirmWithPassword({
+                title: 'Confirm with your password',
+                text: `Enter your password to deactivate ${employee.name}'s account.`,
+            })
+            if (!verified) return
+        }
+
         try {
             setUpdating(employee.employee_id)
 
@@ -420,15 +428,15 @@ function Employees() {
         )
         if (!confirmed) return
 
-        // Granting this is a real privilege escalation (the employee can
-        // then create more logins themselves) -- confirm it's really you.
-        if (next) {
-            const verified = await confirmWithPassword({
-                title: 'Confirm with your password',
-                text: `Enter your password to let ${employee.name} add employee accounts.`,
-            })
-            if (!verified) return
-        }
+        // Both directions change who can create new logins -- confirm it's
+        // really you either way.
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: next
+                ? `Enter your password to let ${employee.name} add employee accounts.`
+                : `Enter your password to revoke ${employee.name}'s ability to add employee accounts.`,
+        })
+        if (!verified) return
 
         try {
             setUpdating(employee.employee_id)

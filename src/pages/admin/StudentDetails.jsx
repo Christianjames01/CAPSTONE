@@ -11,6 +11,7 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifySuccess, notifyWarning } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { generateTempPassword, resetStudentPassword } from '../../lib/resetStudentPassword'
 import { updateStudentEmail } from '../../lib/updateStudentEmail'
 import Modal from '../../components/Modal'
@@ -369,6 +370,12 @@ function StudentDetails() {
 
         if (!confirmed.isConfirmed) return
 
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your own password to reset ${student.fullName}'s password.`,
+        })
+        if (!verified) return
+
         try {
             setResettingPassword(true)
 
@@ -419,6 +426,12 @@ function StudentDetails() {
         })
 
         if (!newEmail) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your own password to change ${student.fullName}'s login email.`,
+        })
+        if (!verified) return
 
         try {
             setChangingEmail(true)

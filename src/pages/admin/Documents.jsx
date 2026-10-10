@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
 import DocumentPreviewModal from '../../components/DocumentPreviewModal'
@@ -363,6 +364,12 @@ function Documents() {
         )
         if (!confirmed) return
 
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to permanently delete "${doc.document_name}".`,
+        })
+        if (!verified) return
+
         try {
             const { error: deleteError } = await supabase
                 .from('document_types')
@@ -461,6 +468,12 @@ function Documents() {
         if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Remove requirement "${requirement.requirement_name}"?`)
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to remove the requirement "${requirement.requirement_name}".`,
+        })
+        if (!verified) return
 
         try {
             const { error: deleteError } = await supabase

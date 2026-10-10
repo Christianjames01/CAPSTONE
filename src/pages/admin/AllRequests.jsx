@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import { logActivity } from '../../lib/activityLog'
 import { notifyStudentByStudentId, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { SkeletonList } from '../../components/Skeleton'
 import PageStats from '../../components/PageStats'
 import { IconFileStack, IconHourglass, IconPackage, IconCheckCircle } from './icons'
@@ -253,6 +254,15 @@ function AllRequests() {
             return
         }
 
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to permanently delete request ${request.request_number}.`,
+        })
+        if (!verified) {
+            setDeletingId(null)
+            return
+        }
+
         try {
             const { error: rpcError } = await supabase.rpc('delete_resolved_request', { p_request_id: request.request_id })
             if (rpcError) throw rpcError
@@ -315,6 +325,12 @@ function AllRequests() {
             })
             if (!value) return
             reason = value.trim()
+
+            const verified = await confirmWithPassword({
+                title: 'Confirm with your password',
+                text: `Enter your password to reject ${targets.length} request(s).`,
+            })
+            if (!verified) return
         } else {
             const confirmed = await confirmModal(
                 `Change ${targets.length} selected request(s) to "${bulkStatus.replace(/_/g, ' ')}"?`,

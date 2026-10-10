@@ -7,6 +7,7 @@ import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notify, notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { generateTempPassword } from '../../lib/resetStudentPassword'
 import { resetEmployeePassword } from '../../lib/resetEmployeePassword'
 import { SkeletonPage } from '../../components/Skeleton'
@@ -184,6 +185,12 @@ function EmployeeDetails() {
         })
 
         if (!isConfirmed || !tempPassword) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your own password to reset ${name}'s password.`,
+        })
+        if (!verified) return
 
         try {
             setResettingPassword(true)
@@ -395,6 +402,12 @@ function EmployeeDetails() {
         if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal('Remove this assignment?')
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: 'Enter your password to remove this assignment.',
+        })
+        if (!verified) return
 
         try {
             const {

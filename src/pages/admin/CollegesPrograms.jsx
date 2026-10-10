@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { HCDC_COLLEGES, HCDC_PROGRAMS } from '../../lib/hcdcCatalog'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
@@ -183,6 +184,14 @@ function CollegesPrograms() {
         )
         if (!confirmed) return
 
+        if (nextStatus === 'inactive') {
+            const verified = await confirmWithPassword({
+                title: 'Confirm with your password',
+                text: `Enter your password to deactivate "${college.college_name}".`,
+            })
+            if (!verified) return
+        }
+
         try {
             const { error: updateError } = await supabase.from('colleges').update({ status: nextStatus }).eq('college_id', college.college_id)
             if (updateError) throw new Error(updateError.message)
@@ -200,6 +209,12 @@ function CollegesPrograms() {
             { title: 'Delete college?', confirmButtonText: 'Delete' }
         )
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to permanently delete "${college.college_name}".`,
+        })
+        if (!verified) return
 
         try {
             const { error: deleteError } = await supabase.from('colleges').delete().eq('college_id', college.college_id)
@@ -288,6 +303,14 @@ function CollegesPrograms() {
         )
         if (!confirmed) return
 
+        if (nextStatus === 'inactive') {
+            const verified = await confirmWithPassword({
+                title: 'Confirm with your password',
+                text: `Enter your password to deactivate "${program.program_name}".`,
+            })
+            if (!verified) return
+        }
+
         try {
             const { error: updateError } = await supabase.from('programs').update({ status: nextStatus }).eq('program_id', program.program_id)
             if (updateError) throw new Error(updateError.message)
@@ -305,6 +328,12 @@ function CollegesPrograms() {
             { title: 'Delete program?', confirmButtonText: 'Delete' }
         )
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to permanently delete "${program.program_name}".`,
+        })
+        if (!verified) return
 
         try {
             const { error: deleteError } = await supabase.from('programs').delete().eq('program_id', program.program_id)

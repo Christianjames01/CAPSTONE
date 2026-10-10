@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activityLog'
 import { notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { confirmWithPassword } from '../../lib/confirmPassword'
 import { sanitizeAnnouncementHtml } from '../../lib/sanitizeHtml'
 import { SkeletonList } from '../../components/Skeleton'
 import Modal from '../../components/Modal'
@@ -273,6 +274,12 @@ function Announcements() {
         if (blockedForReadOnlyViewer(role)) return
         const confirmed = await confirmModal(`Delete the announcement "${stripHtml(a.title)}"? This cannot be undone.`)
         if (!confirmed) return
+
+        const verified = await confirmWithPassword({
+            title: 'Confirm with your password',
+            text: `Enter your password to delete the announcement "${stripHtml(a.title)}".`,
+        })
+        if (!verified) return
 
         try {
             setRemoving(a.announcement_id)
