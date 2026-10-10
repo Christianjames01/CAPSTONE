@@ -53,6 +53,7 @@ function ForgotPassword() {
         <AuthLayout
             title="Forgot your password?"
             subtitle="Enter your account email and we'll send you a link to reset it."
+            cardClassName="is-refined"
             footer={
                 <>Remembered it? <Link to="/login">Back to log in</Link></>
             }
