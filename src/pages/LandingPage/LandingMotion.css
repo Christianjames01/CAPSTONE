@@ -112,40 +112,15 @@
     animation: lpm-fade-up 1s var(--ease-out) 0.35s forwards;
 }
 
-.lpm-system-mark {
+.lpm-qr-bg {
     position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: #fff;
-    border: 1px solid var(--line);
-    box-shadow: 0 16px 30px -18px rgba(10, 36, 80, 0.4);
+    inset: -4% 2% auto auto;
+    opacity: 0.07;
     pointer-events: none;
 }
 
-.lpm-system-mark svg {
-    width: 28px;
-    height: 28px;
-}
-
-.lpm-system-mark-a {
-    inset: 0 6% auto auto;
-    color: var(--blue);
-}
-
-.lpm-system-mark-b {
-    inset: auto auto 6% -2%;
-    color: var(--red);
-    width: 54px;
-    height: 54px;
-}
-
-.lpm-system-mark-b svg {
-    width: 24px;
-    height: 24px;
+.lpm-qr-bg .lpm-qr {
+    display: block;
 }
 
 .lpm-app {

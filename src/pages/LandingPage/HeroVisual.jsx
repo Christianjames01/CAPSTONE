@@ -38,8 +38,6 @@ const I = {
     user: <Svg><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="10" r="3" /><path d="M6.8 18.2a6 6 0 0 1 10.4 0" /></Svg>,
     book: <Svg><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5Z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /></Svg>,
     help: <Svg><circle cx="12" cy="12" r="8.5" /><path d="M9.8 9.5a2.3 2.3 0 0 1 4.4.9c0 1.6-2.2 2-2.2 3.4" /><path d="M12 16.8h.01" /></Svg>,
-    chain: <Svg><path d="M9 15 15 9" /><path d="M8.5 13.5 5.6 16.4a3 3 0 0 0 4.2 4.2L13 17.4" /><path d="M15.5 10.5l2.9-2.9a3 3 0 0 0-4.2-4.2L11 6.6" /></Svg>,
-    shieldCheck: <Svg><path d="M12 3.3 19 6v5.3c0 4.7-3 8-7 9.4-4-1.4-7-4.7-7-9.4V6Z" /><path d="m9 12 2.2 2.2L15.5 10" /></Svg>,
 };
 
 const NAV = [
@@ -112,11 +110,10 @@ function HeroVisual() {
 
     return (
         <div className="lpm-hero-visual" ref={ref} aria-hidden="true">
-            {/* Static system marks (no spin/movement) standing in for the old
-                orbiting rings: the chain link is the product's namesake, the
-                shield-check is what a completed, QR-verifiable credential is. */}
-            <div className="lpm-system-mark lpm-system-mark-a">{I.chain}</div>
-            <div className="lpm-system-mark lpm-system-mark-b">{I.shieldCheck}</div>
+            {/* A faint, static enlargement of the same QR mark every real
+                credential carries -- what the system actually produces,
+                not an abstract decoration. */}
+            <div className="lpm-qr-bg"><QrMark size={360} /></div>
 
             {mode === "3d" ? (
                 <div className={`lpc-stage${sceneReady ? " is-ready" : ""}`} ref={stageRef} />
