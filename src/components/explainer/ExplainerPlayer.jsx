@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon } from './icons'
 import { narrationSupported, readSoundPref, say, speaking, stopSpeaking, writeSoundPref } from '../../lib/narration'
-import { useTourOpen } from '../../lib/tourState'
 import './Explainer.css'
 
 // A video-style motion walkthrough (no video file): animated copies of the
@@ -56,9 +55,7 @@ function ExplainerPlayer({ scenes, cta, autoplay = true, label = 'Walkthrough', 
     // null until the viewer presses play/pause: until then it autoplays the
     // first time the player is on screen.
     const [choice, setChoice] = useState(null)
-    // Paused (and quiet) while the guided demo is open on top of the page.
-    const tourOpen = useTourOpen()
-    const playing = !tourOpen && !clock.ended && (choice === null ? autoplay && inView && !reducedMotion() : choice)
+    const playing = !clock.ended && (choice === null ? autoplay && inView && !reducedMotion() : choice)
     const { scene, elapsed, ended, run } = clock
 
     // ---- 3D: live backdrop + pointer tilt -------------------------------------

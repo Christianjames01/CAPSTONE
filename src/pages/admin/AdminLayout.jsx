@@ -6,8 +6,6 @@ import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogo
 import { IconClipboardList, IconUsers, IconMessage, IconHistory, IconShieldCheck } from '../employee/icons'
 import { IconSwap, IconIdCard, IconDocument, IconBuilding, IconBarChart, IconMegaphone, IconTicket } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
-import ProductTour from '../../components/ProductTour'
-import { HEAD_TOUR } from '../../lib/tourSteps'
 import './AdminLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
@@ -286,8 +284,6 @@ function AdminLayout() {
                 )}
                 <Suspense fallback={<PageLoading inline />}><Outlet context={{ role }} /></Suspense>
             </main>
-
-            <ProductTour role="head" steps={HEAD_TOUR} />
 
         </div>
     )

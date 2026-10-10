@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { START_TOUR_EVENT } from '../lib/tourSteps'
 import ExplainerPlayer from './explainer/ExplainerPlayer'
 import { EMPLOYEE_SCENES, HEAD_SCENES, STUDENT_SCENES } from './explainer/sceneLists'
 import './UserGuide.css'
@@ -13,8 +12,6 @@ const WALKTHROUGHS = {
     employee: { scenes: EMPLOYEE_SCENES, label: 'How handling a request works' },
     head: { scenes: HEAD_SCENES, label: 'How running the office works' },
 }
-
-const startDemo = () => window.dispatchEvent(new Event(START_TOUR_EVENT))
 
 function UserGuide({ title, intro, sections, cardClassName, walkthrough }) {
     const [query, setQuery] = useState('')
@@ -43,9 +40,8 @@ function UserGuide({ title, intro, sections, cardClassName, walkthrough }) {
 
     const cta = {
         title: 'Now try it on the real pages',
-        caption: 'Start the guided demo to walk through each page of your portal, or read the guide below.',
-        primary: { label: '▶ Start the guided demo', onClick: startDemo },
-        secondary: {
+        caption: 'Read the guide below for step-by-step help with every task.',
+        primary: {
             label: 'Read the guide',
             onClick: () => document.getElementById('guide-sections')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
         },
@@ -58,9 +54,6 @@ function UserGuide({ title, intro, sections, cardClassName, walkthrough }) {
                     <h1>{title}</h1>
                     <p>{intro}</p>
                 </div>
-                <button type="button" className="ug-demo ug-anim" style={{ '--i': 1 }} onClick={startDemo}>
-                    <span aria-hidden="true">▶</span> Start demo
-                </button>
             </div>
 
             {video && (
@@ -69,7 +62,7 @@ function UserGuide({ title, intro, sections, cardClassName, walkthrough }) {
                         <span className="ug-watch-badge"><i /> Watch</span>
                         <div>
                             <strong>{video.label}</strong>
-                            <span>About a minute. Pick any chapter to jump ahead, or start the guided demo at the end.</span>
+                            <span>About a minute. Pick any chapter to jump ahead.</span>
                         </div>
                     </div>
                     <ExplainerPlayer scenes={video.scenes} cta={cta} label={video.label} />

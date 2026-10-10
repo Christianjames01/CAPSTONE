@@ -21,10 +21,8 @@ import {
     IconX,
 } from './icons'
 import ThemeToggle from '../../components/ThemeToggle'
-import ProductTour from '../../components/ProductTour'
 import '../../components/DashboardStats.css'
 import '../../components/PortalUi.css'
-import { STUDENT_TOUR } from '../../lib/tourSteps'
 import './StudentLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
@@ -266,8 +264,6 @@ function StudentLayout() {
             <main className="student-content">
                 <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
             </main>
-
-            <ProductTour role="student" steps={STUDENT_TOUR} />
 
         </div>
     )

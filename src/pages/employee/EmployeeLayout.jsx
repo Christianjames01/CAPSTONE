@@ -7,10 +7,8 @@ import { IconClipboardList, IconShieldCheck, IconGear, IconMessage, IconHistory 
 // Same icons as the Registrar Head's sidebar for the same pages.
 import { IconIdCard, IconTicket, IconUsers, IconDocument } from '../admin/icons'
 import ThemeToggle from '../../components/ThemeToggle'
-import ProductTour from '../../components/ProductTour'
 import '../../components/DashboardStats.css'
 import '../../components/PortalUi.css'
-import { EMPLOYEE_TOUR } from '../../lib/tourSteps'
 import './EmployeeLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
@@ -265,8 +263,6 @@ function EmployeeLayout() {
             <main className="employee-content">
                 <Suspense fallback={<PageLoading inline />}><Outlet /></Suspense>
             </main>
-
-            <ProductTour role="employee" steps={EMPLOYEE_TOUR} />
 
         </div>
     )

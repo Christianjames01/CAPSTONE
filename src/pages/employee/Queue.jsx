@@ -8,8 +8,6 @@ import PageStats from '../../components/PageStats'
 import { IconTicket, IconHourglass, IconCheckCircle, IconXCircle } from '../admin/icons'
 import './EmployeePages.css'
 import { digitsOnly } from '../../lib/typedNumber'
-import { useQueueDemo } from '../../lib/queueDemo'
-import { QUEUE_TOUR, START_TOUR_EVENT } from '../../lib/tourSteps'
 import { friendlyError } from '../../lib/friendlyError'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 
@@ -27,9 +25,6 @@ function EmployeeQueue() {
     const [acting, setActing] = useState(null)
     const [issuing, setIssuing] = useState(false)
     const [batchCount, setBatchCount] = useState(1)
-    // While the guided demo is on this page it shows sample tickets, and
-    // the actions below change only those (nothing is saved).
-    const queueDemo = useQueueDemo('/employee/queue')
 
     useEffect(() => {
         loadQueue()
@@ -106,11 +101,6 @@ function EmployeeQueue() {
     }
 
     const updateTicket = async (ticket, changes, description) => {
-        if (queueDemo.demo) {
-            queueDemo.update(ticket, changes)
-            return
-        }
-
         try {
             setActing(ticket.queue_id)
 
@@ -133,11 +123,6 @@ function EmployeeQueue() {
     }
 
     const callTicket = async (ticket) => {
-        if (queueDemo.demo) {
-            queueDemo.update(ticket, { status: 'called', called_at: new Date().toISOString() })
-            return
-        }
-
         const { data: { user } } = await supabase.auth.getUser()
         const { data: employee } = await supabase.from('employees').select('employee_id').eq('user_id', user.id).maybeSingle()
 
@@ -175,11 +160,6 @@ function EmployeeQueue() {
 
     const issueTicket = async () => {
         const count = Math.max(1, Math.min(100, Number(batchCount) || 1))
-
-        if (queueDemo.demo) {
-            queueDemo.issue(count)
-            return
-        }
 
         try {
             setIssuing(true)
@@ -224,11 +204,10 @@ function EmployeeQueue() {
         }
     }
 
-    const shown = queueDemo.tickets(tickets)
+    const shown = tickets
     const waiting = shown.filter((t) => t.status === 'waiting')
     const active = shown.filter((t) => t.status === 'called' || t.status === 'serving')
     const history = shown.filter((t) => HISTORY_STATUSES.includes(t.status))
-    const startQueueDemo = () => window.dispatchEvent(new CustomEvent(START_TOUR_EVENT, { detail: { steps: QUEUE_TOUR.employee } }))
 
     return (
         <div>
@@ -239,11 +218,7 @@ function EmployeeQueue() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button type="button" className="employee-secondary-button queue-demo-button" onClick={startQueueDemo}>
-                        <span aria-hidden="true">▶</span> Demo
-                    </button>
-
-                    <a className="employee-secondary-button" href="/queue-display" target="_blank" rel="noopener noreferrer" data-demo="display">
+                    <a className="employee-secondary-button" href="/queue-display" target="_blank" rel="noopener noreferrer">
                         Open Queue Display →
                     </a>
 
@@ -262,7 +237,7 @@ function EmployeeQueue() {
                         />
                     </label>
 
-                    <button className="employee-primary-button" onClick={issueTicket} disabled={issuing} data-demo="issue">
+                    <button className="employee-primary-button" onClick={issueTicket} disabled={issuing}>
                         {issuing
                             ? 'Issuing...'
                             : Number(batchCount) > 1
@@ -274,13 +249,7 @@ function EmployeeQueue() {
 
             {error && <div className="employee-error-box" style={{ marginTop: 16 }}>{error}</div>}
 
-            {queueDemo.demo && (
-                <div className="queue-demo-note" role="status">
-                    <strong>Demo</strong> Sample numbers — nothing here is saved. Your real queue comes back when the demo ends.
-                </div>
-            )}
-
-            {(!loading || queueDemo.demo) && (
+            {!loading && (
                 <div style={{ marginTop: 20 }}>
                     <PageStats
                         stats={[
@@ -293,12 +262,12 @@ function EmployeeQueue() {
                 </div>
             )}
 
-            {loading && !queueDemo.demo ? (
+            {loading ? (
                 <SkeletonList count={3} />
             ) : (
                 <>
                     {active.length > 0 && (
-                        <div style={{ marginTop: 20 }} data-demo="serving">
+                        <div style={{ marginTop: 20 }}>
                             <h2 className="ui-section-title" style={{ marginTop: 0 }}>Now Serving <span className="ui-chip-count">{active.length}</span></h2>
                             {active.map((t) => (
                                 <div className="employee-list-card" key={t.queue_id}>
@@ -321,15 +290,15 @@ function EmployeeQueue() {
                                     <div className="ui-card-actions">
                                         {t.status === 'called' && (
                                             <>
-                                                <button className="employee-link-button" onClick={() => markServing(t)} disabled={acting === t.queue_id} data-demo="serve">
+                                                <button className="employee-link-button" onClick={() => markServing(t)} disabled={acting === t.queue_id}>
                                                     Mark as serving
                                                 </button>
-                                                <button className="employee-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id} data-demo="recall">
+                                                <button className="employee-link-button" onClick={() => recallTicket(t)} disabled={acting === t.queue_id}>
                                                     Recall (announce again)
                                                 </button>
                                             </>
                                         )}
-                                        <button className="employee-link-button is-success" onClick={() => markCompleted(t)} disabled={acting === t.queue_id} data-demo="complete">
+                                        <button className="employee-link-button is-success" onClick={() => markCompleted(t)} disabled={acting === t.queue_id}>
                                             Mark completed
                                         </button>
                                         <button className="employee-link-button is-danger" onClick={() => markNoShow(t)} disabled={acting === t.queue_id}>
@@ -341,7 +310,7 @@ function EmployeeQueue() {
                         </div>
                     )}
 
-                    <div style={{ marginTop: 20 }} data-demo="waiting">
+                    <div style={{ marginTop: 20 }}>
                         <h2 className="ui-section-title" style={{ marginTop: 0 }}>Waiting <span className="ui-chip-count">{waiting.length}</span></h2>
                         {waiting.length === 0 ? (
                             <div className="employee-empty">No one is currently waiting.</div>
@@ -363,7 +332,7 @@ function EmployeeQueue() {
                                     </div>
 
                                     <div className="ui-card-actions">
-                                        <button className="employee-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id} data-demo="call">
+                                        <button className="employee-primary-button" onClick={() => callTicket(t)} disabled={acting === t.queue_id}>
                                             {acting === t.queue_id ? 'Calling...' : 'Call'}
                                         </button>
                                         <button
@@ -380,7 +349,7 @@ function EmployeeQueue() {
                     </div>
 
                     {history.length > 0 && (
-                        <div style={{ marginTop: 20 }} data-demo="history">
+                        <div style={{ marginTop: 20 }}>
                             <h2 className="ui-section-title" style={{ marginTop: 0 }}>Earlier Today <span className="ui-chip-count">{history.length}</span></h2>
                             {history.map((t) => (
                                 <div className="employee-list-card" key={t.queue_id} style={{ opacity: 0.7 }}>
