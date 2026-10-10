@@ -23,7 +23,7 @@ const NAV_ITEMS = [
     { to: '/requests', label: 'All Requests', icon: <IconClipboardList /> },
     { to: '/assignments', label: 'Request Assignments', icon: <IconSwap /> },
     { to: '/employees', label: 'Employees', icon: <IconUsers /> },
-    { to: '/students', label: 'Students', icon: <IconIdCard /> },
+    { to: '/students', label: 'Students', icon: <IconIdCard />, badgeKey: 'pendingStudents' },
     { to: '/documents', label: 'Documents', icon: <IconDocument /> },
     { to: '/announcements', label: 'Announcements', icon: <IconMegaphone /> },
     { to: '/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
@@ -48,10 +48,11 @@ function AdminLayout() {
     const [role, setRole] = useState('')
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
+    const [pendingStudents, setPendingStudents] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
 
-    useLiveRefresh(['notifications', 'messages'], () => loadBadgeCounts())
+    useLiveRefresh(['notifications', 'messages', 'students'], () => loadBadgeCounts())
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
@@ -119,6 +120,13 @@ function AdminLayout() {
             .eq('is_read', false)
 
         setUnreadMessages(messageCount || 0)
+
+        const { count: pendingCount } = await supabase
+            .from('students')
+            .select('student_id', { count: 'exact', head: true })
+            .eq('verification_status', 'pending')
+
+        setPendingStudents(pendingCount || 0)
     }
 
     const handleLogout = async () => {
@@ -130,6 +138,7 @@ function AdminLayout() {
     const badgeValue = (key) => {
         if (key === 'notifications') return unreadNotifications
         if (key === 'messages') return unreadMessages
+        if (key === 'pendingStudents') return pendingStudents
         return 0
     }
 

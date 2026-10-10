@@ -23,7 +23,7 @@ const NAV_ITEMS = [
     { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
     { to: '/employee/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/employee/queue', label: 'Walk-in Queue', icon: <IconTicket />, fullAccessOnly: true },
-    { to: '/employee/students', label: 'Students', icon: <IconIdCard />, fullAccessOnly: true },
+    { to: '/employee/students', label: 'Students', icon: <IconIdCard />, fullAccessOnly: true, badgeKey: 'pendingStudents' },
     { to: '/employee/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages', fullAccessOnly: true },
     { to: '/employee/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
     { to: '/employee/activity-logs', label: 'Activity Logs', icon: <IconHistory />, fullAccessOnly: true },
@@ -42,10 +42,11 @@ function EmployeeLayout() {
     const [canAddEmployees, setCanAddEmployees] = useState(false)
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
+    const [pendingStudents, setPendingStudents] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
 
-    useLiveRefresh(['notifications', 'messages'], () => loadBadgeCounts())
+    useLiveRefresh(['notifications', 'messages', 'students', 'employee_assignments'], () => loadBadgeCounts())
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
@@ -119,6 +120,37 @@ function EmployeeLayout() {
             .eq('is_read', false)
 
         setUnreadMessages(messageCount || 0)
+
+        // Scoped the same way as employee/Students.jsx's own pending list:
+        // only registrations in a college/program this employee is actively
+        // assigned to, not every pending student system-wide.
+        const { data: employee } = await supabase
+            .from('employees')
+            .select('employee_id')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+        if (employee) {
+            const { data: assignments } = await supabase
+                .from('employee_assignments')
+                .select('college_id, program_id')
+                .eq('employee_id', employee.employee_id)
+                .eq('status', 'active')
+
+            const assignedPairs = new Set((assignments || []).map((a) => `${a.college_id}:${a.program_id}`))
+
+            if (assignedPairs.size > 0) {
+                const { data: pending } = await supabase
+                    .from('students')
+                    .select('college_id, program_id')
+                    .eq('verification_status', 'pending')
+
+                const mine = (pending || []).filter((s) => assignedPairs.has(`${s.college_id}:${s.program_id}`))
+                setPendingStudents(mine.length)
+            } else {
+                setPendingStudents(0)
+            }
+        }
     }
 
     const handleLogout = async () => {
@@ -130,6 +162,7 @@ function EmployeeLayout() {
     const badgeValue = (key) => {
         if (key === 'notifications') return unreadNotifications
         if (key === 'messages') return unreadMessages
+        if (key === 'pendingStudents') return pendingStudents
         return 0
     }
 
