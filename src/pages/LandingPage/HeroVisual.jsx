@@ -110,10 +110,11 @@ function HeroVisual() {
 
     return (
         <div className="lpm-hero-visual" ref={ref} aria-hidden="true">
-            {/* A faint, static enlargement of the same QR mark every real
-                credential carries -- what the system actually produces,
-                not an abstract decoration. */}
-            <div className="lpm-qr-bg"><QrMark size={360} /></div>
+            {/* Soft, fully static glow sampled from the certificate's own
+                palette (navy + gold on warm paper) -- depth and warmth
+                behind the card instead of a separate decorative motif. */}
+            <div className="lpm-glow lpm-glow-navy" />
+            <div className="lpm-glow lpm-glow-gold" />
 
             {mode === "3d" ? (
                 <div className={`lpc-stage${sceneReady ? " is-ready" : ""}`} ref={stageRef} />
