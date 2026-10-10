@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { formatDisplayDateTime } from '../../lib/formatDate'
 import { logActivity } from '../../lib/activityLog'
 import { describeChanges } from '../../lib/describeChanges'
-import { notify, notifyError, notifyWarning, confirmModal } from '../../lib/notify'
+import { notify, notifyError, notifySuccess, notifyWarning, confirmModal } from '../../lib/notify'
 import { generateTempPassword } from '../../lib/resetStudentPassword'
 import { resetEmployeePassword } from '../../lib/resetEmployeePassword'
 import { SkeletonPage } from '../../components/Skeleton'
@@ -18,6 +18,9 @@ import { adminPath } from '../../lib/portalPaths'
 import { blockedForReadOnlyViewer } from '../../lib/viewOnlyGuard'
 import { friendlyError } from '../../lib/friendlyError'
 import { digitsOnly, isValidPhMobile } from '../../lib/phoneInput'
+
+// Same "still open" definition Assignments.jsx uses for workload/coverage.
+const OPEN_STATUSES = ['pending', 'payment_pending', 'receipt_uploaded', 'receipt_verified', 'processing', 'lacking_requirements', 'ready_for_claiming']
 
 function EmployeeDetails() {
     const { role } = useOutletContext() || {}
@@ -419,6 +422,93 @@ function EmployeeDetails() {
                 recordId: assignment.assignment_id,
                 description: `Removed employee ${employee.first_name} ${employee.last_name}'s assignment to "${collegeName(assignment.college_id)}" · "${programName(assignment.program_id)}".`,
             })
+
+            // If someone else still actively covers this exact college/program,
+            // hand this employee's open requests for it straight to them --
+            // otherwise those requests would sit with someone who no longer
+            // owns the program.
+            const { data: otherAssignments } = await supabase
+                .from('employee_assignments')
+                .select('employee_id, is_primary')
+                .eq('college_id', assignment.college_id)
+                .eq('program_id', assignment.program_id)
+                .eq('status', 'active')
+                .neq('employee_id', employeeId)
+
+            const candidateIds = [...new Set((otherAssignments || []).map((a) => a.employee_id))]
+
+            if (candidateIds.length > 0) {
+                const { data: candidates } = await supabase
+                    .from('employees')
+                    .select('employee_id, user_id')
+                    .in('employee_id', candidateIds)
+                    .eq('status', 'active')
+
+                if (candidates?.length) {
+                    const primaryIds = new Set((otherAssignments || []).filter((a) => a.is_primary).map((a) => a.employee_id))
+                    let pick = candidates.find((e) => primaryIds.has(e.employee_id)) || candidates[0]
+
+                    if (!primaryIds.has(pick.employee_id) && candidates.length > 1) {
+                        const { data: loadRows } = await supabase
+                            .from('document_requests')
+                            .select('assigned_employee_id')
+                            .in('assigned_employee_id', candidates.map((e) => e.employee_id))
+                            .in('status', OPEN_STATUSES)
+                        const counts = {}
+                        for (const r of loadRows || []) counts[r.assigned_employee_id] = (counts[r.assigned_employee_id] || 0) + 1
+                        pick = [...candidates].sort((a, b) => (counts[a.employee_id] || 0) - (counts[b.employee_id] || 0))[0]
+                    }
+
+                    const { data: openRequests } = await supabase
+                        .from('document_requests')
+                        .select('request_id, student_id')
+                        .eq('assigned_employee_id', employeeId)
+                        .in('status', OPEN_STATUSES)
+
+                    if (openRequests?.length) {
+                        const studentIds = [...new Set(openRequests.map((r) => r.student_id))]
+                        const { data: matchingStudents } = await supabase
+                            .from('students')
+                            .select('student_id')
+                            .in('student_id', studentIds)
+                            .eq('college_id', assignment.college_id)
+                            .eq('program_id', assignment.program_id)
+
+                        const matchingStudentIds = new Set((matchingStudents || []).map((s) => s.student_id))
+                        const requestIdsToMove = openRequests.filter((r) => matchingStudentIds.has(r.student_id)).map((r) => r.request_id)
+
+                        if (requestIdsToMove.length > 0) {
+                            const { error: moveError } = await supabase
+                                .from('document_requests')
+                                .update({ assigned_employee_id: pick.employee_id, updated_at: new Date().toISOString() })
+                                .in('request_id', requestIdsToMove)
+
+                            if (moveError) {
+                                console.error('MOVE REQUESTS ON UNASSIGNMENT ERROR:', moveError)
+                            } else {
+                                await logActivity({
+                                    userId: user.id,
+                                    action: 'reassign_requests_on_unassignment',
+                                    tableName: 'document_requests',
+                                    recordId: null,
+                                    description: `Moved ${requestIdsToMove.length} request(s) for "${programName(assignment.program_id)}" from ${employee.first_name} ${employee.last_name} to the remaining assigned employee, after removing the assignment.`,
+                                })
+
+                                if (pick.user_id) {
+                                    await notify({
+                                        userId: pick.user_id,
+                                        title: 'Requests reassigned to you',
+                                        message: `${requestIdsToMove.length} request${requestIdsToMove.length === 1 ? '' : 's'} for ${programName(assignment.program_id)} ${requestIdsToMove.length === 1 ? 'was' : 'were'} moved to you after ${employee.first_name} ${employee.last_name}'s assignment to this program was removed.`,
+                                        notificationType: 'assignment',
+                                    })
+                                }
+
+                                notifySuccess(`Assignment removed. ${requestIdsToMove.length} open request${requestIdsToMove.length === 1 ? '' : 's'} moved to the other assigned employee.`)
+                            }
+                        }
+                    }
+                }
+            }
 
             await loadEmployee()
 
