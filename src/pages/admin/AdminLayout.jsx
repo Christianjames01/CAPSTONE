@@ -27,10 +27,10 @@ const NAV_ITEMS = [
     { to: '/documents', label: 'Documents', icon: <IconDocument /> },
     { to: '/announcements', label: 'Announcements', icon: <IconMegaphone /> },
     { to: '/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
-    { to: '/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar /> },
+    { to: '/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar />, badgeKey: 'unclaimed' },
     { to: '/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
-    { to: '/receipts', label: 'Official Receipts', icon: <IconReceipt /> },
+    { to: '/receipts', label: 'Official Receipts', icon: <IconReceipt />, badgeKey: 'uploadedReceipts' },
     { to: '/credentials', label: 'Credentials', icon: <IconShieldCheck /> },
     { to: '/messages', label: 'Messages', icon: <IconMessage />, badgeKey: 'messages' },
     { to: '/notifications', label: 'Notifications', icon: <IconBell />, badgeKey: 'notifications' },
@@ -49,10 +49,15 @@ function AdminLayout() {
     const [unreadNotifications, setUnreadNotifications] = useState(0)
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [pendingStudents, setPendingStudents] = useState(0)
+    const [unclaimed, setUnclaimed] = useState(0)
+    const [uploadedReceipts, setUploadedReceipts] = useState(0)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
 
-    useLiveRefresh(['notifications', 'messages', 'students'], () => loadBadgeCounts())
+    useLiveRefresh(
+        ['notifications', 'messages', 'students', 'document_requests', 'claim_schedules', 'official_receipts'],
+        () => loadBadgeCounts()
+    )
 
     useEffect(() => {
         document.body.style.overflow = mobileNavOpen ? 'hidden' : ''
@@ -127,6 +132,38 @@ function AdminLayout() {
             .eq('verification_status', 'pending')
 
         setPendingStudents(pendingCount || 0)
+
+        // Same "unclaimed" definition as ClaimSchedules.jsx's own count:
+        // ready-for-claiming requests that don't already have a non-
+        // cancelled claim schedule.
+        const { data: readyRequests } = await supabase
+            .from('document_requests')
+            .select('request_id')
+            .eq('status', 'ready_for_claiming')
+
+        const readyIds = (readyRequests || []).map((r) => r.request_id)
+
+        if (readyIds.length > 0) {
+            const { data: scheduled } = await supabase
+                .from('claim_schedules')
+                .select('request_id')
+                .in('request_id', readyIds)
+                .neq('status', 'cancelled')
+
+            const scheduledIds = new Set((scheduled || []).map((s) => s.request_id))
+            setUnclaimed(readyIds.filter((id) => !scheduledIds.has(id)).length)
+        } else {
+            setUnclaimed(0)
+        }
+
+        // Same default filter as OfficialReceipts.jsx: receipts waiting to
+        // be verified.
+        const { count: uploadedCount } = await supabase
+            .from('official_receipts')
+            .select('receipt_id', { count: 'exact', head: true })
+            .eq('status', 'uploaded')
+
+        setUploadedReceipts(uploadedCount || 0)
     }
 
     const handleLogout = async () => {
@@ -139,6 +176,8 @@ function AdminLayout() {
         if (key === 'notifications') return unreadNotifications
         if (key === 'messages') return unreadMessages
         if (key === 'pendingStudents') return pendingStudents
+        if (key === 'unclaimed') return unclaimed
+        if (key === 'uploadedReceipts') return uploadedReceipts
         return 0
     }
 
