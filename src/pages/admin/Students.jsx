@@ -709,33 +709,23 @@ function Students() {
                     {selectedGroup.students.map(renderStudentCard)}
                 </>
             ) : (
-                <div className="admin-table-wrapper">
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>College</th>
-                                <th>Course</th>
-                                <th>Students</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {groupedResults.map((group) => (
-                                <tr
-                                    key={group.key}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => setSelectedProgramKey(group.key)}
-                                >
-                                    <td>{group.collegeName}</td>
-                                    <td>{group.programName}</td>
-                                    <td>{group.students.length}</td>
-                                    <td>
-                                        <span className="admin-link-button">View →</span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="stu-program-grid">
+                    {groupedResults.map((group) => (
+                        <button
+                            type="button"
+                            className="stu-program-card"
+                            key={group.key}
+                            onClick={() => setSelectedProgramKey(group.key)}
+                        >
+                            <div className="stu-program-card-head">
+                                <span className="stu-program-icon" aria-hidden="true"><IconBuilding /></span>
+                                <span className="stu-program-count">{group.students.length} student{group.students.length === 1 ? '' : 's'}</span>
+                            </div>
+                            <h3>{group.programName}</h3>
+                            <p>{group.collegeName}</p>
+                            <span className="stu-program-link">View students →</span>
+                        </button>
+                    ))}
                 </div>
             )}
         </div>
