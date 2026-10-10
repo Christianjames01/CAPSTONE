@@ -29,7 +29,6 @@ const VerifyCredential = lazy(() => import('./pages/verify/VerifyCredential'))
 const QueueDisplay = lazy(() => import('./pages/QueueDisplay'))
 const SystemWorkflow = lazy(() => import('./pages/workflow/SystemWorkflow'))
 const Showreel = lazy(() => import('./pages/showreel/Showreel'))
-const DemoVideo = lazy(() => import('./pages/demovideo/DemoVideo'))
 
 const StudentLayout = lazy(() => import('./pages/student/StudentLayout'))
 const Dashboard = lazy(() => import('./pages/student/Dashboard'))
@@ -221,7 +220,6 @@ function App() {
             system demo). */}
         <Route path="/system-workflow" element={<SystemWorkflow />} />
         <Route path="/showreel" element={<Showreel />} />
-        <Route path="/demo-video" element={<DemoVideo />} />
 
         {/* Standalone, no portal sidebar -- meant to be opened full-screen
             on a lobby TV/monitor and left running. */}
