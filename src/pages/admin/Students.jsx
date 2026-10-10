@@ -37,6 +37,7 @@ function Students() {
     const [error, setError] = useState('')
     const [updating, setUpdating] = useState(null)
     const [removing, setRemoving] = useState(null)
+    const [removingProfileId, setRemovingProfileId] = useState(null)
     const [selectedProgramKey, setSelectedProgramKey] = useState(null)
     const [yearLevelFilter, setYearLevelFilter] = useState('all')
 
@@ -386,6 +387,50 @@ function Students() {
         }
     }
 
+    // "Setup incomplete" accounts have no student record yet -- nothing to
+    // back up, so this skips straight to the password-confirmed delete that
+    // removeStudent above also ends with.
+    const removeIncompleteProfile = async (profile) => {
+        if (blockedForReadOnlyViewer(role)) return
+        const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email
+
+        try {
+            setRemovingProfileId(profile.user_id)
+
+            const confirmed = await confirmModal(
+                `Permanently delete ${name}'s account? They never finished setting up their student record, so there's nothing to back up -- this removes their login and profile entirely. This cannot be undone.`,
+                { title: 'Delete this account?', confirmButtonText: 'Delete account', icon: 'warning' }
+            )
+            if (!confirmed) return
+
+            const { value: password } = await Swal.fire({
+                title: 'Confirm your password',
+                text: 'For your security, enter your own password to permanently delete this account.',
+                allowOutsideClick: false,
+                input: 'password',
+                inputLabel: 'Your password',
+                inputPlaceholder: 'Enter your password',
+                showCancelButton: true,
+                confirmButtonText: 'Delete account',
+                confirmButtonColor: '#dc3545',
+                inputValidator: (value) => (!value ? 'Password is required.' : undefined),
+            })
+
+            if (!password) return
+
+            await deleteStudentAccount({ studentUserId: profile.user_id, password })
+
+            notifySuccess(`${name}'s account has been permanently deleted.`)
+            setPendingProfiles((prev) => prev.filter((p) => p.user_id !== profile.user_id))
+
+        } catch (err) {
+            console.error('REMOVE INCOMPLETE PROFILE ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to delete this account.'))
+        } finally {
+            setRemovingProfileId(null)
+        }
+    }
+
     const groupedResults = (() => {
         const groups = {}
 
@@ -610,11 +655,20 @@ function Students() {
                                 )}
                             </div>
 
-                            <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>
-                                Signed up {new Date(p.created_at).toLocaleString('en-PH', {
-                                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                                })}
-                            </p>
+                            <div className="admin-list-card-header" style={{ marginTop: 10 }}>
+                                <p style={{ fontSize: 12.5, color: 'var(--slate)' }}>
+                                    Signed up {new Date(p.created_at).toLocaleString('en-PH', {
+                                        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                                    })}
+                                </p>
+                                <button
+                                    className="admin-link-button is-danger"
+                                    onClick={() => removeIncompleteProfile(p)}
+                                    disabled={removingProfileId === p.user_id}
+                                >
+                                    {removingProfileId === p.user_id ? 'Deleting...' : 'Delete'}
+                                </button>
+                            </div>
                         </div>
                     ))}
 
