@@ -112,47 +112,40 @@
     animation: lpm-fade-up 1s var(--ease-out) 0.35s forwards;
 }
 
-.lpm-orbit {
+.lpm-system-mark {
     position: absolute;
-    border: 1px dashed rgba(18, 59, 120, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 16px 30px -18px rgba(10, 36, 80, 0.4);
     pointer-events: none;
 }
 
-.lpm-orbit-a {
-    inset: -10px 6% auto auto;
-    width: 280px;
-    height: 280px;
-    animation: lpm-spin 40s linear infinite;
+.lpm-system-mark svg {
+    width: 28px;
+    height: 28px;
 }
 
-.lpm-orbit-b {
-    inset: auto auto 0 -4%;
-    width: 200px;
-    height: 200px;
-    border-color: rgba(200, 16, 46, 0.2);
-    animation: lpm-spin 30s linear infinite reverse;
+.lpm-system-mark-a {
+    inset: 0 6% auto auto;
+    color: var(--blue);
 }
 
-.lpm-orbit::after {
-    content: "";
-    position: absolute;
-    top: 12%;
-    left: 12%;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--blue);
-    box-shadow: 0 0 0 5px rgba(18, 59, 120, 0.12);
+.lpm-system-mark-b {
+    inset: auto auto 6% -2%;
+    color: var(--red);
+    width: 54px;
+    height: 54px;
 }
 
-.lpm-orbit-b::after {
-    background: var(--red);
-    box-shadow: 0 0 0 5px rgba(200, 16, 46, 0.12);
-}
-
-@keyframes lpm-spin {
-    to { transform: rotate(360deg); }
+.lpm-system-mark-b svg {
+    width: 24px;
+    height: 24px;
 }
 
 .lpm-app {
