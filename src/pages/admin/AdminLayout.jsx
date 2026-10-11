@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconReceipt, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
@@ -11,21 +11,49 @@ import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
 import { adminPath } from '../../lib/portalPaths'
 
+const ChevronDown = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6" />
+    </svg>
+)
+
 // Hidden from the superadmin's view of the head portal -- not relevant for
 // account oversight (walk-in queue, announcements) or not meaningful for an
 // account that isn't the one signed in as head (its own profile, the guide).
 const HIDDEN_FOR_SUPERADMIN = ['/announcements', '/queue', '/guide', '/profile']
 
+// Expandable sub-links under a nav item -- deep links into that page's own
+// status filter (it already reads ?status= from the URL), so clicking one
+// both navigates and pre-filters the list.
+const REQUEST_STATUS_CHILDREN = [
+    { to: '/requests?status=pending,payment_pending', label: 'Pending' },
+    { to: '/requests?status=receipt_uploaded,receipt_verified', label: 'In Verification' },
+    { to: '/requests?status=processing,lacking_requirements', label: 'Processing' },
+    { to: '/requests?status=ready_for_claiming', label: 'Ready for Claiming' },
+    { to: '/requests?status=completed', label: 'Completed' },
+    { to: '/requests?status=rejected', label: 'Rejected' },
+    { to: '/requests?status=cancelled', label: 'Cancelled' },
+]
+
+const CLAIM_SCHEDULE_CHILDREN = [
+    { to: '/claim-schedules?status=upcoming', label: 'Upcoming' },
+    { to: '/claim-schedules?status=today', label: 'Today' },
+    { to: '/claim-schedules?status=missed', label: 'Missed' },
+    { to: '/claim-schedules?status=reschedule', label: 'Reschedule Requests' },
+    { to: '/claim-schedules?status=claimed', label: 'Claimed' },
+    { to: '/claim-schedules?status=cancelled', label: 'Cancelled' },
+]
+
 const NAV_ITEMS = [
     { to: '/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
-    { to: '/requests', label: 'All Requests', icon: <IconClipboardList /> },
+    { to: '/requests', label: 'All Requests', icon: <IconClipboardList />, children: REQUEST_STATUS_CHILDREN },
     { to: '/assignments', label: 'Request Assignments', icon: <IconSwap /> },
     { to: '/employees', label: 'Employees', icon: <IconUsers /> },
     { to: '/students', label: 'Students', icon: <IconIdCard />, badgeKey: 'pendingStudents' },
     { to: '/documents', label: 'Documents', icon: <IconDocument /> },
     { to: '/announcements', label: 'Announcements', icon: <IconMegaphone /> },
     { to: '/colleges-programs', label: 'Academic Divisions & Programs', icon: <IconBuilding /> },
-    { to: '/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar />, badgeKey: 'unclaimed' },
+    { to: '/claim-schedules', label: 'Claim Schedules', icon: <IconCalendar />, badgeKey: 'unclaimed', children: CLAIM_SCHEDULE_CHILDREN },
     { to: '/office-calendar', label: 'Office Calendar', icon: <IconCalendar /> },
     { to: '/queue', label: 'Walk-in Queue', icon: <IconTicket /> },
     { to: '/receipts', label: 'Official Receipts', icon: <IconReceipt />, badgeKey: 'uploadedReceipts' },
@@ -40,6 +68,20 @@ const NAV_ITEMS = [
 
 function AdminLayout() {
     const navigate = useNavigate()
+    const location = useLocation()
+    // Which nav items with sub-links are expanded, keyed by `to`. Starts
+    // open for whichever section the user is already on.
+    const [expandedNav, setExpandedNav] = useState(() =>
+        new Set(NAV_ITEMS.filter((item) => item.children && location.pathname.endsWith(item.to)).map((item) => item.to))
+    )
+    const toggleNav = (to) => {
+        setExpandedNav((prev) => {
+            const next = new Set(prev)
+            if (next.has(to)) next.delete(to)
+            else next.add(to)
+            return next
+        })
+    }
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
     const [roleLabel, setRoleLabel] = useState('')
@@ -231,25 +273,57 @@ function AdminLayout() {
                     <nav className="admin-nav">
                         {NAV_ITEMS.filter((item) => role !== 'superadmin' || !HIDDEN_FOR_SUPERADMIN.includes(item.to)).map((item) => {
                             const count = item.badgeKey ? badgeValue(item.badgeKey) : 0
+                            const isOpen = item.children && expandedNav.has(item.to)
 
                             return (
-                                <NavLink
-                                    key={item.to}
-                                    to={adminPath(item.to)}
-                                    end={item.end}
-                                    onClick={closeMobileNav}
-                                    className={({ isActive }) =>
-                                        `admin-nav-link${isActive ? ' active' : ''}`
-                                    }
-                                >
-                                    {item.icon}
-                                    <span>{item.label}</span>
-                                    {count > 0 && (
-                                        <span className="admin-nav-badge">
-                                            {count > 9 ? '9+' : count}
-                                        </span>
+                                <div key={item.to}>
+                                    <NavLink
+                                        to={adminPath(item.to)}
+                                        end={item.end}
+                                        onClick={() => {
+                                            closeMobileNav()
+                                            if (item.children) toggleNav(item.to)
+                                        }}
+                                        className={({ isActive }) =>
+                                            `admin-nav-link${isActive ? ' active' : ''}`
+                                        }
+                                    >
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                        {count > 0 && (
+                                            <span className="admin-nav-badge">
+                                                {count > 9 ? '9+' : count}
+                                            </span>
+                                        )}
+                                        {item.children && (
+                                            <span className={`admin-nav-chevron${isOpen ? ' is-open' : ''}`}>
+                                                <ChevronDown />
+                                            </span>
+                                        )}
+                                    </NavLink>
+
+                                    {item.children && isOpen && (
+                                        <div className="admin-nav-children">
+                                            {item.children.map((child) => {
+                                                const [childPath, childStatus] = child.to.split('?status=')
+                                                const isChildActive = location.pathname.endsWith(childPath)
+                                                    && new URLSearchParams(location.search).get('status') === childStatus
+
+                                                return (
+                                                    <NavLink
+                                                        key={child.to}
+                                                        to={adminPath(child.to)}
+                                                        onClick={closeMobileNav}
+                                                        className={`admin-nav-child-link${isChildActive ? ' active' : ''}`}
+                                                    >
+                                                        <span className="admin-nav-child-dot" aria-hidden="true" />
+                                                        <span>{child.label}</span>
+                                                    </NavLink>
+                                                )
+                                            })}
+                                        </div>
                                     )}
-                                </NavLink>
+                                </div>
                             )
                         })}
                     </nav>
