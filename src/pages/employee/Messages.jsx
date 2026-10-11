@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { notifyError, confirmModal } from '../../lib/notify'
+import { notify, notifyError, confirmModal } from '../../lib/notify'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
@@ -263,6 +263,13 @@ function Messages() {
             if (sendError) {
                 throw new Error('Failed to send message: ' + sendError.message)
             }
+
+            await Promise.all(recipientIds.map((id) => notify({
+                userId: id,
+                title: 'New message',
+                message: reply.trim(),
+                notificationType: 'message',
+            })))
 
             // One bubble here even though it went out as multiple rows.
             const displayRow = readMessage(data.find((d) => d.receiver_user_id === activeThread.otherUserId) || data[0])

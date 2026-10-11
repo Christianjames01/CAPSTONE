@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { IconMessage } from '../employee/icons'
 import { supabase } from '../../lib/supabase'
-import { notifyError, notifySuccess, confirmModal } from '../../lib/notify'
+import { notify, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
@@ -441,6 +441,13 @@ function Messages() {
                 .select()
 
             if (sendError) throw new Error(sendError.message)
+
+            await Promise.all(recipients.map((r) => notify({
+                userId: r.id,
+                title: 'New message',
+                message: reply.trim(),
+                notificationType: 'message',
+            })))
 
             setRawMessages((prev) => [...prev, ...data])
 
