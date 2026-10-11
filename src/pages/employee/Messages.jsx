@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
+import { useConversationPresence, presenceLabel } from '../../lib/presence'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
@@ -237,6 +238,8 @@ function Messages() {
 
     const totalUnread = threads.reduce((sum, t) => sum + t.unreadCount, 0)
 
+    const partnerPresence = useConversationPresence(activeThread?.otherUserId || null)
+
     const sendReply = async () => {
         if (!reply.trim() || !activeThread) return
 
@@ -468,7 +471,10 @@ function Messages() {
                                     onBack={() => setActiveId(null)}
                                     people={[personOf(activeThread)]}
                                     title={activeThread.name}
-                                    subtitle={activeThread.role === 'student' ? 'Student' : "Registrar's Office"}
+                                    subtitle={[
+                                        activeThread.role === 'student' ? 'Student' : "Registrar's Office",
+                                        presenceLabel(partnerPresence),
+                                    ].filter(Boolean).join(' · ')}
                                     typing={activeTypers.length > 0 && `${typerName(activeTypers[0])} is typing…`}
                                 />
 
@@ -484,6 +490,7 @@ function Messages() {
                                         const isSelf = m.sender_user_id === userId
                                         const senderName = senderNames[m.sender_user_id] || 'Unknown'
                                         const fromOtherPerson = !isSelf && m.sender_user_id !== activeThread.otherUserId
+                                        const isLastInThread = m.message_id === activeThread.messages[activeThread.messages.length - 1]?.message_id
 
                                         return (
                                             <MessageBubble
@@ -505,6 +512,7 @@ function Messages() {
                                                 time={groupEnd ? chatBubbleTime(m.created_at) : null}
                                                 edited={!!m.edited_at}
                                                 deletedNote={deletedLabel(m)}
+                                                seen={isSelf && isLastInThread && !!m.is_read}
                                                 onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                                 onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                                 disabled={busy}

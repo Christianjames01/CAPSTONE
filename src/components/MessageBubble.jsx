@@ -35,7 +35,7 @@ const TrashIcon = () => (
 // Delete appear on hover, or on a long press on phones (like Messenger).
 // `onReply` adds Reply to the menu (any message); `quote` ({ label, text,
 // onClick }) shows the answered message above a reply.
-function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, onReply, quote, disabled, avatar, groupStart = true, groupEnd = true }) {
+function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, onReply, quote, disabled, avatar, groupStart = true, groupEnd = true, seen = false }) {
     const [editing, setEditing] = useState(false)
     const [revealed, setRevealed] = useState(false)
     const rowRef = useRef(null)
@@ -212,6 +212,10 @@ function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edit
                         </span>
                     )}
                 </div>
+            )}
+
+            {seen && isSelf && !deletedNote && !editing && (
+                <span className="msg-seen">Seen</span>
             )}
 
             {showActions && (

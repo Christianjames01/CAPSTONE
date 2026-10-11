@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { IconMessage } from '../employee/icons'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
+import { useConversationPresence, presenceLabel } from '../../lib/presence'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
@@ -608,6 +609,13 @@ function Messages() {
         return `${roleLabel(thread.roleA)} & ${roleLabel(thread.roleB)} · replying reaches both`
     }
 
+    // Presence only makes sense for a real 1:1 -- not an oversight thread
+    // where "replying reaches both" of two other people.
+    const directPartnerId = activeThread && isMyThread(activeThread) && otherParticipants(activeThread).length === 1
+        ? otherParticipants(activeThread)[0].id
+        : null
+    const partnerPresence = useConversationPresence(directPartnerId)
+
     const previewOf = (m) => {
         if (!m) return 'No messages yet'
         if (m.deleted_at) return deletedLabel(m)
@@ -724,7 +732,7 @@ function Messages() {
                                     onBack={closeThread}
                                     people={peopleOf(activeThread)}
                                     title={titleOf(activeThread)}
-                                    subtitle={subtitleOf(activeThread)}
+                                    subtitle={[subtitleOf(activeThread), presenceLabel(partnerPresence)].filter(Boolean).join(' · ')}
                                     typing={activeTypers.length > 0 && `${nameForSender(activeTypers[0])} is typing…`}
                                     actions={activeThread.messages.length > 0 && (
                                         <button
@@ -751,6 +759,7 @@ function Messages() {
                                     renderMessage={(m, { groupStart, groupEnd }) => {
                                         const isSelf = m.sender_user_id === currentUserId
                                         const senderName = nameForSender(m.sender_user_id)
+                                        const isLastInThread = m.message_id === activeThread.messages[activeThread.messages.length - 1]?.message_id
 
                                         return (
                                             <MessageBubble
@@ -769,6 +778,7 @@ function Messages() {
                                                 time={groupEnd ? chatBubbleTime(m.created_at) : null}
                                                 edited={!!m.edited_at}
                                                 deletedNote={deletedLabel(m)}
+                                                seen={isSelf && isLastInThread && !!m.is_read}
                                                 onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                                 onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                                 disabled={deletingKey !== null}

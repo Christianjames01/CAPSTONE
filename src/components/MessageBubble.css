@@ -77,6 +77,16 @@
     font-style: italic;
 }
 
+/* "Seen" under the last message you sent, once the other person has
+   read it -- Messenger-style, so it only ever appears on one bubble. */
+.msg-seen {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--slate);
+    text-align: right;
+}
+
 /* ---------- Edit / Delete links under own messages ---------- */
 
 .msg-actions {

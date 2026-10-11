@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
+import { useConversationPresence, presenceLabel } from '../../lib/presence'
 import { EmptyState } from './StudentUi'
 import { IconMessage } from './icons'
 import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
@@ -236,6 +237,7 @@ function Messages() {
     const threadFor = (m) => threadOf[m.message_id] || otherParty(m, userId)
     const thread = selected ? messages.filter((m) => threadFor(m) === selected.userId) : []
     const unreadInThread = unreadReceived(thread, userId)
+    const partnerPresence = useConversationPresence(selected?.userId || null)
 
     const selectContact = (contact) => {
         setSelectedUserId(contact.userId)
@@ -466,6 +468,7 @@ function Messages() {
                                     subtitle={[
                                         selected.subtitle,
                                         selected.requests.length > 0 && `${selected.handlesActive ? 'Handling' : 'Handled'} ${selected.requests.join(', ')}`,
+                                        presenceLabel(partnerPresence),
                                     ].filter(Boolean).join(' · ')}
                                     typing={activeTypers.length > 0 && `${typerName(activeTypers[0])} is typing…`}
                                 />
@@ -486,6 +489,7 @@ function Messages() {
                                             : fromOtherStaff
                                                 ? labels[m.sender_user_id] || REGISTRAR_LABEL
                                                 : selected.name
+                                        const isLastInThread = m.message_id === thread[thread.length - 1]?.message_id
 
                                         return (
                                             <MessageBubble
@@ -504,6 +508,7 @@ function Messages() {
                                                 deletedNote={m.deleted_at
                                                     ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
                                                     : null}
+                                                seen={isSelf && isLastInThread && !!m.is_read}
                                                 onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                                 onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                                 disabled={busy}
