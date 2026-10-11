@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logActivity } from '../lib/activityLog'
-import { notifyError, confirmModal } from '../lib/notify'
+import { notify, notifyError, confirmModal } from '../lib/notify'
 import { formatDisplayDateTime } from '../lib/formatDate'
 import { useLiveRefresh } from '../lib/useLiveRefresh'
 import './RequestNotes.css'
@@ -68,6 +68,33 @@ function RequestNotes({ request, cardClassName, canDeleteAny = false }) {
 
     useLiveRefresh(['request_notes'], loadNotes)
 
+    // Lets the assigned employee know someone left a note on their request --
+    // skipped when there's no assignee yet, or when they wrote the note
+    // themselves (they don't need to be told about their own note).
+    const notifyAssignedEmployee = async (noteBody) => {
+        if (!request.assigned_employee_id) return
+
+        try {
+            const { data: assignedEmployee, error: assignedEmployeeError } = await supabase
+                .from('employees')
+                .select('user_id')
+                .eq('employee_id', request.assigned_employee_id)
+                .single()
+
+            if (assignedEmployeeError || !assignedEmployee?.user_id || assignedEmployee.user_id === userId) return
+
+            await notify({
+                userId: assignedEmployee.user_id,
+                title: 'New note on your request',
+                message: `${categoryLabel(category)} note on "${request.request_number}": ${noteBody.length > 140 ? noteBody.slice(0, 140) + '…' : noteBody}`,
+                notificationType: 'request_update',
+                relatedRequestId: requestId,
+            })
+        } catch (error) {
+            console.error('NOTIFY ASSIGNED EMPLOYEE ERROR:', error)
+        }
+    }
+
     const addNote = async () => {
         const text = body.trim()
         if (!text || saving) return
@@ -87,6 +114,8 @@ function RequestNotes({ request, cardClassName, canDeleteAny = false }) {
                 recordId: requestId,
                 description: `Added a ${categoryLabel(category).toLowerCase()} note to "${request.request_number}".`,
             })
+
+            await notifyAssignedEmployee(text)
 
             setBody('')
             setCategory('general')
