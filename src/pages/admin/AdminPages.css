@@ -27,6 +27,13 @@
     margin-bottom: 16px;
 }
 
+/* A sensitive/destructive action sitting in its own card (e.g. status
+   override) -- a red border marks it as a zone to pause before using,
+   without the loud full-red background of an admin-notice. */
+.admin-danger-zone {
+    border-color: var(--danger-text, var(--red));
+}
+
 .admin-empty {
     text-align: center;
     padding: 48px 24px;

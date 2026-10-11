@@ -1412,42 +1412,44 @@ function AdminRequestDetails() {
 
             {request.status === 'processing' && (
                 <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 6 }}>Document Processing</h2>
+                    <p style={{ fontSize: 13, marginBottom: 16 }}>
+                        Prepare the student's requested academic document, then generate the digital credential.
+                    </p>
+
                     <div className="admin-notice tone-info">
-                        <h2 style={{ fontSize: 16, marginBottom: 8 }}>Document Processing</h2>
                         <strong>Processing has started.</strong>
-                        <p>Prepare the student's requested academic document, then generate the digital credential.</p>
-
                         {request.processed_at && (
-                            <p><strong>Processing Started:</strong> {formatDateTime(request.processed_at)}</p>
+                            <p style={{ margin: 0 }}>Started {formatDateTime(request.processed_at)}</p>
                         )}
-
-                        <label htmlFor="credential-number-input" style={{ display: 'block', marginTop: 16, marginBottom: 6, fontWeight: 600 }}>
-                            Credential Number
-                        </label>
-                        <input
-                            id="credential-number-input"
-                            type="text"
-                            className="admin-search-input"
-                            placeholder="e.g. CERT-2026-00417"
-                            value={credentialNumberInput}
-                            onChange={(e) => setCredentialNumberInput(e.target.value)}
-                            disabled={processing}
-                            style={{ maxWidth: 360, fontFamily: 'monospace' }}
-                        />
-                        <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 6 }}>
-                            Enter the number to use for this credential -- it won't be generated automatically.
-                            Must be unique.
-                        </p>
-
-                        <button
-                            onClick={generateDigitalCredential}
-                            disabled={processing || !credentialNumberInput.trim()}
-                            className="admin-primary-button"
-                            style={{ marginTop: 12 }}
-                        >
-                            {processing ? 'Generating Credential...' : <><IconFile className="is-leading" />Generate Digital Credential</>}
-                        </button>
                     </div>
+
+                    <label htmlFor="credential-number-input" style={{ display: 'block', marginTop: 16, marginBottom: 6, fontWeight: 600, fontSize: 13.5 }}>
+                        Credential Number
+                    </label>
+                    <input
+                        id="credential-number-input"
+                        type="text"
+                        className="admin-search-input"
+                        placeholder="e.g. CERT-2026-00417"
+                        value={credentialNumberInput}
+                        onChange={(e) => setCredentialNumberInput(e.target.value)}
+                        disabled={processing}
+                        style={{ maxWidth: 360, fontFamily: 'monospace' }}
+                    />
+                    <p style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 6 }}>
+                        Enter the number to use for this credential -- it won't be generated automatically.
+                        Must be unique.
+                    </p>
+
+                    <button
+                        onClick={generateDigitalCredential}
+                        disabled={processing || !credentialNumberInput.trim()}
+                        className="admin-primary-button"
+                        style={{ marginTop: 16 }}
+                    >
+                        {processing ? 'Generating Credential...' : <><IconFile className="is-leading" />Generate Digital Credential</>}
+                    </button>
                 </div>
             )}
 
@@ -1588,7 +1590,7 @@ function AdminRequestDetails() {
                                     onClick={dismissMissedClaim}
                                     disabled={saving}
                                 >
-                                    {saving ? 'Dismissing...' : 'Dismiss'}
+                                    {saving ? 'Dismissing...' : <><IconX className="is-leading" />Dismiss</>}
                                 </button>
                             )}
                         </div>
@@ -1615,8 +1617,12 @@ function AdminRequestDetails() {
                 <h2 style={{ fontSize: 16, marginBottom: 6 }}>Reassign Employee</h2>
                 <p style={{ fontSize: 13, marginBottom: 14 }}>Move this request to a different active employee.</p>
 
+                <label htmlFor="reassign-employee-select" style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 13.5 }}>
+                    Employee
+                </label>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <select
+                        id="reassign-employee-select"
                         className="admin-search-input"
                         style={{ maxWidth: 280 }}
                         value={reassignTo}
@@ -1637,33 +1643,48 @@ function AdminRequestDetails() {
                 </div>
             </div>
 
-            <div className="admin-card">
-                <h2 style={{ fontSize: 16, marginBottom: 6 }}>Override Status</h2>
-                <p style={{ fontSize: 13, marginBottom: 14 }}>
+            <div className="admin-card admin-danger-zone">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <IconAlert style={{ color: 'var(--danger-text, var(--red-dark))', flexShrink: 0 }} />
+                    <h2 style={{ fontSize: 16, margin: 0, color: 'var(--danger-text, var(--red-dark))' }}>Override Status</h2>
+                </div>
+                <p style={{ fontSize: 13, marginBottom: 16 }}>
                     Force this request into a different status. This bypasses the normal verification/processing
                     workflow — use only when authorized.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420 }}>
-                    <select
-                        className="admin-search-input"
-                        value={newStatus}
-                        onChange={(e) => setNewStatus(e.target.value)}
-                        disabled={saving}
-                    >
-                        {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                        ))}
-                    </select>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
+                    <div>
+                        <label htmlFor="override-status-select" style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 13.5 }}>
+                            New Status
+                        </label>
+                        <select
+                            id="override-status-select"
+                            className="admin-search-input"
+                            value={newStatus}
+                            onChange={(e) => setNewStatus(e.target.value)}
+                            disabled={saving}
+                        >
+                            {STATUS_OPTIONS.map((s) => (
+                                <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <input
-                        className="admin-search-input"
-                        type="text"
-                        value={overrideReason}
-                        onChange={(e) => setOverrideReason(e.target.value)}
-                        placeholder="Reason for override (required if rejecting)"
-                        disabled={saving}
-                    />
+                    <div>
+                        <label htmlFor="override-reason-input" style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 13.5 }}>
+                            Reason
+                        </label>
+                        <input
+                            id="override-reason-input"
+                            className="admin-search-input"
+                            type="text"
+                            value={overrideReason}
+                            onChange={(e) => setOverrideReason(e.target.value)}
+                            placeholder="Required if rejecting"
+                            disabled={saving}
+                        />
+                    </div>
 
                     <button
                         className="admin-danger-button"
