@@ -1195,6 +1195,91 @@ function AdminRequestDetails() {
                 )}
             </div>
 
+            {claimSchedule && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Claiming Schedule</h2>
+
+                    {claimSchedule.status === 'missed' ? (
+                        <div className="admin-notice tone-danger">
+                            <strong><IconX className="is-leading" />Claiming Appointment Missed</strong>
+                            <p>
+                                The student did not claim this document on{' '}
+                                {formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date)}.
+                            </p>
+                            {claimSchedule.reschedule_requested_at && (
+                                <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
+                            )}
+                        </div>
+                    ) : claimSchedule.status === 'claimed' ? (
+                        <div className="admin-notice tone-success">
+                            <strong><IconCheck className="is-leading" />Document Claimed</strong>
+                            <p>
+                                Claimed on{' '}
+                                {claimSchedule.claimed_at
+                                    ? formatDateTime(claimSchedule.claimed_at)
+                                    : formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date)}.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="admin-info-grid">
+                            <div className="admin-info-field">
+                                <span>Scheduled Date</span>
+                                <strong>{formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}</strong>
+                            </div>
+                            <div className="admin-info-field">
+                                <span>Scheduled Time</span>
+                                <strong>{formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}</strong>
+                            </div>
+                            {claimSchedule.reschedule_requested_at && (
+                                <div className="admin-info-field">
+                                    <span>Reschedule Requested</span>
+                                    <strong>{claimSchedule.reschedule_reason}</strong>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {claimSchedule.status !== 'claimed' && (
+                        <div style={{ display: 'flex', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
+                            <button
+                                className="admin-link-button"
+                                onClick={() => navigate(adminPath(`/requests/${requestId}/claim-schedule`))}
+                            >
+                                {claimSchedule.status === 'missed' || claimSchedule.reschedule_requested_at
+                                    ? 'Reschedule claiming →'
+                                    : 'Edit claiming schedule →'}
+                            </button>
+
+                            {claimSchedule.status === 'missed' && (
+                                <button
+                                    className="admin-link-button"
+                                    style={{ color: 'var(--red-dark)' }}
+                                    onClick={dismissMissedClaim}
+                                    disabled={saving}
+                                >
+                                    {saving ? 'Dismissing...' : <><IconX className="is-leading" />Dismiss</>}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {!claimSchedule && request?.status === 'ready_for_claiming' && (
+                <div className="admin-card">
+                    <h2 style={{ fontSize: 16, marginBottom: 6 }}>Claiming Schedule</h2>
+                    <p style={{ fontSize: 13, marginBottom: 14 }}>
+                        This document is ready but has not been scheduled for claiming yet.
+                    </p>
+                    <button
+                        className="admin-primary-button"
+                        onClick={() => navigate(adminPath(`/requests/${requestId}/claim-schedule`))}
+                    >
+                        <IconCalendar className="is-leading" />Schedule Claiming
+                    </button>
+                </div>
+            )}
+
             <RequestNotes request={request} cardClassName="admin-card" canDeleteAny />
 
             <RepresentativeStaffCard request={request} cardClassName="admin-card" />
@@ -1525,91 +1610,6 @@ function AdminRequestDetails() {
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
-
-            {claimSchedule && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 12 }}>Claiming Schedule</h2>
-
-                    {claimSchedule.status === 'missed' ? (
-                        <div className="admin-notice tone-danger">
-                            <strong><IconX className="is-leading" />Claiming Appointment Missed</strong>
-                            <p>
-                                The student did not claim this document on{' '}
-                                {formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date)}.
-                            </p>
-                            {claimSchedule.reschedule_requested_at && (
-                                <p><strong>Student requested a reschedule:</strong> {claimSchedule.reschedule_reason}</p>
-                            )}
-                        </div>
-                    ) : claimSchedule.status === 'claimed' ? (
-                        <div className="admin-notice tone-success">
-                            <strong><IconCheck className="is-leading" />Document Claimed</strong>
-                            <p>
-                                Claimed on{' '}
-                                {claimSchedule.claimed_at
-                                    ? formatDateTime(claimSchedule.claimed_at)
-                                    : formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date)}.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="admin-info-grid">
-                            <div className="admin-info-field">
-                                <span>Scheduled Date</span>
-                                <strong>{formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}</strong>
-                            </div>
-                            <div className="admin-info-field">
-                                <span>Scheduled Time</span>
-                                <strong>{formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}</strong>
-                            </div>
-                            {claimSchedule.reschedule_requested_at && (
-                                <div className="admin-info-field">
-                                    <span>Reschedule Requested</span>
-                                    <strong>{claimSchedule.reschedule_reason}</strong>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {claimSchedule.status !== 'claimed' && (
-                        <div style={{ display: 'flex', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
-                            <button
-                                className="admin-link-button"
-                                onClick={() => navigate(adminPath(`/requests/${requestId}/claim-schedule`))}
-                            >
-                                {claimSchedule.status === 'missed' || claimSchedule.reschedule_requested_at
-                                    ? 'Reschedule claiming →'
-                                    : 'Edit claiming schedule →'}
-                            </button>
-
-                            {claimSchedule.status === 'missed' && (
-                                <button
-                                    className="admin-link-button"
-                                    style={{ color: 'var(--red-dark)' }}
-                                    onClick={dismissMissedClaim}
-                                    disabled={saving}
-                                >
-                                    {saving ? 'Dismissing...' : <><IconX className="is-leading" />Dismiss</>}
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {!claimSchedule && request?.status === 'ready_for_claiming' && (
-                <div className="admin-card">
-                    <h2 style={{ fontSize: 16, marginBottom: 6 }}>Claiming Schedule</h2>
-                    <p style={{ fontSize: 13, marginBottom: 14 }}>
-                        This document is ready but has not been scheduled for claiming yet.
-                    </p>
-                    <button
-                        className="admin-primary-button"
-                        onClick={() => navigate(adminPath(`/requests/${requestId}/claim-schedule`))}
-                    >
-                        <IconCalendar className="is-leading" />Schedule Claiming
-                    </button>
                 </div>
             )}
 
