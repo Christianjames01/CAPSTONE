@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import certichainLogo from '../../assets/certichain-logo.png'
 import { IconHome, IconCalendar, IconBell, IconUserCircle, IconLogout, IconMenu, IconX, IconBook } from '../student/icons'
@@ -13,27 +13,9 @@ import './EmployeeLayout.css'
 import { useLiveRefresh } from '../../lib/useLiveRefresh'
 import PageLoading from '../../components/PageLoading'
 
-const ChevronDown = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="m6 9 6 6 6-6" />
-    </svg>
-)
-
-// Deep links into Assigned Requests' own status filter (it already reads
-// ?status= from the URL), so clicking one both navigates and pre-filters.
-const REQUEST_STATUS_CHILDREN = [
-    { to: '/employee/requests?status=pending,payment_pending', label: 'Pending' },
-    { to: '/employee/requests?status=receipt_uploaded,receipt_verified', label: 'In Verification' },
-    { to: '/employee/requests?status=processing,lacking_requirements', label: 'Processing' },
-    { to: '/employee/requests?status=ready_for_claiming', label: 'Ready for Claiming' },
-    { to: '/employee/requests?status=completed', label: 'Completed' },
-    { to: '/employee/requests?status=rejected', label: 'Rejected' },
-    { to: '/employee/requests?status=cancelled', label: 'Cancelled' },
-]
-
 const NAV_ITEMS = [
     { to: '/employee/dashboard', label: 'Dashboard', icon: <IconHome />, end: true },
-    { to: '/employee/requests', label: 'Assigned Requests', icon: <IconClipboardList />, children: REQUEST_STATUS_CHILDREN },
+    { to: '/employee/requests', label: 'Assigned Requests', icon: <IconClipboardList /> },
     { to: '/employee/verification', label: 'Request Verification', icon: <IconShieldCheck />, fullAccessOnly: true },
     { to: '/employee/processing', label: 'Document Processing', icon: <IconGear />, fullAccessOnly: true },
     { to: '/employee/claim-schedule', label: 'Claim Schedule', icon: <IconCalendar /> },
@@ -51,20 +33,6 @@ const NAV_ITEMS = [
 
 function EmployeeLayout() {
     const navigate = useNavigate()
-    const location = useLocation()
-    // Which nav items with sub-links are expanded, keyed by `to`. Starts
-    // open for whichever section the user is already on.
-    const [expandedNav, setExpandedNav] = useState(() =>
-        new Set(NAV_ITEMS.filter((item) => item.children && location.pathname.endsWith(item.to)).map((item) => item.to))
-    )
-    const toggleNav = (to) => {
-        setExpandedNav((prev) => {
-            const next = new Set(prev)
-            if (next.has(to)) next.delete(to)
-            else next.add(to)
-            return next
-        })
-    }
     const [name, setName] = useState('')
     const [initials, setInitials] = useState('')
     const [positionTitle, setPositionTitle] = useState('')
@@ -251,57 +219,25 @@ function EmployeeLayout() {
                             (!item.canAddEmployeesOnly || canAddEmployees)
                         ).map((item) => {
                             const count = item.badgeKey ? badgeValue(item.badgeKey) : 0
-                            const isOpen = item.children && expandedNav.has(item.to)
 
                             return (
-                                <div key={item.to}>
-                                    <NavLink
-                                        to={item.to}
-                                        end={item.end}
-                                        onClick={() => {
-                                            closeMobileNav()
-                                            if (item.children) toggleNav(item.to)
-                                        }}
-                                        className={({ isActive }) =>
-                                            `employee-nav-link${isActive ? ' active' : ''}`
-                                        }
-                                    >
-                                        {item.icon}
-                                        <span>{item.label}</span>
-                                        {count > 0 && (
-                                            <span className="employee-nav-badge">
-                                                {count > 9 ? '9+' : count}
-                                            </span>
-                                        )}
-                                        {item.children && (
-                                            <span className={`employee-nav-chevron${isOpen ? ' is-open' : ''}`}>
-                                                <ChevronDown />
-                                            </span>
-                                        )}
-                                    </NavLink>
-
-                                    {item.children && isOpen && (
-                                        <div className="employee-nav-children">
-                                            {item.children.map((child) => {
-                                                const [childPath, childStatus] = child.to.split('?status=')
-                                                const isChildActive = location.pathname.endsWith(childPath)
-                                                    && new URLSearchParams(location.search).get('status') === childStatus
-
-                                                return (
-                                                    <NavLink
-                                                        key={child.to}
-                                                        to={child.to}
-                                                        onClick={closeMobileNav}
-                                                        className={`employee-nav-child-link${isChildActive ? ' active' : ''}`}
-                                                    >
-                                                        <span className="employee-nav-child-dot" aria-hidden="true" />
-                                                        <span>{child.label}</span>
-                                                    </NavLink>
-                                                )
-                                            })}
-                                        </div>
+                                <NavLink
+                                    key={item.to}
+                                    to={item.to}
+                                    end={item.end}
+                                    onClick={closeMobileNav}
+                                    className={({ isActive }) =>
+                                        `employee-nav-link${isActive ? ' active' : ''}`
+                                    }
+                                >
+                                    {item.icon}
+                                    <span>{item.label}</span>
+                                    {count > 0 && (
+                                        <span className="employee-nav-badge">
+                                            {count > 9 ? '9+' : count}
+                                        </span>
                                     )}
-                                </div>
+                                </NavLink>
                             )
                         })}
                     </nav>
