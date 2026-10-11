@@ -318,6 +318,7 @@
 }
 
 .msg-row .msg {
+    position: relative;
     align-self: auto;
     max-width: min(72%, 560px);
     min-width: 0;
@@ -388,10 +389,6 @@
 
 @media (hover: hover) {
     /* Beside the bubble on hover, so hidden actions take no space. */
-    .msg-row .msg {
-        position: relative;
-    }
-
     .msg-row .msg-actions {
         position: absolute;
         top: 50%;
@@ -469,6 +466,96 @@
 @media (max-width: 640px) {
     .msg-row .msg {
         max-width: 80%;
+    }
+}
+
+/* ---------- Reactions ---------- */
+
+.msg-reactions {
+    position: absolute;
+    bottom: -10px;
+    display: flex;
+    gap: 2px;
+    z-index: 2;
+}
+
+.msg-row:not(.is-self) .msg-reactions {
+    left: 8px;
+}
+
+.msg-row.is-self .msg-reactions {
+    right: 8px;
+}
+
+.msg-reaction-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.msg-reaction-chip.is-mine {
+    border-color: var(--blue-accent, var(--blue));
+}
+
+.msg-reaction-count {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--slate);
+}
+
+/* ---------- Emoji picker (tap the smiley in the actions row) ---------- */
+
+.msg-emoji-picker {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    display: flex;
+    gap: 2px;
+    padding: 4px 6px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 24px -12px rgba(10, 20, 40, 0.45);
+    z-index: 6;
+}
+
+.msg-row:not(.is-self) .msg-emoji-picker {
+    left: 0;
+}
+
+.msg-row.is-self .msg-emoji-picker {
+    right: 0;
+}
+
+.msg-emoji-picker button {
+    padding: 4px 6px;
+    border-radius: 999px;
+    background: none;
+    font-size: 18px;
+    line-height: 1;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.msg-emoji-picker button:hover,
+.msg-emoji-picker button:focus-visible {
+    background: var(--paper);
+    outline: none;
+    transform: scale(1.15);
+}
+
+.msg-emoji-picker button.is-active {
+    background: var(--blue-tint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .msg-emoji-picker button {
+        transition: none;
     }
 }
 

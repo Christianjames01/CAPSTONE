@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { REACTION_EMOJIS } from '../lib/messageReactions'
 import './MessageBubble.css'
 
 const PencilIcon = () => (
@@ -21,6 +22,14 @@ const TrashIcon = () => (
     </svg>
 )
 
+const SmileIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M8 13.5s1.5 2.5 4 2.5 4-2.5 4-2.5" />
+        <path d="M9 9h.01M15 9h.01" />
+    </svg>
+)
+
 // One chat bubble, shared by the student, employee, and admin Messages
 // pages. Edit and Delete only appear on the viewer's own messages
 // (`isSelf`); editing turns the bubble into an inline editor card.
@@ -35,22 +44,26 @@ const TrashIcon = () => (
 // Delete appear on hover, or on a long press on phones (like Messenger).
 // `onReply` adds Reply to the menu (any message); `quote` ({ label, text,
 // onClick }) shows the answered message above a reply.
-function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, onReply, quote, disabled, avatar, groupStart = true, groupEnd = true, seen = false }) {
+function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edited, deletedNote, onEdit, onDelete, onReply, quote, disabled, avatar, groupStart = true, groupEnd = true, seen = false, reactions = [], myReaction = null, onReact }) {
     const [editing, setEditing] = useState(false)
     const [revealed, setRevealed] = useState(false)
+    const [pickerOpen, setPickerOpen] = useState(false)
     const rowRef = useRef(null)
     const pressTimer = useRef(null)
 
     // Long press opens the Edit / Delete menu; tapping anywhere else
-    // closes it.
+    // closes it (and the emoji picker, if open).
     useEffect(() => {
-        if (!revealed) return undefined
+        if (!revealed && !pickerOpen) return undefined
         const close = (e) => {
-            if (!rowRef.current?.contains(e.target)) setRevealed(false)
+            if (!rowRef.current?.contains(e.target)) {
+                setRevealed(false)
+                setPickerOpen(false)
+            }
         }
         document.addEventListener('pointerdown', close)
         return () => document.removeEventListener('pointerdown', close)
-    }, [revealed])
+    }, [revealed, pickerOpen])
 
     useEffect(() => () => clearTimeout(pressTimer.current), [])
 
@@ -124,7 +137,7 @@ function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edit
     }
 
     const canEdit = isSelf && (onEdit || onDelete)
-    const showActions = !editing && !deletedNote && (onReply || canEdit)
+    const showActions = !editing && !deletedNote && (onReply || canEdit || onReact)
     const unchanged = draft.trim() === text
 
     const rowClass = [
@@ -214,8 +227,34 @@ function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edit
                 </div>
             )}
 
+            {reactions.length > 0 && !editing && (
+                <div className="msg-reactions">
+                    {reactions.map((r) => (
+                        <span key={r.emoji} className={`msg-reaction-chip${r.mine ? ' is-mine' : ''}`}>
+                            {r.emoji}
+                            {r.count > 1 && <span className="msg-reaction-count">{r.count}</span>}
+                        </span>
+                    ))}
+                </div>
+            )}
+
             {seen && isSelf && !deletedNote && !editing && (
                 <span className="msg-seen">Seen</span>
+            )}
+
+            {pickerOpen && onReact && (
+                <div className="msg-emoji-picker" role="menu" aria-label="React with an emoji">
+                    {REACTION_EMOJIS.map((e) => (
+                        <button
+                            key={e}
+                            type="button"
+                            className={myReaction === e ? 'is-active' : ''}
+                            onClick={() => { onReact(e); setPickerOpen(false); setRevealed(false) }}
+                        >
+                            {e}
+                        </button>
+                    ))}
+                </div>
             )}
 
             {showActions && (
@@ -223,6 +262,17 @@ function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edit
                     {onReply && (
                         <button type="button" onClick={() => { setRevealed(false); onReply() }} disabled={disabled}>
                             <ReplyIcon /> Reply
+                        </button>
+                    )}
+                    {onReact && (
+                        <button
+                            type="button"
+                            onClick={() => setPickerOpen((v) => !v)}
+                            disabled={disabled}
+                            aria-label="React"
+                            aria-expanded={pickerOpen}
+                        >
+                            <SmileIcon />
                         </button>
                     )}
                     {isSelf && onEdit && (

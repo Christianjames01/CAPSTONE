@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
 import { useConversationPresence, presenceLabel } from '../../lib/presence'
+import { loadReactions, toggleReaction, groupReactions } from '../../lib/messageReactions'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
@@ -30,12 +31,13 @@ function Messages() {
     const [reply, setReply] = useState('')
     const [sending, setSending] = useState(false)
     const [senderNames, setSenderNames] = useState({})
+    const [reactionRows, setReactionRows] = useState([])
     const [busy, setBusy] = useState(false)
     const [fillingStatus, setFillingStatus] = useState(false)
     // The message being answered (Messenger-style reply), or null.
     const [replyTo, setReplyTo] = useState(null)
 
-    useLiveRefresh(['messages'], (options) => loadMessages(options))
+    useLiveRefresh(['messages', 'message_reactions'], (options) => loadMessages(options))
     const { typingUserIds, sendTyping } = useTyping(userId)
 
     useEffect(() => {
@@ -75,6 +77,7 @@ function Messages() {
             }
 
             const rows = (data || []).filter((m) => !hiddenIds.has(m.message_id))
+            loadReactions(rows.map((m) => m.message_id)).then(setReactionRows)
 
             const otherUserIds = [
                 ...new Set(
@@ -357,6 +360,20 @@ function Messages() {
         }
     }
 
+    const reactToMessage = async (m, emoji) => {
+        const mine = reactionRows.find((r) => r.message_id === m.message_id && r.user_id === userId)
+        try {
+            const result = await toggleReaction(m.message_id, userId, emoji, mine)
+            setReactionRows((prev) => {
+                const withoutMine = prev.filter((r) => !(r.message_id === m.message_id && r.user_id === userId))
+                return result ? [...withoutMine, { message_id: m.message_id, user_id: userId, emoji: result }] : withoutMine
+            })
+        } catch (err) {
+            console.error('REACT TO MESSAGE ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to react to the message.'))
+        }
+    }
+
     // A student asked "what's the status of REQ-…?": fill in the answer.
     const inquiry = activeThread ? pendingInquiry(activeThread.messages, userId) : null
     const inquiryNumber = inquiryRequestNumber(inquiry?.message)
@@ -491,6 +508,7 @@ function Messages() {
                                         const senderName = senderNames[m.sender_user_id] || 'Unknown'
                                         const fromOtherPerson = !isSelf && m.sender_user_id !== activeThread.otherUserId
                                         const isLastInThread = m.message_id === activeThread.messages[activeThread.messages.length - 1]?.message_id
+                                        const myReactionRow = reactionRows.find((r) => r.message_id === m.message_id && r.user_id === userId)
 
                                         return (
                                             <MessageBubble
@@ -513,6 +531,9 @@ function Messages() {
                                                 edited={!!m.edited_at}
                                                 deletedNote={deletedLabel(m)}
                                                 seen={isSelf && isLastInThread && !!m.is_read}
+                                                reactions={groupReactions(reactionRows.filter((r) => r.message_id === m.message_id), userId)}
+                                                myReaction={myReactionRow?.emoji || null}
+                                                onReact={deletedLabel(m) ? undefined : (emoji) => reactToMessage(m, emoji)}
                                                 onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                                 onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                                 disabled={busy}

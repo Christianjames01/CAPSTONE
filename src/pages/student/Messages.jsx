@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { findAssignedEmployee } from '../../lib/assignEmployee'
 import { notify, notifyError, confirmModal } from '../../lib/notify'
 import { useConversationPresence, presenceLabel } from '../../lib/presence'
+import { loadReactions, toggleReaction, groupReactions } from '../../lib/messageReactions'
 import { EmptyState } from './StudentUi'
 import { IconMessage } from './icons'
 import { buildSenderLabels, REGISTRAR_LABEL } from '../../lib/messageSenderLabel'
@@ -40,6 +41,7 @@ function Messages() {
     const [contacts, setContacts] = useState([])
     const [selectedUserId, setSelectedUserId] = useState(null)
     const [messages, setMessages] = useState([])
+    const [reactionRows, setReactionRows] = useState([])
     // message_id -> the staff member whose conversation it belongs in, and
     // sender labels for staff other than that person (e.g. the Registrar Head).
     const [threadOf, setThreadOf] = useState({})
@@ -61,7 +63,7 @@ function Messages() {
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
-    useLiveRefresh(['messages'], (options) => loadMessages(options))
+    useLiveRefresh(['messages', 'message_reactions'], (options) => loadMessages(options))
     const { typingUserIds, sendTyping } = useTyping(userId)
 
     // Appends an incoming message the instant it arrives, instead of waiting
@@ -215,6 +217,7 @@ function Messages() {
             setRequests((requestRows || []).map((r) => ({ ...r, documentName: docName[r.document_type_id] || '' })))
             setContacts(list)
             setMessages(rows)
+            loadReactions(rows.map((m) => m.message_id)).then(setReactionRows)
             setThreadOf(assigned)
             setLabels(labels)
 
@@ -394,6 +397,20 @@ function Messages() {
         }
     }
 
+    const reactToMessage = async (m, emoji) => {
+        const mine = reactionRows.find((r) => r.message_id === m.message_id && r.user_id === userId)
+        try {
+            const result = await toggleReaction(m.message_id, userId, emoji, mine)
+            setReactionRows((prev) => {
+                const withoutMine = prev.filter((r) => !(r.message_id === m.message_id && r.user_id === userId))
+                return result ? [...withoutMine, { message_id: m.message_id, user_id: userId, emoji: result }] : withoutMine
+            })
+        } catch (err) {
+            console.error('REACT TO MESSAGE ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to react to the message.'))
+        }
+    }
+
     const threadOfContact = (c) => messages.filter((m) => threadFor(m) === c.userId)
 
     // The staff member, or other registrar staff who wrote in this
@@ -490,6 +507,10 @@ function Messages() {
                                                 ? labels[m.sender_user_id] || REGISTRAR_LABEL
                                                 : selected.name
                                         const isLastInThread = m.message_id === thread[thread.length - 1]?.message_id
+                                        const myReactionRow = reactionRows.find((r) => r.message_id === m.message_id && r.user_id === userId)
+                                        const deletedNote = m.deleted_at
+                                            ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
+                                            : null
 
                                         return (
                                             <MessageBubble
@@ -505,10 +526,11 @@ function Messages() {
                                                 text={m.message}
                                                 time={groupEnd ? chatBubbleTime(m.created_at) : null}
                                                 edited={!!m.edited_at}
-                                                deletedNote={m.deleted_at
-                                                    ? ((m.deleted_by || m.sender_user_id) === userId ? 'You deleted a message' : `${senderLabel || REGISTRAR_LABEL} deleted a message`)
-                                                    : null}
+                                                deletedNote={deletedNote}
                                                 seen={isSelf && isLastInThread && !!m.is_read}
+                                                reactions={groupReactions(reactionRows.filter((r) => r.message_id === m.message_id), userId)}
+                                                myReaction={myReactionRow?.emoji || null}
+                                                onReact={deletedNote ? undefined : (emoji) => reactToMessage(m, emoji)}
                                                 onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                                 onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                                 disabled={busy}

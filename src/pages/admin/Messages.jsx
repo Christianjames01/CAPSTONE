@@ -3,6 +3,7 @@ import { IconMessage } from '../employee/icons'
 import { supabase } from '../../lib/supabase'
 import { notify, notifyError, notifySuccess, confirmModal } from '../../lib/notify'
 import { useConversationPresence, presenceLabel } from '../../lib/presence'
+import { loadReactions, toggleReaction, groupReactions } from '../../lib/messageReactions'
 import { confirmWithPassword } from '../../lib/confirmPassword'
 import { buildSenderLabels } from '../../lib/messageSenderLabel'
 import { markMessagesRead, unreadReceived, withRead } from '../../lib/markMessagesRead'
@@ -30,6 +31,7 @@ function Messages() {
     // Every row loaded, including the hidden [[ref=]] routing copies, so a
     // delete can also hide those siblings (see hideRows).
     const [rawMessages, setRawMessages] = useState([])
+    const [reactionRows, setReactionRows] = useState([])
     const [deletingKey, setDeletingKey] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -52,7 +54,7 @@ function Messages() {
     const [studentResults, setStudentResults] = useState([])
     const [searchingStudents, setSearchingStudents] = useState(false)
 
-    useLiveRefresh(['messages'], (options) => loadMessages(options))
+    useLiveRefresh(['messages', 'message_reactions'], (options) => loadMessages(options))
     const { typingUserIds, sendTyping } = useTyping(currentUserId)
 
     useEffect(() => {
@@ -92,6 +94,7 @@ function Messages() {
             const visible = (data || []).filter((m) => !hiddenIds.has(m.message_id))
 
             setRawMessages(visible)
+            loadReactions(visible.map((m) => m.message_id)).then(setReactionRows)
 
             const userIds = [
                 ...new Set(visible.flatMap((m) => [m.sender_user_id, m.receiver_user_id]))
@@ -536,6 +539,20 @@ function Messages() {
         }
     }
 
+    const reactToMessage = async (m, emoji) => {
+        const mine = reactionRows.find((r) => r.message_id === m.message_id && r.user_id === currentUserId)
+        try {
+            const result = await toggleReaction(m.message_id, currentUserId, emoji, mine)
+            setReactionRows((prev) => {
+                const withoutMine = prev.filter((r) => !(r.message_id === m.message_id && r.user_id === currentUserId))
+                return result ? [...withoutMine, { message_id: m.message_id, user_id: currentUserId, emoji: result }] : withoutMine
+            })
+        } catch (err) {
+            console.error('REACT TO MESSAGE ERROR:', err)
+            notifyError(friendlyError(err, 'Failed to react to the message.'))
+        }
+    }
+
     // Used from both the conversation list and the open conversation.
     // New messages sent into the conversation later will bring it back.
     const deleteConversation = async (thread) => {
@@ -760,6 +777,8 @@ function Messages() {
                                         const isSelf = m.sender_user_id === currentUserId
                                         const senderName = nameForSender(m.sender_user_id)
                                         const isLastInThread = m.message_id === activeThread.messages[activeThread.messages.length - 1]?.message_id
+                                        const siblingIds = siblingMessageIds([m], rawMessages)
+                                        const myReactionRow = reactionRows.find((r) => r.message_id === m.message_id && r.user_id === currentUserId)
 
                                         return (
                                             <MessageBubble
@@ -779,6 +798,9 @@ function Messages() {
                                                 edited={!!m.edited_at}
                                                 deletedNote={deletedLabel(m)}
                                                 seen={isSelf && isLastInThread && !!m.is_read}
+                                                reactions={groupReactions(reactionRows.filter((r) => siblingIds.includes(r.message_id)), currentUserId)}
+                                                myReaction={myReactionRow?.emoji || null}
+                                                onReact={deletedLabel(m) ? undefined : (emoji) => reactToMessage(m, emoji)}
                                                 onEdit={isSelf ? (text) => editMessage(m, text) : undefined}
                                                 onDelete={isSelf ? () => deleteMessage(m) : undefined}
                                                 disabled={deletingKey !== null}
