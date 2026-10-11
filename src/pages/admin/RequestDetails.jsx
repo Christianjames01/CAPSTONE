@@ -1143,36 +1143,35 @@ function AdminRequestDetails() {
             <div className="admin-card" style={{ marginTop: 24 }}>
                 <h2 style={{ fontSize: 16, marginBottom: 16 }}>Request Information</h2>
 
-                <div className="admin-info-grid">
-                    <div className="admin-info-field">
-                        <span>Document Requested</span>
-                        <strong>{documentName}</strong>
-                    </div>
-
-                    <div className="admin-info-field">
-                        <span>Quantity</span>
-                        <strong>{request.quantity}</strong>
-                    </div>
-
-                    <div className="admin-info-field">
-                        <span>Total Amount</span>
-                        <strong>₱{Number(request.total_amount || 0).toFixed(2)}</strong>
-                    </div>
-
-                    <div className="admin-info-field">
-                        <span>Assigned Employee</span>
-                        <strong>{currentEmployeeName}</strong>
-                    </div>
-
-                    <div className="admin-info-field">
-                        <span>Requested</span>
-                        <strong>{request.requested_at ? formatDateTime(request.requested_at) : 'N/A'}</strong>
-                    </div>
-
-                    <div className="admin-info-field">
-                        <span>Purpose</span>
-                        <strong>{request.purpose || 'Not specified'}</strong>
-                    </div>
+                <div className="admin-table-wrapper">
+                    <table className="admin-table admin-fact-table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Document Requested</th>
+                                <td>{documentName}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Quantity</th>
+                                <td>{request.quantity}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Total Amount</th>
+                                <td>₱{Number(request.total_amount || 0).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Assigned Employee</th>
+                                <td>{currentEmployeeName}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Requested</th>
+                                <td>{request.requested_at ? formatDateTime(request.requested_at) : 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Purpose</th>
+                                <td>{request.purpose || 'Not specified'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 {request.rejection_reason && (
@@ -1221,21 +1220,25 @@ function AdminRequestDetails() {
                             </p>
                         </div>
                     ) : (
-                        <div className="admin-info-grid">
-                            <div className="admin-info-field">
-                                <span>Scheduled Date</span>
-                                <strong>{formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}</strong>
-                            </div>
-                            <div className="admin-info-field">
-                                <span>Scheduled Time</span>
-                                <strong>{formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}</strong>
-                            </div>
-                            {claimSchedule.reschedule_requested_at && (
-                                <div className="admin-info-field">
-                                    <span>Reschedule Requested</span>
-                                    <strong>{claimSchedule.reschedule_reason}</strong>
-                                </div>
-                            )}
+                        <div className="admin-table-wrapper">
+                            <table className="admin-table admin-fact-table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">Scheduled Date</th>
+                                        <td>{formatDate(claimSchedule.claim_date || claimSchedule.scheduled_date) || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Scheduled Time</th>
+                                        <td>{formatTime(claimSchedule.claim_time || claimSchedule.scheduled_time) || 'N/A'}</td>
+                                    </tr>
+                                    {claimSchedule.reschedule_requested_at && (
+                                        <tr>
+                                            <th scope="row">Reschedule Requested</th>
+                                            <td>{claimSchedule.reschedule_reason}</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     )}
 
@@ -1306,16 +1309,19 @@ function AdminRequestDetails() {
                     </div>
                 ) : (
                     <>
-                        <div className="admin-info-grid">
-                            <div className="admin-info-field">
-                                <span>Amount Paid</span>
-                                <strong>₱{Number(receipt.amount_paid || 0).toFixed(2)}</strong>
-                            </div>
-
-                            <div className="admin-info-field">
-                                <span>Status</span>
-                                <strong style={{ textTransform: 'capitalize' }}>{receipt.status}</strong>
-                            </div>
+                        <div className="admin-table-wrapper">
+                            <table className="admin-table admin-fact-table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">Amount Paid</th>
+                                        <td>₱{Number(receipt.amount_paid || 0).toFixed(2)}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Status</th>
+                                        <td style={{ textTransform: 'capitalize' }}>{receipt.status}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
                         <ReceiptChecks receipt={receipt} />
@@ -1365,77 +1371,100 @@ function AdminRequestDetails() {
                         <p>No request requirements have been created for this request yet.</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        {requirements.map((requirement) => {
-                            const definition = requirement.document_requirements
-                            const fileUrl = requirementUrls[requirement.request_requirement_id]
+                    <div className="admin-table-wrapper">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Requirement</th>
+                                    <th>Status</th>
+                                    <th>File</th>
+                                    <th>Uploaded</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {requirements.flatMap((requirement) => {
+                                    const definition = requirement.document_requirements
+                                    const fileUrl = requirementUrls[requirement.request_requirement_id]
 
-                            return (
-                                <div key={requirement.request_requirement_id} className="admin-list-card" style={{ marginBottom: 0 }}>
-                                    <div className="admin-list-card-header">
-                                        <div>
-                                            <h3>{definition?.requirement_name || 'Requirement'}{definition?.is_required && <span style={{ color: 'var(--red)' }}> *</span>}</h3>
-                                            <p>{definition?.description || 'No description provided.'}</p>
-                                        </div>
-
-                                        <span className={`admin-status-pill status-${requirement.status}`}>{requirement.status}</span>
-                                    </div>
-
-                                    <div className="admin-info-grid">
-                                        <div className="admin-info-field">
-                                            <span>File Name</span>
-                                            <strong>{requirement.file_name || 'No file uploaded'}</strong>
-                                        </div>
-
-                                        <div className="admin-info-field">
-                                            <span>Uploaded At</span>
-                                            <strong>{requirement.uploaded_at ? formatDateTime(requirement.uploaded_at) : 'Not uploaded'}</strong>
-                                        </div>
-                                    </div>
-
-                                    {requirement.rejection_reason && (
-                                        <div className="admin-error-box" style={{ marginTop: 12, marginBottom: 0 }}>
-                                            Rejection reason: {requirement.rejection_reason}
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-                                        {fileUrl && (
-                                            <button
-                                                className="admin-link-button"
-                                                onClick={() => setPreviewFile({ url: fileUrl, name: requirement.file_name })}
-                                            >
-                                                View Document →
-                                            </button>
-                                        )}
-
-                                        {requirement.status === 'uploaded' && (
-                                            <>
-                                                <button
-                                                    className="admin-primary-button"
-                                                    onClick={() => approveRequirement(requirement)}
-                                                    disabled={requirementProcessing}
+                                    const rows = [
+                                        <tr key={requirement.request_requirement_id}>
+                                            <td>
+                                                <strong>
+                                                    {definition?.requirement_name || 'Requirement'}
+                                                    {definition?.is_required && <span style={{ color: 'var(--red)' }}> *</span>}
+                                                </strong>
+                                                <div style={{ fontSize: 12, color: 'var(--slate)', marginTop: 2 }}>
+                                                    {definition?.description || 'No description provided.'}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`admin-status-pill status-${requirement.status}`}>{requirement.status}</span>
+                                            </td>
+                                            <td style={{ maxWidth: 200 }}>
+                                                <span
+                                                    style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
+                                                    title={requirement.file_name || undefined}
                                                 >
-                                                    {requirementProcessing ? 'Processing...' : <><IconCheck className="is-leading" />Approve</>}
-                                                </button>
+                                                    {requirement.file_name || '—'}
+                                                </span>
+                                            </td>
+                                            <td>{requirement.uploaded_at ? formatDateTime(requirement.uploaded_at) : '—'}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                                    {fileUrl && (
+                                                        <button
+                                                            className="admin-link-button"
+                                                            onClick={() => setPreviewFile({ url: fileUrl, name: requirement.file_name })}
+                                                        >
+                                                            View →
+                                                        </button>
+                                                    )}
 
-                                                <button
-                                                    className="admin-danger-button"
-                                                    onClick={() => {
-                                                        setSelectedRequirement(requirement)
-                                                        setRejectionReason('')
-                                                        setShowReject(true)
-                                                    }}
-                                                    disabled={requirementProcessing}
-                                                >
-                                                    <IconX className="is-leading" />Reject
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                                    {requirement.status === 'uploaded' && (
+                                                        <>
+                                                            <button
+                                                                className="admin-primary-button"
+                                                                onClick={() => approveRequirement(requirement)}
+                                                                disabled={requirementProcessing}
+                                                            >
+                                                                {requirementProcessing ? 'Processing...' : <><IconCheck className="is-leading" />Approve</>}
+                                                            </button>
+
+                                                            <button
+                                                                className="admin-danger-button"
+                                                                onClick={() => {
+                                                                    setSelectedRequirement(requirement)
+                                                                    setRejectionReason('')
+                                                                    setShowReject(true)
+                                                                }}
+                                                                disabled={requirementProcessing}
+                                                            >
+                                                                <IconX className="is-leading" />Reject
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>,
+                                    ]
+
+                                    if (requirement.rejection_reason) {
+                                        rows.push(
+                                            <tr key={`${requirement.request_requirement_id}-reason`}>
+                                                <td colSpan={5} style={{ paddingTop: 0 }}>
+                                                    <div className="admin-error-box" style={{ margin: 0 }}>
+                                                        Rejection reason: {requirement.rejection_reason}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    }
+
+                                    return rows
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 )}
 

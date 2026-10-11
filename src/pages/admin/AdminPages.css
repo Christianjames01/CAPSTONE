@@ -378,6 +378,44 @@
     background: var(--paper);
 }
 
+/* Key/value "fact" table -- a row per field instead of a floating grid of
+   label/value pairs, so related facts read as one connected block. Not
+   clickable, so no row hover highlight. */
+.admin-fact-table {
+    table-layout: fixed;
+}
+
+.admin-fact-table th[scope="row"] {
+    width: 200px;
+    color: var(--slate);
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 13px;
+    white-space: normal;
+}
+
+.admin-fact-table td {
+    font-weight: 600;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+.admin-fact-table tbody tr:hover {
+    background: transparent;
+}
+
+.admin-fact-table tbody tr:last-child th,
+.admin-fact-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+@media (max-width: 560px) {
+    .admin-fact-table th[scope="row"] {
+        width: 128px;
+    }
+}
+
 /* Scroll stat cards and filter chips as a single row on mobile instead of
    wrapping into a tall stack -- appended last so it wins the cascade over
    the unconditional .admin-filter-row/.admin-stat-grid rules above. */
