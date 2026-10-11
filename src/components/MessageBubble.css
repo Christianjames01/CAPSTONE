@@ -471,6 +471,20 @@
 
 /* ---------- Reactions ---------- */
 
+/* Anchors the reaction chip / emoji picker to the bubble itself, not the
+   taller column that also holds the sender label and quote above it or
+   the Seen label below it -- otherwise the chip floats past those and
+   overlaps whatever text sits there. */
+.msg-bubble-wrap {
+    position: relative;
+}
+
+/* Extra room below the bubble so the overlapping reaction chip doesn't
+   sit on top of the Seen label or the next message. */
+.msg-bubble-wrap:has(.msg-reactions) {
+    margin-bottom: 10px;
+}
+
 .msg-reactions {
     position: absolute;
     bottom: -10px;

@@ -174,87 +174,89 @@ function MessageBubble({ messageId, isSelf, senderLabel, badge, text, time, edit
                 </button>
             )}
 
-            {editing ? (
-                <div className="msg-editor">
-                    <div className="msg-editor-label">Edit message</div>
-                    <textarea
-                        ref={inputRef}
-                        className="msg-editor-input"
-                        value={draft}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onKeyDown={onKeyDown}
-                        rows={1}
-                        disabled={saving}
-                        aria-label="Edit message"
-                    />
-                    <div className="msg-editor-footer">
-                        <span className="msg-editor-hint">
-                            <kbd>Enter</kbd> to save · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line · <kbd>Esc</kbd> to cancel
-                        </span>
-                        <div className="msg-editor-buttons">
-                            <button type="button" className="msg-btn" onClick={() => setEditing(false)} disabled={saving}>
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="msg-btn is-primary"
-                                onClick={save}
-                                disabled={saving || !draft.trim() || unchanged}
-                            >
-                                {saving ? 'Saving...' : 'Save'}
-                            </button>
+            <div className="msg-bubble-wrap">
+                {editing ? (
+                    <div className="msg-editor">
+                        <div className="msg-editor-label">Edit message</div>
+                        <textarea
+                            ref={inputRef}
+                            className="msg-editor-input"
+                            value={draft}
+                            onChange={(e) => setDraft(e.target.value)}
+                            onKeyDown={onKeyDown}
+                            rows={1}
+                            disabled={saving}
+                            aria-label="Edit message"
+                        />
+                        <div className="msg-editor-footer">
+                            <span className="msg-editor-hint">
+                                <kbd>Enter</kbd> to save · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line · <kbd>Esc</kbd> to cancel
+                            </span>
+                            <div className="msg-editor-buttons">
+                                <button type="button" className="msg-btn" onClick={() => setEditing(false)} disabled={saving}>
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="msg-btn is-primary"
+                                    onClick={save}
+                                    disabled={saving || !draft.trim() || unchanged}
+                                >
+                                    {saving ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                <div
-                    className={`msg-bubble${deletedNote ? ' is-deleted' : ''}`}
-                    {...(showActions ? pressHandlers : {})}
-                >
-                    {deletedNote && (
-                        <div className="msg-deleted-note">
-                            <TrashIcon />
-                            <span>{deletedNote}</span>
-                        </div>
-                    )}
-                    {!deletedNote && <p className="msg-text">{text}</p>}
-                    {(time || (edited && !deletedNote)) && (
-                        <span className="msg-time">
-                            {time}
-                            {edited && !deletedNote && <span className="msg-edited">{time ? ' · ' : ''}edited</span>}
-                        </span>
-                    )}
-                </div>
-            )}
+                ) : (
+                    <div
+                        className={`msg-bubble${deletedNote ? ' is-deleted' : ''}`}
+                        {...(showActions ? pressHandlers : {})}
+                    >
+                        {deletedNote && (
+                            <div className="msg-deleted-note">
+                                <TrashIcon />
+                                <span>{deletedNote}</span>
+                            </div>
+                        )}
+                        {!deletedNote && <p className="msg-text">{text}</p>}
+                        {(time || (edited && !deletedNote)) && (
+                            <span className="msg-time">
+                                {time}
+                                {edited && !deletedNote && <span className="msg-edited">{time ? ' · ' : ''}edited</span>}
+                            </span>
+                        )}
+                    </div>
+                )}
 
-            {reactions.length > 0 && !editing && (
-                <div className="msg-reactions">
-                    {reactions.map((r) => (
-                        <span key={r.emoji} className={`msg-reaction-chip${r.mine ? ' is-mine' : ''}`}>
-                            {r.emoji}
-                            {r.count > 1 && <span className="msg-reaction-count">{r.count}</span>}
-                        </span>
-                    ))}
-                </div>
-            )}
+                {reactions.length > 0 && !editing && (
+                    <div className="msg-reactions">
+                        {reactions.map((r) => (
+                            <span key={r.emoji} className={`msg-reaction-chip${r.mine ? ' is-mine' : ''}`}>
+                                {r.emoji}
+                                {r.count > 1 && <span className="msg-reaction-count">{r.count}</span>}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                {pickerOpen && onReact && (
+                    <div className="msg-emoji-picker" role="menu" aria-label="React with an emoji">
+                        {REACTION_EMOJIS.map((e) => (
+                            <button
+                                key={e}
+                                type="button"
+                                className={myReaction === e ? 'is-active' : ''}
+                                onClick={() => { onReact(e); setPickerOpen(false); setRevealed(false) }}
+                            >
+                                {e}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {seen && isSelf && !deletedNote && !editing && (
                 <span className="msg-seen">Seen</span>
-            )}
-
-            {pickerOpen && onReact && (
-                <div className="msg-emoji-picker" role="menu" aria-label="React with an emoji">
-                    {REACTION_EMOJIS.map((e) => (
-                        <button
-                            key={e}
-                            type="button"
-                            className={myReaction === e ? 'is-active' : ''}
-                            onClick={() => { onReact(e); setPickerOpen(false); setRevealed(false) }}
-                        >
-                            {e}
-                        </button>
-                    ))}
-                </div>
             )}
 
             {showActions && (
